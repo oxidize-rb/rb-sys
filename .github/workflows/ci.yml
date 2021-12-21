@@ -21,6 +21,8 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0 || true
+      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0/x86_64-linux || true
       - uses: actions-rs/cargo@v1
         with:
           command: build
