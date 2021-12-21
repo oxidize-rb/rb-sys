@@ -43,6 +43,7 @@ fn main() {
         .use_core()
         .ctypes_prefix("::libc")
         .blocklist_item("mjit.*")
+        .blocklist_item("FP_.*")
         .clang_args(&[
             format!("-I{}", rbconfig("rubyhdrdir")),
             format!("-I{}", rbconfig("rubyarchhdrdir")),
