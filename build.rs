@@ -1,78 +1,73 @@
 extern crate bindgen;
+extern crate pkg_config;
 
 use std::env;
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
 
+fn setup_ruby_pkgconfig() -> pkg_config::Library {
+    match env::var("PKG_CONFIG_PATH") {
+        Ok(val) => env::set_var(
+            "PKG_CONFIG_PATH",
+            &format!("{}:{}/pkgconfig", val, rbconfig("libdir")),
+        ),
+        Err(_) => env::set_var(
+            "PKG_CONFIG_PATH",
+            &format!("{}/pkgconfig", rbconfig("libdir")),
+        ),
+    }
+
+    pkg_config::Config::new()
+        .probe(format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).as_str())
+        .unwrap()
+}
+
 fn rbconfig(key: &str) -> String {
-  let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
+    let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
 
-  let config = Command::new(ruby)
-    .arg("-e")
-    .arg(format!("print RbConfig::CONFIG['{}']", key))
-    .output()
-    .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+    let config = Command::new(ruby)
+        .arg("-e")
+        .arg(format!("print RbConfig::CONFIG['{}']", key))
+        .output()
+        .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
-  String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+    String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
 }
 
 fn main() {
-  let ruby_libs = rbconfig("LIBS");
+    let library = setup_ruby_pkgconfig();
 
-  if !ruby_libs.trim().is_empty() {
-    println!("cargo:rustc-link-arg={}", ruby_libs);
-  }
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=wrapper.h");
 
-  let libruby_arg = rbconfig("LIBRUBYARG_SHARED");
+    let mut clang_args = library
+        .include_paths
+        .iter()
+        .map(|path| format!("-I{}", path.to_str().unwrap()).to_string())
+        .collect::<Vec<_>>();
 
-  if !libruby_arg.trim().is_empty() {
-    println!("cargo:rustc-link-arg={}", libruby_arg);
-  }
+    clang_args.push("-fdeclspec".to_string());
 
-  rbconfig("DLDFLAGS").split(' ').for_each(|arg| {
-    if !arg.trim().is_empty() {
-      println!("cargo:rustc-link-arg={}", arg);
-    }
-  });
+    let bindings = bindgen::Builder::default()
+        .header("wrapper.h")
+        .use_core()
+        .ctypes_prefix("::libc")
+        .allowlist_file(".*ruby.*")
+        .rustified_enum("*")
+        .new_type_alias_deref("VALUE")
+        .default_alias_style(bindgen::AliasVariation::NewType)
+        .derive_eq(true)
+        .derive_debug(true)
+        .clang_args(clang_args)
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .generate()
+        .expect("Unable to generate bindings");
 
-  println!(
-    "cargo:rustc-link-arg={}",
-    format!("-I{}", rbconfig("rubyhdrdir"))
-  );
-  println!(
-    "cargo:rustc-link-arg={}",
-    format!("-I{}", rbconfig("rubyarchhdrdir"))
-  );
-  println!("cargo:rerun-if-changed=wrapper.h");
-  println!("cargo:rerun-if-changed=build.rs");
-  println!("cargo:rerun-if-changed=wrapper.h");
-
-  let bindings = bindgen::Builder::default()
-    .header("wrapper.h")
-    .use_core()
-    .ctypes_prefix("::libc")
-    .blocklist_item(".*mjit.*")
-    .blocklist_item("^FP_.*")
-    .allowlist_file(".*/ruby/.+\\.h")
-    .allowlist_file(".*/ruby\\.h")
-    .rustified_enum("*")
-    .new_type_alias_deref("VALUE")
-    .default_alias_style(bindgen::AliasVariation::NewType)
-    .derive_eq(true)
-    .derive_debug(true)
-    .clang_args(&[
-      format!("-I{}", rbconfig("rubyhdrdir")),
-      format!("-I{}", rbconfig("rubyarchhdrdir")),
-      "-fdeclspec".to_string(),
-    ])
-    .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-    .generate()
-    .expect("Unable to generate bindings");
-
-  // Write the bindings to the $OUT_DIR/bindings.rs file.
-  let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-  bindings
-    .write_to_file(out_path.join("bindings.rs"))
-    .expect("Couldn't write bindings!");
+    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join("bindings.rs"))
+        .expect("Couldn't write bindings!");
 }
