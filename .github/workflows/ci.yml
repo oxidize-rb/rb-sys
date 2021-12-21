@@ -1,0 +1,27 @@
+---
+on: [push]
+
+name: CI
+
+jobs:
+  build_and_test:
+    name: Build and test 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ruby: [2.5, 2.6, 2.7, '3.0']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+    - uses: actions-rs/cargo@v1
+      with:
+        command: test
