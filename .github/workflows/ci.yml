@@ -18,13 +18,15 @@ jobs:
         run: |
           gpg --keyserver hkp://pgp.mit.edu --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
           curl -sSL https://get.rvm.io | bash -s stable
-          echo 'export PATH=$PATH:$HOME/.rvm/bin' >> $GITHUB_ENV
-          echo "source $HOME/.rvm/scripts/rvm" >> $GITHUB_ENV
           source $HOME/.rvm/scripts/rvm
           rvm use ${{ matrix.ruby }} --install --default 
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - uses: actions/checkout@v2
+      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/lib || true
+      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0 || true
+      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0/x86_64-linux || true
       - uses: actions-rs/cargo@v1
         with:
           command: build
