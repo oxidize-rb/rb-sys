@@ -17,11 +17,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-    - uses: actions-rs/cargo@v1
-      with:
-        command: test
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
