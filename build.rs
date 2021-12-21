@@ -38,6 +38,7 @@ fn rbconfig(key: &str) -> String {
 fn main() {
     let library = setup_ruby_pkgconfig();
 
+    println!("cargo:rustc-link-search=dylib={}", rbconfig("libdir"));
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
