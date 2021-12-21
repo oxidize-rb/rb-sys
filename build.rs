@@ -44,6 +44,17 @@ fn main() {
         .ctypes_prefix("::libc")
         .blocklist_item("mjit.*")
         .blocklist_item("FP_.*")
+        .blocklist_file("stdio.h")
+        .blocklist_file("math.h")
+        .blocklist_file("cstddef.h")
+        .blocklist_file("cstddef")
+        // these are never part of ffmpeg API
+        .blocklist_function("_.*")
+        // Rust doesn't support long double, and bindgen can't skip it
+        // https://github.com/rust-lang/rust-bindgen/issues/1549
+        .rustified_enum("*")
+        .derive_eq(true)
+        .derive_debug(true)
         .clang_args(&[
             format!("-I{}", rbconfig("rubyhdrdir")),
             format!("-I{}", rbconfig("rubyarchhdrdir")),
