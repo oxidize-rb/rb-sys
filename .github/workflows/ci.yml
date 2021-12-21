@@ -24,6 +24,7 @@ jobs:
           curl -sSL https://get.rvm.io | bash -s stable
           echo 'export PATH=$PATH:$HOME/.rvm/bin' >> $GITHUB_ENV
           echo "source $HOME/.rvm/scripts/rvm" >> $GITHUB_ENV
+          source $HOME/.rvm/scripts/rvm
           rvm install ${{ matrix.ruby }}
           echo . $(rvm ${{ matrix.ruby }} do rvm env --path) >> $GITHUB_ENV
       - uses: ruby/setup-ruby@v1
