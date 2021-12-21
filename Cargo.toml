@@ -8,3 +8,6 @@ libc = "0.2.112"
 
 [build-dependencies]
 bindgen = "0.59.2"
+
+[patch.crates-io]
+bindgen = { git = "https://github.com/daviddrysdale/rust-bindgen", branch = "allowlist-file" }
