@@ -23,4 +23,9 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
       - uses: actions-rs/cargo@v1
         with:
+          command: build
+           args: --verbose 
+      - run: cat "$(find . -name bindings.rs | head -n1)"
+      - uses: actions-rs/cargo@v1
+        with:
           command: test
