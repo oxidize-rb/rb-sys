@@ -24,7 +24,7 @@ fn main() {
     println!("cargo:rustc-link-arg={}", ruby_libs);
   }
 
-  let libruby_arg = rbconfig("LIBRUBYARG");
+  let libruby_arg = rbconfig("LIBRUBYARG_SHARED");
 
   if !libruby_arg.trim().is_empty() {
     println!("cargo:rustc-link-arg={}", libruby_arg);
@@ -40,7 +40,10 @@ fn main() {
     "cargo:rustc-link-arg={}",
     format!("-I{}", rbconfig("rubyhdrdir"))
   );
-  println!("cargo:rustc-link-arg={}", format!("-I{}", rbconfig("rubyarchhdrdir")));
+  println!(
+    "cargo:rustc-link-arg={}",
+    format!("-I{}", rbconfig("rubyarchhdrdir"))
+  );
   println!("cargo:rerun-if-changed=wrapper.h");
   println!("cargo:rerun-if-changed=build.rs");
   println!("cargo:rerun-if-changed=wrapper.h");
