@@ -41,6 +41,7 @@ fn main() {
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rustc-link-arg=-Wl,-rpath,{}/{}", rbconfig("libdir"), rbconfig("LIBRUBY_SO"));
 
     let mut clang_args = library
         .include_paths

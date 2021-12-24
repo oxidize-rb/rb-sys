@@ -14,6 +14,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -22,10 +30,12 @@ jobs:
           toolchain: stable
       - uses: actions/checkout@v2
       - uses: actions-rs/cargo@v1
+        name: 🛠 Cargo build
         with:
           command: build
           args: --verbose 
       - run: cat "$(find . -name bindings.rs | head -n1)"
       - uses: actions-rs/cargo@v1
+        name: 🧪 Cargo test
         with:
           command: test
