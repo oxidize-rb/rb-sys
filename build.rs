@@ -52,7 +52,6 @@ fn main() {
         .map(|path| format!("-I{}", path))
         .collect::<Vec<_>>();
 
-    clang_args.push("-fdeclspec".to_string());
     pkgconfig_var("DLDFLAGS")
         .split(' ')
         .for_each(|flag| clang_args.push(flag.to_string()));
@@ -61,13 +60,17 @@ fn main() {
     if !libs.trim().is_empty() {
         clang_args.push(libs);
     }
-    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
-    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
-    // clang_args.push(format!("{}/{}", pkgconfig_var("libdir"), pkgconfig_var("LIBRUBY_SO")));
+    // clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
+    // clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
+
+    // Linking directly with absolute path seems to be the only thing that works
+    clang_args.push(format!("{}/{}", pkgconfig_var("libdir"), pkgconfig_var("LIBRUBY_SO")));
 
     clang_args
         .iter()
         .for_each(|arg| println!("cargo:rustc-link-arg={}", arg));
+
+    clang_args.push("-fdeclspec".to_string());
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
