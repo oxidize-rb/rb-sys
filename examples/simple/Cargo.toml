@@ -1,0 +1,9 @@
+[package]
+name = "rust-ruby-example"
+version = "0.1.0"
+
+[dependencies]
+rb-sys = { path = ".." }
+
+[lib]
+crate-type = ["cdylib"]
