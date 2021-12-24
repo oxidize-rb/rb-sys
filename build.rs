@@ -18,10 +18,21 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         ),
     }
 
-    pkg_config::Config::new()
-        .cargo_metadata(true)
-        .probe(format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).as_str())
-        .unwrap()
+    let mut config = pkg_config::Config::new().cargo_metadata(true).to_owned();
+    let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
+
+    config.probe(ruby_name).unwrap_or_else(|_| {
+        config
+            .statik(true)
+            .probe(ruby_name.as_str())
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Could not find ruby-{}.{} or ruby",
+                    rbconfig("MAJOR"),
+                    rbconfig("MINOR")
+                )
+            })
+    })
 }
 
 fn rbconfig(key: &str) -> String {
