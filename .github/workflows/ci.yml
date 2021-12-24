@@ -54,7 +54,4 @@ jobs:
 
       - name: 💨 Smoke test 
         working-directory: examples/simple
-        uses: actions-rs/cargo@v1
-        with:
-          command: make
-          args: verify --verbose
+        runs: cargo make verify --verbose
