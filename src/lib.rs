@@ -6,6 +6,8 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
+pub type Value = VALUE;
+
 #[cfg(test)]
 mod tests {
     use super::*;

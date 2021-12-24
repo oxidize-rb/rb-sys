@@ -19,6 +19,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
     }
 
     pkg_config::Config::new()
+        .cargo_metadata(true)
         .probe(format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).as_str())
         .unwrap()
 }
@@ -35,6 +36,14 @@ fn rbconfig(key: &str) -> String {
     String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
 }
 
+#[cfg(target_os = "macos")]
+fn setup_os_specific_cflags() {
+    println!("cargo:rustc-link-arg=-bundle");
+}
+
+#[cfg(not(target_os = "macos"))]
+fn setup_os_specific_cflags() {}
+
 fn main() {
     let library = setup_ruby_pkgconfig();
 
@@ -44,6 +53,8 @@ fn main() {
 
     // Make sure we have the rpath set so libruby can be foudn when the program runs
     println!("cargo:rustc-link-arg=-Wl,-rpath,{}", rbconfig("libdir"));
+    setup_ruby_pkgconfig();
+    setup_os_specific_cflags();
 
     let mut clang_args = library
         .include_paths
