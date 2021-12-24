@@ -60,11 +60,12 @@ fn main() {
     if !libs.trim().is_empty() {
         clang_args.push(libs);
     }
-    // clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
-    // clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
+
+    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
+    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
 
     // Linking directly with absolute path seems to be the only thing that works
-    clang_args.push(format!("{}/{}", pkgconfig_var("libdir"), pkgconfig_var("LIBRUBY_SO")));
+    // clang_args.push(format!("{}/{}", pkgconfig_var("libdir"), pkgconfig_var("LIBRUBY_SO")));
 
     clang_args
         .iter()
