@@ -61,7 +61,7 @@ fn main() {
         clang_args.push(libs);
     }
 
-    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
+    // clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
     clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
 
     // Linking directly with absolute path seems to be the only thing that works
