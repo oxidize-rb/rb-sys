@@ -14,6 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - name: ⚡ Cache
         uses: actions/cache@v2
         with:
@@ -21,21 +22,39 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
+            examples/simple/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+
       - uses: actions/checkout@v2
+
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
         with:
           command: build
           args: --verbose 
-      - run: cat "$(find . -name bindings.rs | head -n1)"
+
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         with:
           command: test
+
+      - name: Ⓜ️ Install cargo-make
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --debug cargo-make
+
+      - name: 💨 Smoke test 
+        working-directory: examples/simple
+        uses: actions-rs/cargo@v1
+        with:
+          command: make
+          args: verify --verbose
