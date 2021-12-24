@@ -10,23 +10,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        ruby: ['2.6.9', '2.7.5', '3.0.3']
+        ruby: ['2.6', '2.7', '3.0']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - name: Install Ruby with RVM (since setup-ruby has linking problems)
-        run: |
-          gpg --keyserver hkp://pgp.mit.edu --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-          curl -sSL https://get.rvm.io | bash -s stable
-          source $HOME/.rvm/scripts/rvm
-          rvm use ${{ matrix.ruby }} --install --default 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
       - uses: actions/checkout@v2
-      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/lib || true
-      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0 || true
-      - run: find /opt/hostedtoolcache/Ruby/2.6.9/x64/include/ruby-2.6.0/x86_64-linux || true
       - uses: actions-rs/cargo@v1
         with:
           command: build

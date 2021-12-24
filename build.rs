@@ -6,7 +6,7 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
 
-fn setup_ruby_pkgconfig() -> pkg_config::Library {
+fn pkgconfig_var(name: &str) -> String {
     match env::var("PKG_CONFIG_PATH") {
         Ok(val) => env::set_var(
             "PKG_CONFIG_PATH",
@@ -18,9 +18,11 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         ),
     }
 
-    pkg_config::Config::new()
-        .probe(format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).as_str())
-        .unwrap()
+    pkg_config::Config::get_variable(
+        format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).as_str(),
+        name,
+    )
+    .unwrap()
 }
 
 fn rbconfig(key: &str) -> String {
@@ -36,20 +38,36 @@ fn rbconfig(key: &str) -> String {
 }
 
 fn main() {
-    let library = setup_ruby_pkgconfig();
-
-    println!("cargo:rustc-link-search=dylib={}", rbconfig("libdir"));
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    let mut clang_args = library
-        .include_paths
+    let include_paths = &[
+        pkgconfig_var("rubyarchhdrdir").to_string(),
+        pkgconfig_var("rubyhdrdir").to_string(),
+    ];
+
+    let mut clang_args = include_paths
         .iter()
-        .map(|path| format!("-I{}", path.to_str().unwrap()).to_string())
+        .map(|path| format!("-I{}", path))
         .collect::<Vec<_>>();
 
     clang_args.push("-fdeclspec".to_string());
+    pkgconfig_var("DLDFLAGS")
+        .split(' ')
+        .for_each(|flag| clang_args.push(flag.to_string()));
+    let libs = pkgconfig_var("LIBS").to_string();
+
+    if !libs.trim().is_empty() {
+        clang_args.push(libs);
+    }
+    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_SO_NAME")));
+    clang_args.push(format!("-l{}", pkgconfig_var("RUBY_BASE_NAME")));
+    // clang_args.push(format!("{}/{}", pkgconfig_var("libdir"), pkgconfig_var("LIBRUBY_SO")));
+
+    clang_args
+        .iter()
+        .for_each(|arg| println!("cargo:rustc-link-arg={}", arg));
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
