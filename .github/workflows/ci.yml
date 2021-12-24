@@ -54,4 +54,4 @@ jobs:
 
       - name: 💨 Smoke test 
         working-directory: examples/simple
-        runs: cargo make verify --verbose
+        run: cargo make verify --verbose
