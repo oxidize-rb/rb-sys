@@ -7,18 +7,18 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn setup_ruby_pkgconfig() -> pkg_config::Library {
-    match env::var("PKG_CONFIG_PATH") {
+    match env::var("PKG_CONFIG_LIBDIR") {
         Ok(val) => env::set_var(
-            "PKG_CONFIG_PATH",
+            "PKG_CONFIG_LIBDIR",
             &format!("{}/pkgconfig:{}", rbconfig("libdir"), val),
         ),
         Err(_) => env::set_var(
-            "PKG_CONFIG_PATH",
+            "PKG_CONFIG_LIBDIR",
             &format!("{}/pkgconfig", rbconfig("libdir")),
         ),
     }
 
-    let mut config = pkg_config::Config::new().cargo_metadata(true).arg("--with-path").arg(format!("{}/pkgconfig", rbconfig("libdir"))).to_owned();
+    let mut config = pkg_config::Config::new().cargo_metadata(true).to_owned();
     let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
 
     config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
