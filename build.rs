@@ -18,7 +18,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         ),
     }
 
-    let mut config = pkg_config::Config::new().cargo_metadata(true).to_owned();
+    let mut config = pkg_config::Config::new().cargo_metadata(true).arg("--with-path").arg(format!("{}/pkgconfig", rbconfig("libdir"))).to_owned();
     let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
 
     config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
