@@ -38,7 +38,9 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
 
       - name: 🥊 Fix pkg-config for Windows 
-        run: pacman -S mingw-w64-x86_64-pkg-config
+        run: |
+          pacman -Rs mingw-w64-x86_64-pkgconf
+          pacman -S mingw-w64-x86_64-pkg-config
         if: ${{ matrix.os == 'windows-latest' }}
 
       - name: 🪲 Debug Windows
