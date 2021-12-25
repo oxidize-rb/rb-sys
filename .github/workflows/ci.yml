@@ -40,7 +40,7 @@ jobs:
       - name: 🪲 Debug Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          which
+          which ruby
 
       - uses: actions/checkout@v2
 
