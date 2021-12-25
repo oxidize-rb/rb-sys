@@ -25,6 +25,10 @@ jobs:
             examples/simple/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: 🪟 Setup msys2
+        uses: msys2/setup-msys2@v2
+        if: ${{ matrix.os == 'windows-latest' }}
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -32,10 +36,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-
-      - name: 🪟 Setup msys2
-        uses: msys2/setup-msys2@v2
-        if: ${{ matrix.os == 'windows-latest' }}
 
       # - name: 🥊 Fix pkg-config for Windows 
       #   run: |
