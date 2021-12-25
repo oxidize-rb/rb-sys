@@ -25,13 +25,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         config
             .statik(true)
             .probe(ruby_name.as_str())
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Could not find ruby-{}.{} or ruby",
-                    rbconfig("MAJOR"),
-                    rbconfig("MINOR")
-                )
-            })
+            .unwrap()
     })
 }
 
