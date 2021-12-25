@@ -11,8 +11,9 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
     config
         .arg("--with-path")
         .arg(format!("{}/pkgconfig", rbconfig("libdir")))
-        .arg("--define-prefix")
+        .arg("--prefix-variable")
         .arg(rbconfig("libdir").replace("/lib", ""))
+        .arg("--define-prefix")
 }
 
 #[cfg(not(target_os = "windows"))]
