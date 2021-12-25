@@ -37,16 +37,16 @@ jobs:
         uses: msys2/setup-msys2@v2
         if: ${{ matrix.os == 'windows-latest' }}
 
+      - name: 🥊 Fix pkg-config for Windows 
+        run: pacman -S mingw-w64-x86_64-pkg-config
+        if: ${{ matrix.os == 'windows-latest' }}
+
       - name: 🪲 Debug Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          which ruby
+          which pkg-config
 
       - uses: actions/checkout@v2
-
-      - name: Windows PATH
-        run: echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:C:\hostedtoolcache\windows\Ruby\${{ matrix.ruby }}\x64\lib\pkgconfig" >> $GITHUB_ENV
-        if: ${{ matrix.os == 'windows-latest' }}
 
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
