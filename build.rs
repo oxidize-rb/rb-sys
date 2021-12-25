@@ -6,19 +6,30 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::process::Command;
 
+#[cfg(target_os = "windows")]
+fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
+    config.arg("--with-path").arg(format!("{}/pkgconfig", rbconfig("libdir")))
+}
+
+#[cfg(not(target_os = "windows"))]
+fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
+    config
+}
+
 fn setup_ruby_pkgconfig() -> pkg_config::Library {
-    match env::var("PKG_CONFIG_LIBDIR") {
+    match env::var("PKG_CONFIG_PATH") {
         Ok(val) => env::set_var(
-            "PKG_CONFIG_LIBDIR",
+            "PKG_CONFIG_PATH",
             &format!("{}/pkgconfig:{}", rbconfig("libdir"), val),
         ),
         Err(_) => env::set_var(
-            "PKG_CONFIG_LIBDIR",
+            "PKG_CONFIG_PATH",
             &format!("{}/pkgconfig", rbconfig("libdir")),
         ),
     }
 
-    let mut config = pkg_config::Config::new().cargo_metadata(true).to_owned();
+    let mut config = adjust_pkgconfig(pkg_config::Config::new().cargo_metadata(true)).to_owned();
+
     let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
 
     config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
