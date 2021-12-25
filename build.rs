@@ -10,7 +10,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
     match env::var("PKG_CONFIG_PATH") {
         Ok(val) => env::set_var(
             "PKG_CONFIG_PATH",
-            &format!("{}/pkgconfig:{}", val, rbconfig("libdir")),
+            &format!("{}/pkgconfig:{}", rbconfig("libdir"), val),
         ),
         Err(_) => env::set_var(
             "PKG_CONFIG_PATH",
