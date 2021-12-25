@@ -8,7 +8,7 @@ use std::process::Command;
 
 #[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    println!("cargo:rustc-link-search={}", rbconfig("bindir"));
+    println!("cargo:rustc-link-search={}", rbconfig("bindir").replace("/", "\\"));
 
     config
         .arg("--with-path")
