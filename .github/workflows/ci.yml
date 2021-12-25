@@ -39,7 +39,7 @@ jobs:
 
       - name: 🥊 Fix pkg-config for Windows 
         run: |
-          pacman -S mingw-w64-x86_64-pkg-config --overwrite '*'
+          pacman -Sf mingw-w64-x86_64-pkg-config
         if: ${{ matrix.os == 'windows-latest' }}
 
       - name: 🪲 Debug Windows
