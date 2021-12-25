@@ -11,6 +11,7 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
     println!("cargo:rustc-link-search={}", rbconfig("bindir").replace("/", "\\"));
 
     config
+        .statik(true)
         .arg("--with-path")
         .arg(format!("{}/pkgconfig", rbconfig("libdir")))
         .arg("--prefix-variable")
