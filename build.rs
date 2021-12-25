@@ -8,7 +8,11 @@ use std::process::Command;
 
 #[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    config.arg("--with-path").arg(format!("{}/pkgconfig", rbconfig("libdir")))
+    config
+        .arg("--with-path")
+        .arg(format!("{}/pkgconfig", rbconfig("libdir")))
+        .arg("--define-prefix")
+        .arg(rbconfig("libdir").replace("/lib", ""))
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -32,12 +36,9 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 
     let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
 
-    config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
-        config
-            .statik(true)
-            .probe(ruby_name.as_str())
-            .unwrap()
-    })
+    config
+        .probe(ruby_name.as_str())
+        .unwrap_or_else(|_| config.statik(true).probe(ruby_name.as_str()).unwrap())
 }
 
 fn rbconfig(key: &str) -> String {
