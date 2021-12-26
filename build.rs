@@ -36,13 +36,9 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
     )));
     println!("cargo:rustc-link-search={}", mingw_libs.to_string_lossy());
 
-    let deps_dir = Path::new("target")
-        .join(env::var_os("PROFILE").unwrap())
-        .join("deps");
     let libruby_so = rbconfig("LIBRUBY_SO");
     let ruby_dll = Path::new(&libruby_so);
     let name = ruby_dll.file_stem().unwrap();
-    let target = deps_dir.join(format!("{}.lib", name.to_string_lossy()));
 
     Command::new("build/windows/vcbuild.cmd")
         .arg("-arch=x64")
@@ -67,7 +63,7 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
         .arg(format!("/name:{}", name.to_string_lossy()))
         .arg(format!("/libpath:{}", rbconfig("bindir")))
         .arg("/machine:x64")
-        .arg(format!("/out:{}", target.to_string_lossy()))
+        .arg(format!("/out:{}", rbconfig("bindir")))
         .output()
         .unwrap();
 
