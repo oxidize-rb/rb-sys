@@ -63,7 +63,7 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
         .arg(format!("/name:{}", name.to_string_lossy()))
         .arg(format!("/libpath:{}", rbconfig("bindir")))
         .arg("/machine:x64")
-        .arg(format!("/out:{}", Path::new(&rbconfig("bindir")).join(name.to_string_lossy())))
+        .arg(format!("/out:{}", Path::new(&rbconfig("bindir")).join(name.to_string_lossy()).to_string_lossy()))
         .output()
         .unwrap();
 
