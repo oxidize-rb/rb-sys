@@ -8,13 +8,13 @@ use std::process::Command;
 
 #[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    // println!(
-    //     "cargo:rustc-link-search={}",
-    //     rbconfig("bindir").replace("/", "\\")
-    // );
+    println!(
+        "cargo:rustc-link-search={}",
+        rbconfig("bindir").replace("/", "\\")
+    );
 
     config
-        .statik(true)
+        .statik(false)
         .arg("--with-path")
         .arg(format!("{}/pkgconfig", rbconfig("libdir")))
         .arg("--prefix-variable")
