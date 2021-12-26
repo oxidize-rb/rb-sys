@@ -5,6 +5,19 @@ use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::fs;
+
+#[cfg(target_os = "windows")]
+fn delete<'a>(s: &'a str, from: &'a str) -> String {
+    let mut result = String::new();
+    let mut last_end = 0;
+    for (start, part) in s.match_indices(from) {
+        result.push_str(unsafe { s.get_unchecked(last_end..start) });
+        last_end = start + part.len();
+    }
+    result.push_str(unsafe { s.get_unchecked(last_end..s.len()) });
+    result
+}
 
 #[cfg(target_os = "windows")]
 fn purge_refptr_text() {
