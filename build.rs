@@ -3,15 +3,63 @@ extern crate pkg_config;
 
 use std::env;
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[cfg(target_os = "windows")]
+fn purge_refptr_text() {
+    let buffer = fs::read_to_string("exports.def").expect("Failed to read 'exports.def'");
+    fs::write("exports.def", delete(&buffer, ".refptr."))
+        .expect("Failed to write update to 'exports.def'");
+}
+
+#[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    println!(
-        "cargo:rustc-link-search={}",
-        rbconfig("bindir").replace("/", "\\")
-    );
+    // A lot taken from https://github.com/danielpclark/rutie/blob/cba311cbb5873ef42ad627081f2dec04feab9a51/build.rs#L122
+    println!("cargo:rustc-link-search={}", rbconfig("bindir"));
+    let mingw_libs: OsString = env::var_os("MINGW_LIBS").unwrap_or(OsString::from(format!(
+        "{}/ruby_builtin_dlls",
+        rbconfig("bindir")
+    )));
+    println!("cargo:rustc-link-search={}", mingw_libs.to_string_lossy());
+
+    let deps_dir = Path::new("target")
+        .join(env::var_os("PROFILE").unwrap())
+        .join("deps");
+    let libruby_so = rbconfig("LIBRUBY_SO");
+    let ruby_dll = Path::new(&libruby_so);
+    let name = ruby_dll.file_stem().unwrap();
+    let target = deps_dir.join(format!("{}.lib", name.to_string_lossy()));
+
+    Command::new("build/windows/vcbuild.cmd")
+        .arg("-arch=x64")
+        .arg("-host_arch=x64")
+        .arg("&&")
+        .arg("dumpbin")
+        .arg("/exports")
+        .arg("/out:exports.txt")
+        .arg(Path::new(&rbconfig("bindir")).join(&libruby_so))
+        .output()
+        .unwrap();
+
+    Command::new("build/windows/exports.bat").output().unwrap();
+
+    purge_refptr_text();
+    Command::new("build/windows/vcbuild.cmd")
+        .arg("-arch=x64")
+        .arg("-host_arch=x64")
+        .arg("&&")
+        .arg("lib")
+        .arg("/def:exports.def")
+        .arg(format!("/name:{}", name.to_string_lossy()))
+        .arg(format!("/libpath:{}", rbconfig("bindir")))
+        .arg("/machine:x64")
+        .arg(format!("/out:{}", target.to_string_lossy()))
+        .output()
+        .unwrap();
+
+    fs::remove_file("exports.def").expect("couldn't remove exports.def");
+    fs::remove_file("exports.txt").expect("couldn't remove exports.txt");
 
     config
         .statik(false)
