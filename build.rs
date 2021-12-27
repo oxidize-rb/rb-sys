@@ -34,7 +34,7 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
         "{}/ruby_builtin_dlls",
         rbconfig("bindir")
     )));
-    println!("cargo:rustc-link-search={}", mingw_libs.to_string_lossy());
+    println!("cargo:rustc-link-search={}", mingw_libs.replace("/", "\\").to_string_lossy());
 
     let libruby_so = rbconfig("LIBRUBY_SO");
     let ruby_dll = Path::new(&libruby_so);
@@ -71,7 +71,6 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
     fs::remove_file("exports.txt").expect("couldn't remove exports.txt");
 
     config
-        .statik(false)
         .arg("--with-path")
         .arg(format!("{}/pkgconfig", rbconfig("libdir")))
         .arg("--prefix-variable")
