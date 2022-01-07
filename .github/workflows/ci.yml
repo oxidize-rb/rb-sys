@@ -1,71 +1,62 @@
 ---
 on: [push]
-
 name: CI
-
+anchors:
+  setup_cache: &setup_cache
+    name: ⚡ Cache
+    uses: actions/cache@v2
+    with:
+      path: |
+        ~/.cargo/registry
+        ~/.cargo/git
+        target
+        examples/simple/target
+      key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+  setup_cargo: &setup_cargo
+    uses: actions-rs/toolchain@v1
+    with:
+      toolchain: stable
 jobs:
-  build_and_test:
-    name: Build and test 
+  lint:
+    name: 💅 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - *setup_cache
+      - *setup_cargo
+      - uses: actions/checkout@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+
+  run_tests:
+    name: 🧪 Run tests (Ruby ${{ matrix.ruby }} on ${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        ruby: ['2.6.9', '2.7.5', '3.0.3']
+        ruby: ['2.6', '2.7', '3.0', '3.1']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-
-      - name: ⚡ Cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            examples/simple/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: 🪟 Setup msys2
-        uses: msys2/setup-msys2@v2
-        if: ${{ matrix.os == 'windows-latest' }}
-
+      - *setup_cache
+      - *setup_cargo
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      # - name: 🥊 Fix pkg-config for Windows 
-      #   run: |
-      #     pacman -S --overwrite '*' mingw-w64-x86_64-pkg-config
-      #   if: ${{ matrix.os == 'windows-latest' }}
-
-      - name: 🪲 Debug Windows
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          which pkg-config
-
       - uses: actions/checkout@v2
-
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
         with:
           command: build
-          args: --verbose 
-
+          args: --locked --release --verbose 
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         with:
           command: test
-
       - name: Ⓜ️ Install cargo-make
         uses: actions-rs/cargo@v1
         with:
           command: install
           args: --debug cargo-make
-
       - name: 💨 Smoke test 
         working-directory: examples/simple
         run: cargo make verify --verbose
