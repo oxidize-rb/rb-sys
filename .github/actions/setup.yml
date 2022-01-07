@@ -1,0 +1,37 @@
+---
+name: 🍽 Setup boilerplate
+inputs:
+  os: 
+    required: true
+    description: Operating system
+  ruby_version: 
+    required: true
+    description: Ruby version
+  rust_toolchain: 
+    required: true
+    description: Rust toolchain
+outputs: {}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ inputs.ruby_version }}
+    - name: ⚡ Cache
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+          examples/simple/target
+        key: ${{ inputs.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ inputs.rust_toolchain }}
+    - name: Ⓜ️ Install cargo-make
+      uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: --debug cargo-make

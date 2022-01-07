@@ -1,48 +1,40 @@
 ---
 on: [push]
 name: CI
-anchors:
-  setup_cache: &setup_cache
-    name: ⚡ Cache
-    uses: actions/cache@v2
-    with:
-      path: |
-        ~/.cargo/registry
-        ~/.cargo/git
-        target
-        examples/simple/target
-      key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-  setup_cargo: &setup_cargo
-    uses: actions-rs/toolchain@v1
-    with:
-      toolchain: stable
 jobs:
   lint:
     name: 💅 Lint
     runs-on: ubuntu-latest
     steps:
-      - *setup_cache
-      - *setup_cargo
-      - uses: actions/checkout@v2
+      - uses: .github/actions/setup.yml
+        with:
+          rust_toolchain: stable
+          ruby_version: '3.0'
+          os: ubuntu-latest
       - uses: actions-rs/cargo@v1
+        name: ✂️ Run clippy
         with:
           command: clippy
 
+      - uses: actions-rs/cargo@v1
+        name: 📃 Run cargo fmt
+        with:
+          command: fmt
   run_tests:
-    name: 🧪 Run tests (Ruby ${{ matrix.ruby }} on ${{ matrix.os }})
+    name: Ruby ${{ matrix.ruby }} | Rust ${{ matrix.rust_toolchain}} | OS ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        rust_toolchain: [stable]
         os: [ubuntu-latest, macos-latest]
-        ruby: ['2.6', '2.7', '3.0', '3.1']
+        ruby_version: ['2.6', '2.7', '3.0', '3.1']
     runs-on: ${{ matrix.os }}
     steps:
-      - *setup_cache
-      - *setup_cargo
-      - uses: ruby/setup-ruby@v1
+      - uses: .github/actions/setup.yml
         with:
-          ruby-version: ${{ matrix.ruby }}
-      - uses: actions/checkout@v2
+          rust_toolchain: ${{ matrix.rust_toolchain }}
+          ruby_version: ${{ matrix.ruby_version }}
+          os: ${{ matrix.os }}
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
         with:
@@ -52,11 +44,6 @@ jobs:
         name: 🧪 Cargo test
         with:
           command: test
-      - name: Ⓜ️ Install cargo-make
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: --debug cargo-make
       - name: 💨 Smoke test 
         working-directory: examples/simple
         run: cargo make verify --verbose
