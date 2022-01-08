@@ -6,7 +6,7 @@ jobs:
     name: 💅 Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: .github/actions/setup.yml
+      - uses: ./.github/actions/setup.yml
         with:
           rust_toolchain: stable
           ruby_version: '3.0'
@@ -15,11 +15,11 @@ jobs:
         name: ✂️ Run clippy
         with:
           command: clippy
-
       - uses: actions-rs/cargo@v1
         name: 📃 Run cargo fmt
         with:
           command: fmt
+
   run_tests:
     name: Ruby ${{ matrix.ruby }} | Rust ${{ matrix.rust_toolchain}} | OS ${{ matrix.os }}
     strategy:
@@ -30,7 +30,7 @@ jobs:
         ruby_version: ['2.6', '2.7', '3.0', '3.1']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: .github/actions/setup.yml
+      - uses: ./.github/actions/setup.yml
         with:
           rust_toolchain: ${{ matrix.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
