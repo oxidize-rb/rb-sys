@@ -1,13 +1,15 @@
 ---
-on: [push]
 name: CI
+
+on: [push]
+
 jobs:
   lint:
     name: 💅 Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/setup.yml
+      - uses: ./.github/actions/setup
         with:
           rust_toolchain: stable
           ruby_version: '3.0'
@@ -21,8 +23,8 @@ jobs:
         with:
           command: fmt
 
-  run_tests:
-    name: Ruby ${{ matrix.ruby }} | Rust ${{ matrix.rust_toolchain}} | OS ${{ matrix.os }}
+  build_and_test:
+    name: 🧪 Build and test
     strategy:
       fail-fast: false
       matrix:
@@ -32,7 +34,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/setup.yml
+      - uses: ./.github/actions/setup
         with:
           rust_toolchain: ${{ matrix.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
