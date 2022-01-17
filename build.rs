@@ -74,28 +74,33 @@ fn is_static() -> bool {
     }
 }
 
-fn main() {
-    let library = setup_ruby_pkgconfig();
+fn should_link_ruby() -> bool {
+    match env::var("RUBY_LINK") {
+        Ok(val) => val == "true" || val == "1",
+        _ => true,
+    }
+}
 
+fn main() {
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    setup_ruby_pkgconfig();
+    if should_link_ruby() {
+        let library = setup_ruby_pkgconfig();
 
-    if cfg!(unix) {
-        library.link_paths.iter().for_each(|path| {
-            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
-        });
+        if cfg!(unix) {
+            library.link_paths.iter().for_each(|path| {
+                println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
+            });
+        }
     }
 
-    let mut clang_args = library
-        .include_paths
-        .iter()
-        .map(|path| format!("-I{}", path.to_str().unwrap()).to_string())
-        .collect::<Vec<_>>();
-
-    clang_args.push("-fdeclspec".to_string());
+    let clang_args = vec![
+        format!("-I{}", rbconfig("rubyhdrdir")),
+        format!("-I{}", rbconfig("rubyarchhdrdir")),
+        "-fdeclspec".to_string(),
+    ];
 
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")

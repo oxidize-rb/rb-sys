@@ -26,12 +26,12 @@ jobs:
   build_and_test:
     name: 🧪 Build and test
     env:
-      RUBY_STATIC: "${{ matrix.os == 'windows-latest' }}"
+      RUBY_LINK: "true"
     strategy:
       fail-fast: false
       matrix:
         rust_toolchain: [stable]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         ruby_version: ['2.4', '2.5', '2.6', '2.7', '3.0', '3.1']
     runs-on: ${{ matrix.os }}
     steps:
@@ -53,4 +53,3 @@ jobs:
       - name: 💨 Smoke test 
         working-directory: examples/simple
         run: cargo make verify --verbose
-        if: ${{ matrix.os != 'windows-latest' }}
