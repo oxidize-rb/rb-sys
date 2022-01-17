@@ -37,6 +37,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 
     let mut config = adjust_pkgconfig(pkg_config::Config::new().cargo_metadata(true))
         .exactly_version(ruby_version.as_str())
+        .statik(is_static())
         .to_owned();
 
     let ruby_name = Path::new(rbconfig("ruby_pc").as_str())
@@ -66,6 +67,13 @@ fn rbconfig(key: &str) -> String {
     String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
 }
 
+fn is_static() -> bool {
+    match env::var("RUBY_STATIC") {
+        Ok(val) => val == "true" || val == "1",
+        _ => false,
+    }
+}
+
 fn main() {
     let library = setup_ruby_pkgconfig();
 
@@ -74,6 +82,12 @@ fn main() {
     println!("cargo:rerun-if-changed=wrapper.h");
 
     setup_ruby_pkgconfig();
+
+    if cfg!(unix) {
+        library.link_paths.iter().for_each(|path| {
+            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
+        });
+    }
 
     let mut clang_args = library
         .include_paths

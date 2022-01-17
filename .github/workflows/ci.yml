@@ -25,6 +25,8 @@ jobs:
 
   build_and_test:
     name: 🧪 Build and test
+    env:
+      RUSTFLAGS: "-C linker=cc"
     strategy:
       fail-fast: false
       matrix:
@@ -51,5 +53,4 @@ jobs:
       - name: 💨 Smoke test 
         working-directory: examples/simple
         run: cargo make verify --verbose
-        exclude:
-          - os: windows-latest
+        if: ${{ matrix.os != 'windows-latest' }}

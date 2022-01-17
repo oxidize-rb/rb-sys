@@ -13,6 +13,3 @@ doctest = false
 [build-dependencies]
 bindgen = { git = "https://github.com/daviddrysdale/rust-bindgen", branch = "allowlist-file" }
 pkg-config = "0.3.24"
-
-[profile.test]
-rpath = true
