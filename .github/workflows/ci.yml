@@ -26,7 +26,7 @@ jobs:
   build_and_test:
     name: 🧪 Build and test
     env:
-      RUSTFLAGS: "-C linker=cc"
+      RUSTFLAGS: "-C linker=gcc"
     strategy:
       fail-fast: false
       matrix:
