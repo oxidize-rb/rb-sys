@@ -41,6 +41,9 @@ jobs:
           rust_toolchain: ${{ matrix.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.os }}
+      - name: ⏳ Install libclang
+        run: pacman -S mingw-w64-x86_64-clang
+        if: ${{ matrix.os == 'windows-latest' }}
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
         with:
