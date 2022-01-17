@@ -3,7 +3,7 @@ extern crate pkg_config;
 
 use std::env;
 use std::ffi::OsString;
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 #[cfg(target_os = "windows")]
@@ -33,13 +33,25 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         ),
     }
 
-    let mut config = adjust_pkgconfig(pkg_config::Config::new().cargo_metadata(true)).to_owned();
+    let ruby_version = rbconfig("ruby_version");
 
-    let ruby_name = format!("ruby-{}.{}", rbconfig("MAJOR"), rbconfig("MINOR")).to_string();
+    let mut config = adjust_pkgconfig(pkg_config::Config::new().cargo_metadata(true))
+        .exactly_version(ruby_version.as_str())
+        .to_owned();
 
-    config
-        .probe(ruby_name.as_str())
-        .unwrap_or_else(|_| config.statik(true).probe(ruby_name.as_str()).unwrap())
+    let ruby_name = Path::new(rbconfig("ruby_pc").as_str())
+        .file_stem()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_owned();
+
+    config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
+        config
+            .statik(true)
+            .probe(ruby_name.as_str())
+            .expect(format!("{} not found, needed for pkg-config", ruby_name).as_str())
+    })
 }
 
 fn rbconfig(key: &str) -> String {
