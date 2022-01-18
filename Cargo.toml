@@ -3,6 +3,8 @@ name = "rb-sys"
 version = "0.2.0"
 edition = "2021"
 links = "ruby"
+readme = "readme.md"
+categories = ["cryptography", "external-ffi-bindings"]
 
 [dependencies]
 libc = "0.2.112"
@@ -11,5 +13,5 @@ libc = "0.2.112"
 doctest = false
 
 [build-dependencies]
-bindgen = { git = "https://github.com/daviddrysdale/rust-bindgen", branch = "allowlist-file", version = "0.59.2"}
+bindgen = { git = "https://github.com/daviddrysdale/rust-bindgen", branch = "allowlist-file" }
 pkg-config = "0.3.24"
