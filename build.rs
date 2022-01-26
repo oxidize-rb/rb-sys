@@ -6,6 +6,8 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+// Setting up pkgconfig on windows takes a little more work. We need to setup
+// the pkgconfig path in a different way and define the prefix variable.
 #[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
     config
@@ -59,6 +61,8 @@ fn rbconfig(key: &str) -> String {
     let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
 
     let config = Command::new(ruby)
+        .arg("--disable-gems")
+        .arg("-rrbconfig")
         .arg("-e")
         .arg(format!("print RbConfig::CONFIG['{}']", key))
         .output()
@@ -68,16 +72,11 @@ fn rbconfig(key: &str) -> String {
 }
 
 fn is_static() -> bool {
+    println!("cargo:rerun-if-env-changed=RUBY_STATIC");
+
     match env::var("RUBY_STATIC") {
         Ok(val) => val == "true" || val == "1",
-        _ => false,
-    }
-}
-
-fn should_link_ruby() -> bool {
-    match env::var("RUBY_LINK") {
-        Ok(val) => val == "true" || val == "1",
-        _ => true,
+        _ => cfg!(feature = "ruby-static"),
     }
 }
 
@@ -86,13 +85,18 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
 
-    if should_link_ruby() {
+    if cfg!(feature = "link-ruby") {
         let library = setup_ruby_pkgconfig();
 
+        // Setup rpath on unix to hardcode the ruby library path
         if cfg!(unix) {
             library.link_paths.iter().for_each(|path| {
                 println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
             });
+        }
+    } else {
+        if cfg!(unix) {
+            println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
         }
     }
 

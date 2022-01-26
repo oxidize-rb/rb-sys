@@ -5,7 +5,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
 
 #[no_mangle]
-unsafe extern "C" fn pub_reverse(_klass: Value, mut input: Value) -> Value {
+unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
     let ruby_string = CStr::from_ptr(rb_string_value_cstr(&mut input))
         .to_str()
         .unwrap();
@@ -25,8 +25,8 @@ pub extern "C" fn Init_rust_ruby_example() {
     unsafe {
         let klass = rb_define_module(name.as_ptr());
         let callback = std::mem::transmute::<
-            unsafe extern "C" fn(Value, Value) -> Value,
-            unsafe extern "C" fn() -> Value,
+            unsafe extern "C" fn(RubyValue, RubyValue) -> RubyValue,
+            unsafe extern "C" fn() -> RubyValue,
         >(pub_reverse);
         rb_define_module_function(klass, function_name.as_ptr(), Some(callback), 1)
     }

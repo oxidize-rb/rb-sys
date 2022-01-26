@@ -11,6 +11,24 @@ Add the following to your `Cargo.toml`:
 rb-sys = { git = "https://github.com/ianks/rb-sys", branch = "main" }
 ```
 
+### Linking libruby
+
+If you need to link libruby (i.e. you are initializing a Ruby VM in your Rust code), use can enable the `link-ruby` feature:
+
+```rust
+rb-sys = { git = "https://github.com/ianks/rb-sys", branch = "main", features = ["link-ruby"] }
+```
+
+#### Static
+
+You can also force the `link-ruby` feature to be static:
+
+```rust
+rb-sys = { git = "https://github.com/ianks/rb-sys", branch = "main", features = ["link-ruby", "ruby-static"] }
+```
+
+Alternatively, you can set the `RUBY_STATIC=true` environment variable.
+
 ## License
 
 Licensed under either of

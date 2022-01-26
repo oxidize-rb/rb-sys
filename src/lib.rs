@@ -6,9 +6,10 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-pub type Value = VALUE;
+pub type RubyValue = VALUE;
 
 #[cfg(test)]
+#[cfg(link_ruby)]
 mod tests {
     use super::*;
 

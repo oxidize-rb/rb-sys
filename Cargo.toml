@@ -1,10 +1,15 @@
 [package]
 name = "rb-sys"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 links = "ruby"
 readme = "readme.md"
-categories = ["cryptography", "external-ffi-bindings"]
+categories = ["ruby", "external-ffi-bindings"]
+
+[features]
+default = []
+ruby-static = []
+link-ruby = []
 
 [dependencies]
 libc = "0.2.112"
