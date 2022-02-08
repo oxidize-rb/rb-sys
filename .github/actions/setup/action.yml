@@ -37,6 +37,7 @@ runs:
         args: --debug cargo-make
     - name: Fixup libclang install for Windows
       if: ${{ inputs.os == 'windows-latest' }}
+      shell: bash
       run: |
         pacman --remove --cascade mingw-w64-x86_64-clang
         pacman --sync --noconfirm --needed $ENV:MINGW_PACKAGE_PREFIX-clang
