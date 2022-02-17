@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 links = "ruby"
 readme = "readme.md"
@@ -18,5 +18,5 @@ libc = "0.2.112"
 doctest = false
 
 [build-dependencies]
-bindgen = { git = "https://github.com/daviddrysdale/rust-bindgen", branch = "allowlist-file" }
+bindgen = { git = "https://github.com/ianks/rust-bindgen", branch = "allowlist-file" }
 pkg-config = "0.3.24"
