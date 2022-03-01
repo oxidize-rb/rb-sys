@@ -30,17 +30,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust_toolchain: [stable]
-        os: [ubuntu-latest, macos-latest, windows-latest]
         ruby_version: ['2.4', '2.5', '2.6', '2.7', '3.0', '3.1', 'head']
-    runs-on: ${{ matrix.os }}
+        sys:
+          - os: ubuntu-latest
+            rust_toolchain: stable
+          - os: macos-latest
+            rust_toolchain: stable
+          - os: windows-2019
+            rust_toolchain: stable-x86_64-pc-windows-gnu
+    runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup
         with:
-          rust_toolchain: ${{ matrix.rust_toolchain }}
+          rust_toolchain: ${{ matrix.sys.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
-          os: ${{ matrix.os }}
+          os: ${{ matrix.sys.os }}
       - uses: actions-rs/cargo@v1
         name: 🛠 Cargo build
         with:
@@ -48,10 +53,10 @@ jobs:
           args: --locked --release --verbose
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
-        if: ${{ matrix.os != 'windows-latest' }}
+        if: ${{ matrix.sys.os != 'windows-latest' }}
         with:
           command: test
       - name: 💨 Smoke test
-        if: ${{ matrix.os != 'windows-latest' }}
+        if: ${{ matrix.sys.os != 'windows-latest' }}
         working-directory: examples/simple
         run: cargo make verify --verbose
