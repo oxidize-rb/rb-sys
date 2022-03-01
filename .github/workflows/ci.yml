@@ -32,7 +32,7 @@ jobs:
       matrix:
         rust_toolchain: [stable]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        ruby_version: ['2.4', '2.5', '2.6', '2.7', '3.0', '3.1']
+        ruby_version: ['2.4', '2.5', '2.6', '2.7', '3.0', '3.1', 'head']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -45,13 +45,13 @@ jobs:
         name: 🛠 Cargo build
         with:
           command: build
-          args: --locked --release --verbose 
+          args: --locked --release --verbose
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         if: ${{ matrix.os != 'windows-latest' }}
         with:
           command: test
-      - name: 💨 Smoke test 
+      - name: 💨 Smoke test
         if: ${{ matrix.os != 'windows-latest' }}
         working-directory: examples/simple
         run: cargo make verify --verbose
