@@ -18,5 +18,5 @@ libc = "0.2.112"
 doctest = false
 
 [build-dependencies]
-bindgen = { git = "https://github.com/ianks/rust-bindgen", branch = "allowlist-file" }
+bindgen = { git = "https://github.com/rust-lang/rust-bindgen", rev = "f34e4103f304500c96d332f5cecc9067c980d0f9" }
 pkg-config = "0.3.24"

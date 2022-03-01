@@ -13,7 +13,7 @@ function strip_lib_prefix
 end
 
 for lib in ${libs}
-  if ends_with ${lib} .dylib 
+  if ends_with ${lib} .dylib
     strip_lib_prefix ${lib}
   end
 
