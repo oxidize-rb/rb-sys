@@ -53,10 +53,9 @@ jobs:
           args: --locked --release --verbose
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
-        if: ${{ matrix.sys.os != 'windows-latest' }}
         with:
           command: test
       - name: 💨 Smoke test
-        if: ${{ matrix.sys.os != 'windows-latest' }}
+        if: ${{ matrix.sys.os != 'windows-2019' }}
         working-directory: examples/simple
         run: cargo make verify --verbose
