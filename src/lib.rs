@@ -10,8 +10,8 @@ pub type RubyValue = VALUE;
 
 #[cfg(ruby_dln_check_abi)]
 #[no_mangle]
-pub extern "C" fn ruby_abi_version() -> u32 {
-    RUBY_ABI_VERSION
+pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
+    RUBY_ABI_VERSION.into()
 }
 
 #[cfg(test)]
