@@ -10,7 +10,7 @@ pub type RubyValue = VALUE;
 
 #[cfg(ruby_dln_check_abi)]
 #[macro_export]
-macro_rules! rb_module_magic {
+macro_rules! ruby_extension {
     () => {
         #[no_mangle]
         #[allow(unused)]
@@ -24,7 +24,7 @@ macro_rules! rb_module_magic {
 
 #[cfg(not(ruby_dln_check_abi))]
 #[macro_export]
-macro_rules! rb_module_magic {
+macro_rules! ruby_extension {
     () => {};
 }
 
@@ -56,7 +56,7 @@ mod tests {
 mod tests {
     use super::*;
 
-    rb_module_magic!();
+    ruby_extension!();
 
     #[cfg(unix)]
     #[cfg(ruby_major = "3")]
