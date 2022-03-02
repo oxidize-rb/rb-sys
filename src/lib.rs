@@ -8,6 +8,12 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub type RubyValue = VALUE;
 
+#[cfg(ruby_dln_check_abi)]
+#[no_mangle]
+pub extern "C" fn ruby_abi_version() -> u32 {
+    RUBY_ABI_VERSION
+}
+
 #[cfg(test)]
 #[cfg(link_ruby)]
 mod tests {
@@ -29,5 +35,18 @@ mod tests {
 
             assert_eq!(result_str, "hello world");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(unix)]
+    #[cfg(ruby_major = "3")]
+    #[cfg(ruby_minor = "2")]
+    #[test]
+    fn test_ruby_abi_version() {
+        assert!(ruby_abi_version() == 0)
     }
 }

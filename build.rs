@@ -23,6 +23,18 @@ fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config 
     config
 }
 
+fn export_cargo_cfg() {
+    rustc_cfg("ruby_major", "MAJOR");
+    rustc_cfg("ruby_minor", "MINOR");
+    rustc_cfg("ruby_teeny", "TEENY");
+    rustc_cfg("ruby_patchlevel", "PATCHLEVEL");
+    rustc_cfg("ruby_api_version", "RUBY_API_VERSION");
+
+    if has_ruby_dln_check_abi() {
+        println!("cargo:rustc-cfg=ruby_dln_check_abi");
+    }
+}
+
 fn setup_ruby_pkgconfig() -> pkg_config::Library {
     match env::var("PKG_CONFIG_PATH") {
         Ok(val) => env::set_var(
@@ -113,6 +125,7 @@ fn main() {
         .allowlist_file(".*ruby.*")
         .rustified_enum("*")
         .new_type_alias_deref("VALUE")
+        .blocklist_item("ruby_abi_version")
         .default_alias_style(bindgen::AliasVariation::NewType)
         .derive_eq(true)
         .derive_debug(true)
@@ -126,4 +139,17 @@ fn main() {
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
+
+    export_cargo_cfg();
+}
+
+fn rustc_cfg(name: &str, key: &str) {
+    println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig(key));
+}
+
+fn has_ruby_dln_check_abi() -> bool {
+    let major = rbconfig("MAJOR").parse::<i32>().unwrap();
+    let minor = rbconfig("MINOR").parse::<i32>().unwrap();
+
+    major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
 }

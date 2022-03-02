@@ -1,13 +1,13 @@
 ---
 name: 🍽 Setup boilerplate
 inputs:
-  os: 
+  os:
     required: true
     description: Operating system
-  ruby_version: 
+  ruby_version:
     required: true
     description: Ruby version
-  rust_toolchain: 
+  rust_toolchain:
     required: true
     description: Rust toolchain
 outputs: {}
@@ -30,14 +30,16 @@ runs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust_toolchain }}
+        default: true
     - name: Ⓜ️ Install cargo-make
       uses: actions-rs/cargo@v1
       with:
         command: install
         args: --debug cargo-make
-    - name: Fixup libclang install for Windows
-      if: ${{ inputs.os == 'windows-latest' }}
+    - name: Fix clang dep for rust-bindgen (see https://github.com/rubygems/rubygems/pull/5175#discussion_r794873977)
+      if: ${{ inputs.os == 'windows-2019' }}
       shell: bash
       run: |
-        pacman --remove --cascade mingw-w64-x86_64-clang
-        pacman --sync --noconfirm --needed $ENV:MINGW_PACKAGE_PREFIX-clang
+        pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
+        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang
+
