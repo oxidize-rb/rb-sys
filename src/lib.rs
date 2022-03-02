@@ -15,7 +15,7 @@ macro_rules! rb_module_magic {
         #[no_mangle]
         #[allow(unused)]
         pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
-            RUBY_ABI_VERSION.into()
+            self::RUBY_ABI_VERSION.into()
         }
     };
 }
