@@ -8,16 +8,22 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub type RubyValue = VALUE;
 
+#[cfg(ruby_dln_check_abi)]
 #[macro_export]
 macro_rules! rb_module_magic {
     () => {
-        #[cfg(ruby_dln_check_abi)]
         #[no_mangle]
         #[allow(unused)]
         pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
             RUBY_ABI_VERSION.into()
         }
     };
+}
+
+#[cfg(not(ruby_dln_check_abi))]
+#[macro_export]
+macro_rules! rb_module_magic {
+    () => {};
 }
 
 #[cfg(test)]
