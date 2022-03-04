@@ -1,0 +1,24 @@
+[package]
+name = "rb-sys"
+version = "0.8.0"
+edition = "2021"
+links = "ruby"
+readme = "readme.md"
+categories = ["ruby", "external-ffi-bindings"]
+
+[features]
+default = ["rb-config"]
+ruby-static = []
+link-ruby = []
+rb-config = []
+
+[dependencies]
+libc = "0.2.112"
+
+[lib]
+doctest = false
+
+[build-dependencies]
+bindgen = { git = "https://github.com/rust-lang/rust-bindgen", rev = "f34e4103f304500c96d332f5cecc9067c980d0f9" }
+pkg-config = "0.3.24"
+cached = "0.33.0"

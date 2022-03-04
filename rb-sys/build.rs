@@ -1,26 +1,25 @@
 extern crate bindgen;
 extern crate pkg_config;
 
+use cached::proc_macro::cached;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 // Setting up pkgconfig on windows takes a little more work. We need to setup
 // the pkgconfig path in a different way and define the prefix variable.
-#[cfg(target_os = "windows")]
 fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    config
-        .arg("--with-path")
-        .arg(format!("{}/pkgconfig", rbconfig("libdir")))
-        .arg("--prefix-variable")
-        .arg(rbconfig("libdir").replace("/lib", ""))
-        .arg("--define-prefix")
-}
-
-#[cfg(not(target_os = "windows"))]
-fn adjust_pkgconfig(config: &mut pkg_config::Config) -> &mut pkg_config::Config {
-    config
+    if cfg!(windows) {
+        config
+            .arg("--with-path")
+            .arg(format!("{}/pkgconfig", rbconfig("libdir")))
+            .arg("--prefix-variable")
+            .arg(rbconfig("libdir").replace("/lib", ""))
+            .arg("--define-prefix")
+    } else {
+        config
+    }
 }
 
 fn export_cargo_cfg() {
@@ -69,7 +68,23 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
     })
 }
 
-fn rbconfig(key: &str) -> String {
+fn dump_rbconfig() {
+    let mut cmd = Command::new("ruby");
+    cmd.arg("-e")
+        .arg(
+            "RbConfig::CONFIG.each { |k, v| puts \"cargo:rustc-cfg=rb_config_#{k}=#{v.to_json}\" }",
+        )
+        .arg("--disable-gems")
+        .arg("-rjson")
+        .arg("-rrbconfig")
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("could not dump rbconfig");
+}
+
+#[cached]
+fn rbconfig(key: &'static str) -> String {
     let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
 
     let config = Command::new(ruby)
@@ -84,8 +99,6 @@ fn rbconfig(key: &str) -> String {
 }
 
 fn is_static() -> bool {
-    println!("cargo:rerun-if-env-changed=RUBY_STATIC");
-
     match env::var("RUBY_STATIC") {
         Ok(val) => val == "true" || val == "1",
         _ => cfg!(feature = "ruby-static"),
@@ -93,6 +106,8 @@ fn is_static() -> bool {
 }
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=RUBY_STATIC");
+    println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
@@ -141,10 +156,14 @@ fn main() {
         .expect("Couldn't write bindings!");
 
     export_cargo_cfg();
+
+    if cfg!(feature = "rb-config") {
+        dump_rbconfig()
+    }
 }
 
-fn rustc_cfg(name: &str, key: &str) {
-    println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig(key));
+fn rustc_cfg(name: &str, key: &'static str) {
+    println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig(&key));
 }
 
 fn has_ruby_dln_check_abi() -> bool {

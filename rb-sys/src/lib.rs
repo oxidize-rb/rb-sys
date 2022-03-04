@@ -10,11 +10,10 @@ pub type RubyValue = VALUE;
 
 #[cfg(ruby_dln_check_abi)]
 #[macro_export]
-macro_rules! ruby_extension {
+macro_rules! rb_abi_magic {
     () => {
-        #[no_mangle]
-        #[allow(unused)]
-        pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
+        #[rb_extern]
+        fn ruby_abi_version() -> std::os::raw::c_ulonglong {
             use $crate::RUBY_ABI_VERSION;
 
             RUBY_ABI_VERSION.into()
@@ -24,7 +23,7 @@ macro_rules! ruby_extension {
 
 #[cfg(not(ruby_dln_check_abi))]
 #[macro_export]
-macro_rules! ruby_extension {
+macro_rules! rb_abi_magic {
     () => {};
 }
 
@@ -56,7 +55,7 @@ mod tests {
 mod tests {
     use super::*;
 
-    ruby_extension!();
+    rb_abi_magic!();
 
     #[cfg(unix)]
     #[cfg(ruby_major = "3")]

@@ -1,0 +1,16 @@
+[package]
+name = "rb-ext"
+version = "0.8.0"
+edition = "2021"
+readme = "readme.md"
+categories = ["ruby", "external-ffi-bindings"]
+
+[features]
+default = ["rb-sys/rb-config"]
+ruby-static = ["rb-sys/ruby-static"]
+link-ruby = ["rb-sys/link-ruby"]
+rb-config = ["rb-sys/rb-config"]
+
+[dependencies]
+rb-sys = { path = "./../rb-sys" }
+rb-sys-macros = { path = "./../rb-sys-macros" }

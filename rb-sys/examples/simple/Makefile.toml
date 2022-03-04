@@ -42,6 +42,7 @@ libs = glob_array ./target/*/rust_ruby_example.*
 
 for lib in ${libs}
   folder = dirname ${lib}
+  echo ruby -r ./${folder}/rust_ruby_example -e "RustRubyExample.reverse('hello world') == 'dlrow olleh' ? puts('Success!!!') :  abort('Failure')"
   exec --fail-on-error ruby -r ./${folder}/rust_ruby_example -e "RustRubyExample.reverse('hello world') == 'dlrow olleh' ? puts('Success!!!') :  abort('Failure')"
 end
 '''
