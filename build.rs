@@ -70,17 +70,24 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 }
 
 fn rbconfig(key: &str) -> String {
-    let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
+    println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
 
-    let config = Command::new(ruby)
-        .arg("--disable-gems")
-        .arg("-rrbconfig")
-        .arg("-e")
-        .arg(format!("print RbConfig::CONFIG['{}']", key))
-        .output()
-        .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+    match env::var(format!("RBCONFIG_{}", key)) {
+        Ok(val) => String::from(val),
+        Err(_) => {
+            let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
 
-    String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+            let config = Command::new(ruby)
+                .arg("--disable-gems")
+                .arg("-rrbconfig")
+                .arg("-e")
+                .arg(format!("print RbConfig::CONFIG['{}']", key))
+                .output()
+                .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+
+            String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+        }
+    }
 }
 
 fn is_static() -> bool {
