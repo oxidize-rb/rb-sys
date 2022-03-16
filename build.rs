@@ -122,7 +122,7 @@ fn main() {
     let clang_args = vec![
         format!("-I{}", rbconfig("rubyhdrdir")),
         format!("-I{}", rbconfig("rubyarchhdrdir")),
-        "-fdeclspec".to_string(),
+        "-fms-extensions".to_string(),
     ];
 
     let bindings = bindgen::Builder::default()
