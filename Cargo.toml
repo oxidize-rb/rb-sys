@@ -1,22 +1,7 @@
-[package]
-name = "rb-sys"
-version = "0.6.2"
-edition = "2021"
-links = "ruby"
-readme = "readme.md"
-categories = ["ruby", "external-ffi-bindings"]
-
-[features]
-default = []
-ruby-static = []
-link-ruby = []
-
-[dependencies]
-libc = "0.2.112"
-
-[lib]
-doctest = false
-
-[build-dependencies]
-bindgen = { git = "https://github.com/rust-lang/rust-bindgen", rev = "f34e4103f304500c96d332f5cecc9067c980d0f9" }
-pkg-config = "0.3.24"
+[workspace]
+resolver = "2"
+members = [
+    "crates/rb-sys",
+    "crates/cargo-rbx",
+    "examples/simple",
+]
