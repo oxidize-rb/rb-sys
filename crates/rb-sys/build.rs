@@ -113,10 +113,8 @@ fn main() {
                 println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
             });
         }
-    } else {
-        if cfg!(unix) {
-            println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
-        }
+    } else if cfg!(unix) {
+        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
     }
 
     let clang_args = vec![

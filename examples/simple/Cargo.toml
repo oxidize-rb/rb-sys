@@ -3,7 +3,7 @@ name = "rust-ruby-example"
 version = "0.1.0"
 
 [dependencies]
-rb-sys = { path = "./../../crates/rb-sys", features = ["link-ruby"] }
+rb-sys = { path = "./../../crates/rb-sys" }
 
 [lib]
 crate-type = ["cdylib"]
