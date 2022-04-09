@@ -1,6 +1,9 @@
-# rbx
+# oxidize-rb
 
-`rbx` is a framework for developing safe Ruby extensions in Rust.
+[![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) 
+
+The goal of `oxidize-rb` is to provide developers with tooling to build safe
+Ruby extensions in Rust.
 
 ## rb-sys
 
