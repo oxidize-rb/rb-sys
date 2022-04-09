@@ -1,0 +1,16 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[tasks.test-rubies]
+script = '''
+#!/usr/bin/env bash
+
+source /usr/local/share/chruby/chruby.sh
+
+for ver in $RUBY_VERSIONS; do
+  chruby $ver
+  echo "🧪 Testing against ruby-$ver"
+  sleep 5
+  cargo test -- --quiet
+done
+'''
