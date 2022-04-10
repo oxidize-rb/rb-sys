@@ -2,10 +2,10 @@ ARG VARIANT
 FROM mcr.microsoft.com/vscode/devcontainers/rust:${VARIANT}
 
 ENV CHRUBY_VERSION="0.3.9" \
-    RUBY_INSTALL_VERSION="0.8.3"
-ENV BUILD_LIST "build-essential clang"
-ENV DEBIAN_FRONTEND noninteractive
-ENV RUBY_VERSIONS="2.7.5 3.1.1 3.2.0-preview1"
+    RUBY_INSTALL_VERSION="0.8.3" \
+    BUILD_LIST="build-essential" \
+    DEBIAN_FRONTEND="noninteractive" \
+    RUBY_VERSIONS="2.6.9 2.7.5 3.1.1 3.2.0-preview1" 
 
 USER root
 
@@ -44,20 +44,17 @@ RUN set -ex; \
     cd ruby-install-${RUBY_INSTALL_VERSION}/; \
     make install; \
     cd /; \
-    apt-get clean && \
-    rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* /ruby-install* /chruby* /usr/local/src/ruby*;
 
-# Ruby installs
-RUN set -ex; \
-    apt-get update; \
+    # Install ruby versions
     echo 'gem: --no-document' >> $HOME/.gemrc; \
     for ver in $RUBY_VERSIONS; do \
       # static
       ruby-install -c -j$(nproc) --install-dir "/opt/rubies/$ver-static" ruby "$ver" -- --disable-install-rdoc; \
-
       # dynamic
       ruby-install -c -j$(nproc) --install-dir "/opt/rubies/$ver" ruby "$ver" -- --disable-install-rdoc --enable-shared; \
     done; \
+
+    # Cleanup
     apt-get clean && \
     rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* /ruby-install* /chruby* /usr/local/src/ruby*;
   
