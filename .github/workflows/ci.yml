@@ -1,7 +1,9 @@
 ---
-name: CI
-
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - main
+  pull_request: {}
 
 jobs:
   lint:
@@ -58,4 +60,4 @@ jobs:
       - name: 💨 Smoke test
         if: ${{ matrix.sys.os == 'ubuntu-latest' }}
         working-directory: examples/simple
-        run: cargo make verify --verbose
+        run: bin/verify.sh

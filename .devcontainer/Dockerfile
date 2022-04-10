@@ -2,8 +2,7 @@ ARG VARIANT
 FROM mcr.microsoft.com/vscode/devcontainers/rust:${VARIANT}
 
 ENV CHRUBY_VERSION="0.3.9" \
-    RUBY_INSTALL_VERSION="0.8.3" \
-    BUILD_LIST="build-essential" \
+    BUILD_LIST="build-essential clang" \
     DEBIAN_FRONTEND="noninteractive" \
     RUBY_VERSIONS="2.6.9 2.7.5 3.1.1 3.2.0-preview1" 
 
@@ -34,29 +33,22 @@ RUN set -ex; \
     echo "chruby 3.1.1" >> "$HOME/.bashrc"; \
     cd /; \
 
-    # Install ruby-install
-    mkdir /tmp/ruby-install-build; \
-    cd /tmp/ruby-install-build; \
-    wget -O ruby-install-${RUBY_INSTALL_VERSION}.tar.gz https://github.com/postmodern/ruby-install/archive/v${RUBY_INSTALL_VERSION}.tar.gz; \
-    wget https://raw.github.com/postmodern/ruby-install/master/pkg/ruby-install-${RUBY_INSTALL_VERSION}.tar.gz.asc; \
-    gpg --verify ruby-install-${RUBY_INSTALL_VERSION}.tar.gz.asc ruby-install-${RUBY_INSTALL_VERSION}.tar.gz; \
-    tar -xzvf ruby-install-${RUBY_INSTALL_VERSION}.tar.gz; \
-    cd ruby-install-${RUBY_INSTALL_VERSION}/; \
-    make install; \
+    # Install ruby-build
+    mkdir /tmp/ruby-build-build; \
+    cd /tmp/ruby-build-build; \
+    git clone https://github.com/rbenv/ruby-build.git; \
+    PREFIX=/usr/local ./ruby-build/install.sh; \
     cd /; \
 
     # Install ruby versions
     echo 'gem: --no-document' >> $HOME/.gemrc; \
     for ver in $RUBY_VERSIONS; do \
-      # static
-      ruby-install -c -j$(nproc) --install-dir "/opt/rubies/$ver-static" ruby "$ver" -- --disable-install-rdoc; \
-      # dynamic
-      ruby-install -c -j$(nproc) --install-dir "/opt/rubies/$ver" ruby "$ver" -- --disable-install-rdoc --enable-shared; \
+      RUBY_CONFIGURE_OPTS="--disable-install-rdoc --enable-shared" ruby-build "$ver" "/opt/rubies/$ver"; \
     done; \
 
     # Cleanup
     apt-get clean && \
-    rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* /ruby-install* /chruby* /usr/local/src/ruby*;
+    rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* /chruby* /usr/local/src/ruby*;
   
   RUN set -ex; \
       cargo install cargo-make; \
