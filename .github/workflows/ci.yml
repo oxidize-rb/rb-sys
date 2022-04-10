@@ -58,4 +58,4 @@ jobs:
       - name: 💨 Smoke test
         if: ${{ matrix.sys.os == 'ubuntu-latest' }}
         working-directory: examples/simple
-        run: cargo make verify --verbose
+        run: bin/verify.sh

@@ -8,11 +8,9 @@
 			"VARIANT": "bullseye"
 		}
 	},
-	"containerEnv": {
-		"CARGO_TARGET_DIR": "/tmp/cargo-target-dir"
-	},
 	"mounts": [
 		"type=volume,target=${containerWorkspaceFolder}/target",
+		"type=volume,target=${containerWorkspaceFolder}/examples/simple/target",
 	],
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",

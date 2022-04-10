@@ -63,6 +63,6 @@ mod tests {
     #[cfg(ruby_minor = "2")]
     #[test]
     fn test_ruby_abi_version() {
-        assert!(ruby_abi_version() == 0)
+        assert!(ruby_abi_version() == 1)
     }
 }
