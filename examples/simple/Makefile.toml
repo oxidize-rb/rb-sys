@@ -1,3 +1,6 @@
+[env]
+RUSTFLAGS = "-C link-arg=-Wl,-undefined,dynamic_lookup"
+
 [tasks.build-with-link]
 command = "cargo"
 args = ["build", "--verbose", "--features", "link-ruby"]
