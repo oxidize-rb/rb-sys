@@ -19,14 +19,17 @@ runs:
       with:
         ruby-version: ${{ inputs.ruby_version }}
     - name: ⚡ Cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-          examples/simple/target
-        key: ${{ inputs.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+          examples/simple/target/
+          crate/rb-sys/target/
+        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v1-${{ hashFiles('**/Cargo.lock') }}
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust_toolchain }}
