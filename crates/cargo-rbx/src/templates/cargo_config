@@ -1,3 +1,0 @@
-[build]
-# Ruby symbols won't be available until runtime
-rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]

@@ -2,7 +2,6 @@
 resolver = "2"
 members = [
     "crates/rb-sys",
-    "crates/cargo-rbx",
 ]
 exclude = [
     "examples/simple",
