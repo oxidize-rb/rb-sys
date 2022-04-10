@@ -1,5 +1,9 @@
+[tasks.build-with-link]
+command = "cargo"
+args = ["build", "--verbose", "--features", "link-ruby"]
+
 [tasks.install]
-dependencies = ["build"]
+dependencies = ["build-with-link"]
 script_runner = "@duckscript"
 script = '''
 exit_on_error true

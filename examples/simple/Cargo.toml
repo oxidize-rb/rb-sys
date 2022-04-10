@@ -7,3 +7,6 @@ rb-sys = { path = "./../../crates/rb-sys" }
 
 [lib]
 crate-type = ["cdylib"]
+
+[features]
+link-ruby = ["rb-sys/link-ruby"]
