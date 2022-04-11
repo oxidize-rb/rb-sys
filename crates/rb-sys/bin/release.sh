@@ -15,7 +15,7 @@ read -p "Are you sure you want to bump to v$version? <y/N> " prompt
 if [[ $prompt =~ [yY](es)* ]]; then
 	sed -i '' "s/^version = .*/version = \"$version\"/g" Cargo.toml
 	cargo build
-	git add Cargo.lock Cargo.toml
+	git add Cargo.lock Cargo.toml ../../Cargo.toml
 	git commit -m "Bump to v$version"
 	git tag "v$version"
 	git push --atomic origin main "v$version"
