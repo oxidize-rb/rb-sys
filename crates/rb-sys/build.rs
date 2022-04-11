@@ -131,6 +131,7 @@ fn main() {
         .allowlist_file(".*ruby.*")
         .rustified_enum("*")
         .blocklist_item("ruby_abi_version")
+        .blocklist_item("rbimpl_atomic_or")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
