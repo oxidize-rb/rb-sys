@@ -50,11 +50,6 @@ RUN set -ex; \
     apt-get clean && \
     rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/* /chruby* /usr/local/src/ruby*;
   
-  RUN set -ex; \
-      cargo install cargo-make; \
-      mkdir -p $HOME/.config/cargo-make; \
-      echo 'log_level = "error"' >> $HOME/.config/cargo-make/config.toml;
-
   COPY welcome-message.txt "/usr/local/share/welcome-message.txt"
   RUN echo "cat /usr/local/share/welcome-message.txt" >> $HOME/.zshrc; \
       echo "cat /usr/local/share/welcome-message.txt" >> $HOME/.bashrc;

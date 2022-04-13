@@ -72,6 +72,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 fn rbconfig(key: &str) -> String {
     println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
+    println!("cargo:rerun-if-env-changed=RUBY");
 
     match env::var(format!("RBCONFIG_{}", key)) {
         Ok(val) => String::from(val),

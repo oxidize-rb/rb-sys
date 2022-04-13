@@ -21,6 +21,9 @@ List Ruby versions:
 Use another Ruby Version:
   $ chruby ruby-2.7.5
 
-Test against all rubies
-  $ cargo make test-rubies
+Unit test against all rubies:
+  $ rake test:rubies
+
+Integration test against all rubies:
+  $ rake test:examples
 ===========================================================
