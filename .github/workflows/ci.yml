@@ -1,5 +1,5 @@
 ---
-on: 
+on:
   push:
     branches:
       - main
@@ -27,8 +27,6 @@ jobs:
 
   build_and_test:
     name: 🧪 Build and test
-    env:
-      RUBY_LINK: "true"
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +56,7 @@ jobs:
         with:
           command: test
       - name: 💨 Smoke test
-        if: ${{ matrix.sys.os == 'ubuntu-latest' }}
-        working-directory: examples/simple
-        run: bin/verify.sh
+        working-directory: examples/rust_reverse
+        run: |
+          bundle install
+          bundle exec rake test
