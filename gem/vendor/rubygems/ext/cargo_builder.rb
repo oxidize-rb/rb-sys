@@ -203,14 +203,14 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
     # On windows, it is assumed that mkmf has setup an exports file for the
     # extension, so we have to to create one ourselves.
     when "DEFFILE"
-      write_deffile(dest_dir)
+      write_deffile
     else
       RbConfig::CONFIG[var_name]
     end
   end
 
-  def write_deffile(dest_dir)
-    deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
+  def write_deffile
+    deffile_path = File.join("#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
     export_prefix = makefile_config("EXPORT_PREFIX") || ""
 
     File.open(deffile_path, "w") do |f|
