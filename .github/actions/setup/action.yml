@@ -18,6 +18,7 @@ runs:
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ inputs.ruby_version }}
+        bundler-cache: true
     - name: ⚡ Cache
       uses: actions/cache@v3
       with:
@@ -27,9 +28,9 @@ runs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
-          examples/simple/target/
-          crate/rb-sys/target/
-        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v1-${{ hashFiles('**/Cargo.lock') }}
+          examples/rust_reverse/target/
+          crates/rb-sys/target/
+        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v2-${{ hashFiles('**/Cargo.lock') }}
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust_toolchain }}

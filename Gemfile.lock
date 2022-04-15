@@ -1,5 +1,5 @@
 PATH
-  remote: .
+  remote: examples/rust_reverse
   specs:
     rust_reverse (0.1.0)
 
@@ -13,7 +13,7 @@ GEM
       ast (~> 2.4.1)
     rainbow (3.1.1)
     rake (13.0.6)
-    rake-compiler (1.1.9)
+    rake-compiler (1.2.0)
       rake
     regexp_parser (2.3.0)
     rexml (3.2.5)
@@ -39,6 +39,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  x86_64-linux
 
 DEPENDENCIES
   minitest (~> 5.0)

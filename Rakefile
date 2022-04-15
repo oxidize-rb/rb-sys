@@ -16,11 +16,20 @@ namespace :test do
   namespace :examples do
     task :rust_reverse do
       Dir.chdir("examples/rust_reverse") do
-        sh "rake test"
+        sh "rake compile test"
       end
     end
   end
 
   desc "Test all examples against all installed Rubies"
   task examples: ["test:examples:rust_reverse"]
+end
+
+desc "Run all tests"
+task test: ["test:rubies", "test:examples"]
+
+desc "Pretty the files"
+task :fmt do
+  sh "cargo fmt"
+  sh "standardrb --fix"
 end

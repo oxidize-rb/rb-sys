@@ -12,18 +12,17 @@
                                         \$$$$$$  
 ===========================================================
 
+Welcome to the devcontainer! This container extends the rake-compiler-dock
+images so it works with Ruby.
+
+To try things out in a different platform, edit the "VARIANT" argument in the
+".devcontainer/devcontainer.json" file.
+
 Run the tests:
   $ cargo test
 
-List Ruby versions:
-  $ ls /opt/rubies
+Compile the gem for the current platform:
+  $ cd examples/rust_reverse
+  $ rake compile:$RBSYS_PLATFORM
 
-Use another Ruby Version:
-  $ chruby ruby-2.7.5
-
-Unit test against all rubies:
-  $ rake test:rubies
-
-Integration test against all rubies:
-  $ rake test:examples
 ===========================================================

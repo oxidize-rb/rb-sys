@@ -58,5 +58,4 @@ jobs:
       - name: 💨 Smoke test
         working-directory: examples/rust_reverse
         run: |
-          bundle install
-          bundle exec rake
+          rake
