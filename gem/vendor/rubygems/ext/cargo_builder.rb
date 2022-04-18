@@ -59,6 +59,14 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
     cmd
   end
 
+  def cargo_dylib_path(dest_path)
+    prefix = so_ext == "dll" ? "" : "lib"
+    path_parts = [dest_path]
+    path_parts << ENV["CARGO_BUILD_TARGET"] if ENV["CARGO_BUILD_TARGET"]
+    path_parts += [profile_target_directory, "#{prefix}#{cargo_crate_name}.#{so_ext}"]
+    File.join(*path_parts)
+  end
+
   private
 
   def rb_config_env
@@ -141,15 +149,7 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
     dylib_path.gsub(File.basename(dylib_path), dlext_name)
   end
 
-  def cargo_dylib_path(dest_path)
-    prefix = so_ext == "dll" ? "" : "lib"
-    path_parts = [dest_path]
-    path_parts << ENV["CARGO_BUILD_TARGET"] if ENV["CARGO_BUILD_TARGET"]
-    path_parts += [profile_target_directory, "#{prefix}#{cargo_crate_name}.#{so_ext}"]
-    File.join(*path_parts)
-  end
-
-  def cargo_crate_name
+ def cargo_crate_name
     spec.metadata.fetch("cargo_crate_name", spec.name).tr("-", "_")
   end
 
@@ -209,7 +209,8 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
     end
   end
 
-  def write_deffile(dest_dir)
+  def write_deffile(dest_path)
+    dest_dir = File.dirname(final_extension_path(dest_path))
     FileUtils.mkdir_p(dest_dir)
     deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
     export_prefix = makefile_config("EXPORT_PREFIX") || ""

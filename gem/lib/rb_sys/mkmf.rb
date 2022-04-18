@@ -22,10 +22,10 @@ module RbSys
         target_prefix = #{target_prefix}
         CARGO_PROFILE = release
         CLEANLIBS = target/ $(RUSTLIB) $(DLLIB)
-        DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
-        RUSTLIB = target/$(CARGO_PROFILE)/lib$(TARGET).#{RbConfig::CONFIG["SOEXT"]}
+        RUSTLIB = #{dllib_path(srcdir, target)}
         TARGET = #{target}
+        DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
 
         #{base_makefile(srcdir)}
 
@@ -70,6 +70,18 @@ module RbSys
       spec = Struct.new(:name, :metadata).new(target, {})
       builder = Gem::Ext::CargoBuilder.new(spec)
       builder.build_env.map { |k, v| %($(DLLIB): export #{k} = #{v.gsub("\n", '\n')}) }.join("\n")
+    end
+
+    def dllib_path(cargo_dir, target)
+      spec = Struct.new(:name, :metadata).new(target, {})
+      builder = Gem::Ext::CargoBuilder.new(spec)
+      builder.cargo_dylib_path(File.join(Dir.pwd, 'target'))
+    end
+
+    def final_extension_name(cargo_dir, target)
+      spec = Struct.new(:name, :metadata).new(target, {})
+      builder = Gem::Ext::CargoBuilder.new(spec)
+      File.basename(builder.final_extension_path(cargo_dir))
     end
   end
 end
