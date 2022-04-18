@@ -86,4 +86,4 @@ module RbSys
   end
 end
 
-Kernel.send(:include, RbSys::Mkmf)
+include RbSys::Mkmf # rubocop:disable Style/MixinUsage

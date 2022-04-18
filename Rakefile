@@ -16,7 +16,7 @@ namespace :test do
   namespace :examples do
     task :rust_reverse do
       Dir.chdir("examples/rust_reverse") do
-        sh "rake compile test"
+        sh "rake"
       end
     end
   end
