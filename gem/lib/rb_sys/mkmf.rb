@@ -85,3 +85,5 @@ module RbSys
     end
   end
 end
+
+Kernel.send(:include, RbSys::Mkmf)
