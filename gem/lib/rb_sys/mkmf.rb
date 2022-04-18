@@ -75,7 +75,7 @@ module RbSys
     def dllib_path(cargo_dir, target)
       spec = Struct.new(:name, :metadata).new(target, {})
       builder = Gem::Ext::CargoBuilder.new(spec)
-      builder.cargo_dylib_path(File.join(Dir.pwd, 'target'))
+      builder.cargo_dylib_path(File.join(Dir.pwd, "target"))
     end
 
     def final_extension_name(cargo_dir, target)

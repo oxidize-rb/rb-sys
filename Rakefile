@@ -33,3 +33,10 @@ task :fmt do
   sh "cargo fmt"
   sh "standardrb --fix"
 end
+
+desc "Lint"
+task :lint do
+  sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}"
+  sh "cargo fmt --check"
+  sh "cargo clippy"
+end

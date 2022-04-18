@@ -14,7 +14,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: stable
-          ruby_version: "3.0"
+          ruby_version: "3.1"
           os: ubuntu-latest
       - uses: actions-rs/cargo@v1
         name: ✂️ Run clippy
@@ -24,6 +24,9 @@ jobs:
         name: 📃 Run cargo fmt
         with:
           command: fmt
+          args: --check
+      - name: 🚓 Run Standard.rb
+        run: bundle exec standardrb --format github
 
   build_and_test:
     name: 🧪 Build and test
