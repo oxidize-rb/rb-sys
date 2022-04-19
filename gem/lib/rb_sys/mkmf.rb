@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rubygems/ext"
+require "shellwords"
 require_relative "./../../vendor/rubygems/ext/cargo_builder"
 
 # Root module
@@ -15,27 +16,30 @@ module RbSys
         target_prefix = ""
       end
 
+      spec = Struct.new(:name, :metadata).new(target, {})
+      builder = Gem::Ext::CargoBuilder.new(spec)
       srcprefix ||= "$(srcdir)/#{srcprefix}".chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
+
       # rubocop:disable Style/GlobalVars
       make_install = <<~MAKE
         target_prefix = #{target_prefix}
         CARGO_PROFILE = release
         CLEANLIBS = target/ $(RUSTLIB) $(DLLIB)
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
-        RUSTLIB = #{dllib_path(srcdir, target)}
+        RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
 
         #{base_makefile(srcdir)}
 
-        #{env_vars(srcdir, target)}
+        #{env_vars(builder)}
 
         FORCE: ;
 
         $(DLLIB): FORCE
-        \t#{cargo_command(srcdir, target)}
-        \tcp $(RUSTLIB) $@
+        \t#{cargo_command(srcdir, builder)}
+        \t$(COPY) "$(RUSTLIB)" $@
 
         install: $(DLLIB)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
@@ -57,31 +61,19 @@ module RbSys
       base_makefile
     end
 
-    def cargo_command(cargo_dir, target)
-      spec = Struct.new(:name, :metadata).new(target, {})
-      builder = Gem::Ext::CargoBuilder.new(spec)
+    def cargo_command(cargo_dir, builder)
       dest_path = File.join(Dir.pwd, "target")
       args = []
       cargo_cmd = builder.cargo_command(cargo_dir, dest_path, args)
-      cargo_cmd.join(" ")
+      Shellwords.join(cargo_cmd)
     end
 
-    def env_vars(cargo_dir, target)
-      spec = Struct.new(:name, :metadata).new(target, {})
-      builder = Gem::Ext::CargoBuilder.new(spec)
+    def env_vars(builder)
       builder.build_env.map { |k, v| %($(DLLIB): export #{k} = #{v.gsub("\n", '\n')}) }.join("\n")
     end
 
-    def dllib_path(cargo_dir, target)
-      spec = Struct.new(:name, :metadata).new(target, {})
-      builder = Gem::Ext::CargoBuilder.new(spec)
+    def dllib_path(builder)
       builder.cargo_dylib_path(File.join(Dir.pwd, "target"))
-    end
-
-    def final_extension_name(cargo_dir, target)
-      spec = Struct.new(:name, :metadata).new(target, {})
-      builder = Gem::Ext::CargoBuilder.new(spec)
-      File.basename(builder.final_extension_path(cargo_dir))
     end
   end
 end
