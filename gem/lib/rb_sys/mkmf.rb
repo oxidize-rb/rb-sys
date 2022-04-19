@@ -65,7 +65,7 @@ module RbSys
       dest_path = File.join(Dir.pwd, "target")
       args = []
       cargo_cmd = builder.cargo_command(cargo_dir, dest_path, args)
-      Shellwords.join(cargo_cmd).gsub("\=", "=")
+      Shellwords.join(cargo_cmd).tr("\=", "=")
     end
 
     def env_vars(builder)
