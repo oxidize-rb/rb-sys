@@ -1,7 +1,12 @@
 ARG VARIANT
 FROM rbsys/rcd:${VARIANT}
 ARG VARIANT
-  
+
+RUN set -ex; \
+    apt-get update && apt-get install -y zsh locales; \
+    # sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"; \
+    apt-get autoremove -y;  
+
 ENV LANG=en_US.UTF-8 \
     TERM=xterm \
     SHELL=/bin/zsh
