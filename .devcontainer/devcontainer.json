@@ -1,12 +1,13 @@
 {
   "name": "rb-sys-devcontainer",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "Dockerfile.cross",
     "args": {
       // Can use any of these
       // ["x86_64-linux", "arm-linux", "aarch64-linux", "x86-linux", "x86_64-darwin", "arm64-darwin", "x86-mingw32", "x64-mingw32", "x64-mingw-ucrt"]
       // "VARIANT": "x64-mingw32"
-      "VARIANT": "x86_64-linux"
+      "RBSYS_PLATFORM": "x86_64-linux",
+      "VARIANT": "bulleye"
       // "VARIANT": "aarch64-linux"
     }
   },
