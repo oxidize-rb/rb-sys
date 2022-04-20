@@ -3,7 +3,7 @@ name = "rb-sys"
 version = "0.8.0"
 edition = "2018"
 links = "ruby"
-readme = "readme.md"
+# readme = "readme.md"
 categories = ["ruby", "external-ffi-bindings"]
 
 [features]
