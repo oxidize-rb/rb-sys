@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: script/xruby [options]"
+
+  opts.on("-c", "--command COMMAND", "The command to exec") do |c|
+    options[:command] = c
+  end
+
+  opts.on("--only VERSIONS", "Only run against these versions") do |ver|
+    options[:only] = ver.split(",")
+  end
+end.parse!
+
+RUBIES = {}
+
+RUBY_DIRS = [
+  *Dir["#{ENV["HOME"]}/.asdf/installs/ruby/*"],
+  *Dir["/opt/rubies/*"],
+  *Dir["#{ENV["HOME"]}/.rbenv/versions/*"]
+].sort
+
+RUBY_DIRS.each do |dir|
+  version = dir.split("/")[-1]
+  next if options[:only] && !options[:only].include?(version)
+  RUBIES[version] = dir
+end
+
+clean_path = ENV.fetch("PATH").dup
+clean_path.gsub!("#{ENV["GEM_HOME"]}/bin:", "") if ENV["GEM_HOME"]
+clean_path.gsub!("#{ENV["GEM_ROOT"]}/bin:", "") if ENV["GEM_ROOT"]
+clean_path.gsub!("#{ENV["RUBY_ROOT"]}/bin:", "") if ENV["RUBY_ROOT"]
+
+RUBIES.each do |version, ruby_dir|
+  gem_root = Dir["#{ruby_dir}/lib/ruby/gems/*"].first
+  gem_home = "#{ENV["HOME"]}/.gem/xruby/#{version}"
+  cmd = options[:command]
+
+  env = {
+    "PATH" => "#{gem_home}/bin:#{ruby_dir}/bin:#{clean_path}",
+    "RUBY" => "#{ruby_dir}/bin/ruby",
+    "RUBY_ROOT" => ruby_dir,
+    "RUBY_VERSION" => version,
+    "GEM_ROOT" => gem_root,
+    "GEM_PATH" => "#{gem_home}:#{gem_root}",
+    "GEM_HOME" => gem_home
+  }
+
+  puts "Running against Ruby #{version}: #{cmd}"
+  sleep 1
+  system(env, cmd) || abort("Command failed on Ruby version: #{version}")
+end

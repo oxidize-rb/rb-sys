@@ -1,5 +1,5 @@
 ---
-on: 
+on:
   push:
     branches:
       - main
@@ -14,7 +14,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: stable
-          ruby_version: '3.0'
+          ruby_version: "3.1"
           os: ubuntu-latest
       - uses: actions-rs/cargo@v1
         name: ✂️ Run clippy
@@ -24,15 +24,16 @@ jobs:
         name: 📃 Run cargo fmt
         with:
           command: fmt
+          args: --check
+      - name: 🚓 Run Standard.rb
+        run: bundle exec standardrb --format github
 
   build_and_test:
     name: 🧪 Build and test
-    env:
-      RUBY_LINK: "true"
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ['2.4', '2.5', '2.6', '2.7', '3.0', '3.1', 'head']
+        ruby_version: ["2.6", "2.7", "3.0", "3.1", "head"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: stable
@@ -58,6 +59,5 @@ jobs:
         with:
           command: test
       - name: 💨 Smoke test
-        if: ${{ matrix.sys.os == 'ubuntu-latest' }}
-        working-directory: examples/simple
-        run: bin/verify.sh
+        run: |
+          bundle exec rake test:examples

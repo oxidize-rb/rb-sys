@@ -1,50 +1,41 @@
 {
-	"name": "Rust",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			// Use the VARIANT arg to pick a Debian OS version: buster, bullseye
-			// Use bullseye when on local on arm64/Apple Silicon.
-			"VARIANT": "bullseye"
-		}
-	},
-	"mounts": [
-		"type=volume,target=${containerWorkspaceFolder}/target",
-		"type=volume,target=${containerWorkspaceFolder}/examples/simple/target",
-	],
-	"runArgs": [
-		"--cap-add=SYS_PTRACE",
-		"--security-opt",
-		"seccomp=unconfined"
-	],
+  "name": "rb-sys-devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile.cross",
+    "args": {
+      // Can use any of these
+      // ["x86_64-linux", "arm-linux", "aarch64-linux", "x86-linux", "x86_64-darwin", "arm64-darwin", "x86-mingw32", "x64-mingw32", "x64-mingw-ucrt"]
+      // "VARIANT": "x64-mingw32"
+      "RBSYS_PLATFORM": "x86_64-linux",
+      "VARIANT": "bulleye"
+      // "VARIANT": "aarch64-linux"
+    }
+  },
+  "mounts": [
+    "type=volume,target=${containerWorkspaceFolder}/target",
+    "type=volume,target=${containerWorkspaceFolder}/examples/rust_reverse/tmp",
+    "type=volume,target=${containerWorkspaceFolder}/examples/rust_reverse/ext/rust_reverse/target"
+  ],
+  "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-		"lldb.executable": "/usr/bin/lldb",
-		// VS Code don't watch files under ./target
-		"files.watcherExclude": {
-			"**/target/**": true
-		},
-		"rust-analyzer.checkOnSave.command": "clippy",
-		"terminal.integrated.shell.*": "/bin/zsh"
-	},
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"vadimcn.vscode-lldb",
-		"mutantdino.resourcemonitor",
-		"matklad.rust-analyzer",
-		"tamasfe.even-better-toml",
-		"serayuzgur.crates",
-		"rebornix.Ruby"
-	],
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "rustc --version",
-
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-	// "remoteUser": "vscode"
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "lldb.executable": "/usr/bin/lldb",
+    // VS Code don't watch files under ./target
+    "files.watcherExclude": {
+      "**/target/**": true,
+      "**/tmp/**": true
+    },
+    "rust-analyzer.checkOnSave.command": "clippy",
+    "terminal.integrated.shell.*": "/usr/bin/zsh"
+  },
+  "extensions": [
+    "vadimcn.vscode-lldb",
+    "mutantdino.resourcemonitor",
+    "matklad.rust-analyzer",
+    "tamasfe.even-better-toml",
+    "serayuzgur.crates",
+    "rebornix.Ruby"
+  ],
+  "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/on-post-attach.sh"
 }

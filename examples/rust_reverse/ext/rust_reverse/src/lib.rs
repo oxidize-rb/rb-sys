@@ -4,6 +4,8 @@ use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
 
+ruby_extension!();
+
 #[no_mangle]
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
     let ruby_string = CStr::from_ptr(rb_string_value_cstr(&mut input))
@@ -18,8 +20,8 @@ unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> Rub
 
 #[allow(non_snake_case)]
 #[no_mangle]
-pub extern "C" fn Init_rust_ruby_example() {
-    let name = CString::new("RustRubyExample").unwrap();
+pub extern "C" fn Init_rust_reverse() {
+    let name = CString::new("RustReverse").unwrap();
     let function_name = CString::new("reverse").unwrap();
 
     unsafe {

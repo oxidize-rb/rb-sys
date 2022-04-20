@@ -19,7 +19,10 @@ To try things out in a different platform, edit the "VARIANT" argument in the
 ".devcontainer/devcontainer.json" file.
 
 Run the tests:
-  $ rake test:rubies
-  $ rake test:examples
+  $ cargo test
+
+Compile the gem for the current platform:
+  $ cd examples/rust_reverse
+  $ rake compile:$RBSYS_PLATFORM
 
 ===========================================================

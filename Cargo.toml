@@ -3,5 +3,5 @@ members = [
     "crates/rb-sys",
 ]
 exclude = [
-    "examples/simple",
+    "examples/rust_reverse/ext/rust_reverse",
 ]
