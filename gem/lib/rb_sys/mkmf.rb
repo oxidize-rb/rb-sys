@@ -25,7 +25,8 @@ module RbSys
       make_install = <<~MAKE
         target_prefix = #{target_prefix}
         CARGO_PROFILE = release
-        CLEANLIBS = target/ $(RUSTLIB) $(DLLIB)
+        CLEANLIBS = $(RUSTLIB) $(DLLIB)
+        DISTCLEANDIRS = target/
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
