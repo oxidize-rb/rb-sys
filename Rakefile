@@ -10,14 +10,20 @@ namespace :test do
   task :rubies do
     cargo_args = extra_args || ["--quiet"]
 
-    sh "./script/xruby", "-c", "cargo test #{cargo_args.join(" ")}"
+    sh "./script/xruby", "-c", "cargo test --features link-ruby #{cargo_args.join(" ")}"
   end
 
   namespace :examples do
     task :rust_reverse do
       Dir.chdir("examples/rust_reverse") do
-        sh "rake"
+        sh "bundle check || bundle install"
+        sh "bundle exec rake"
       end
+    end
+
+    desc "Test against all installed Rubies"
+    task :rubies do
+      sh "./script/xruby", "-c", "rake test:examples"
     end
   end
 
@@ -26,7 +32,7 @@ namespace :test do
 end
 
 desc "Run all tests"
-task test: ["test:rubies", "test:examples"]
+task test: ["test:rubies", "test:examples:rubies"]
 
 desc "Pretty the files"
 task :fmt do

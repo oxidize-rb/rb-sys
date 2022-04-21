@@ -35,7 +35,7 @@ clean_path.gsub!("#{ENV["GEM_HOME"]}/bin:", "") if ENV["GEM_HOME"]
 clean_path.gsub!("#{ENV["GEM_ROOT"]}/bin:", "") if ENV["GEM_ROOT"]
 clean_path.gsub!("#{ENV["RUBY_ROOT"]}/bin:", "") if ENV["RUBY_ROOT"]
 
-RUBIES.each do |version, ruby_dir|
+RUBIES.reverse_each do |version, ruby_dir|
   gem_root = Dir["#{ruby_dir}/lib/ruby/gems/*"].first
   gem_home = "#{ENV["HOME"]}/.gem/xruby/#{version}"
   cmd = options[:command]
