@@ -18,7 +18,7 @@ end.parse!
 
 RUBIES = {}
 
-RUBY_DIRS = [
+RUBY_DIRS = ENV.key?("RUBIES_DIR") ? Dir["#{ENV["RUBIES_DIR"]}/*"] : [
   *Dir["#{ENV["HOME"]}/.asdf/installs/ruby/*"],
   *Dir["/opt/rubies/*"],
   *Dir["#{ENV["HOME"]}/.rbenv/versions/*"]

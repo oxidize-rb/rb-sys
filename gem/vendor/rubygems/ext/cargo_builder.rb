@@ -149,7 +149,7 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
     dylib_path.gsub(File.basename(dylib_path), dlext_name)
   end
 
- def cargo_crate_name
+  def cargo_crate_name
     spec.metadata.fetch("cargo_crate_name", spec.name).tr("-", "_")
   end
 
