@@ -21,4 +21,4 @@ doctest = false
 
 [build-dependencies]
 bindgen = "0.59"
-pkg-config = "0.3.24"
+pkg-config = "0.3.25"
