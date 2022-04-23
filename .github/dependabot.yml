@@ -9,7 +9,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-   - package-ecosystem: "cargo"
+  - package-ecosystem: "cargo"
     directory: "/crates/rb-sys"
     schedule:
       interval: "daily"
