@@ -13,3 +13,7 @@ updates:
     directory: "/crates/rb-sys"
     schedule:
       interval: "daily"
+  - package-ecosystem: "cargo"
+    directory: "/examples/rust_reverse/ext/rust_reverse"
+    schedule:
+      interval: "daily"
