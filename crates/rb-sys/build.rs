@@ -65,7 +65,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         config
             .statik(true)
             .probe(ruby_name.as_str())
-            .expect(format!("{} not found, needed for pkg-config", ruby_name).as_str())
+            .unwrap_or_else(|_| panic!("{} not found, needed for pkg-config", ruby_name))
     })
 }
 
@@ -75,9 +75,9 @@ fn rbconfig(key: &str) -> String {
     println!("cargo:rerun-if-env-changed=RUBY");
 
     match env::var(format!("RBCONFIG_{}", key)) {
-        Ok(val) => String::from(val),
+        Ok(val) => val,
         Err(_) => {
-            let ruby = env::var_os("RUBY").unwrap_or(OsString::from("ruby"));
+            let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
 
             let config = Command::new(ruby)
                 .arg("--disable-gems")
@@ -117,7 +117,7 @@ fn main() {
         }
     } else if cfg!(unix) {
         println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
-    }
+    } 
 
     let clang_args = vec![
         format!("-I{}", rbconfig("rubyhdrdir")),
