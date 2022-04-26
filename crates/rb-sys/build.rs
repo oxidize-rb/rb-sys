@@ -117,7 +117,7 @@ fn main() {
         }
     } else if cfg!(unix) {
         println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
-    } 
+    }
 
     let clang_args = vec![
         format!("-I{}", rbconfig("rubyhdrdir")),
