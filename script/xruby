@@ -52,5 +52,10 @@ RUBIES.each do |version, ruby_dir|
 
   puts "Running against Ruby #{version}: #{cmd}"
   sleep 1
-  system(env, cmd) || abort("Command failed on Ruby version: #{version}")
+
+  run_cmd = proc do
+    system(env, cmd) || abort("Command failed on Ruby version: #{version}")
+  end
+
+  defined?(Bundler) ? Bundler.with_unbundled_env(&run_cmd) : run_cmd.call
 end

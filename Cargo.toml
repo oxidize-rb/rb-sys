@@ -1,7 +1,5 @@
 [workspace]
 members = [
     "crates/rb-sys",
-]
-exclude = [
     "examples/rust_reverse/ext/rust_reverse",
 ]

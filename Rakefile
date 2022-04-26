@@ -10,7 +10,13 @@ namespace :test do
   task :rubies do
     cargo_args = extra_args || ["--quiet"]
 
-    sh "./script/xruby", "-c", "cargo test #{cargo_args.join(" ")}"
+    cmd = <<~SH
+      gem install bundler:2.3.7
+      bundle check || bundle install -j3
+      cargo test #{cargo_args.join(" ")}
+    SH
+
+    sh "./script/xruby", "-c", cmd
   end
 
   namespace :examples do

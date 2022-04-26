@@ -9,11 +9,13 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+
   - package-ecosystem: "cargo"
-    directory: "/crates/rb-sys"
+    directory: "/"
     schedule:
       interval: "daily"
-  - package-ecosystem: "cargo"
-    directory: "/examples/rust_reverse/ext/rust_reverse"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "daily"

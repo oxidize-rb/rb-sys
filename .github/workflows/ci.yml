@@ -50,14 +50,10 @@ jobs:
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
       - uses: actions-rs/cargo@v1
-        name: 🛠 Cargo build
-        with:
-          command: build
-          args: --locked --release --verbose
-      - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         with:
           command: test
+          args: -p rb-sys
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples
