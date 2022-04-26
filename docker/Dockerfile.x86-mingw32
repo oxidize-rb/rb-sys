@@ -1,0 +1,32 @@
+ARG RCD_TAG
+FROM larskanis/rake-compiler-dock-mri-x86-mingw32:${RCD_TAG}
+
+ENV RUBY_TARGET="x86-mingw32" \
+    RUST_TARGET="i686-pc-windows-gnu" \
+    RUSTUP_DEFAULT_TOOLCHAIN="stable" \
+    PKG_CONFIG_ALLOW_CROSS="1" \
+    RUSTUP_HOME="/usr/local/rustup" \
+    CARGO_HOME="/usr/local/cargo" \
+    PATH="/usr/local/cargo/bin:$PATH"
+
+COPY setup/lib.sh /lib.sh
+
+COPY setup/rustup.sh /
+RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
+
+COPY setup/rubygems.sh /
+RUN /rubygems.sh
+
+RUN bash -c "source /lib.sh && install_packages libclang-dev"
+
+RUN set -ex; \
+    curl -Lo /llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-msvcrt-i686.zip; \
+    mkdir /llvm-mingw; \
+    unzip /llvm-mingw.zip -d /llvm-mingw; \
+    rm /llvm-mingw.zip; 
+
+ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/lib/clang/14.0.0/include" \
+    LIBCLANG_PATH="/usr/lib/llvm-10/lib/"
+
+COPY setup/rubybashrc.sh /
+RUN /rubybashrc.sh
