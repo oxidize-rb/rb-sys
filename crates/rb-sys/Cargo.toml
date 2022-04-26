@@ -1,12 +1,15 @@
 [package]
 name = "rb-sys"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2018"
 links = "ruby"
-# readme = "readme.md"
+readme = "./../../readme.md"
 categories = ["ruby", "external-ffi-bindings"]
 description = "Rust bindings for the CRuby API"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+documentation = "https://docs.rs/rb-sys"
 
 [features]
 default = []

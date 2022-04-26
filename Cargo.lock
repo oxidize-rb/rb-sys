@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "bindgen",
  "libc",
