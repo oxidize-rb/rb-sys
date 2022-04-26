@@ -1,5 +1,4 @@
-ARG RCD_TAG
-FROM larskanis/rake-compiler-dock-mri-arm-linux:${RCD_TAG}
+FROM larskanis/rake-compiler-dock-mri-arm-linux:1.2.1
 
 ENV RUBY_TARGET="arm-linux" \
     RUST_TARGET="arm-unknown-linux-gnueabihf" \

@@ -1,5 +1,4 @@
-ARG RCD_TAG
-FROM larskanis/rake-compiler-dock-mri-x86-linux:${RCD_TAG}
+FROM larskanis/rake-compiler-dock-mri-x86-linux:1.2.1
 
 ENV RUBY_TARGET="x86-linux" \
     RUST_TARGET="i686-unknown-linux-gnu" \
@@ -14,7 +13,7 @@ COPY setup/lib.sh /lib.sh
 RUN source /lib.sh && install_packages libedit libedit-devel g++-multilib
 
 COPY setup/rustup.sh /
-RUN /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN 
+RUN /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 
 RUN set -ex; \
     wget https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/clang-libs-12.0.1-4.module_el8.5.0+1025+93159d6c.i686.rpm \

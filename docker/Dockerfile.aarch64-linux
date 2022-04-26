@@ -1,5 +1,4 @@
-ARG RCD_TAG
-FROM larskanis/rake-compiler-dock-mri-aarch64-linux:${RCD_TAG}
+FROM larskanis/rake-compiler-dock-mri-aarch64-linux:1.2.1
 
 ENV RUBY_TARGET="aarch64-linux" \
     RUST_TARGET="aarch64-unknown-linux-gnu" \

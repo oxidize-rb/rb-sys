@@ -1,5 +1,4 @@
-ARG RCD_TAG
-FROM larskanis/rake-compiler-dock-mri-x64-mingw-ucrt:${RCD_TAG}
+FROM larskanis/rake-compiler-dock-mri-x64-mingw-ucrt:1.2.1
 
 ENV RUBY_TARGET="x64-mingw-ucrt" \
     RUST_TARGET="x86_64-pc-windows-gnu" \
@@ -23,7 +22,7 @@ RUN bash -c "source /lib.sh && install_packages libclang-dev"
 #     curl -Lo /llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-ubuntu-18.04-x86_64.tar.xz; \
 #     mkdir /llvm-mingw; \
 #     tar xf /llvm-mingw.tar.xz -C /llvm-mingw --strip-components=1; \
-#     rm /llvm-mingw.tar.xz; 
+#     rm /llvm-mingw.tar.xz;
 
 ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/x86_64-w64-mingw32 -I/usr/lib/llvm-10/lib/clang/10.0.0/include" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib/"
