@@ -6,6 +6,7 @@ The primary goal of `rb-sys` is to make building native Ruby extensions in Rust 
 
 ## Features
 
+- [GitHub action](https://github.com/oxidize-rb/cross-gem-action) to easily cross compile in CI
 - Integration with [rake-compiler](https://github.com/rake-compiler/rake-compiler)
 - Cross compilation of gems
 - Auto-generated Rust bindings for libruby classes
