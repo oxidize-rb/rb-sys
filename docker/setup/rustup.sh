@@ -15,8 +15,8 @@ main() {
   curl --retry 3 --proto '=https' --tlsv1.2 -sSf "$url" > rustup-init
   chmod +x rustup-init
   ./rustup-init --no-modify-path --default-toolchain "$3" --profile minimal -y || true # i686 has an ignorable error
-  chmod -R a+w $RUSTUP_HOME $CARGO_HOME
-  rustup target add $2
+  chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
+  rustup target add "$2"
 
   builtin popd
   rm -rf "${td}"

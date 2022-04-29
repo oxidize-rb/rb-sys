@@ -23,3 +23,5 @@ RUN /rubygems.sh
 
 RUN bash -c "source /lib.sh && install_packages libclang-dev clang libc6-arm64-cross libc6-dev-arm64-cross"
 
+COPY setup/osxcross-shebang.sh /
+RUN /osxcross-shebang.sh

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 purge_list=()
 
 install_packages() {
