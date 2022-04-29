@@ -64,3 +64,14 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # Test the container
+      - uses: actions/checkout@v3
+        with:
+          repo: "oxidize-rb/cross-gem-action"
+          path: "tmp/cross-gem-action"
+
+      - uses: "oxidize-rb/cross-gem-action@v1"
+        with:
+          platform: ${{ matrix.platform.ruby_target }}
+          directory: tmp/cross-gem-action/__tests__/fixtures/test-gem

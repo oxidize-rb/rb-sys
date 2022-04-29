@@ -38,7 +38,9 @@ desc "Pretty the files"
 task :fmt do
   sh "cargo fmt"
   sh "standardrb --fix"
+  sh "npx prettier --write $(git ls-files '*.yml')"
 end
+task format: [:fmt]
 
 desc "Lint"
 task :lint do
