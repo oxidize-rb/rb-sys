@@ -7,6 +7,7 @@ set -euo pipefail
 source /lib.sh
 
 main() {
+  # shellcheck disable=SC2129
   echo "export PATH=\"/usr/local/cargo/bin:\$PATH\"" >> /etc/rubybashrc
   echo "export RUSTUP_HOME=\"$RUSTUP_HOME\"" >> /etc/rubybashrc
   echo "export CARGO_HOME=\"$CARGO_HOME\"" >> /etc/rubybashrc

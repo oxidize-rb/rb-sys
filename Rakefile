@@ -38,11 +38,14 @@ desc "Pretty the files"
 task :fmt do
   sh "cargo fmt"
   sh "standardrb --fix"
+  sh "npx prettier --write $(git ls-files '*.yml')"
 end
+task format: [:fmt]
 
 desc "Lint"
 task :lint do
   sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}"
   sh "cargo fmt --check"
   sh "cargo clippy"
+  sh "shellcheck $(git ls-files '*.sh')"
 end
