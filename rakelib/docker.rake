@@ -27,6 +27,11 @@ task ".github/workflows/docker.yml" do |t, _args|
   run_gh_workflow t.name
 end
 
+desc "Run CI workflow"
+task ".github/workflows/ci.yml" do |t, _args|
+  run_gh_workflow t.name
+end
+
 namespace :docker do
   DOCKERFILE_PLATFORM_PAIRS.each do |pair|
     dockerfile, arch = pair
