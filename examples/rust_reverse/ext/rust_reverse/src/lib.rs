@@ -6,8 +6,9 @@ use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
 
-ruby_extension!();
+#[cfg(not(windows))]
 ruby_global_allocator!();
+ruby_extension!();
 
 #[no_mangle]
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
