@@ -10,4 +10,10 @@ class TestRustReverse < Minitest::Test
   def test_it_does_something_useful
     assert_equal "dlrow olleh", RustReverse.reverse("hello world")
   end
+
+  def test_stressing_it_out
+    10000.times do
+      assert_equal "a" * 100000, RustReverse.reverse("a" * 100000)
+    end
+  end
 end

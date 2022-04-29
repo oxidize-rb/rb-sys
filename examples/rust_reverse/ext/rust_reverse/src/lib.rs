@@ -1,10 +1,13 @@
+extern crate rb_allocator;
 extern crate rb_sys;
 
+use rb_allocator::*;
 use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
 
 ruby_extension!();
+ruby_global_allocator!();
 
 #[no_mangle]
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {

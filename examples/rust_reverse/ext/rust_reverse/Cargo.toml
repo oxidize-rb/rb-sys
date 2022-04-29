@@ -4,6 +4,7 @@ version = "0.1.0"
 
 [dependencies]
 rb-sys = { path = "./../../../../crates/rb-sys" }
+rb-allocator = { path = "./../../../../crates/rb-allocator" }
 
 [lib]
 crate-type = ["cdylib"]
