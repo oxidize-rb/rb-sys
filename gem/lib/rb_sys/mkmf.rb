@@ -71,12 +71,18 @@ module RbSys
 
     def env_vars(builder)
       lines = builder.build_env.map { |k, v| env_line(k, v) }
-      lines << env_line("CC", RbConfig::MAKEFILE_CONFIG["CC"]) if RbConfig::MAKEFILE_CONFIG["CC"]
-      lines.join("\n")
+      lines << env_line("CC", env_or_makefile_config("CC"))
+      lines << env_line("AR", env_or_makefile_config("AR"))
+      lines.compact.join("\n")
     end
 
     def env_line(k, v)
+      return unless v
       %($(DLLIB): export #{k} = #{v.gsub("\n", '\n')})
+    end
+
+    def env_or_makefile_config(key)
+      ENV[key] || RbConfig::MAKEFILE_CONFIG[key]
     end
 
     def dllib_path(builder)
