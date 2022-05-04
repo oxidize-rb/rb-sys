@@ -17,7 +17,7 @@ ruby-static = []
 link-ruby = []
 
 [dependencies]
-libc = "0.2.112"
+libc = "0.2.125"
 
 [lib]
 doctest = false
