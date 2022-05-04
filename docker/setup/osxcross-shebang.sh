@@ -5,7 +5,7 @@
 main() {
   for file in /opt/osxcross/target/bin/*; do
     if [ "$(file -b --mime-type "$file")" = "text/plain" ]; then
-      printf "#!/bin/sh\n%s" "$(cat "$file")\n" > "$file"
+      printf "#!/bin/sh\n%s\n" "$(cat "$file")" > "$file"
     fi
   done
 
