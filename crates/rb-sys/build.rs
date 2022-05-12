@@ -198,7 +198,6 @@ fn compile_ruby_macros() {
         build.flag(&arg);
     }
 
-
     build.file("src/ruby_macros/ruby_macros.c");
     build.include(format!("{}/include/internal", rbconfig("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
