@@ -15,7 +15,7 @@ documentation = "https://docs.rs/rb-sys"
 default = ["ruby-macros"]
 ruby-static = []
 link-ruby = []
-ruby-macros = []
+ruby-macros = ["cc", "shell-words"]
 
 [dependencies]
 libc = "0.2.125"
@@ -26,5 +26,5 @@ doctest = false
 [build-dependencies]
 bindgen = "0.59"
 pkg-config = "0.3.24"
-cc = "1.0"
-shell-words = "1.1.0"
+cc = { version = "1.0", optional = true }
+shell-words = { version = "1.1.0", optional = true }
