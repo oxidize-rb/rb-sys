@@ -104,7 +104,8 @@ fn is_static() -> bool {
 fn main() {
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
+    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
 
     if cfg!(feature = "link-ruby") {
         let library = setup_ruby_pkgconfig();
@@ -124,11 +125,10 @@ fn main() {
         format!("-I{}", rbconfig("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
+    let cflags = clang_args.clone();
 
-    let bindings = bindgen::Builder::default()
+    let bindings = default_bindgen(clang_args)
         .header("wrapper.h")
-        .use_core()
-        .ctypes_prefix("::libc")
         .allowlist_function("^(onig(enc)?|rb|ruby)_.*")
         .allowlist_function("eaccess")
         .allowlist_function("explicit_bzero")
@@ -171,27 +171,60 @@ fn main() {
         .allowlist_var("_THREAD_SAFE")
         .allowlist_var("__EXTENSIONS__")
         .allowlist_var("__STDC_WANT_LIB_EXT1__")
-        .rustified_enum("*")
         .blocklist_item("ruby_abi_version")
         .blocklist_item("rbimpl_atomic_or")
-        .derive_eq(true)
-        .derive_debug(true)
-        .clang_args(clang_args)
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .generate()
-        .expect("Unable to generate bindings");
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
-
+    write_bindings(bindings, "bindings.rs");
     export_cargo_cfg();
+    if cfg!(feature = "ruby-macros") {
+        compile_ruby_macros(cflags);
+    }
 }
 
 fn rustc_cfg(name: &str, key: &str) {
     println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig(key));
+}
+
+fn compile_ruby_macros(cflags: Vec<String>) {
+    let mut build = cc::Build::new();
+
+    build.compiler(rbconfig("CC"));
+    build.file("src/ruby_macros/ruby_macros.c");
+
+    for flag in cflags {
+        build.flag(&flag);
+    }
+
+    let cflags_str = rbconfig("CFLAGS");
+    let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
+
+    for flag in rb_cflags {
+        build.flag(&flag);
+    }
+
+    build.compile("ruby_macros");
+}
+
+fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
+    bindgen::Builder::default()
+        .use_core()
+        .ctypes_prefix("::libc")
+        .rustified_enum("*")
+        .derive_eq(true)
+        .derive_debug(true)
+        .clang_args(clang_args)
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+}
+
+fn write_bindings(builder: bindgen::Builder, path: &str) {
+    let bindings = builder
+        .generate()
+        .expect(format!("Unable to generate bindings for {}", path).as_str());
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    bindings
+        .write_to_file(out_path.join(path))
+        .expect(format!("Couldn't write bindings for {}", path).as_str());
 }
 
 fn has_ruby_dln_check_abi() -> bool {
