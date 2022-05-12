@@ -2,7 +2,6 @@
 name = "rb-sys"
 version = "0.8.1"
 edition = "2018"
-links = "ruby"
 readme = "readme.md"
 categories = ["ruby", "external-ffi-bindings"]
 description = "Rust bindings for the CRuby API"
