@@ -188,8 +188,17 @@ fn rustc_cfg(name: &str, key: &str) {
 
 fn compile_ruby_macros() {
     let mut build = cc::Build::new();
+    let mut cc_args = shell_words::split(&rbconfig("CC")).expect("CC is not a valid shell word");
 
-    build.compiler(rbconfig("CC"));
+    cc_args.reverse();
+    build.compiler(cc_args.pop().expect("CC is empty"));
+    cc_args.reverse();
+
+    for arg in cc_args {
+        build.flag(&arg);
+    }
+
+
     build.file("src/ruby_macros/ruby_macros.c");
     build.include(format!("{}/include/internal", rbconfig("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
