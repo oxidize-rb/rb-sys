@@ -55,7 +55,7 @@ jobs:
         name: 🧪 Cargo test
         with:
           command: test
-          args: -p rb-sys
+          args: -p rb-sys --features link-ruby
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples
