@@ -1,10 +1,10 @@
 #include "ruby.h"
+#include "ruby/internal/stdbool.h"
 
 bool
 ruby_macros_RB_TYPE_P(VALUE obj, enum ruby_value_type t) {
   return RB_TYPE_P(obj, t);
 };
-
 
 bool
 ruby_macros_RB_INTEGER_TYPE_P(VALUE obj) {
