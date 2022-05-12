@@ -1,9 +1,9 @@
 #include "ruby.h"
-#include "ruby/internal/stdbool.h"
+#include "stdbool.h"
 
 bool
 ruby_macros_RB_TYPE_P(VALUE obj, enum ruby_value_type t) {
-  return RB_TYPE_P(obj, t);
+  return RB_TYPE_P(obj, (int)t);
 };
 
 bool

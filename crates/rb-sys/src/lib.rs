@@ -9,7 +9,16 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(feature = "ruby-macros")]
-pub mod ruby_macros;
+mod ruby_macros;
+
+#[cfg(feature = "ruby-macros")]
+pub mod macros {
+    pub use crate::ruby_macros::*;
+}
+
+pub mod special_consts;
+
+pub use special_consts::*;
 
 pub type Value = VALUE;
 

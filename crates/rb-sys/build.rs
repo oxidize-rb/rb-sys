@@ -191,6 +191,8 @@ fn compile_ruby_macros(cflags: Vec<String>) {
 
     build.compiler(rbconfig("CC"));
     build.file("src/ruby_macros/ruby_macros.c");
+    build.include(format!("{}/include/internal", rbconfig("rubyhdrdir")));
+    build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
 
     for flag in cflags {
         build.flag(&flag);
