@@ -125,7 +125,6 @@ fn main() {
         format!("-I{}", rbconfig("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
-    let cflags = clang_args.clone();
 
     let bindings = default_bindgen(clang_args)
         .header("wrapper.h")
@@ -177,8 +176,9 @@ fn main() {
 
     write_bindings(bindings, "bindings.rs");
     export_cargo_cfg();
+
     if cfg!(feature = "ruby-macros") {
-        compile_ruby_macros(cflags);
+        compile_ruby_macros();
     }
 }
 
@@ -186,17 +186,16 @@ fn rustc_cfg(name: &str, key: &str) {
     println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig(key));
 }
 
-fn compile_ruby_macros(cflags: Vec<String>) {
+fn compile_ruby_macros() {
     let mut build = cc::Build::new();
 
     build.compiler(rbconfig("CC"));
     build.file("src/ruby_macros/ruby_macros.c");
     build.include(format!("{}/include/internal", rbconfig("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
-
-    for flag in cflags {
-        build.flag(&flag);
-    }
+    build.include(rbconfig("rubyhdrdir"));
+    build.include(rbconfig("rubyarchhdrdir"));
+    build.flag_if_supported("-fms-extensions");
 
     let cflags_str = rbconfig("CFLAGS");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");

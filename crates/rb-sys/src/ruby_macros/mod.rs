@@ -80,8 +80,8 @@ extern "C" {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
     use super::*;
+    use crate::*;
 
     #[test]
     fn test_nil_p() {
