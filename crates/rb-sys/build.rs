@@ -110,7 +110,13 @@ fn main() {
     if cfg!(feature = "link-ruby") {
         let library = setup_ruby_pkgconfig();
 
-        for arg in shell_words::split(&rbconfig("LIBRUBYARG")).expect("LIBRUBYARG not split") {
+        let libruby = if is_static() {
+            rbconfig("LIBRUBYARG_STATIC")
+        } else {
+            rbconfig("LIBRUBYARG_SHARED")
+        };
+
+        for arg in shell_words::split(&libruby).expect("cannot split libruby ary") {
             println!("cargo:rustc-link-arg={}", &arg);
         }
 
