@@ -9,6 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 documentation = "https://docs.rs/rb-sys"
+links = "rb" # we name it like this so users can still use magnus / rutie
 
 [features]
 default = ["ruby-macros"]

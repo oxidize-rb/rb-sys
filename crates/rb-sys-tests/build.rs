@@ -1,7 +1,7 @@
 use std::env;
 
 fn main() {
-    export_cargo_cfg();
+    export_cargo_cfg()
 }
 
 fn export_cargo_cfg() {
@@ -13,7 +13,7 @@ fn export_cargo_cfg() {
 }
 
 fn rustc_cfg(name: &str) {
-    let val = env::var(format!("DEP_RUBY_{}", &name.to_uppercase()))
+    let val = env::var(format!("DEP_RB_{}", &name.to_uppercase()))
         .unwrap_or_else(|_| panic!("{} not found", name));
     println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
 }

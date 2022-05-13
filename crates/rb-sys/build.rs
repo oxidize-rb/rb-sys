@@ -48,22 +48,10 @@ fn main() {
     if cfg!(feature = "ruby-macros") {
         compile_ruby_macros();
     }
-
-    std::process::exit(1);
 }
 
 fn link_libruby() {
     let library = setup_ruby_pkgconfig();
-
-    let libruby = if is_static() {
-        rbconfig("LIBRUBYARG_STATIC")
-    } else {
-        rbconfig("LIBRUBYARG_SHARED")
-    };
-
-    for arg in shell_words::split(&libruby).expect("cannot split libruby ary") {
-        println!("cargo:rustc-link-arg={}", &arg);
-    }
 
     println!("cargo:rustc-link-search=native={}", rbconfig("libdir"));
 
