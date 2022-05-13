@@ -191,6 +191,14 @@ fn export_cargo_cfg() {
     println!("cargo:minor={}", rbconfig("MINOR"));
     println!("cargo:teeny={}", rbconfig("TEENY"));
     println!("cargo:patchlevel={}", rbconfig("PATCHLEVEL"));
+
+    if is_static() {
+        println!("cargo:lib={}-static", rbconfig("RUBY_SO_NAME"));
+    } else {
+        println!("cargo:lib={}", rbconfig("RUBY_SO_NAME"));
+    }
+
+    println!("cargo:libdir={}", rbconfig("libdir"));
 }
 
 fn setup_ruby_pkgconfig() -> pkg_config::Library {
@@ -212,19 +220,21 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
         .statik(is_static())
         .to_owned();
 
-    let ruby_name = Path::new(rbconfig("ruby_pc").as_str())
+    config.probe(ruby_lib_name().as_str()).unwrap_or_else(|_| {
+        config
+            .statik(true)
+            .probe(ruby_lib_name().as_str())
+            .unwrap_or_else(|_| panic!("{} not found, needed for pkg-config", ruby_lib_name()))
+    })
+}
+
+fn ruby_lib_name() -> String{
+    Path::new(rbconfig("ruby_pc").as_str())
         .file_stem()
         .unwrap()
         .to_str()
         .unwrap()
-        .to_owned();
-
-    config.probe(ruby_name.as_str()).unwrap_or_else(|_| {
-        config
-            .statik(true)
-            .probe(ruby_name.as_str())
-            .unwrap_or_else(|_| panic!("{} not found, needed for pkg-config", ruby_name))
-    })
+        .to_owned()
 }
 
 fn rbconfig(key: &str) -> String {

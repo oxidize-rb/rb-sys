@@ -1,7 +1,14 @@
 use std::env;
 
 fn main() {
-    export_cargo_cfg()
+    export_cargo_cfg();
+
+    println!("cargo:rustc-link-lib=dylib={}", env::var("DEP_RB_LIB").unwrap());
+    println!("cargo:rustc-link-search=native={}", env::var("DEP_RB_LIBDIR").unwrap());
+
+    if cfg!(unix) {
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", env::var("DEP_RB_LIBDIR").unwrap());
+    }
 }
 
 fn export_cargo_cfg() {
