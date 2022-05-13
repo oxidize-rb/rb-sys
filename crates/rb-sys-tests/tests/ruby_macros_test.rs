@@ -17,12 +17,14 @@ fn test_rb_test() {
 
 #[test]
 fn test_symbol_p() {
-    eprintln!("👋 Got to symbol_p");
+    eprintln!("👋 About to start ruby vm");
     setup_ruby_vm();
 
+    eprintln!("👋 About to call ID2SYM");
     let name = std::ffi::CString::new("foo").unwrap();
     let sym = unsafe { ID2SYM(rb_intern(name.into_raw())) };
 
+    eprintln!("👋 About to call SYMBOL_P");
     assert!(unsafe { SYMBOL_P(sym) });
 }
 
