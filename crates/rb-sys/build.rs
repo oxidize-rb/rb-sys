@@ -109,8 +109,11 @@ fn main() {
 
     if cfg!(feature = "link-ruby") {
         let library = setup_ruby_pkgconfig();
-        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
-        println!("cargo:rustc-link-arg={}", rbconfig("LIBRUBYARG"));
+
+        for arg in shell_words::split(&rbconfig("LIBRUBYARG")).expect("LIBRUBYARG not split") {
+            println!("cargo:rustc-link-arg={}", &arg);
+        }
+
         println!("cargo:rustc-link-search=native={}", rbconfig("libdir"));
 
         // Setup rpath on unix to hardcode the ruby library path

@@ -8,7 +8,7 @@ end
 namespace :test do
   desc "Test against all installed Rubies"
   task :rubies do
-    cargo_args = extra_args || ["--quiet"]
+    cargo_args = extra_args || ["--features", "link-ruby", "--quiet"]
 
     cmd = <<~SH
       gem install bundler:2.3.7

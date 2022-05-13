@@ -54,8 +54,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         with:
-          command: test
-          args: -p rb-sys --features link-ruby
+          command: test -- --nocapture
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples

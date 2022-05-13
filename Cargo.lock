@@ -248,6 +248,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rb-sys-tests"
+version = "0.8.1"
+dependencies = [
+ "rb-sys",
+]
+
+[[package]]
 name = "regex"
 version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
