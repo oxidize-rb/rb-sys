@@ -54,7 +54,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         name: 🧪 Cargo test
         with:
-          command: test -- --nocapture
+          command: test 
+          args: --verbose -- --nocapture
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples
