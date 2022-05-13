@@ -28,6 +28,113 @@ impl Version {
 const SUPPORTED_RUBY_VERSIONS: [Version; 4] =
     [Version(2, 7), Version(3, 0), Version(3, 1), Version(3, 2)];
 
+fn main() {
+    println!("cargo:rerun-if-env-changed=RUBY_VERSION");
+    println!("cargo:rerun-if-env-changed=RUBY");
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
+    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
+
+    if cfg!(feature = "link-ruby") {
+        link_libruby();
+    } else if cfg!(unix) {
+        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
+    }
+
+    generate_bindings();
+    export_cargo_cfg();
+
+    if cfg!(feature = "ruby-macros") {
+        compile_ruby_macros();
+    }
+
+    std::process::exit(1);
+}
+
+fn link_libruby() {
+    let library = setup_ruby_pkgconfig();
+
+    let libruby = if is_static() {
+        rbconfig("LIBRUBYARG_STATIC")
+    } else {
+        rbconfig("LIBRUBYARG_SHARED")
+    };
+
+    for arg in shell_words::split(&libruby).expect("cannot split libruby ary") {
+        println!("cargo:rustc-link-arg={}", &arg);
+    }
+
+    println!("cargo:rustc-link-search=native={}", rbconfig("libdir"));
+
+    // Setup rpath on unix to hardcode the ruby library path
+    if cfg!(unix) {
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", rbconfig("libdir"));
+
+        library.link_paths.iter().for_each(|path| {
+            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
+        });
+    }
+}
+
+fn generate_bindings() {
+    let clang_args = vec![
+        format!("-I{}", rbconfig("rubyhdrdir")),
+        format!("-I{}", rbconfig("rubyarchhdrdir")),
+        "-fms-extensions".to_string(),
+    ];
+
+    let bindings = default_bindgen(clang_args)
+        .header("wrapper.h")
+        .allowlist_function("^(onig(enc)?|rb|ruby)_.*")
+        .allowlist_function("eaccess")
+        .allowlist_function("explicit_bzero")
+        .allowlist_function("setproctitle")
+        .allowlist_type("VALUE")
+        .allowlist_type("Regexp")
+        .allowlist_type("^(Onig|R[A-Z]|re_|rb_|rbimpl_|ruby_|st_).*")
+        .allowlist_var("^(Onig|rb_|ruby_).*")
+        .allowlist_var("^(FMODE_|INTEGER_|HAVE_|ONIG|Onig|RBIMPL_|RB_|RGENGC_|RUBY_|SIGNEDNESS_|SIZEOF_|USE_).*")
+        .allowlist_var("^PRI(.PTRDIFF|.SIZE|.VALUE|.*_PREFIX)$")
+        .allowlist_var("ATAN2_INF_C99")
+        .allowlist_var("BROKEN_BACKTRACE")
+        .allowlist_var("BROKEN_CRYPT")
+        .allowlist_var("CASEFOLD_FILESYSTEM")
+        .allowlist_var("COROUTINE_H")
+        .allowlist_var("DLEXT")
+        .allowlist_var("DLEXT_MAXLEN")
+        .allowlist_var("ENUM_OVER_INT")
+        .allowlist_var("FALSE")
+        .allowlist_var("INCLUDE_RUBY_CONFIG_H")
+        .allowlist_var("INTERNAL_ONIGENC_CASE_FOLD_MULTI_CHAR")
+        .allowlist_var("LIBDIR_BASENAME")
+        .allowlist_var("NEGATIVE_TIME_T")
+        .allowlist_var("PATH_ENV")
+        .allowlist_var("PATH_SEP")
+        .allowlist_var("POSIX_SIGNAL")
+        .allowlist_var("STACK_GROW_DIRECTION")
+        .allowlist_var("STDC_HEADERS")
+        .allowlist_var("ST_INDEX_BITS")
+        .allowlist_var("THREAD_IMPL_H")
+        .allowlist_var("THREAD_IMPL_SRC")
+        .allowlist_var("TRUE")
+        .allowlist_var("UNALIGNED_WORD_ACCESS")
+        .allowlist_var("UNLIMITED_ARGUMENTS")
+        .allowlist_var("_ALL_SOURCE")
+        .allowlist_var("_GNU_SOURCE")
+        .allowlist_var("_POSIX_PTHREAD_SEMANTICS")
+        .allowlist_var("_REENTRANT")
+        .allowlist_var("_TANDEM_SOURCE")
+        .allowlist_var("_THREAD_SAFE")
+        .allowlist_var("__EXTENSIONS__")
+        .allowlist_var("__STDC_WANT_LIB_EXT1__")
+        .blocklist_item("ruby_abi_version")
+        .blocklist_item("rbimpl_atomic_or")
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+    write_bindings(bindings, "bindings.rs");
+}
+
 // Setting up pkgconfig on windows takes a little more work. We need to setup
 // the pkgconfig path in a different way and define the prefix variable.
 #[cfg(target_os = "windows")]
@@ -134,9 +241,10 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 
 fn rbconfig(key: &str) -> String {
     let mut cache = CACHE.lock().unwrap();
+    let cache_key = String::from(key);
 
-    if cache.get(key).is_some() {
-        return cache.get(key).unwrap().to_owned();
+    if cache.get(&cache_key).is_some() {
+        return cache.get(&cache_key).unwrap().to_owned();
     }
 
     println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
@@ -155,7 +263,7 @@ fn rbconfig(key: &str) -> String {
                 .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
             let val = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
-            cache.insert(String::from(key), val.clone());
+            cache.insert(cache_key, val.clone());
             val
         }
     }
@@ -167,103 +275,6 @@ fn is_static() -> bool {
     match env::var("RUBY_STATIC") {
         Ok(val) => val == "true" || val == "1",
         _ => cfg!(feature = "ruby-static"),
-    }
-}
-
-fn main() {
-    println!("cargo:rerun-if-env-changed=RUBY_VERSION");
-    println!("cargo:rerun-if-env-changed=RUBY");
-    println!("cargo:rerun-if-changed=wrapper.h");
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
-
-    if cfg!(feature = "link-ruby") {
-        let library = setup_ruby_pkgconfig();
-
-        let libruby = if is_static() {
-            rbconfig("LIBRUBYARG_STATIC")
-        } else {
-            rbconfig("LIBRUBYARG_SHARED")
-        };
-
-        for arg in shell_words::split(&libruby).expect("cannot split libruby ary") {
-            println!("cargo:rustc-link-arg={}", &arg);
-        }
-
-        println!("cargo:rustc-link-search=native={}", rbconfig("libdir"));
-
-        // Setup rpath on unix to hardcode the ruby library path
-        if cfg!(unix) {
-            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", rbconfig("libdir"));
-
-            library.link_paths.iter().for_each(|path| {
-                println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
-            });
-        }
-    } else if cfg!(unix) {
-        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
-    }
-
-    let clang_args = vec![
-        format!("-I{}", rbconfig("rubyhdrdir")),
-        format!("-I{}", rbconfig("rubyarchhdrdir")),
-        "-fms-extensions".to_string(),
-    ];
-
-    let bindings = default_bindgen(clang_args)
-        .header("wrapper.h")
-        .allowlist_function("^(onig(enc)?|rb|ruby)_.*")
-        .allowlist_function("eaccess")
-        .allowlist_function("explicit_bzero")
-        .allowlist_function("setproctitle")
-        .allowlist_type("VALUE")
-        .allowlist_type("Regexp")
-        .allowlist_type("^(Onig|R[A-Z]|re_|rb_|rbimpl_|ruby_|st_).*")
-        .allowlist_var("^(Onig|rb_|ruby_).*")
-        .allowlist_var("^(FMODE_|INTEGER_|HAVE_|ONIG|Onig|RBIMPL_|RB_|RGENGC_|RUBY_|SIGNEDNESS_|SIZEOF_|USE_).*")
-        .allowlist_var("^PRI(.PTRDIFF|.SIZE|.VALUE|.*_PREFIX)$")
-        .allowlist_var("ATAN2_INF_C99")
-        .allowlist_var("BROKEN_BACKTRACE")
-        .allowlist_var("BROKEN_CRYPT")
-        .allowlist_var("CASEFOLD_FILESYSTEM")
-        .allowlist_var("COROUTINE_H")
-        .allowlist_var("DLEXT")
-        .allowlist_var("DLEXT_MAXLEN")
-        .allowlist_var("ENUM_OVER_INT")
-        .allowlist_var("FALSE")
-        .allowlist_var("INCLUDE_RUBY_CONFIG_H")
-        .allowlist_var("INTERNAL_ONIGENC_CASE_FOLD_MULTI_CHAR")
-        .allowlist_var("LIBDIR_BASENAME")
-        .allowlist_var("NEGATIVE_TIME_T")
-        .allowlist_var("PATH_ENV")
-        .allowlist_var("PATH_SEP")
-        .allowlist_var("POSIX_SIGNAL")
-        .allowlist_var("STACK_GROW_DIRECTION")
-        .allowlist_var("STDC_HEADERS")
-        .allowlist_var("ST_INDEX_BITS")
-        .allowlist_var("THREAD_IMPL_H")
-        .allowlist_var("THREAD_IMPL_SRC")
-        .allowlist_var("TRUE")
-        .allowlist_var("UNALIGNED_WORD_ACCESS")
-        .allowlist_var("UNLIMITED_ARGUMENTS")
-        .allowlist_var("_ALL_SOURCE")
-        .allowlist_var("_GNU_SOURCE")
-        .allowlist_var("_POSIX_PTHREAD_SEMANTICS")
-        .allowlist_var("_REENTRANT")
-        .allowlist_var("_TANDEM_SOURCE")
-        .allowlist_var("_THREAD_SAFE")
-        .allowlist_var("__EXTENSIONS__")
-        .allowlist_var("__STDC_WANT_LIB_EXT1__")
-        .blocklist_item("ruby_abi_version")
-        .blocklist_item("rbimpl_atomic_or")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
-
-    write_bindings(bindings, "bindings.rs");
-    export_cargo_cfg();
-
-    if cfg!(feature = "ruby-macros") {
-        compile_ruby_macros();
     }
 }
 
