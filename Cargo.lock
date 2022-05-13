@@ -242,6 +242,7 @@ version = "0.8.1"
 dependencies = [
  "bindgen",
  "cc",
+ "lazy_static",
  "libc",
  "pkg-config",
  "shell-words",

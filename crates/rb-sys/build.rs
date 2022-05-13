@@ -1,10 +1,32 @@
 extern crate bindgen;
 extern crate pkg_config;
 
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref CACHE: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
+}
+
+#[derive(Debug, PartialEq, PartialOrd)]
+struct Version(u32, u32);
+
+impl Version {
+    pub fn current() -> Version {
+        Self(
+            rbconfig("MAJOR").parse::<i32>().unwrap() as _,
+            rbconfig("MINOR").parse::<i32>().unwrap() as _,
+        )
+    }
+}
+
+const SUPPORTED_RUBY_VERSIONS: [Version; 4] =
+    [Version(2, 7), Version(3, 0), Version(3, 1), Version(3, 2)];
 
 // Setting up pkgconfig on windows takes a little more work. We need to setup
 // the pkgconfig path in a different way and define the prefix variable.
@@ -33,6 +55,47 @@ fn export_cargo_cfg() {
     if has_ruby_dln_check_abi() {
         println!("cargo:rustc-cfg=ruby_dln_check_abi");
     }
+
+    let version = Version::current();
+
+    for v in SUPPORTED_RUBY_VERSIONS {
+        if version < v {
+            println!(r#"cargo:lt_{}_{}=true"#, v.0, v.1);
+        } else {
+            println!(r#"cargo:lt_{}_{}=false"#, v.0, v.1);
+        }
+
+        if version <= v {
+            println!(r#"cargo:lte_{}_{}=true"#, v.0, v.1);
+        } else {
+            println!(r#"cargo:lte_{}_{}=false"#, v.0, v.1);
+        }
+
+        if version == v {
+            println!(r#"cargo:eq_{}_{}=true"#, v.0, v.1);
+        } else {
+            println!(r#"cargo:eq_{}_{}=false"#, v.0, v.1);
+        }
+
+        if version >= v {
+            println!(r#"cargo:gte_{}_{}=true"#, v.0, v.1);
+        } else {
+            println!(r#"cargo:gte_{}_{}=false"#, v.0, v.1);
+        }
+
+        if version > v {
+            println!(r#"cargo:gt_{}_{}=true"#, v.0, v.1);
+        } else {
+            println!(r#"cargo:gt_{}_{}=false"#, v.0, v.1);
+        }
+    }
+
+    println!("cargo:root={}", rbconfig("prefix"));
+    println!("cargo:version={}", rbconfig("ruby_version"));
+    println!("cargo:major={}", rbconfig("MAJOR"));
+    println!("cargo:minor={}", rbconfig("MINOR"));
+    println!("cargo:teeny={}", rbconfig("TEENY"));
+    println!("cargo:patchlevel={}", rbconfig("PATCHLEVEL"));
 }
 
 fn setup_ruby_pkgconfig() -> pkg_config::Library {
@@ -70,9 +133,13 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
 }
 
 fn rbconfig(key: &str) -> String {
+    let mut cache = CACHE.lock().unwrap();
+
+    if cache.get(key).is_some() {
+        return cache.get(key).unwrap().to_owned();
+    }
+
     println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
-    println!("cargo:rerun-if-env-changed=RUBY_VERSION");
-    println!("cargo:rerun-if-env-changed=RUBY");
 
     match env::var(format!("RBCONFIG_{}", key)) {
         Ok(val) => val,
@@ -87,7 +154,9 @@ fn rbconfig(key: &str) -> String {
                 .output()
                 .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
-            String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+            let val = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
+            cache.insert(String::from(key), val.clone());
+            val
         }
     }
 }
@@ -102,6 +171,8 @@ fn is_static() -> bool {
 }
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=RUBY_VERSION");
+    println!("cargo:rerun-if-env-changed=RUBY");
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
