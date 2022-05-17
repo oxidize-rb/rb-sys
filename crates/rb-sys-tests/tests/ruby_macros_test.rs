@@ -1,7 +1,3 @@
-#[path = "./helpers.rs"]
-mod helpers;
-
-use helpers::*;
 use rb_sys::macros::*;
 use rb_sys::*;
 
@@ -17,14 +13,11 @@ fn test_rb_test() {
 
 #[test]
 fn test_symbol_p() {
-    eprintln!("👋 About to start ruby vm");
-    setup_ruby_vm();
-
-    eprintln!("👋 About to call ID2SYM");
     let name = std::ffi::CString::new("foo").unwrap();
-    let sym = unsafe { ID2SYM(rb_intern(name.into_raw())) };
+    let ptr = name.as_ptr();
+    let symbol = unsafe { rb_intern(ptr) };
+    let sym = unsafe { ID2SYM(symbol) };
 
-    eprintln!("👋 About to call SYMBOL_P");
     assert!(unsafe { SYMBOL_P(sym) });
 }
 

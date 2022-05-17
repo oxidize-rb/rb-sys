@@ -43,6 +43,8 @@ jobs:
             rust_toolchain: stable
           - os: windows-2019
             rust_toolchain: stable-x86_64-pc-windows-gnu
+          - os: windows-2022
+            rust_toolchain: stable-x86_64-pc-windows-gnu
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3
@@ -52,10 +54,15 @@ jobs:
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
       - uses: actions-rs/cargo@v1
-        name: 🧪 Cargo test
+        name: 🧪 Cargo test (rb-sys)
         with:
           command: test 
-          args: --verbose -- --nocapture
+          args: -p rb-sys --verbose -- --nocapture
+      - uses: actions-rs/cargo@v1
+        name: 🧪 Cargo test (rb-sys-tests)
+        with:
+          command: test 
+          args: -p rb-sys-tests --verbose -- --nocapture
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples

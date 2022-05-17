@@ -228,7 +228,7 @@ fn setup_ruby_pkgconfig() -> pkg_config::Library {
     })
 }
 
-fn ruby_lib_name() -> String{
+fn ruby_lib_name() -> String {
     Path::new(rbconfig("ruby_pc").as_str())
         .file_stem()
         .unwrap()
@@ -321,13 +321,13 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
 }
 
 fn write_bindings(builder: bindgen::Builder, path: &str) {
-    let bindings = builder
-        .generate()
-        .expect(format!("Unable to generate bindings for {}", path).as_str());
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
+
+    builder
+        .generate()
+        .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
         .write_to_file(out_path.join(path))
-        .expect(format!("Couldn't write bindings for {}", path).as_str());
+        .unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
 }
 
 fn has_ruby_dln_check_abi() -> bool {

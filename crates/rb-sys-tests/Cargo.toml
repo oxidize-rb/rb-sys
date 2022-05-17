@@ -5,6 +5,7 @@ edition = "2018"
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby", "ruby-macros"] } 
+ctor = "0.1"
 
 [features]
 default = ["link-ruby", "ruby-macros"]

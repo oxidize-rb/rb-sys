@@ -41,5 +41,11 @@ macro_rules! ruby_extension {
 #[cfg(not(ruby_dln_check_abi))]
 #[macro_export]
 macro_rules! ruby_extension {
-    () => {};
+    () => {
+        #[no_mangle]
+        #[allow(unused)]
+        pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
+            0
+        }
+    };
 }
