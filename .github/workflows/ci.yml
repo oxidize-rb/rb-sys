@@ -54,15 +54,9 @@ jobs:
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
       - uses: actions-rs/cargo@v1
-        name: 🧪 Cargo test (rb-sys)
+        name: 🧪 Cargo test
         with:
-          command: test 
-          args: -p rb-sys --verbose -- --nocapture
-      - uses: actions-rs/cargo@v1
-        name: 🧪 Cargo test (rb-sys-tests)
-        with:
-          command: test 
-          args: -p rb-sys-tests --verbose -- --nocapture
+          command: test
       - name: 💨 Smoke test
         run: |
           bundle exec rake test:examples

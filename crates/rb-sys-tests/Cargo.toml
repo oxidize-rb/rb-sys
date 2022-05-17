@@ -2,6 +2,7 @@
 name = "rb-sys-tests"
 version = "0.8.1"
 edition = "2018"
+autotests = false
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby", "ruby-macros"] } 

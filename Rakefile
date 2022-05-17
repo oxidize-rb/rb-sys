@@ -8,17 +8,15 @@ end
 namespace :test do
   desc "Test against all installed Rubies"
   task :rubies do
-    ["rb-sys", "rb-sys-tests"].each do |pkg|
-      cargo_args = extra_args || ["--features", "link-ruby", "--quiet"]
+    cargo_args = extra_args || ["--quiet"]
 
-      cmd = <<~SH
-        gem install bundler:2.3.7
-        bundle check || bundle install -j3
-        cargo test -p #{pkg} #{cargo_args.join(" ")}
-      SH
+    cmd = <<~SH
+      gem install bundler:2.3.7
+      bundle check || bundle install -j3
+      cargo test #{cargo_args.join(" ")}
+    SH
 
-      sh "./script/xruby", "-c", cmd
-    end
+    sh "./script/xruby", "-c", cmd
   end
 
   namespace :examples do
