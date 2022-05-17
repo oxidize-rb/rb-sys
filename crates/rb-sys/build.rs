@@ -46,6 +46,10 @@ fn main() {
     export_cargo_cfg();
 
     if cfg!(feature = "ruby-macros") {
+        // Windows does not allow -dynamic_lookup
+        if cfg!(windows) {
+            link_libruby();
+        }
         compile_ruby_macros();
     }
 }
@@ -117,7 +121,8 @@ fn generate_bindings() {
         .allowlist_var("__EXTENSIONS__")
         .allowlist_var("__STDC_WANT_LIB_EXT1__")
         .blocklist_item("ruby_abi_version")
-        .blocklist_item("rbimpl_atomic_or")
+        .blocklist_item("^rbimpl_.*")
+        .blocklist_item("^RBIMPL_.*")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     write_bindings(bindings, "bindings.rs");
