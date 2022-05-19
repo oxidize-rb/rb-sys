@@ -1,6 +1,7 @@
 [package]
 name = "rust-reverse"
 version = "0.1.0"
+autotests = false # set true if you want to use "cargo test"
 
 [dependencies]
 rb-sys = { path = "./../../../../crates/rb-sys" }

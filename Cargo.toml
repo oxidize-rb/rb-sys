@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "crates/rb-sys",
+    "crates/rb-sys-tests",
     "examples/rust_reverse/ext/rust_reverse",
 ]

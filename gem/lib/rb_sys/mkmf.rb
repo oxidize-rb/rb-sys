@@ -72,7 +72,7 @@ module RbSys
     def env_vars(builder)
       lines = builder.build_env.map { |k, v| env_line(k, v) }
       lines << env_line("CC", env_or_makefile_config("CC"))
-      lines << env_line("AR", env_or_makefile_config("AR"))
+      lines << env_line("AR", env_or_makefile_config("AR")) unless env_or_makefile_config("AR") == "libtool -static"
       lines.compact.join("\n")
     end
 

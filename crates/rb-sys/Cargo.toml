@@ -2,7 +2,6 @@
 name = "rb-sys"
 version = "0.8.1"
 edition = "2018"
-links = "ruby"
 readme = "readme.md"
 categories = ["ruby", "external-ffi-bindings"]
 description = "Rust bindings for the CRuby API"
@@ -10,11 +9,13 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 documentation = "https://docs.rs/rb-sys"
+links = "rb" # we name it like this so users can still use magnus / rutie
 
 [features]
-default = []
+default = ["ruby-macros"]
 ruby-static = []
 link-ruby = []
+ruby-macros = ["cc", "shell-words"]
 
 [dependencies]
 libc = "0.2.125"
@@ -25,3 +26,6 @@ doctest = false
 [build-dependencies]
 bindgen = "0.59"
 pkg-config = "0.3.24"
+cc = { version = "1.0", optional = true }
+shell-words = { version = "1.1.0", optional = true }
+lazy_static = "1.4"
