@@ -43,8 +43,6 @@ jobs:
             rust_toolchain: stable
           - os: windows-2019
             rust_toolchain: stable-x86_64-pc-windows-gnu
-          - os: windows-2022
-            rust_toolchain: stable-x86_64-pc-windows-gnu
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3

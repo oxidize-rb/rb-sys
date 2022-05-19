@@ -11,6 +11,7 @@ fn test_rb_test() {
     assert!(!unsafe { RB_TEST(Qnil as u64) });
 }
 
+#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_symbol_p() {
     let name = std::ffi::CString::new("foo").unwrap();

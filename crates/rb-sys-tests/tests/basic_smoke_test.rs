@@ -1,5 +1,6 @@
 use rb_sys::*;
 
+#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn basic_smoke_test() {
     let cstr = std::ffi::CString::new("hello").unwrap();
