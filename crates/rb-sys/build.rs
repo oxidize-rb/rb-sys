@@ -321,8 +321,8 @@ fn compile_ruby_macros() {
     build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
     build.include(rbconfig("rubyhdrdir"));
     build.include(rbconfig("rubyarchhdrdir"));
-    build.flag_if_supported("-fms-extensions");
-    build.flag_if_supported("-Wunused-parameter");
+    build.flag("-fms-extensions");
+    build.flag("-Wunused-parameter");
 
     let cflags_str = rbconfig("CFLAGS");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
