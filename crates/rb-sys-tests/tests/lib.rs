@@ -1,10 +1,15 @@
 extern crate rb_sys;
 
+#[cfg(not(windows_broken_vm_init_3_1))]
 use ctor::ctor;
+
+#[cfg(not(windows_broken_vm_init_3_1))]
 use std::sync::atomic::{AtomicBool, Ordering};
 
+#[cfg(not(windows_broken_vm_init_3_1))]
 static INITED: AtomicBool = AtomicBool::new(false);
 
+#[cfg(not(windows_broken_vm_init_3_1))]
 #[ctor]
 fn vm_init() {
     match INITED.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst) {
