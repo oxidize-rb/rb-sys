@@ -44,6 +44,7 @@ fn main() {
 
     generate_bindings();
     export_cargo_cfg();
+    add_platform_link_args();
 
     if cfg!(feature = "ruby-macros") {
         // Windows does not allow -dynamic_lookup
@@ -66,6 +67,24 @@ fn link_libruby() {
         library.link_paths.iter().for_each(|path| {
             println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
         });
+    }
+}
+
+fn add_platform_link_args() {
+    if cfg!(windows) {
+        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
+        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
+        println!("cargo:rustc-link-arg=-static-libgcc");
+
+        let libruby_arg = if is_static() {
+            rbconfig("LIBRUBYARG_STATIC")
+        } else {
+            rbconfig("LIBRUBYARG")
+        };
+
+        for arg in shell_words::split(&libruby_arg).expect("Could not split libruby arg") {
+            println!("cargo:rustc-link-arg={}", arg);
+        }
     }
 }
 
