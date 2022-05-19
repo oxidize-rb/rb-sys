@@ -27,10 +27,10 @@ fn export_cargo_cfg() {
     rustc_cfg("teeny");
     rustc_cfg("patchlevel");
     rustc_cfg("gte_3_2");
-    rustc_cfg("lt_3_1");
+    rustc_cfg("gte_3_1");
 
     if env::var("DEP_RB_GTE_3_1") == Ok("true".to_string()) && cfg!(windows) {
-        println!("cargo:rustc-cfg=br_windows_broken_vm_init_3_1");
+        println!("cargo:rustc-cfg=windows_broken_vm_init_3_1");
     }
 }
 
