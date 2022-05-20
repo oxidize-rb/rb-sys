@@ -65,7 +65,7 @@ fn test_rstring_ptr() {
 
     let rust_str = unsafe {
         let ptr = RSTRING_PTR(rstring);
-        let len = RARRAY_LEN(rstring);
+        let len = RSTRING_LEN(rstring);
 
         str::from_utf8(slice::from_raw_parts(ptr as _, len as _))
     };
