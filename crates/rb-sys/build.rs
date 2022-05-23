@@ -307,6 +307,7 @@ fn rustc_cfg(name: &str, key: &str) {
 fn compile_ruby_macros() {
     let mut build = cc::Build::new();
     let mut cc_args = shell_words::split(&rbconfig("CC")).expect("CC is not a valid shell word");
+    let libs = shell_words::split(&rbconfig("LIBS")).expect("cannot split LIBS");
 
     cc_args.reverse();
     build.compiler(cc_args.pop().expect("CC is empty"));
@@ -314,6 +315,10 @@ fn compile_ruby_macros() {
 
     for arg in cc_args {
         build.flag(&arg);
+    }
+
+    for lib in libs {
+        build.flag(&lib);
     }
 
     build.file("src/ruby_macros/ruby_macros.c");
