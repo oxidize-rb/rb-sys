@@ -19,5 +19,7 @@ class TestRustReverse < Minitest::Test
     1000.times do
       assert_equal expected, RustReverse.reverse("a" * 10000)
     end
+  ensure
+    GC.stress = false
   end
 end
