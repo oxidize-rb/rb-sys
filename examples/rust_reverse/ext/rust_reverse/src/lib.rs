@@ -1,7 +1,7 @@
 extern crate rb_allocator;
 extern crate rb_sys;
 
-use rb_allocator::{ruby_global_allocator};
+use rb_allocator::ruby_global_allocator;
 use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
