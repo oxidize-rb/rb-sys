@@ -18,9 +18,25 @@ unsafe impl GlobalAlloc for RbAllocator {
         ret
     }
 
+    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+        let ret = System.alloc_zeroed(layout);
+        if !ret.is_null() {
+            rb_gc_adjust_memory_usage(layout.size() as ssize_t)
+        }
+        ret
+    }
+
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         System.dealloc(ptr, layout);
         rb_gc_adjust_memory_usage(0 - (layout.size() as ssize_t));
+    }
+
+    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+        let ret = System.realloc(ptr, layout, new_size);
+        if !ret.is_null() {
+            rb_gc_adjust_memory_usage((new_size - layout.size()) as ssize_t);
+        }
+        ret
     }
 }
 

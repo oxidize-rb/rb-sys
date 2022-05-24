@@ -12,8 +12,12 @@ class TestRustReverse < Minitest::Test
   end
 
   def test_stressing_it_out
-    10000.times do
-      assert_equal "a" * 100000, RustReverse.reverse("a" * 100000)
+    GC.stress = true
+
+    expected = "a" * 10000
+
+    1000.times do
+      assert_equal expected, RustReverse.reverse("a" * 10000)
     end
   end
 end

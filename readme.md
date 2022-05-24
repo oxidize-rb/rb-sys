@@ -1,8 +1,8 @@
 # rb-sys
 
-[![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) [![.github/workflows/ci.yml](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml/badge.svg)](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml)
+![Crates.io](https://img.shields.io/crates/v/rb-sys?style=flat) ![Gem](https://img.shields.io/gem/v/rb_sys?style=flat) [![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) [![.github/workflows/ci.yml](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml/badge.svg)](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml)
 
-The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. It's it not easy, it's a bug.
+The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If it's not easy, it's a bug.
 
 ## Features
 

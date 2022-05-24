@@ -2,5 +2,6 @@
 members = [
     "crates/rb-sys",
     "crates/rb-allocator",
+    "crates/rb-sys-tests",
     "examples/rust_reverse/ext/rust_reverse",
 ]

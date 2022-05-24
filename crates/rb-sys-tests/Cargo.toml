@@ -1,0 +1,20 @@
+[package]
+name = "rb-sys-tests"
+version = "0.8.1"
+edition = "2018"
+autotests = false
+
+[dependencies]
+rb-sys = { path = "../rb-sys", features = ["link-ruby", "ruby-macros"] } 
+ctor = "0.1"
+
+[features]
+default = ["link-ruby", "ruby-macros"]
+link-ruby = ["rb-sys/link-ruby"]
+ruby-macros = ["rb-sys/ruby-macros"]
+
+[[test]]
+name = "rb-sys-tests"
+path = "tests/lib.rs"
+harness = true
+required-features = ["link-ruby", "ruby-macros"]
