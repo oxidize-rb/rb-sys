@@ -71,10 +71,6 @@ fn add_platform_link_args() {
             rbconfig("LIBRUBYARG")
         };
 
-        if rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
-            println!("cargo:rustc-link-arg=-fno-stack-protector");
-        }
-
         for arg in shell_words::split(&libruby_arg).expect("Could not split libruby arg") {
             println!("cargo:rustc-link-arg={}", arg);
         }
@@ -233,7 +229,7 @@ fn compile_ruby_macros() {
     build.flag("-fms-extensions");
     build.flag("-Wunused-parameter");
 
-    let cflags_str = rbconfig("CFLAGS");
+    let cflags_str = rbconfig("cflags");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
 
     for flag in rb_cflags {
