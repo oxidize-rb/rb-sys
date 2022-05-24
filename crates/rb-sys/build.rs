@@ -68,6 +68,10 @@ fn link_libruby() {
             println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
         });
     }
+
+    if cfg!(windows) && rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
+        println!("cargo:rustc-link-arg=-fstack-protector-all");
+    }
 }
 
 fn add_platform_link_args() {
@@ -328,10 +332,6 @@ fn compile_ruby_macros() {
     build.include(rbconfig("rubyarchhdrdir"));
     build.flag("-fms-extensions");
     build.flag("-Wunused-parameter");
-
-    if cfg!(windows) && rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
-        build.flag("-fstack-protector-all");
-    }
 
     let cflags_str = rbconfig("CFLAGS");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
