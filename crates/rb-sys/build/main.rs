@@ -1,17 +1,11 @@
 extern crate bindgen;
 extern crate pkg_config;
 
-use lazy_static::lazy_static;
-use std::collections::HashMap;
-use std::env;
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::Mutex;
+mod rbconfig;
 
-lazy_static! {
-    static ref CACHE: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
-}
+use rbconfig::rbconfig;
+use std::env;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, PartialEq, PartialOrd)]
 struct Version(u32, u32);
@@ -68,16 +62,12 @@ fn link_libruby() {
             println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.display());
         });
     }
-
-    if cfg!(windows) && rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
-        println!("cargo:rustc-link-arg=-fstack-protector-all");
-    }
 }
 
 fn add_platform_link_args() {
     if cfg!(windows) {
-        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
-        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
+        // println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
+        // println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
         println!("cargo:rustc-link-arg=-static-libgcc");
 
         let libruby_arg = if is_static() {
@@ -85,6 +75,10 @@ fn add_platform_link_args() {
         } else {
             rbconfig("LIBRUBYARG")
         };
+
+        if rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
+            println!("cargo:rustc-link-lib=static=ssp");
+        }
 
         for arg in shell_words::split(&libruby_arg).expect("Could not split libruby arg") {
             println!("cargo:rustc-link-arg={}", arg);
@@ -263,36 +257,6 @@ fn ruby_lib_name() -> String {
         .to_str()
         .unwrap()
         .to_owned()
-}
-
-fn rbconfig(key: &str) -> String {
-    let mut cache = CACHE.lock().unwrap();
-    let cache_key = String::from(key);
-
-    if cache.get(&cache_key).is_some() {
-        return cache.get(&cache_key).unwrap().to_owned();
-    }
-
-    println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
-
-    match env::var(format!("RBCONFIG_{}", key)) {
-        Ok(val) => val,
-        Err(_) => {
-            let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
-
-            let config = Command::new(ruby)
-                .arg("--disable-gems")
-                .arg("-rrbconfig")
-                .arg("-e")
-                .arg(format!("print RbConfig::CONFIG['{}']", key))
-                .output()
-                .unwrap_or_else(|e| panic!("ruby not found: {}", e));
-
-            let val = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
-            cache.insert(cache_key, val.clone());
-            val
-        }
-    }
 }
 
 fn is_static() -> bool {
