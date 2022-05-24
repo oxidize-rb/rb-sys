@@ -329,6 +329,10 @@ fn compile_ruby_macros() {
     build.flag("-fms-extensions");
     build.flag("-Wunused-parameter");
 
+    if cfg!(windows) && rbconfig("MAJOR") == "3" && rbconfig("MINOR") == "0" {
+        build.flag("-fstack-protector-all");
+    }
+
     let cflags_str = rbconfig("CFLAGS");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
 
