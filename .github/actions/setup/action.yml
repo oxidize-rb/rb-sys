@@ -21,6 +21,7 @@ runs:
         bundler-cache: true
     - name: 🐛 Print debug info
       run: ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
+      shell: bash
     - name: ⚡ Cache
       uses: actions/cache@v3
       with:
