@@ -2,25 +2,19 @@ extern crate bindgen;
 extern crate pkg_config;
 
 mod rbconfig;
+mod version;
 
 use rbconfig::rbconfig;
 use std::env;
 use std::path::{Path, PathBuf};
+use version::Version;
 
-#[derive(Debug, PartialEq, PartialOrd)]
-struct Version(u32, u32);
-
-impl Version {
-    pub fn current() -> Version {
-        Self(
-            rbconfig("MAJOR").parse::<i32>().unwrap() as _,
-            rbconfig("MINOR").parse::<i32>().unwrap() as _,
-        )
-    }
-}
-
-const SUPPORTED_RUBY_VERSIONS: [Version; 4] =
-    [Version(2, 7), Version(3, 0), Version(3, 1), Version(3, 2)];
+const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
+    Version::new(2, 7),
+    Version::new(3, 0),
+    Version::new(3, 1),
+    Version::new(3, 2),
+];
 
 fn main() {
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -177,33 +171,33 @@ fn export_cargo_cfg() {
 
     for v in SUPPORTED_RUBY_VERSIONS {
         if version < v {
-            println!(r#"cargo:lt_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:lt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lt_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version <= v {
-            println!(r#"cargo:lte_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:lte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lte_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:lte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version == v {
-            println!(r#"cargo:eq_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:eq_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:eq_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version >= v {
-            println!(r#"cargo:gte_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:gte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gte_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:gte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version > v {
-            println!(r#"cargo:gt_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:gt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gt_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:gt_{}_{}=false"#, v.major(), v.minor());
         }
     }
 
