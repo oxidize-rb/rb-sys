@@ -1,32 +1,21 @@
 extern crate bindgen;
 extern crate pkg_config;
 
-use lazy_static::lazy_static;
-use std::collections::HashMap;
+mod bindings;
+mod rbconfig;
+mod version;
+
+use rbconfig::rbconfig;
 use std::env;
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::Mutex;
+use std::path::Path;
+use version::Version;
 
-lazy_static! {
-    static ref CACHE: Mutex<HashMap<String, String>> = Mutex::new(HashMap::new());
-}
-
-#[derive(Debug, PartialEq, PartialOrd)]
-struct Version(u32, u32);
-
-impl Version {
-    pub fn current() -> Version {
-        Self(
-            rbconfig("MAJOR").parse::<i32>().unwrap() as _,
-            rbconfig("MINOR").parse::<i32>().unwrap() as _,
-        )
-    }
-}
-
-const SUPPORTED_RUBY_VERSIONS: [Version; 4] =
-    [Version(2, 7), Version(3, 0), Version(3, 1), Version(3, 2)];
+const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
+    Version::new(2, 7),
+    Version::new(3, 0),
+    Version::new(3, 1),
+    Version::new(3, 2),
+];
 
 fn main() {
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -42,7 +31,7 @@ fn main() {
         println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
     }
 
-    generate_bindings();
+    bindings::generate();
     export_cargo_cfg();
     add_platform_link_args();
 
@@ -72,8 +61,8 @@ fn link_libruby() {
 
 fn add_platform_link_args() {
     if cfg!(windows) {
-        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
-        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
+        // println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
+        // println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
         println!("cargo:rustc-link-arg=-static-libgcc");
 
         let libruby_arg = if is_static() {
@@ -86,65 +75,6 @@ fn add_platform_link_args() {
             println!("cargo:rustc-link-arg={}", arg);
         }
     }
-}
-
-fn generate_bindings() {
-    let clang_args = vec![
-        format!("-I{}", rbconfig("rubyhdrdir")),
-        format!("-I{}", rbconfig("rubyarchhdrdir")),
-        "-fms-extensions".to_string(),
-    ];
-
-    let bindings = default_bindgen(clang_args)
-        .header("wrapper.h")
-        .allowlist_function("^(onig(enc)?|rb|ruby)_.*")
-        .allowlist_function("eaccess")
-        .allowlist_function("explicit_bzero")
-        .allowlist_function("setproctitle")
-        .allowlist_type("VALUE")
-        .allowlist_type("Regexp")
-        .allowlist_type("^(Onig|R[A-Z]|re_|rb_|rbimpl_|ruby_|st_).*")
-        .allowlist_var("^(Onig|rb_|ruby_).*")
-        .allowlist_var("^(FMODE_|INTEGER_|HAVE_|ONIG|Onig|RBIMPL_|RB_|RGENGC_|RUBY_|SIGNEDNESS_|SIZEOF_|USE_).*")
-        .allowlist_var("^PRI(.PTRDIFF|.SIZE|.VALUE|.*_PREFIX)$")
-        .allowlist_var("ATAN2_INF_C99")
-        .allowlist_var("BROKEN_BACKTRACE")
-        .allowlist_var("BROKEN_CRYPT")
-        .allowlist_var("CASEFOLD_FILESYSTEM")
-        .allowlist_var("COROUTINE_H")
-        .allowlist_var("DLEXT")
-        .allowlist_var("DLEXT_MAXLEN")
-        .allowlist_var("ENUM_OVER_INT")
-        .allowlist_var("FALSE")
-        .allowlist_var("INCLUDE_RUBY_CONFIG_H")
-        .allowlist_var("INTERNAL_ONIGENC_CASE_FOLD_MULTI_CHAR")
-        .allowlist_var("LIBDIR_BASENAME")
-        .allowlist_var("NEGATIVE_TIME_T")
-        .allowlist_var("PATH_ENV")
-        .allowlist_var("PATH_SEP")
-        .allowlist_var("POSIX_SIGNAL")
-        .allowlist_var("STACK_GROW_DIRECTION")
-        .allowlist_var("STDC_HEADERS")
-        .allowlist_var("ST_INDEX_BITS")
-        .allowlist_var("THREAD_IMPL_H")
-        .allowlist_var("THREAD_IMPL_SRC")
-        .allowlist_var("TRUE")
-        .allowlist_var("UNALIGNED_WORD_ACCESS")
-        .allowlist_var("UNLIMITED_ARGUMENTS")
-        .allowlist_var("_ALL_SOURCE")
-        .allowlist_var("_GNU_SOURCE")
-        .allowlist_var("_POSIX_PTHREAD_SEMANTICS")
-        .allowlist_var("_REENTRANT")
-        .allowlist_var("_TANDEM_SOURCE")
-        .allowlist_var("_THREAD_SAFE")
-        .allowlist_var("__EXTENSIONS__")
-        .allowlist_var("__STDC_WANT_LIB_EXT1__")
-        .blocklist_item("ruby_abi_version")
-        .blocklist_item("^rbimpl_.*")
-        .blocklist_item("^RBIMPL_.*")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
-
-    write_bindings(bindings, "bindings.rs");
 }
 
 // Setting up pkgconfig on windows takes a little more work. We need to setup
@@ -179,33 +109,33 @@ fn export_cargo_cfg() {
 
     for v in SUPPORTED_RUBY_VERSIONS {
         if version < v {
-            println!(r#"cargo:lt_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:lt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lt_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version <= v {
-            println!(r#"cargo:lte_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:lte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lte_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:lte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version == v {
-            println!(r#"cargo:eq_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:eq_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:eq_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version >= v {
-            println!(r#"cargo:gte_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:gte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gte_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:gte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if version > v {
-            println!(r#"cargo:gt_{}_{}=true"#, v.0, v.1);
+            println!(r#"cargo:gt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gt_{}_{}=false"#, v.0, v.1);
+            println!(r#"cargo:gt_{}_{}=false"#, v.major(), v.minor());
         }
     }
 
@@ -261,36 +191,6 @@ fn ruby_lib_name() -> String {
         .to_owned()
 }
 
-fn rbconfig(key: &str) -> String {
-    let mut cache = CACHE.lock().unwrap();
-    let cache_key = String::from(key);
-
-    if cache.get(&cache_key).is_some() {
-        return cache.get(&cache_key).unwrap().to_owned();
-    }
-
-    println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
-
-    match env::var(format!("RBCONFIG_{}", key)) {
-        Ok(val) => val,
-        Err(_) => {
-            let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
-
-            let config = Command::new(ruby)
-                .arg("--disable-gems")
-                .arg("-rrbconfig")
-                .arg("-e")
-                .arg(format!("print RbConfig::CONFIG['{}']", key))
-                .output()
-                .unwrap_or_else(|e| panic!("ruby not found: {}", e));
-
-            let val = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
-            cache.insert(cache_key, val.clone());
-            val
-        }
-    }
-}
-
 fn is_static() -> bool {
     println!("cargo:rerun-if-env-changed=RUBY_STATIC");
 
@@ -307,6 +207,7 @@ fn rustc_cfg(name: &str, key: &str) {
 fn compile_ruby_macros() {
     let mut build = cc::Build::new();
     let mut cc_args = shell_words::split(&rbconfig("CC")).expect("CC is not a valid shell word");
+    let libs = shell_words::split(&rbconfig("LIBS")).expect("cannot split LIBS");
 
     cc_args.reverse();
     build.compiler(cc_args.pop().expect("CC is empty"));
@@ -316,15 +217,19 @@ fn compile_ruby_macros() {
         build.flag(&arg);
     }
 
+    for lib in libs {
+        build.flag(&lib);
+    }
+
     build.file("src/ruby_macros/ruby_macros.c");
     build.include(format!("{}/include/internal", rbconfig("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig("rubyhdrdir")));
     build.include(rbconfig("rubyhdrdir"));
     build.include(rbconfig("rubyarchhdrdir"));
-    build.flag_if_supported("-fms-extensions");
-    build.flag_if_supported("-Wunused-parameter");
+    build.flag("-fms-extensions");
+    build.flag("-Wunused-parameter");
 
-    let cflags_str = rbconfig("CFLAGS");
+    let cflags_str = rbconfig("cflags");
     let rb_cflags = shell_words::split(&cflags_str).expect("failed to parse CFLAGS");
 
     for flag in rb_cflags {
@@ -332,27 +237,6 @@ fn compile_ruby_macros() {
     }
 
     build.compile("ruby_macros");
-}
-
-fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
-    bindgen::Builder::default()
-        .use_core()
-        .ctypes_prefix("::libc")
-        .rustified_enum("*")
-        .derive_eq(true)
-        .derive_debug(true)
-        .clang_args(clang_args)
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-}
-
-fn write_bindings(builder: bindgen::Builder, path: &str) {
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    builder
-        .generate()
-        .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
-        .write_to_file(out_path.join(path))
-        .unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
 }
 
 fn has_ruby_dln_check_abi() -> bool {

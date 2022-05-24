@@ -76,4 +76,28 @@ extern "C" {
     /// @return     An ::ID of the identical symbol.
     #[link_name = "ruby_macros_SYM2ID"]
     pub fn SYM2ID(obj: ID) -> VALUE;
+
+    /// Queries the contents pointer of the string.
+    ///
+    /// @param[in]  str  String in question.
+    /// @return     Pointer to its contents.
+    /// @pre        `str` must be an instance of ::RString.
+    #[link_name = "ruby_macros_RSTRING_PTR"]
+    pub fn RSTRING_PTR(obj: VALUE) -> *mut ::libc::c_char;
+
+    /// Queries the length of the string.
+    ///
+    /// @param[in]  str  String in question.
+    /// @return     Its length, in bytes.
+    /// @pre        `str` must be an instance of ::RString.
+    #[link_name = "ruby_macros_RSTRING_LEN"]
+    pub fn RSTRING_LEN(obj: VALUE) -> ::libc::c_long;
+
+    /// Queries the length of the array.
+    ///
+    /// @param[in]  a  Array in question.
+    /// @return     Its number of elements.
+    /// @pre        `a` must be an instance of ::RArray.
+    #[link_name = "ruby_macros_RARRAY_LEN"]
+    pub fn RARRAY_LEN(a: VALUE) -> ::libc::c_long;
 }

@@ -10,6 +10,7 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 documentation = "https://docs.rs/rb-sys"
 links = "rb" # we name it like this so users can still use magnus / rutie
+build = "build/main.rs"
 
 [features]
 default = ["ruby-macros"]

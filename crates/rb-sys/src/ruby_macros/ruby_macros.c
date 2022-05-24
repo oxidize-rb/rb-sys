@@ -40,3 +40,18 @@ ID
 ruby_macros_SYM2ID(VALUE obj) {
   return SYM2ID(obj);
 }
+
+char *
+ruby_macros_RSTRING_PTR(VALUE obj) {
+  return RSTRING_PTR(obj);
+}
+
+long
+ruby_macros_RSTRING_LEN(VALUE obj) {
+  return RSTRING_LEN(obj);
+}
+
+long
+ruby_macros_RARRAY_LEN(VALUE obj) {
+  return RARRAY_LEN(obj);
+}
