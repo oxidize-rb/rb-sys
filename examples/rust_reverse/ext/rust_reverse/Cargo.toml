@@ -5,6 +5,7 @@ autotests = false # set true if you want to use "cargo test"
 
 [dependencies]
 rb-sys = { path = "./../../../../crates/rb-sys" }
+rb-allocator = { path = "./../../../../crates/rb-allocator" }
 
 [lib]
 crate-type = ["cdylib"]
