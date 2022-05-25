@@ -1,6 +1,6 @@
 [package]
 name = "rb-allocator"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2018"
 readme = "readme.md"
 categories = ["memory-management"]
@@ -11,5 +11,4 @@ homepage = "https://github.com/oxidize-rb/rb-sys"
 documentation = "https://docs.rs/rb-allocator"
 
 [dependencies]
-# rb-sys = { path = "../rb-sys", version = "0.8.1" }
-rb-sys = { path = "../rb-sys", version = "0.8.1" }
+rb-sys = { path = "../rb-sys", version = "0.9.0" }
