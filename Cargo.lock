@@ -186,6 +186,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "linkify"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28d9967eb7d0bc31c39c6f52e8fce42991c0cd1f7a2078326f0b7a399a584c8d"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "log"
 version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -261,6 +270,7 @@ dependencies = [
  "cc",
  "lazy_static",
  "libc",
+ "linkify",
  "pkg-config",
  "shell-words",
 ]

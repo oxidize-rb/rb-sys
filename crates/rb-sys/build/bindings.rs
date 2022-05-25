@@ -1,5 +1,9 @@
 use super::rbconfig;
+use linkify::{self, LinkFinder};
 use std::env;
+use std::fs::File;
+use std::io::{self, BufRead, Write};
+use std::path::Path;
 use std::path::PathBuf;
 
 pub fn generate() {
@@ -58,7 +62,42 @@ pub fn generate() {
         .blocklist_item("^RBIMPL_.*")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
-    write_bindings(bindings, "bindings.rs");
+    write_bindings(bindings, "bindings-raw.rs");
+    clean_docs();
+}
+
+fn clean_docs() {
+    let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
+    let mut outfile =
+        File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs")).unwrap();
+    let lines = read_lines(&path).unwrap();
+
+    for line in lines {
+        let line = line.unwrap();
+
+        if line.contains("@deprecated") {
+            outfile.write_all(b"#[deprecated]\n").unwrap();
+        }
+
+        if !line.contains("#[doc") {
+            outfile.write_all(line.as_bytes()).unwrap();
+        } else {
+            let finder = LinkFinder::new();
+            let mut outline = line.to_owned();
+            let links: Vec<_> = finder.links(&line).collect();
+
+            for link in links {
+                outline.replace_range(
+                    link.start()..link.end(),
+                    format!("<{}>", link.as_str()).as_str(),
+                );
+            }
+
+            outfile.write_all(outline.as_bytes()).unwrap();
+        }
+
+        outfile.write_all("\n".as_bytes()).unwrap();
+    }
 }
 
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
@@ -80,4 +119,14 @@ fn write_bindings(builder: bindgen::Builder, path: &str) {
         .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
         .write_to_file(out_path.join(path))
         .unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
+}
+
+// The output is wrapped in a Result to allow matching on errors
+// Returns an Iterator to the Reader of the lines of the file.
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
