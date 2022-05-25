@@ -34,7 +34,7 @@ unsafe impl GlobalAlloc for RbAllocator {
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let ret = System.realloc(ptr, layout, new_size);
         if !ret.is_null() {
-            rb_gc_adjust_memory_usage((new_size - layout.size()) as ssize_t);
+            rb_gc_adjust_memory_usage((new_size as isize - layout.size() as isize) as ssize_t);
         }
         ret
     }

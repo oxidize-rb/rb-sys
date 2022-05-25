@@ -4,7 +4,7 @@
 # over the `cargo rustc` command which takes care of building Rust code in a way
 # that Ruby can use.
 class Gem::Ext::CargoBuilder < Gem::Ext::Builder
-  attr_accessor :spec, :runner, :profile
+  attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args
 
   def initialize(spec)
     require "rubygems/command"
@@ -12,7 +12,11 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
 
     @spec = spec
     @runner = self.class.method(:run)
-    @profile = :release
+    @profile = ENV.fetch("CARGO_BUILD_PROFILE", :release).to_sym
+    @env = {}
+    @features = []
+    @target = ENV['CARGO_BUILD_TARGET']
+    @extra_rustc_args = []
   end
 
   def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)
@@ -37,7 +41,7 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
   def build_env
     build_env = rb_config_env
     build_env["RUBY_STATIC"] = "true" if ruby_static? && ENV.key?("RUBY_STATIC")
-    build_env
+    build_env.merge(env)
   end
 
   def cargo_command(cargo_dir, dest_path, args = [])
@@ -46,23 +50,25 @@ class Gem::Ext::CargoBuilder < Gem::Ext::Builder
 
     cmd = []
     cmd += [cargo, "rustc"]
-    cmd += ["--target", ENV["CARGO_BUILD_TARGET"]] if ENV["CARGO_BUILD_TARGET"]
+    cmd += ["--target", target] if target
     cmd += ["--target-dir", dest_path]
+    cmd += ["--features", features.join(",")] unless features.empty?
     cmd += ["--manifest-path", manifest]
     cmd += ["--lib"]
     cmd += ["--profile", profile.to_s]
-    cmd += ["--locked"] if profile == :release
+    cmd += ["--locked"] if profile.to_s == 'release'
     cmd += Gem::Command.build_args
     cmd += args
     cmd += ["--"]
     cmd += [*cargo_rustc_args(dest_path)]
+    cmd += extra_rustc_args
     cmd
   end
 
   def cargo_dylib_path(dest_path)
     prefix = so_ext == "dll" ? "" : "lib"
     path_parts = [dest_path]
-    path_parts << ENV["CARGO_BUILD_TARGET"] if ENV["CARGO_BUILD_TARGET"]
+    path_parts << target if target 
     path_parts += [profile_target_directory, "#{prefix}#{cargo_crate_name}.#{so_ext}"]
     File.join(*path_parts)
   end
