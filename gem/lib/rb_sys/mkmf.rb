@@ -6,8 +6,28 @@ require_relative "./../../vendor/rubygems/ext/cargo_builder"
 
 # Root module
 module RbSys
-  # Helpers for creating a Ruby compatible makefile for Rust
+  # Helper class for creating Rust Makefiles
   module Mkmf
+    # Helper for building Rust extensions by creating a Ruby compatible makefile
+    # for Rust. By using this class, your rust extension will be 100% compatible
+    # with the rake-compiler gem, which allows for easy cross compilation.
+    #
+    # @example Basic
+    #   require 'mkmf'
+    # . require 'rb_sys/mkmf'
+    #
+    # . create_rust_makefile("my_extension") #=> Generate a Makefile in the current directory
+    #
+    # @example Configure a custom build profile
+    #   require 'mkmf'
+    # . require 'rb_sys/mkmf'
+    #
+    # . create_rust_makefile("my_extension") do |r|
+    # .   # All of these are optional
+    # .   r.env = { 'FOO' => 'bar' }
+    # .   r.profile = ENV.fetch('CARGO_BUILD_PROFILE', :dev).to_sym
+    # .   r.features = %w[some_cargo_feature]
+    # . end
     def create_rust_makefile(target, srcprefix = nil, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)

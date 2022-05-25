@@ -3,17 +3,6 @@
 # This class is used by rubygems to build Rust extensions. It is a thin-wrapper
 # over the `cargo rustc` command which takes care of building Rust code in a way
 # that Ruby can use.
-#
-# @example
-#   require 'mkmf'
-# . require 'rb_sys/mkmf'
-#
-# . create_rust_makefile("my_extension") do |r|
-# .   # All of these are optional
-# .   r.env = { 'FOO' => 'bar' }
-# .   r.profile = ENV.fetch('BUILD_ENV', 'release')
-# .   r.features = %w[some_cargo_feature]
-# . end
 class Gem::Ext::CargoBuilder < Gem::Ext::Builder
   attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args
 
