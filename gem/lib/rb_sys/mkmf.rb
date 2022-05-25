@@ -8,7 +8,7 @@ require_relative "./../../vendor/rubygems/ext/cargo_builder"
 module RbSys
   # Helpers for creating a Ruby compatible makefile for Rust
   module Mkmf
-    def create_rust_makefile(target, srcprefix = nil)
+    def create_rust_makefile(target, srcprefix = nil, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"
@@ -18,6 +18,9 @@ module RbSys
 
       spec = Struct.new(:name, :metadata).new(target, {})
       builder = Gem::Ext::CargoBuilder.new(spec)
+
+      yield builder if blk
+
       srcprefix ||= "$(srcdir)/#{srcprefix}".chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
 

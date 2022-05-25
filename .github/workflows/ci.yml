@@ -57,5 +57,7 @@ jobs:
           command: test
           args: --workspace --exclude rust-reverse
       - name: 💨 Smoke test
+        env:
+          CARGO_BUILD_PROFILE: "release"
         run: |
           bundle exec rake test:examples
