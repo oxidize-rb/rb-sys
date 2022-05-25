@@ -1,3 +1,5 @@
+use std::os::raw::{c_char, c_long};
+
 use crate::{ruby_value_type, ID, VALUE};
 
 extern "C" {
@@ -83,7 +85,7 @@ extern "C" {
     /// @return     Pointer to its contents.
     /// @pre        `str` must be an instance of ::RString.
     #[link_name = "ruby_macros_RSTRING_PTR"]
-    pub fn RSTRING_PTR(obj: VALUE) -> *mut ::libc::c_char;
+    pub fn RSTRING_PTR(obj: VALUE) -> *mut c_char;
 
     /// Queries the length of the string.
     ///
@@ -91,7 +93,7 @@ extern "C" {
     /// @return     Its length, in bytes.
     /// @pre        `str` must be an instance of ::RString.
     #[link_name = "ruby_macros_RSTRING_LEN"]
-    pub fn RSTRING_LEN(obj: VALUE) -> ::libc::c_long;
+    pub fn RSTRING_LEN(obj: VALUE) -> c_long;
 
     /// Queries the length of the array.
     ///
@@ -99,5 +101,5 @@ extern "C" {
     /// @return     Its number of elements.
     /// @pre        `a` must be an instance of ::RArray.
     #[link_name = "ruby_macros_RARRAY_LEN"]
-    pub fn RARRAY_LEN(a: VALUE) -> ::libc::c_long;
+    pub fn RARRAY_LEN(a: VALUE) -> c_long;
 }

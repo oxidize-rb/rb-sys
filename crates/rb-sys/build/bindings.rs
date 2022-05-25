@@ -103,7 +103,6 @@ fn clean_docs() {
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
-        .ctypes_prefix("::libc")
         .rustified_enum("*")
         .derive_eq(true)
         .derive_debug(true)
