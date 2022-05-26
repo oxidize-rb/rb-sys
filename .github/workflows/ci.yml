@@ -51,13 +51,12 @@ jobs:
           rust_toolchain: ${{ matrix.sys.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
-      - uses: actions-rs/cargo@v1
-        name: 🧪 Cargo test
-        with:
-          command: test
-          args: --workspace --exclude rust-reverse
+      - name: 🧪 Cargo test
+        run: bundle exec rake test:cargo
+      - name: 💎 Gem test
+        run: bundle exec rake test:gem
       - name: 💨 Smoke test
         env:
-          CARGO_BUILD_PROFILE: "release"
+          PROFILE: "release"
         run: |
           bundle exec rake test:examples

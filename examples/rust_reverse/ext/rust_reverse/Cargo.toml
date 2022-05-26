@@ -10,3 +10,6 @@ rb-allocator = { path = "./../../../../crates/rb-allocator" }
 
 [lib]
 crate-type = ["cdylib"]
+
+[features]
+test-feature = []

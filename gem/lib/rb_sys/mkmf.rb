@@ -2,7 +2,7 @@
 
 require "rubygems/ext"
 require "shellwords"
-require_relative "./../../vendor/rubygems/ext/cargo_builder"
+require_relative "cargo_builder"
 
 # Root module
 module RbSys
@@ -37,17 +37,21 @@ module RbSys
       end
 
       spec = Struct.new(:name, :metadata).new(target, {})
-      builder = Gem::Ext::CargoBuilder.new(spec)
+      builder = CargoBuilder.new(spec)
 
       yield builder if blk
 
       srcprefix ||= "$(srcdir)/#{srcprefix}".chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
 
+      full_cargo_command = cargo_command(srcdir, builder)
+      gsub_cargo_command!(full_cargo_command, builder: builder)
+
       # rubocop:disable Style/GlobalVars
       make_install = <<~MAKE
+        RB_SYS_CARGO_PROFILE ?= #{builder.profile}
+        RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
         target_prefix = #{target_prefix}
-        CARGO_PROFILE = release
         CLEANLIBS = $(RUSTLIB) $(DLLIB)
         DISTCLEANDIRS = target/
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
@@ -62,10 +66,10 @@ module RbSys
         FORCE: ;
 
         $(DLLIB): FORCE
-        \t#{cargo_command(srcdir, builder)}
+        \t#{full_cargo_command}
         \t$(COPY) "$(RUSTLIB)" $@
 
-        install: $(DLLIB)
+        install: $(DLLIB) Makefile
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
         all: #{$extout ? "install" : "$(DLLIB)"}
@@ -110,6 +114,12 @@ module RbSys
 
     def dllib_path(builder)
       builder.cargo_dylib_path(File.join(Dir.pwd, "target"))
+    end
+
+    def gsub_cargo_command!(cargo_command, builder:)
+      cargo_command.gsub!("--profile #{builder.profile}", "--profile $(RB_SYS_CARGO_PROFILE)")
+      cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
+      cargo_command
     end
   end
 end

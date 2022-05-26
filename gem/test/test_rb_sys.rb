@@ -32,7 +32,8 @@ class TestRbSys < Minitest::Test
       b.profile = :dev
     end
 
-    assert_match(/--profile dev/, makefile.read)
+    assert(makefile.read.include?("RB_SYS_CARGO_PROFILE ?= dev"), "Expected to find RB_SYS_CARGO_PROFILE ?= dev")
+    assert_match(/--profile \$\(RB_SYS_CARGO_PROFILE\)/, makefile.read)
   end
 
   def test_uses_extra_features
@@ -40,7 +41,8 @@ class TestRbSys < Minitest::Test
       b.features = ["foo", "bar"]
     end
 
-    assert_match(/--features foo,bar/, makefile.read)
+    assert(makefile.read.include?("RB_SYS_CARGO_FEATURES ?= foo,bar"), "Expected to find RB_SYS_CARGO_PROFILE ?= foo,bar")
+    assert_match(/--features \$\(RB_SYS_CARGO_FEATURES\)/, makefile.read)
   end
 
   def test_uses_extra_rustc_args
