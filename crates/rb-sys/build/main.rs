@@ -21,9 +21,12 @@ fn main() {
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-env-changed=RUBY");
     println!("cargo:rerun-if-changed=wrapper.h");
-    println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
     println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
+
+    for file in std::fs::read_dir("build").unwrap() {
+        println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
+    }
 
     if cfg!(feature = "link-ruby") {
         link_libruby();

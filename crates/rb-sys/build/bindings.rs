@@ -81,10 +81,6 @@ fn clean_docs() {
             outfile.write_all(b"#[deprecated]\n").unwrap();
         }
 
-        if line.contains("pub const RUBY_FL_DUPPED") {
-            continue;
-        }
-
         if !line.contains("#[doc") {
             outfile.write_all(line.as_bytes()).unwrap();
         } else {
