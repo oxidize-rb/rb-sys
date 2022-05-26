@@ -60,6 +60,8 @@ pub fn generate() {
         .blocklist_item("ruby_abi_version")
         .blocklist_item("^rbimpl_.*")
         .blocklist_item("^RBIMPL_.*")
+        .blocklist_item("ruby_fl_type")
+        .blocklist_item("RData")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     write_bindings(bindings, "bindings-raw.rs");

@@ -6,6 +6,12 @@ def extra_args
 end
 
 namespace :test do
+  desc "Run cargo test against current Ruby"
+  task :cargo do
+    cargo_args = extra_args || ["--quiet", "--workspace", "--exclude", "rust-reverse"]
+    sh "cargo", "test", *cargo_args
+  end
+
   desc "Test against all installed Rubies"
   task :rubies do
     cargo_args = extra_args || ["--quiet"]
@@ -29,10 +35,17 @@ namespace :test do
 
   desc "Test all examples against all installed Rubies"
   task examples: ["test:examples:rust_reverse"]
+
+  desc "Run unit tests for the gem"
+  task :gem do
+    Dir.chdir("gem") do
+      sh "rake"
+    end
+  end
 end
 
 desc "Run all tests"
-task test: ["test:rubies", "test:examples"]
+task test: ["test:cargo", "test:gem", "test:examples"]
 
 desc "Pretty the files"
 task :fmt do
