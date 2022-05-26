@@ -60,6 +60,8 @@ pub fn generate() {
         .blocklist_item("ruby_abi_version")
         .blocklist_item("^rbimpl_.*")
         .blocklist_item("^RBIMPL_.*")
+        .blocklist_item("ruby_fl_type")
+        .blocklist_item("RData")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     write_bindings(bindings, "bindings-raw.rs");
@@ -77,6 +79,10 @@ fn clean_docs() {
 
         if line.contains("@deprecated") {
             outfile.write_all(b"#[deprecated]\n").unwrap();
+        }
+
+        if line.contains("pub const RUBY_FL_DUPPED") {
+            continue;
         }
 
         if !line.contains("#[doc") {
