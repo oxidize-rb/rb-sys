@@ -1,4 +1,4 @@
-use super::rbconfig;
+use super::RBCONFIG;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct Version(u32, u32);
@@ -18,8 +18,8 @@ impl Version {
 
     pub fn current() -> Version {
         Self(
-            rbconfig("MAJOR").parse::<i32>().unwrap() as _,
-            rbconfig("MINOR").parse::<i32>().unwrap() as _,
+            RBCONFIG.get("MAJOR").parse::<i32>().unwrap() as _,
+            RBCONFIG.get("MINOR").parse::<i32>().unwrap() as _,
         )
     }
 }
