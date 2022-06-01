@@ -1,6 +1,6 @@
 [package]
 name = "rb-allocator"
-version = "0.9.0"
+version = "0.9.1"
 edition = "2018"
 readme = "readme.md"
 categories = ["memory-management"]
@@ -12,4 +12,4 @@ documentation = "https://docs.rs/rb-allocator"
 autotests = false
 
 [dependencies]
-rb-sys = { path = "../rb-sys", version = "0.9.0" }
+rb-sys = { path = "../rb-sys", version = "0.9.1" }
