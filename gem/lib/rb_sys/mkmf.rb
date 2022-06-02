@@ -89,6 +89,7 @@ module RbSys
 
         install: $(DLLIB) Makefile
         \t$(ECHO) installing $(DLLIB)
+        \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(Q) $(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
         all: #{$extout ? "install" : "$(DLLIB)"}
