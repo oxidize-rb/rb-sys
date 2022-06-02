@@ -257,14 +257,14 @@ dependencies = [
 
 [[package]]
 name = "rb-allocator"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "rb-sys",
 ]
 
 [[package]]
 name = "rb-sys"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "bindgen",
  "cc",
@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "ctor",
  "rb-sys",

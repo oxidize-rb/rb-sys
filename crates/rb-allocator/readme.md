@@ -10,7 +10,7 @@ A wrapper around the [Rust system allocator](https://doc.rust-lang.org/std/alloc
 
    ```toml
    [dependencies]
-   rb-allocator = "0.9.1"
+   rb-allocator = "0.9.2"
    ```
 
 2. Use the provided `ruby_global_allocator!` macro
