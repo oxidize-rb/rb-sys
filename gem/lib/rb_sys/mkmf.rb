@@ -53,9 +53,9 @@ module RbSys
         RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
 
         ifeq ($(RB_SYS_CARGO_PROFILE),dev)
-          RB_SYS_TARGET_DIR ?= debug
+          RB_SYS_TARGET_DIR = debug
         else
-          RB_SYS_TARGET_DIR ?= $(RB_SYS_CARGO_PROFILE)
+          RB_SYS_TARGET_DIR = #{builder.profile}
         endif
 
         target_prefix = #{target_prefix}
