@@ -52,6 +52,8 @@ task :fmt do
   sh "cargo fmt"
   sh "standardrb --fix"
   sh "npx prettier --write $(git ls-files '*.yml')"
+  md_files = `git ls-files '*.md'`.split("\n").select { |f| File.exist?(f) }
+  sh "npx", "prettier", "--write", "--print-width=120", "--prose-wrap=always", *md_files
 end
 task format: [:fmt]
 
