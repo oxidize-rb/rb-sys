@@ -67,13 +67,18 @@ module RbSys
         RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        DEFFILE = $(TARGET)-$(arch).def
+        TARGET_DIR = target/$(RB_SYS_TARGET_DIR)
+        DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
         #{env_vars(builder)}
 
         FORCE: ;
 
-        $(DEFFILE):
+        $(TARGET_DIR):
+        \t$(ECHO) creating target directory \\($(@)\\)
+        \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
+
+        $(DEFFILE): $(TARGET_DIR)
         \t$(ECHO) generating $(@)
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
 
