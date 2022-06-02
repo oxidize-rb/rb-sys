@@ -307,7 +307,11 @@ module RbSys
     end
 
     def profile_target_directory
-      "$(RB_SYS_TARGET_DIR)"
+      case profile
+      when :release then "release"
+      when :dev then "debug"
+      else raise "unknown target directory for profile: #{profile}"
+      end
     end
 
     # Error raised when no cdylib artifact was created
