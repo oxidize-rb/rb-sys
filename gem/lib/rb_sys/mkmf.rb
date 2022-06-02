@@ -67,7 +67,7 @@ module RbSys
         RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        TARGET_DIR = target/$(RB_SYS_TARGET_DIR)
+        TARGET_DIR = #{Dir.pwd}/target/$(RB_SYS_TARGET_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
         #{env_vars(builder)}
@@ -141,7 +141,6 @@ module RbSys
       cargo_command.gsub!("--profile #{builder.profile}", "--profile $(RB_SYS_CARGO_PROFILE)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{/target/\w+/}, "/target/$(RB_SYS_TARGET_DIR)/")
-      cargo_command.gsub!("#{Dir.pwd}/", "")
       cargo_command
     end
   end
