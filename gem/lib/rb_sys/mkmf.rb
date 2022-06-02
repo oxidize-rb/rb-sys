@@ -47,7 +47,7 @@ module RbSys
       full_cargo_command = cargo_command(srcdir, builder)
 
       # rubocop:disable Style/GlobalVars
-      make_install = <<~MAKE
+      make_install = +<<~MAKE
         RB_SYS_CARGO_PROFILE ?= #{builder.profile}
         RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
         CARGO ?= cargo
