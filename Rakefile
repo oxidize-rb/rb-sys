@@ -62,3 +62,13 @@ task :lint do
   sh "cargo clippy"
   sh "shellcheck $(git ls-files '*.sh')"
 end
+
+desc "Bump the gem version"
+task :bump do
+  printf "What is the new version?: "
+  new_version = $stdin.gets.chomp
+  sh "fastmod", "--extensions=toml", "^version = \".*\"", "version = #{new_version.inspect}"
+  sh "fastmod", "--extensions=rb", "^  VERSION = \".*\"", "  VERSION = #{new_version.inspect}"
+  sh "cargo check"
+  sh "bundle"
+end
