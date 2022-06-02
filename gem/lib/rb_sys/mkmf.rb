@@ -59,25 +59,32 @@ module RbSys
         endif
 
         target_prefix = #{target_prefix}
-        CLEANLIBS = $(RUSTLIB) $(DLLIB)
+        TARGET_NAME = #{target[/\A\w+/]}
+        TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
+        CLEANLIBS = $(RUSTLIB) $(DLLIB) $(DEFFILE)
         DISTCLEANDIRS = target/
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-
+        DEFFILE = $(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
-
         #{env_vars(builder)}
 
         FORCE: ;
 
-        $(DLLIB): FORCE
-        \t#{full_cargo_command}
-        \t$(COPY) "$(RUSTLIB)" $@
+        $(DEFFILE):
+        \t$(ECHO) generating $(@)
+        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+
+        $(DLLIB): $(DEFFILE) FORCE
+        \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
+        \t$(Q) #{full_cargo_command}
+        \t$(Q) $(COPY) "$(RUSTLIB)" $@
 
         install: $(DLLIB) Makefile
-        \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
+        \t$(ECHO) installing $(DLLIB)
+        \t$(Q) $(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE

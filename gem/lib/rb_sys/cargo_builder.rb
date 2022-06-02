@@ -13,6 +13,7 @@ module RbSys
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"]
       @extra_rustc_args = []
+      @dry_run = true
     end
 
     def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)
@@ -217,9 +218,11 @@ module RbSys
       deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
       export_prefix = makefile_config("EXPORT_PREFIX") || ""
 
-      File.open(deffile_path, "w") do |f|
-        f.puts "EXPORTS"
-        f.puts "#{export_prefix.strip}Init_#{spec.name}"
+      unless dry_run
+        File.open(deffile_path, "w") do |f|
+          f.puts "EXPORTS"
+          f.puts "#{export_prefix.strip}Init_#{spec.name}"
+        end
       end
 
       deffile_path

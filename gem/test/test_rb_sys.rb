@@ -61,6 +61,13 @@ class TestRbSys < Minitest::Test
     assert_match(/--target wasm32-unknown-unknown/, makefile.read)
   end
 
+  def test_generates_deffile
+    makefile = create_makefile.read
+
+    assert makefile.include?("DEFFILE = $(TARGET)-$(arch).def")
+    assert makefile.include?("$(DEFFILE):")
+  end
+
   private
 
   def create_makefile(&blk)
