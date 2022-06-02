@@ -1,6 +1,6 @@
 module RbSys
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args
+    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run
 
     def initialize(spec)
       require "rubygems/command"
