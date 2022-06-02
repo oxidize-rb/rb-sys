@@ -51,6 +51,13 @@ module RbSys
       make_install = <<~MAKE
         RB_SYS_CARGO_PROFILE ?= #{builder.profile}
         RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
+
+        ifeq ($(RB_SYS_CARGO_PROFILE),dev)
+          RB_SYS_TARGET_DIR ?= debug
+        else
+          RB_SYS_TARGET_DIR ?= $(RB_SYS_CARGO_PROFILE)
+        endif
+
         target_prefix = #{target_prefix}
         CLEANLIBS = $(RUSTLIB) $(DLLIB)
         DISTCLEANDIRS = target/
