@@ -53,7 +53,6 @@ module RbSys
       cmd += ["--manifest-path", manifest]
       cmd += ["--lib"]
       cmd += ["--profile", profile.to_s]
-      cmd += ["--locked"] if profile.to_s == "release"
       cmd += Gem::Command.build_args
       cmd += args
       cmd += ["--"]
