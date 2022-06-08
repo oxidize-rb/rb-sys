@@ -1,4 +1,4 @@
-use std::{env, process::Command, sync::Arc};
+use std::{collections::HashMap, env, process::Command};
 
 use regex::Regex;
 mod flags;
@@ -20,7 +20,7 @@ pub struct RbConfig {
     pub libs: Vec<Library>,
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
-    value_map: Arc<Map<String, Value>>,
+    value_map: Box<HashMap<String, Value>>,
 }
 
 impl RbConfig {
@@ -31,8 +31,12 @@ impl RbConfig {
             libs: Vec::new(),
             link_args: Vec::new(),
             cflags: Vec::new(),
-            value_map: Arc::new(Map::new()),
+            value_map: Box::new(HashMap::new()),
         }
+    }
+
+    pub fn set_value_for_key(&mut self, key: &str, value: Value) {
+        self.value_map.insert(key.to_owned(), value);
     }
 
     /// Instantiates a new `RbConfig` for the current Ruby.
@@ -60,7 +64,13 @@ impl RbConfig {
 
         rbconfig.push_cflags(cflags);
         rbconfig.push_dldflags(ldflags);
-        rbconfig.value_map = Arc::new(value_map);
+        let mut hash_map = HashMap::new();
+
+        for (key, value) in value_map {
+            hash_map.insert(key, value);
+        }
+
+        rbconfig.value_map = Box::new(hash_map);
 
         rbconfig
     }
@@ -137,47 +147,49 @@ impl RbConfig {
         let framework_regex_long = Regex::new(r"^--framework\s*(?P<name>.*)$").unwrap();
 
         for arg in split_args {
-            if let Some(name) = capture_name(&search_path_regex, arg) {
+            let arg = self.subst_shell_variables(arg);
+
+            if let Some(name) = capture_name(&search_path_regex, &arg) {
                 self.search_paths.push(SearchPath {
                     kind: SearchPathKind::Native,
                     name,
                 });
-            } else if let Some(name) = capture_name(&lib_regex_long, arg) {
+            } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&lib_regex_short, arg) {
+            } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&static_lib_regex, arg) {
+            } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&dynamic_lib_regex, arg) {
+            } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&static_lib_regex, arg) {
+            } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&dynamic_lib_regex, arg) {
+            } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&framework_regex_short, arg) {
+            } else if let Some(name) = capture_name(&framework_regex_short, &arg) {
                 self.search_paths.push(SearchPath {
                     kind: SearchPathKind::Framework,
                     name: name.to_owned(),
                 });
-            } else if let Some(name) = capture_name(&framework_regex_long, arg) {
+            } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Framework,
                     name: name.to_owned(),
@@ -188,6 +200,36 @@ impl RbConfig {
         }
 
         self
+    }
+
+    // Examines the string from shell variables and expands them with values in the value_map
+    fn subst_shell_variables(&self, input: &str) -> String {
+        let mut result = String::new();
+        let mut chars = input.chars();
+
+        while let Some(c) = chars.next() {
+            if c == '$' {
+                if let Some(c) = chars.next() {
+                    if c == '(' {
+                        let mut key = String::new();
+
+                        while let Some(c) = chars.next() {
+                            if c == ')' {
+                                break;
+                            } else {
+                                key.push(c);
+                            }
+                        }
+
+                        result.push_str(self.get(&key).as_str());
+                    }
+                }
+            } else {
+                result.push(c);
+            }
+        }
+
+        result
     }
 }
 
@@ -413,6 +455,20 @@ mod tests {
                 "cargo:rustc-link-lib=foo",
                 "cargo:rustc-link-arg=-static-libgcc"
             ],
+            result
+        );
+    }
+
+    #[test]
+    fn test_variable_subst() {
+        let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("DEFFILE", "some.def".into());
+
+        rb_config.push_dldflags("--enable-auto-import $(DEFFILE) foo");
+        let result = rb_config.cargo_args();
+
+        assert_eq!(
+            vec!["cargo:rustc-link-arg=--enable-auto-import some.def foo"],
             result
         );
     }
