@@ -29,19 +29,11 @@ impl From<&str> for SearchPath {
         match parts.len() {
             1 => Self {
                 kind: SearchPathKind::Native,
-                name: parts
-                    .first()
-                    .expect("search path is empty")
-                    .to_owned()
-                    .to_owned(),
+                name: parts.first().expect("search path is empty").to_owned(),
             },
             2 => Self {
                 kind: parts.first().expect("no kind for lib").as_str().into(),
-                name: parts
-                    .last()
-                    .expect("search path is empty")
-                    .to_owned()
-                    .to_owned(),
+                name: parts.last().expect("search path is empty").to_owned(),
             },
             _ => panic!("Invalid library specification: {}", s),
         }

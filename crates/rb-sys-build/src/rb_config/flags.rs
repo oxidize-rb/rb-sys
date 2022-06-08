@@ -47,7 +47,7 @@ impl<'a> Iterator for Flags<'a> {
         if buf.is_empty() {
             None
         } else {
-            self.inner = &self.inner[last_idx..].trim();
+            self.inner = self.inner[last_idx..].trim();
             Some(buf)
         }
     }
@@ -61,9 +61,9 @@ mod tests {
     fn test_basic_flags() {
         let mut flags = Flags::new("--foo --bar -baz");
 
-        assert_eq!(flags.next(), Some("--foo".into()));
-        assert_eq!(flags.next(), Some("--bar".into()));
-        assert_eq!(flags.next(), Some("-baz".into()));
+        assert_eq!(flags.next(), Some("--foo"));
+        assert_eq!(flags.next(), Some("--bar"));
+        assert_eq!(flags.next(), Some("-baz"));
         assert_eq!(flags.next(), None);
     }
 
@@ -71,8 +71,8 @@ mod tests {
     fn test_flag_variations() {
         let mut flags = Flags::new("-ltest     --library test");
 
-        assert_eq!(flags.next(), Some("-ltest".into()));
-        assert_eq!(flags.next(), Some("--library test".into()));
+        assert_eq!(flags.next(), Some("-ltest"));
+        assert_eq!(flags.next(), Some("--library test"));
         assert_eq!(flags.next(), None);
     }
 
@@ -80,16 +80,13 @@ mod tests {
     fn test_real_ldflags() {
         let mut flags = Flags::new("-L. -L/Users/ianks/.asdf/installs/ruby/3.1.1/lib -L/opt/homebrew/opt/openssl@1.1/lib -fstack-protector-strong");
 
-        assert_eq!(flags.next(), Some("-L.".into()));
+        assert_eq!(flags.next(), Some("-L."));
         assert_eq!(
             flags.next(),
-            Some("-L/Users/ianks/.asdf/installs/ruby/3.1.1/lib".into())
+            Some("-L/Users/ianks/.asdf/installs/ruby/3.1.1/lib")
         );
-        assert_eq!(
-            flags.next(),
-            Some("-L/opt/homebrew/opt/openssl@1.1/lib".into())
-        );
-        assert_eq!(flags.next(), Some("-fstack-protector-strong".into()));
+        assert_eq!(flags.next(), Some("-L/opt/homebrew/opt/openssl@1.1/lib"));
+        assert_eq!(flags.next(), Some("-fstack-protector-strong"));
         assert_eq!(flags.next(), None);
     }
 
@@ -97,8 +94,8 @@ mod tests {
     fn test_dashed_flag_with_dashed_val() {
         let mut flags = Flags::new("-ltest -fsomething-foo bar-val");
 
-        assert_eq!(flags.next(), Some("-ltest".into()));
-        assert_eq!(flags.next(), Some("-fsomething-foo bar-val".into()));
+        assert_eq!(flags.next(), Some("-ltest"));
+        assert_eq!(flags.next(), Some("-fsomething-foo bar-val"));
         assert_eq!(flags.next(), None);
     }
 }

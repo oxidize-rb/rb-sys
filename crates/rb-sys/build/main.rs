@@ -49,7 +49,7 @@ fn main() {
 fn link_libruby(rbconfig: &mut RbConfig) {
     rbconfig.push_dldflags(&format!("-L{}", &rbconfig.get("libdir")));
 
-    if is_static(&rbconfig) {
+    if is_static(rbconfig) {
         rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_STATIC"));
     } else {
         rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_SHARED"));
@@ -72,17 +72,17 @@ fn add_platform_link_args(rbconfig: &mut RbConfig) {
 }
 
 fn export_cargo_cfg(rbconfig: &mut RbConfig) {
-    rustc_cfg(&rbconfig, "ruby_major", "MAJOR");
-    rustc_cfg(&rbconfig, "ruby_minor", "MINOR");
-    rustc_cfg(&rbconfig, "ruby_teeny", "TEENY");
-    rustc_cfg(&rbconfig, "ruby_patchlevel", "PATCHLEVEL");
-    rustc_cfg(&rbconfig, "ruby_api_version", "RUBY_API_VERSION");
+    rustc_cfg(rbconfig, "ruby_major", "MAJOR");
+    rustc_cfg(rbconfig, "ruby_minor", "MINOR");
+    rustc_cfg(rbconfig, "ruby_teeny", "TEENY");
+    rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
+    rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if has_ruby_dln_check_abi(&rbconfig) {
+    if has_ruby_dln_check_abi(rbconfig) {
         println!("cargo:rustc-cfg=ruby_dln_check_abi");
     }
 
-    let version = Version::current(&rbconfig);
+    let version = Version::current(rbconfig);
 
     for v in SUPPORTED_RUBY_VERSIONS {
         if version < v {
@@ -123,7 +123,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     println!("cargo:teeny={}", rbconfig.get("TEENY"));
     println!("cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
-    if is_static(&rbconfig) {
+    if is_static(rbconfig) {
         println!("cargo:lib={}-static", rbconfig.get("RUBY_SO_NAME"));
     } else {
         println!("cargo:lib={}", rbconfig.get("RUBY_SO_NAME"));
@@ -172,7 +172,7 @@ fn compile_ruby_macros(rbconfig: &mut RbConfig) {
     build.flag("-Wunused-parameter");
 
     for flag in &rbconfig.cflags {
-        build.flag(&flag);
+        build.flag(flag);
     }
 
     build.compile("ruby_macros");

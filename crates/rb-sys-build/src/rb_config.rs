@@ -20,7 +20,13 @@ pub struct RbConfig {
     pub libs: Vec<Library>,
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
-    value_map: Box<HashMap<String, Value>>,
+    value_map: HashMap<String, Value>,
+}
+
+impl Default for RbConfig {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RbConfig {
@@ -31,7 +37,7 @@ impl RbConfig {
             libs: Vec::new(),
             link_args: Vec::new(),
             cflags: Vec::new(),
-            value_map: Box::new(HashMap::new()),
+            value_map: HashMap::new(),
         }
     }
 
@@ -70,7 +76,7 @@ impl RbConfig {
             hash_map.insert(key, value);
         }
 
-        rbconfig.value_map = Box::new(hash_map);
+        rbconfig.value_map = hash_map;
 
         rbconfig
     }
@@ -213,7 +219,7 @@ impl RbConfig {
                     if c == '(' {
                         let mut key = String::new();
 
-                        while let Some(c) = chars.next() {
+                        for c in chars.by_ref() {
                             if c == ')' {
                                 break;
                             } else {
@@ -235,7 +241,7 @@ impl RbConfig {
 
 fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
     regex
-        .captures(&arg)
+        .captures(arg)
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
 }
 

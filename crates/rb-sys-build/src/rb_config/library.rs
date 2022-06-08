@@ -33,19 +33,11 @@ impl From<&str> for Library {
         match parts.len() {
             1 => Library {
                 kind: LibraryKind::Native,
-                name: parts
-                    .first()
-                    .expect("lib name is empty")
-                    .to_owned()
-                    .to_owned(),
+                name: parts.first().expect("lib name is empty").to_owned(),
             },
             2 => Library {
                 kind: parts.first().expect("no kind for lib").as_str().into(),
-                name: parts
-                    .last()
-                    .expect("lib name is empty")
-                    .to_owned()
-                    .to_owned(),
+                name: parts.last().expect("lib name is empty").to_owned(),
             },
             _ => panic!("Invalid library specification: {}", s),
         }
