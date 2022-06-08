@@ -58,7 +58,7 @@ impl std::fmt::Display for Library {
             LibraryKind::Framework => write!(f, "framework={}", self.name),
             LibraryKind::Dylib => write!(f, "dylib={}", self.name),
             LibraryKind::Static => write!(f, "static={}", self.name),
-            LibraryKind::Native => write!(f, "native={}", self.name),
+            LibraryKind::Native => write!(f, "{}", self.name),
         }
     }
 }

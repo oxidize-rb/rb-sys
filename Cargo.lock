@@ -268,7 +268,6 @@ version = "0.9.0"
 dependencies = [
  "bindgen",
  "cc",
- "lazy_static",
  "libc",
  "linkify",
  "rb-sys-build",

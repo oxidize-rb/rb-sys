@@ -410,7 +410,7 @@ mod tests {
         assert_eq!(
             vec![
                 "cargo:rustc-link-search=native=/Users/ianks/.asdf/installs/ruby/3.1.1/lib",
-                "cargo:rustc-link-lib=native=foo",
+                "cargo:rustc-link-lib=foo",
                 "cargo:rustc-link-arg=-static-libgcc"
             ],
             result

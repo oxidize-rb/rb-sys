@@ -3,15 +3,9 @@ extern crate bindgen;
 mod bindings;
 mod version;
 
-use lazy_static::lazy_static;
 use rb_sys_build::RbConfig;
 use std::env;
 use version::Version;
-
-lazy_static! {
-    /// This is an example for using doc comment attributes
-    static ref RBCONFIG: RbConfig = RbConfig::current();
-}
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
     Version::new(2, 7),
@@ -21,6 +15,8 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
 ];
 
 fn main() {
+    let mut rbconfig = RbConfig::current();
+
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-env-changed=RUBY");
     println!("cargo:rerun-if-changed=wrapper.h");
@@ -32,69 +28,61 @@ fn main() {
     }
 
     if cfg!(feature = "link-ruby") {
-        link_libruby();
-    } else if cfg!(unix) {
-        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
+        link_libruby(&mut rbconfig);
     }
 
-    bindings::generate();
-    export_cargo_cfg();
-    add_platform_link_args();
+    bindings::generate(&rbconfig);
+    export_cargo_cfg(&mut rbconfig);
+    add_platform_link_args(&mut rbconfig);
 
     if cfg!(feature = "ruby-macros") {
         // Windows does not allow -dynamic_lookup
         if cfg!(windows) {
-            link_libruby();
+            link_libruby(&mut rbconfig);
         }
-        compile_ruby_macros();
+        compile_ruby_macros(&mut rbconfig);
     }
+
+    rbconfig.print_cargo_args();
 }
 
-fn link_libruby() {
-    RBCONFIG.print_cargo_args();
+fn link_libruby(rbconfig: &mut RbConfig) {
+    rbconfig.push_dldflags(&format!("-L{}", &rbconfig.get("libdir")));
 
-    println!("cargo:rustc-link-search=native={}", RBCONFIG.get("libdir"));
+    if is_static(&rbconfig) {
+        rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_STATIC"));
+    } else {
+        rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_SHARED"));
+    }
 
     // Setup rpath on unix to hardcode the ruby library path
     if cfg!(unix) {
-        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", RBCONFIG.get("libdir"));
-
-        RBCONFIG.libs.iter().for_each(|path| {
-            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", path.name);
+        rbconfig.libs.iter().for_each(|lib| {
+            println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
         });
     }
 }
 
-fn add_platform_link_args() {
+fn add_platform_link_args(rbconfig: &mut RbConfig) {
     if cfg!(windows) {
-        // println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
-        // println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
-        println!("cargo:rustc-link-arg=-static-libgcc");
-
-        let libruby_arg = if is_static() {
-            RBCONFIG.get("LIBRUBYARG_STATIC")
-        } else {
-            RBCONFIG.get("LIBRUBYARG")
-        };
-
-        for arg in shell_words::split(&libruby_arg).expect("Could not split libruby arg") {
-            println!("cargo:rustc-link-arg={}", arg);
-        }
+        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
+        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
+        rbconfig.push_dldflags("-static-libgcc");
     }
 }
 
-fn export_cargo_cfg() {
-    rustc_cfg("ruby_major", "MAJOR");
-    rustc_cfg("ruby_minor", "MINOR");
-    rustc_cfg("ruby_teeny", "TEENY");
-    rustc_cfg("ruby_patchlevel", "PATCHLEVEL");
-    rustc_cfg("ruby_api_version", "RUBY_API_VERSION");
+fn export_cargo_cfg(rbconfig: &mut RbConfig) {
+    rustc_cfg(&rbconfig, "ruby_major", "MAJOR");
+    rustc_cfg(&rbconfig, "ruby_minor", "MINOR");
+    rustc_cfg(&rbconfig, "ruby_teeny", "TEENY");
+    rustc_cfg(&rbconfig, "ruby_patchlevel", "PATCHLEVEL");
+    rustc_cfg(&rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if has_ruby_dln_check_abi() {
+    if has_ruby_dln_check_abi(&rbconfig) {
         println!("cargo:rustc-cfg=ruby_dln_check_abi");
     }
 
-    let version = Version::current();
+    let version = Version::current(&rbconfig);
 
     for v in SUPPORTED_RUBY_VERSIONS {
         if version < v {
@@ -128,40 +116,40 @@ fn export_cargo_cfg() {
         }
     }
 
-    println!("cargo:root={}", RBCONFIG.get("prefix"));
-    println!("cargo:version={}", RBCONFIG.get("ruby_version"));
-    println!("cargo:major={}", RBCONFIG.get("MAJOR"));
-    println!("cargo:minor={}", RBCONFIG.get("MINOR"));
-    println!("cargo:teeny={}", RBCONFIG.get("TEENY"));
-    println!("cargo:patchlevel={}", RBCONFIG.get("PATCHLEVEL"));
+    println!("cargo:root={}", rbconfig.get("prefix"));
+    println!("cargo:version={}", rbconfig.get("ruby_version"));
+    println!("cargo:major={}", rbconfig.get("MAJOR"));
+    println!("cargo:minor={}", rbconfig.get("MINOR"));
+    println!("cargo:teeny={}", rbconfig.get("TEENY"));
+    println!("cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
-    if is_static() {
-        println!("cargo:lib={}-static", RBCONFIG.get("RUBY_SO_NAME"));
+    if is_static(&rbconfig) {
+        println!("cargo:lib={}-static", rbconfig.get("RUBY_SO_NAME"));
     } else {
-        println!("cargo:lib={}", RBCONFIG.get("RUBY_SO_NAME"));
+        println!("cargo:lib={}", rbconfig.get("RUBY_SO_NAME"));
     }
 
-    println!("cargo:libdir={}", RBCONFIG.get("libdir"));
+    println!("cargo:libdir={}", rbconfig.get("libdir"));
 }
 
-fn is_static() -> bool {
+fn is_static(rbconfig: &RbConfig) -> bool {
     println!("cargo:rerun-if-env-changed=RUBY_STATIC");
 
     match env::var("RUBY_STATIC") {
         Ok(val) => val == "true" || val == "1",
-        _ => cfg!(feature = "ruby-static"),
+        _ => cfg!(feature = "ruby-static") || rbconfig.get("ENABLE_SHARED") == "no",
     }
 }
 
-fn rustc_cfg(name: &str, key: &str) {
-    println!("cargo:rustc-cfg={}=\"{}\"", name, RBCONFIG.get(key));
+fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
+    println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig.get(key));
 }
 
-fn compile_ruby_macros() {
+fn compile_ruby_macros(rbconfig: &mut RbConfig) {
     let mut build = cc::Build::new();
     let mut cc_args =
-        shell_words::split(&RBCONFIG.get("CC")).expect("CC is not a valid shell word");
-    let libs = shell_words::split(&RBCONFIG.get("LIBS")).expect("cannot split LIBS");
+        shell_words::split(&rbconfig.get("CC")).expect("CC is not a valid shell word");
+    let libs = shell_words::split(&rbconfig.get("LIBS")).expect("cannot split LIBS");
 
     cc_args.reverse();
     build.compiler(cc_args.pop().expect("CC is empty"));
@@ -176,23 +164,23 @@ fn compile_ruby_macros() {
     }
 
     build.file("src/ruby_macros/ruby_macros.c");
-    build.include(format!("{}/include/internal", RBCONFIG.get("rubyhdrdir")));
-    build.include(format!("{}/include/impl", RBCONFIG.get("rubyhdrdir")));
-    build.include(RBCONFIG.get("rubyhdrdir"));
-    build.include(RBCONFIG.get("rubyarchhdrdir"));
+    build.include(format!("{}/include/internal", rbconfig.get("rubyhdrdir")));
+    build.include(format!("{}/include/impl", rbconfig.get("rubyhdrdir")));
+    build.include(rbconfig.get("rubyhdrdir"));
+    build.include(rbconfig.get("rubyarchhdrdir"));
     build.flag("-fms-extensions");
     build.flag("-Wunused-parameter");
 
-    for flag in &RBCONFIG.cflags {
+    for flag in &rbconfig.cflags {
         build.flag(&flag);
     }
 
     build.compile("ruby_macros");
 }
 
-fn has_ruby_dln_check_abi() -> bool {
-    let major = RBCONFIG.get("MAJOR").parse::<i32>().unwrap();
-    let minor = RBCONFIG.get("MINOR").parse::<i32>().unwrap();
+fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
+    let major = rbconfig.get("MAJOR").parse::<i32>().unwrap();
+    let minor = rbconfig.get("MINOR").parse::<i32>().unwrap();
 
     major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
 }
