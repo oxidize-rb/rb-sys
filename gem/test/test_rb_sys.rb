@@ -16,7 +16,7 @@ class TestRbSys < Minitest::Test
   def test_invokes_cargo_rustc
     makefile = create_makefile
 
-    assert_match(/cargo rustc --target-dir/, makefile.read)
+    assert_match(/\$\(CARGO\) rustc --target-dir/, makefile.read)
   end
 
   def test_invokes_custom_env
@@ -59,6 +59,13 @@ class TestRbSys < Minitest::Test
     end
 
     assert_match(/--target wasm32-unknown-unknown/, makefile.read)
+  end
+
+  def test_generates_deffile
+    makefile = create_makefile.read
+
+    assert makefile.include?("DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def")
+    assert makefile.include?("$(DEFFILE):")
   end
 
   private

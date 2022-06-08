@@ -1,6 +1,6 @@
 module RbSys
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args
+    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run
 
     def initialize(spec)
       require "rubygems/command"
@@ -13,6 +13,7 @@ module RbSys
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"]
       @extra_rustc_args = []
+      @dry_run = true
     end
 
     def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)
@@ -52,7 +53,6 @@ module RbSys
       cmd += ["--manifest-path", manifest]
       cmd += ["--lib"]
       cmd += ["--profile", profile.to_s]
-      cmd += ["--locked"] if profile.to_s == "release"
       cmd += Gem::Command.build_args
       cmd += args
       cmd += ["--"]
@@ -217,9 +217,11 @@ module RbSys
       deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
       export_prefix = makefile_config("EXPORT_PREFIX") || ""
 
-      File.open(deffile_path, "w") do |f|
-        f.puts "EXPORTS"
-        f.puts "#{export_prefix.strip}Init_#{spec.name}"
+      unless dry_run
+        File.open(deffile_path, "w") do |f|
+          f.puts "EXPORTS"
+          f.puts "#{export_prefix.strip}Init_#{spec.name}"
+        end
       end
 
       deffile_path

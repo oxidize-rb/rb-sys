@@ -1,0 +1,7 @@
+[book]
+title = "Rusty Ruby Book"
+description = "The definitive guide for building Ruby native gems using Rust"
+authors = ["Ian Ker-Seymer"]
+language = "en"
+multilingual = false
+src = "src"

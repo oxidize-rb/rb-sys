@@ -28,7 +28,7 @@ namespace :test do
   namespace :examples do
     task :rust_reverse do
       Dir.chdir("examples/rust_reverse") do
-        sh "rake"
+        sh "rake clean compile test"
       end
     end
   end
@@ -52,6 +52,8 @@ task :fmt do
   sh "cargo fmt"
   sh "standardrb --fix"
   sh "npx prettier --write $(git ls-files '*.yml')"
+  md_files = `git ls-files '*.md'`.split("\n").select { |f| File.exist?(f) }
+  sh "npx", "prettier", "--write", "--print-width=120", "--prose-wrap=always", *md_files
 end
 task format: [:fmt]
 
@@ -61,4 +63,14 @@ task :lint do
   sh "cargo fmt --check"
   sh "cargo clippy"
   sh "shellcheck $(git ls-files '*.sh')"
+end
+
+desc "Bump the gem version"
+task :bump do
+  printf "What is the new version?: "
+  new_version = $stdin.gets.chomp
+  sh "fastmod", "--extensions=toml", "^version = \".*\"", "version = #{new_version.inspect}"
+  sh "fastmod", "--extensions=rb", "^  VERSION = \".*\"", "  VERSION = #{new_version.inspect}"
+  sh "cargo check"
+  sh "bundle"
 end
