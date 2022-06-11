@@ -103,6 +103,21 @@ impl RbConfig {
         }
     }
 
+    /// Returns the value of the given key from the either the matching
+    /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
+    pub fn get_optional(&self, key: &str) -> Option<String> {
+        println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
+
+        match env::var(format!("RBCONFIG_{}", key)) {
+            Ok(val) => Some(val),
+            _ => self
+                .value_map
+                .get(key)
+                .map(|val| val.as_str())
+                .map(|val| val.unwrap().to_owned()),
+        }
+    }
+
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
         shell_words::split(cflags)
@@ -227,7 +242,12 @@ impl RbConfig {
                             }
                         }
 
-                        result.push_str(self.get(&key).as_str());
+                        if let Some(val) = self.get_optional(&key) {
+                            result.push_str(&val);
+                        } else {
+                            // Consume whitespace
+                            chars.next();
+                        }
                     }
                 }
             } else {
@@ -475,6 +495,19 @@ mod tests {
 
         assert_eq!(
             vec!["cargo:rustc-link-arg=--enable-auto-import some.def foo"],
+            result
+        );
+    }
+
+    #[test]
+    fn test_variable_subst_unknown_var() {
+        let mut rb_config = RbConfig::new();
+
+        rb_config.push_dldflags("--enable-auto-import $(DEFFILE) foo");
+        let result = rb_config.cargo_args();
+
+        assert_eq!(
+            vec!["cargo:rustc-link-arg=--enable-auto-import foo"],
             result
         );
     }
