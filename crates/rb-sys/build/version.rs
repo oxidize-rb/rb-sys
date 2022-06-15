@@ -1,4 +1,4 @@
-use super::rbconfig;
+use crate::RbConfig;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct Version(u32, u32);
@@ -16,10 +16,10 @@ impl Version {
         self.1
     }
 
-    pub fn current() -> Version {
+    pub fn current(rbconfig: &RbConfig) -> Version {
         Self(
-            rbconfig("MAJOR").parse::<i32>().unwrap() as _,
-            rbconfig("MINOR").parse::<i32>().unwrap() as _,
+            rbconfig.get("MAJOR").parse::<i32>().unwrap() as _,
+            rbconfig.get("MINOR").parse::<i32>().unwrap() as _,
         )
     }
 }

@@ -1,4 +1,4 @@
-use super::rbconfig;
+use crate::RbConfig;
 use linkify::{self, LinkFinder};
 use std::env;
 use std::fs::File;
@@ -6,10 +6,10 @@ use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::path::PathBuf;
 
-pub fn generate() {
+pub fn generate(rbconfig: &RbConfig) {
     let clang_args = vec![
-        format!("-I{}", rbconfig("rubyhdrdir")),
-        format!("-I{}", rbconfig("rubyarchhdrdir")),
+        format!("-I{}", rbconfig.get("rubyhdrdir")),
+        format!("-I{}", rbconfig.get("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
 

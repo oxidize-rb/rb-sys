@@ -1,30 +1,39 @@
 [package]
+build = "build/main.rs"
 name = "rb-sys"
 version = "0.9.4"
 edition = "2018"
 readme = "readme.md"
 categories = ["ruby", "external-ffi-bindings"]
 description = "Rust bindings for the CRuby API"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/oxidize-rb/rb-sys"
-homepage = "https://github.com/oxidize-rb/rb-sys"
 documentation = "https://docs.rs/rb-sys"
-links = "rb" # we name it like this so users can still use magnus / rutie
-build = "build/main.rs"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+links = "rb"
+repository = "https://github.com/oxidize-rb/rb-sys"
+
+[build-dependencies]
+bindgen = "0.59"
+linkify = "0.8"
+regex = "1"
+rb-sys-build = { path = "../rb-sys-build" }
+
+[build-dependencies.cc]
+optional = true
+version = "1.0"
+
+[build-dependencies.shell-words]
+optional = true
+version = "1.1.0"
+
+[dependencies]
+libc = "0.2.126"
 
 [features]
 default = ["ruby-macros"]
-ruby-static = []
 link-ruby = []
 ruby-macros = ["cc", "shell-words"]
+ruby-static = []
 
 [lib]
 doctest = false
-
-[build-dependencies]
-bindgen = "0.60"
-pkg-config = "0.3.24"
-cc = { version = "1.0", optional = true }
-shell-words = { version = "1.1.0", optional = true }
-lazy_static = "1.4"
-linkify = "0.8"
