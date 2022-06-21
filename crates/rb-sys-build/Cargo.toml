@@ -1,9 +1,13 @@
 [package]
 edition = "2021"
 name = "rb-sys-build"
-version = "0.1.0"
+version = "0.9.5"
+description = "Build system for rb-sys"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
 
 [dependencies]
-regex = { version = "1"}
+regex = "1" 
 shell-words = "1.1.0"
 serde_json = "1.0"

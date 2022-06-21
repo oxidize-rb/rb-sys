@@ -74,3 +74,16 @@ task :bump do
   sh "cargo check"
   sh "bundle"
 end
+
+desc "Publish the crates and gems"
+task :publish do
+  ["crates/rb-sys-build", "crates/rb-sys", "crates/rb-alloc"].each do |dir|
+    Dir.chdir(dir) do
+      sh "cargo publish"
+    end
+  end
+
+  Dir.chdir("gem") do
+    sh "bundle exec rake release"
+  end
+end
