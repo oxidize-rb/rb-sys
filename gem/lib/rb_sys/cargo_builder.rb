@@ -83,8 +83,7 @@ module RbSys
         *mkmf_libpath,
         *rustc_dynamic_linker_flags(dest_dir),
         *rustc_lib_flags(dest_dir),
-        *platform_specific_rustc_args(dest_dir),
-        *debug_flags
+        *platform_specific_rustc_args(dest_dir)
       ]
     end
 
@@ -254,13 +253,6 @@ module RbSys
       return unless val
 
       RbConfig.expand(val.dup)
-    end
-
-    # Good balance between binary size and debugability
-    def debug_flags
-      return [] if profile == :dev
-
-      ["-C", "debuginfo=1"]
     end
 
     # Copied from ExtConfBuilder
