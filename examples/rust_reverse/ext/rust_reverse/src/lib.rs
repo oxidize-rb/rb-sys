@@ -5,7 +5,6 @@ use std::os::raw::c_long;
 // NOTICE: This is a low level library. If you are looking to write a gem in
 // Rust, you should probably use https://github.com/matsadler/magnus instead.
 
-#[no_mangle]
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
     let ruby_string = CStr::from_ptr(rb_string_value_cstr(&mut input))
         .to_str()
