@@ -21,7 +21,7 @@ pub fn generate(rbconfig: &RbConfig) {
         .blocklist_item("RData")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
-    let bindings = if cfg!(feature = "include-rbimpls") {
+    let bindings = if cfg!(feature = "bindgen-rbimpls") {
         bindings
     } else {
         bindings
@@ -29,7 +29,7 @@ pub fn generate(rbconfig: &RbConfig) {
             .blocklist_item("^RBIMPL_.*")
     };
 
-    let bindings = if cfg!(feature = "include-deprecated") {
+    let bindings = if cfg!(feature = "bindgen-deprecated-types") {
         bindings
     } else {
         bindings

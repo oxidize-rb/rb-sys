@@ -79,7 +79,15 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
     if has_ruby_dln_check_abi(rbconfig) {
-        println!("cargo:rustc-cfg=ruby_dln_check_abi");
+        println!("cargo:rustc-cfg=has_ruby_abi_version");
+    }
+
+    if cfg!(feature = "global-allocator") {
+        println!("cargo:rustc-cfg=use_global_allocator");
+    }
+
+    if cfg!(feature = "ruby-abi-version") {
+        println!("cargo:rustc-cfg=use_ruby_abi_version");
     }
 
     let version = Version::current(rbconfig);
@@ -163,7 +171,7 @@ fn compile_ruby_macros(rbconfig: &mut RbConfig) {
         build.flag(&lib);
     }
 
-    build.file("src/ruby_macros/ruby_macros.c");
+    build.file("src/macros/ruby_macros.c");
     build.include(format!("{}/include/internal", rbconfig.get("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig.get("rubyhdrdir")));
     build.include(rbconfig.get("rubyhdrdir"));

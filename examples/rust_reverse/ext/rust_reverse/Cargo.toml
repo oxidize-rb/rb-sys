@@ -1,11 +1,11 @@
 [package]
 name = "rust-reverse"
-version = "0.9.6"
+version = "0.9.7"
 autotests = false # set true if you want to use "cargo test"
+edition = "2021"
 
 [dependencies]
-rb-sys = { path = "./../../../../crates/rb-sys" }
-rb-allocator = { path = "./../../../../crates/rb-allocator" }
+rb-sys = { path = "./../../../../crates/rb-sys", features = ["global-allocator"] }
 
 [lib]
 crate-type = ["cdylib"]

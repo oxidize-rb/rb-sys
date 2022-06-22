@@ -1,3 +1,10 @@
+//! Definitions for Ruby's special constants.
+//!
+//! Makes it easier to reference important Ruby constants, without havign to dig
+//! around in bindgen's output.
+
+#![allow(non_upper_case_globals)]
+
 use crate::ruby_special_consts;
 
 pub const Qfalse: ruby_special_consts = ruby_special_consts::RUBY_Qfalse;
