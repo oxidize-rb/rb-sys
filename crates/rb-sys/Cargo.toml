@@ -33,7 +33,9 @@ libc = "0.2.126"
 default = ["ruby-macros"]
 link-ruby = []
 ruby-macros = ["cc", "shell-words"]
-ruby-static = []
+ruby-static = ["link-ruby"]
+include-rbimpls = []
+include-deprecated = []
 
 [lib]
 doctest = false
