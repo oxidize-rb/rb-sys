@@ -17,12 +17,25 @@ pub fn generate(rbconfig: &RbConfig) {
         .header("wrapper.h")
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
-        .blocklist_item("^rbimpl_.*")
-        .blocklist_item("^RBIMPL_.*")
-        .blocklist_item("ruby_fl_type")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+    let bindings = if cfg!(feature = "include-rbimpls") {
+        bindings
+    } else {
+        bindings
+            .blocklist_item("^rbimpl_.*")
+            .blocklist_item("^RBIMPL_.*")
+    };
+
+    let bindings = if cfg!(feature = "include-deprecated") {
+        bindings
+    } else {
+        bindings
+            .blocklist_item("^ruby_fl_type.*")
+            .blocklist_item("^_bindgen_ty_9.*")
+    };
 
     write_bindings(bindings, "bindings-raw.rs");
     clean_docs();

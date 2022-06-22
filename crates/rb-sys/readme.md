@@ -25,15 +25,25 @@ feature:
 rb-sys = { version = "0.9",  features = ["link-ruby"] }
 ```
 
+If you are authoring a Ruby gem, you do not need to enable this feature.
+
 ### Static libruby
 
-You can also force the `link-ruby` feature to be static:
+You can also force static linking of libruby:
 
 ```rust
-rb-sys = { version = "0.9", features = ["link-ruby", "ruby-static"] }
+rb-sys = { version = "0.9", features = ["ruby-static"] }
 ```
 
 Alternatively, you can set the `RUBY_STATIC=true` environment variable.
+
+### Other features
+
+- `ruby-macros`: Generate Rust functions for Ruby macros (i.e. `RSTRING_PTR`).
+- `ruby-static`: Link the static version of libruby.
+- `link-ruby`: Link libruby.
+- `include-rbimpls`: Include the Ruby impl types in bindings.
+- `include-deprecated`: Include deprecated Ruby methods in bindings.
 
 ## License
 
