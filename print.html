@@ -174,8 +174,48 @@ robust C FFI, you can code anything in Rust that you could with C.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="setup"><a class="header" href="#setup">Setup</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="testing"><a class="header" href="#testing">Testing</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="debugging"><a class="header" href="#debugging">Debugging</a></h1>
+<p>To debug Rust extensions, you can use either LLDB or GDB. First, you will need to compile with the <code>dev</code> Cargo profile,
+so debug symbols are available.</p>
+<p>To do that you can run: <code>RB_SYS_CARGO_PROFILE=dev rake compile</code>. Alternatively, you can add a helper Rake task to make
+this easier:</p>
+<pre><code class="language-ruby"># Rakefile
+
+desc &quot;Compile the extension with debug symbols&quot;
+task &quot;compile:debug&quot; do
+  ENV[&quot;RB_SYS_CARGO_PROFILE&quot;] = &quot;dev&quot;
+  Rake::Task[&quot;compile&quot;].invoke
+end
+</code></pre>
+<h2 id="vscode--lldb"><a class="header" href="#vscode--lldb">VSCode + LLDB</a></h2>
+<p>The <a href="tutorial/testing/">code-lldb</a> extension for VSCode is a great way to debug Rust code. Here is an example configuration file:</p>
+<pre><code class="language-json">// .vscode/launch.json
+{
+  &quot;version&quot;: &quot;0.2.0&quot;,
+  &quot;configurations&quot;: [
+    {
+      &quot;type&quot;: &quot;lldb&quot;,
+      &quot;request&quot;: &quot;launch&quot;,
+      &quot;name&quot;: &quot;Debug&quot;,
+      &quot;preLaunchTask&quot;: {
+        &quot;task&quot;: &quot;compile:debug&quot;,
+        &quot;type&quot;: &quot;rake&quot;
+      },
+      &quot;program&quot;: &quot;~/.asdf/installs/ruby/3.1.1/bin/ruby&quot;,
+      &quot;args&quot;: [&quot;-Ilib&quot;, &quot;test/test_helper.rb&quot;],
+      &quot;cwd&quot;: &quot;${workspaceFolder}&quot;,
+      &quot;sourceLanguages&quot;: [&quot;rust&quot;]
+    }
+  ]
+}
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="publishing"><a class="header" href="#publishing">Publishing</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cross-compilation"><a class="header" href="#cross-compilation">Cross-Compilation</a></h1>
+<p>TODO!</p>
+<h2 id="resource"><a class="header" href="#resource">Resource</a></h2>
+<ul>
+<li><a href="https://github.com/oxidize-rb/cross-gem-action">Cross Gem Action</a> to easily cross compile with GitHub actions</li>
+<li><a href="https://index.docker.io/u/rbsys">Docker images compatible with <code>rake-compiler-dock</code></a></li>
+</ul>
 
                     </main>
 
