@@ -1,3 +1,9 @@
+//! Definitions for the compiled Ruby macros.
+//!
+//! Since macros are rely on the C preprocessor, they are not automatically
+//! available to Rust. This module compiles a tiny snippet of C code that is
+//! used to generate the Ruby macros, so they can be used in Rust.
+
 use std::os::raw::{c_char, c_long};
 
 use crate::{ruby_value_type, ID, VALUE};

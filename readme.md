@@ -7,6 +7,9 @@
 The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If
 it's not easy, it's a bug.
 
+- [Rust bindings (`rb-sys` crate)](./crates/rb-sys/readme.md)
+- [Ruby gem for compiling extensions](./gem/readme.md)
+
 ## Features
 
 - [GitHub action](https://github.com/oxidize-rb/cross-gem-action) to easily cross compile in CI

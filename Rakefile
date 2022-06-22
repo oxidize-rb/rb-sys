@@ -67,10 +67,14 @@ end
 
 desc "Bump the gem version"
 task :bump do
-  printf "What is the new version?: "
+  require_relative "./gem/lib/rb_sys/version"
+  old_version = RbSys::VERSION
+
+  printf "What is the new version (current: #{old_version})?: "
   new_version = $stdin.gets.chomp
-  sh "fastmod", "--extensions=toml", "^version = \".*\"", "version = #{new_version.inspect}"
-  sh "fastmod", "--extensions=rb", "^  VERSION = \".*\"", "  VERSION = #{new_version.inspect}"
+
+  sh "fastmod", "--extensions=toml", "^version = \"#{old_version}\"", "version = #{new_version.inspect}"
+  sh "fastmod", "--extensions=rb", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
   sh "cargo check"
   sh "bundle"
 end
@@ -81,7 +85,7 @@ task :publish do
     sh "bundle exec rake release"
   end
 
-  ["crates/rb-sys-build", "crates/rb-sys", "crates/rb-allocator"].each do |dir|
+  ["crates/rb-sys-build", "crates/rb-sys"].each do |dir|
     Dir.chdir(dir) do
       sh "cargo publish || true"
       sleep 5

@@ -1,16 +1,10 @@
-extern crate rb_allocator;
-extern crate rb_sys;
-
-use rb_allocator::ruby_global_allocator;
 use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
 
-#[cfg(not(windows))]
-ruby_global_allocator!();
-ruby_extension!();
+// NOTICE: This is a low level library. If you are looking to write a gem in
+// Rust, you should probably use https://github.com/matsadler/magnus instead.
 
-#[no_mangle]
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
     let ruby_string = CStr::from_ptr(rb_string_value_cstr(&mut input))
         .to_str()
@@ -24,7 +18,7 @@ unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> Rub
 
 #[allow(non_snake_case)]
 #[no_mangle]
-pub extern "C" fn Init_rust_reverse() {
+extern "C" fn Init_rust_reverse() {
     let name = CString::new("RustReverse").unwrap();
     let function_name = CString::new("reverse").unwrap();
 
