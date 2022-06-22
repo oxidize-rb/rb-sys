@@ -1,6 +1,6 @@
 module RbSys
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run
+    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir
 
     def initialize(spec)
       require "rubygems/command"
@@ -8,12 +8,13 @@ module RbSys
 
       @spec = spec
       @runner = self.class.method(:run)
-      @profile = ENV.fetch("CARGO_BUILD_PROFILE", :release).to_sym
+      @profile = ENV.fetch("RB_SYS_CARGO_BUILD_PROFILE", :release).to_sym
       @env = {}
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"]
       @extra_rustc_args = []
       @dry_run = true
+      @ext_dir = nil
     end
 
     def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)
@@ -29,7 +30,7 @@ module RbSys
 
     def build_crate(dest_path, results, args, cargo_dir)
       env = build_env
-      cmd = cargo_command(cargo_dir, dest_path, args)
+      cmd = cargo_command(dest_path, args)
       runner.call cmd, results, "cargo", cargo_dir, env
 
       results
@@ -41,8 +42,8 @@ module RbSys
       build_env.merge(env)
     end
 
-    def cargo_command(cargo_dir, dest_path, args = [])
-      manifest = File.join(cargo_dir, "Cargo.toml")
+    def cargo_command(dest_path, args = [])
+      manifest = File.join(ext_dir, "Cargo.toml")
       cargo = ENV.fetch("CARGO", "cargo")
 
       cmd = []
@@ -301,7 +302,7 @@ module RbSys
     end
 
     def profile_target_directory
-      case profile
+      case profile.to_sym
       when :release then "release"
       when :dev then "debug"
       else raise "unknown target directory for profile: #{profile}"

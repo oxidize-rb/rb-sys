@@ -1,8 +1,9 @@
-# We need to require mkmr this since `rake-compiler` injects code here for cross compilation
-require "mkmf"
+# Use local rb_sys gem (only needed for developing in this repo)
+$LOAD_PATH.unshift(File.expand_path("../../../../gem/lib", __dir__))
 
-# In a real gem, this would just be: `require "rb_sys/mkmf"`
-require_relative "./../../../../gem/lib/rb_sys/mkmf"
+# We need to require mkmf *first* this since `rake-compiler` injects code here for cross compilation
+require "mkmf"
+require "rb_sys/mkmf"
 
 create_rust_makefile("rust_reverse") do |r|
   # Create debug builds in dev. Make sure that release gems are compiled with
@@ -14,4 +15,7 @@ create_rust_makefile("rust_reverse") do |r|
 
   # You can add whatever env vars you want to the env hash (optional)
   r.env = {"FOO" => "BAR"}
+
+  # If your Cargo.toml is in a different directory, you can specify it here (optional)
+  r.ext_dir = "."
 end

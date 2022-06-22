@@ -28,7 +28,7 @@ module RbSys
     # .   r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
     # .   r.features = %w[some_cargo_feature]
     # . end
-    def create_rust_makefile(target, srcprefix = nil, &blk)
+    def create_rust_makefile(target, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"
@@ -41,7 +41,7 @@ module RbSys
 
       yield builder if blk
 
-      srcprefix ||= "$(srcdir)/#{srcprefix}".chomp("/")
+      srcprefix = "$(srcdir)/#{builder.ext_dir}".chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
 
       full_cargo_command = cargo_command(srcdir, builder)
@@ -112,9 +112,11 @@ module RbSys
     end
 
     def cargo_command(cargo_dir, builder)
+      builder.ext_dir = cargo_dir
       dest_path = File.join(Dir.pwd, "target")
-      args = []
-      cargo_cmd = builder.cargo_command(cargo_dir, dest_path, args)
+      args = ARGV.dup
+      args.shift if args.first == "--"
+      cargo_cmd = builder.cargo_command(dest_path, args)
       Shellwords.join(cargo_cmd).gsub("\\=", "=").gsub(/\Acargo/, "$(CARGO)")
     end
 
