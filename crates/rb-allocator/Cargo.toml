@@ -1,6 +1,6 @@
 [package]
 name = "rb-allocator"
-version = "0.9.5"
+version = "0.9.6"
 edition = "2018"
 readme = "readme.md"
 categories = ["memory-management"]
