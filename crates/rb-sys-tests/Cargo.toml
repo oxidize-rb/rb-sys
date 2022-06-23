@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys-tests"
-version = "0.9.7"
+version = "0.9.8"
 edition = "2018"
 autotests = false
 
