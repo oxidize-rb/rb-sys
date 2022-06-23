@@ -20,6 +20,7 @@ pub struct RbConfig {
     pub libs: Vec<Library>,
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
+    pub blocklist_lib: Vec<String>,
     value_map: HashMap<String, Value>,
 }
 
@@ -33,6 +34,7 @@ impl RbConfig {
     /// Creates a new, blank `RbConfig`. You likely want to use `RbConfig::current()` instead.
     pub fn new() -> RbConfig {
         RbConfig {
+            blocklist_lib: vec![],
             search_paths: Vec::new(),
             libs: Vec::new(),
             link_args: Vec::new(),
@@ -79,6 +81,12 @@ impl RbConfig {
         rbconfig.value_map = hash_map;
 
         rbconfig
+    }
+
+    /// Filter the libs, removing the ones that are not needed.
+    pub fn blocklist_lib(&mut self, name: &str) -> &mut RbConfig {
+        self.blocklist_lib.push(name.to_string());
+        self
     }
 
     /// Returns the current ruby version.
@@ -138,7 +146,9 @@ impl RbConfig {
         }
 
         for lib in &self.libs {
-            result.push(format!("cargo:rustc-link-lib={}", lib));
+            if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
+                result.push(format!("cargo:rustc-link-lib={}", lib));
+            }
         }
 
         for link_arg in &self.link_args {

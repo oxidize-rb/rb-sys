@@ -16,7 +16,7 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 bindgen = "0.60"
 linkify = "0.8"
 regex = "1"
-rb-sys-build = { path = "../rb-sys-build", version = "0.9.5" }
+rb-sys-build = { path = "../rb-sys-build", version = "0.9.7" }
 
 [build-dependencies.cc]
 optional = true
@@ -34,7 +34,7 @@ default = ["ruby-macros", "gem"]
 gem = ["ruby-abi-version"]
 link-ruby = []
 ruby-macros = ["cc", "shell-words"]
-ruby-static = ["link-ruby"]
+ruby-static = []
 ruby-abi-version = []
 global-allocator = []
 bindgen-rbimpls = []

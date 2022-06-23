@@ -1,0 +1,67 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug rust_reverse example",
+      "sourceLanguages": ["rust"],
+      "program": "/opt/rubies/3.1.1/bin/ruby",
+      "env": {
+        "RB_SYS_CARGO_PROFILE": "1"
+      },
+      "args": ["-Ilib", "test/test_helper.rb"],
+      "cwd": "${workspaceFolder}/examples/rust_reverse"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'rb-sys'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=rb-sys"],
+        "filter": {
+          "name": "rb-sys",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in library 'rb-sys-build'",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib", "--package=rb-sys-build"],
+        "filter": {
+          "name": "rb-sys-build",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'rb-sys-tests'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=rb-sys-tests",
+          "--package=rb-sys-tests"
+        ],
+        "filter": {
+          "name": "rb-sys-tests",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

@@ -32,5 +32,16 @@ create_rust_makefile("rust_reverse") do |r|
   # If your Cargo.toml is in a different directory, you can specify it here
   # (optional)
   r.ext_dir = "."
+
+  # You can add extra rustc args for Cargo
+  # (optional)
+  r.extra_rustc_args = ["-C", "foo=bar"]
 end
 ```
+
+## Tips and Tricks
+
+- When using `rake-compiler` to build your gem, you can use the `RB_SYS_CARGO_PROFILE` environment variable to set the
+  Cargo profile (i.e. `release` or `dev`).
+
+- You can pass Cargo arguments to `rake-compiler` like so: `rake compile -- --verbose`

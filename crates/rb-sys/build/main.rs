@@ -27,10 +27,6 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    if cfg!(feature = "link-ruby") {
-        link_libruby(&mut rbconfig);
-    }
-
     bindings::generate(&rbconfig);
     export_cargo_cfg(&mut rbconfig);
     add_platform_link_args(&mut rbconfig);
@@ -41,6 +37,14 @@ fn main() {
             link_libruby(&mut rbconfig);
         }
         compile_ruby_macros(&mut rbconfig);
+    }
+
+    // Only link libruby if it is explicitly requested... except on Windows
+    // where its required.
+    if cfg!(feature = "link-ruby") {
+        link_libruby(&mut rbconfig);
+    } else if !cfg!(windows) {
+        rbconfig.blocklist_lib("ruby");
     }
 
     rbconfig.print_cargo_args();
