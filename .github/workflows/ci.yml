@@ -76,7 +76,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: ${{ matrix.sys.rust_toolchain }}
-          ruby_version: ${{ matrix.ruby_version }}
+          ruby_version: false
           os: ${{ matrix.sys.os }}
       - name: 🔘 Build static ruby
         working-directory: /tmp
