@@ -60,3 +60,29 @@ jobs:
           PROFILE: "release"
         run: |
           bundle exec rake test:examples
+
+  build_and_test_static:
+    name: 🧪 Build and test
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby_version: ["3.1.2"]
+        sys:
+          - os: ubuntu-latest
+            rust_toolchain: stable
+    runs-on: ${{ matrix.sys.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
+        with:
+          rust_toolchain: ${{ matrix.sys.rust_toolchain }}
+          ruby_version: ${{ matrix.ruby_version }}
+          os: ${{ matrix.sys.os }}
+      - name: 🌫 Build static ruby
+        working-directory: ./tmp
+        run: |
+          git clone https://github.com/rbenv/ruby-build.git
+          PREFIX=/usr/local ./ruby-build/install.sh
+          RUBY_CONFIGURE_OPTS="--disable-shared" ruby-build ${{ matrix.ruby_version }} /usr/local --verbose
+      - name: 🧪 Run tests
+        run: bundle exec rake test
