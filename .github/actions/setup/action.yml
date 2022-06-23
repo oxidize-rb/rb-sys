@@ -16,7 +16,7 @@ runs:
   steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
-      if: inputs.ruby_version != "skip"
+      if: inputs.ruby_version != 'skip'
       with:
         ruby-version: ${{ inputs.ruby_version }}
         bundler-cache: true
