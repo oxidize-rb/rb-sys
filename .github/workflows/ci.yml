@@ -79,7 +79,7 @@ jobs:
           path: |
             /opt/rubies/${{ matrix.ruby_version }}
             ~/.gem/ruby/${{ matrix.ruby_version }}
-        key: ${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          key: ${{ matrix.sys.os }}-${{ matrix.ruby_version }}
       - name: Setup env
         run: |
           echo "PATH=/opt/rubies/${{ matrix.ruby_version }}/bin:$PATH" >> $GITHUB_ENV
