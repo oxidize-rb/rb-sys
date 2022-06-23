@@ -158,9 +158,10 @@ fn compile_ruby_macros(rbconfig: &mut RbConfig) {
     let mut cc_args =
         shell_words::split(&rbconfig.get("CC")).expect("CC is not a valid shell word");
     let libs = shell_words::split(&rbconfig.get("LIBS")).expect("cannot split LIBS");
+    let cc = cc_args.pop().expect("CC is empty");
 
     cc_args.reverse();
-    build.compiler(cc_args.pop().expect("CC is empty"));
+    build.compiler(&cc);
     cc_args.reverse();
 
     for arg in cc_args {
@@ -178,6 +179,15 @@ fn compile_ruby_macros(rbconfig: &mut RbConfig) {
     build.include(rbconfig.get("rubyarchhdrdir"));
     build.flag("-fms-extensions");
     build.flag("-Wunused-parameter");
+
+    if cfg!(feature = "experimental-lto") {
+        if cc != "clang" {
+            panic!("experimental-lto feature is only supported with clang");
+        } else {
+            build.flag("-flto");
+            println!("cargo:rustc-link-arg=-flto");
+        }
+    }
 
     for flag in &rbconfig.cflags {
         build.flag(flag);

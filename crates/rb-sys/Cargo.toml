@@ -39,6 +39,7 @@ ruby-abi-version = []
 global-allocator = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []
+experimental-lto = []
 
 [lib]
 doctest = false

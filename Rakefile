@@ -92,3 +92,8 @@ task :publish do
     end
   end
 end
+
+desc "Run the benchmarks"
+task :bench do
+  sh "cargo bench -p rb-sys-tests"
+end

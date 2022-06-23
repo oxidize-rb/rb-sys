@@ -58,12 +58,12 @@ impl RbConfig {
             .arg("-rjson")
             .arg("-e")
             .arg("print RbConfig::CONFIG.to_json")
+            .stderr(std::process::Stdio::inherit())
             .output()
             .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
         let output = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("Could not parse RbConfig output");
+        let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
         let value_map: Map<String, Value> = parsed.as_object().unwrap().clone();
         let cflags = value_map.get("cflags").unwrap().as_str().unwrap();
         let ldflags = value_map.get("DLDFLAGS").unwrap().as_str().unwrap();

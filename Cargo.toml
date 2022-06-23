@@ -5,3 +5,6 @@ members = [
     "crates/rb-sys-build",
     "examples/rust_reverse/ext/rust_reverse",
 ]
+
+[profile.release]
+lto = true

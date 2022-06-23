@@ -1,20 +1,29 @@
 [package]
 name = "rb-sys-tests"
 version = "0.9.7"
-edition = "2018"
+edition = "2021"
 autotests = false
 
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby", "ruby-macros"] } 
+rb-sys = { path = "../rb-sys" } 
 ctor = "0.1"
+
+[dev-dependencies]
+criterion = { version = "0.3" }
 
 [features]
 default = ["link-ruby", "ruby-macros"]
 link-ruby = ["rb-sys/link-ruby"]
 ruby-macros = ["rb-sys/ruby-macros"]
+ruby-static = ["rb-sys/ruby-static"]
+experimental-lto = ["rb-sys/experimental-lto"]
 
 [[test]]
 name = "rb-sys-tests"
 path = "tests/lib.rs"
 harness = true
 required-features = ["link-ruby", "ruby-macros"]
+
+[[bench]]
+name = "main"
+harness = false

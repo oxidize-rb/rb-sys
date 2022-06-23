@@ -28,3 +28,12 @@ make contribution easier. Here are the steps to use it:
 1. `git clone https://github.com/oxidize-rb/rb-sys`
 2. Make sure you have Ruby installed
 3. Install Rust and Cargo with [Rustup](https://rustup.rs/).
+
+## Benchmarks
+
+```sh
+$ rake bench
+```
+
+There are a couple of benchmarks within the [`crates/rb-sys-tests/benches`](./crates/rb-sys-tests/benches/) directory,
+feel free to add more as you see fit.
