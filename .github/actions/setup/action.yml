@@ -22,6 +22,7 @@ runs:
         bundler-cache: true
     - name: Bundle install
       if: inputs.ruby_version == 'skip'
+      shell: bash
       run: bundle install -j3
     - name: 🐛 Print debug info
       run: ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'

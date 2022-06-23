@@ -89,7 +89,9 @@ jobs:
         run: |
           git clone https://github.com/rbenv/ruby-build.git
           PREFIX=/usr/local sudo ./ruby-build/install.sh
-          RUBY_CONFIGURE_OPTS="--disable-shared --disable-install-doc" sudo ruby-build ${{ matrix.ruby_version }} /opt/rubies/${{ matrix.ruby_version }} --verbose
+          export MAKEFLAGS="-j$(nproc)"
+          export RUBY_CONFIGURE_OPTS="--disable-shared --disable-install-doc --disable-install-rdoc" 
+          sudo ruby-build ${{ matrix.ruby_version }} /opt/rubies/${{ matrix.ruby_version }}
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: ${{ matrix.sys.rust_toolchain }}
