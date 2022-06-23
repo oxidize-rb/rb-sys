@@ -27,8 +27,10 @@ namespace :test do
 
   namespace :examples do
     task :rust_reverse do
+      cargo_args = extra_args || []
+
       Dir.chdir("examples/rust_reverse") do
-        sh "rake clean compile test"
+        sh "rake", "clean", "compile", "test", *cargo_args
       end
     end
   end
@@ -73,7 +75,7 @@ task :bump do
   printf "What is the new version (current: #{old_version})?: "
   new_version = $stdin.gets.chomp
 
-  sh "fastmod", "--extensions=toml", "^version = \"#{old_version}\"", "version = #{new_version.inspect}"
+  sh "fastmod", "--extensions=toml", "version = \"#{old_version}\"", "version = #{new_version.inspect}"
   sh "fastmod", "--extensions=rb", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
   sh "cargo check"
   sh "bundle"

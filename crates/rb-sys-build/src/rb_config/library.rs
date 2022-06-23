@@ -1,5 +1,5 @@
 /// Represents the kind of library.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LibraryKind {
     Framework,
     Dylib,
@@ -12,6 +12,13 @@ pub enum LibraryKind {
 pub struct Library {
     pub kind: LibraryKind,
     pub name: String,
+}
+
+impl Library {
+    /// Creates a new library.
+    pub fn new(name: String, kind: LibraryKind) -> Self {
+        Self { kind, name }
+    }
 }
 
 impl From<&str> for LibraryKind {
