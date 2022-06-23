@@ -55,3 +55,8 @@ long
 ruby_macros_RARRAY_LEN(VALUE obj) {
   return RARRAY_LEN(obj);
 }
+
+const VALUE*
+ruby_macros_RARRAY_PTR(VALUE ary) {
+  return RARRAY_PTR(ary);
+}
