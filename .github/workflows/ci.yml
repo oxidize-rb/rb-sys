@@ -62,7 +62,7 @@ jobs:
           bundle exec rake test:examples
 
   build_and_test_static:
-    name: 🧪 Build and test
+    name: 🌫 Test static Ruby
     strategy:
       fail-fast: false
       matrix:
@@ -79,7 +79,7 @@ jobs:
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
       - name: 🌫 Build static ruby
-        working-directory: ./tmp
+        working-directory: tmp
         run: |
           git clone https://github.com/rbenv/ruby-build.git
           PREFIX=/usr/local ./ruby-build/install.sh
