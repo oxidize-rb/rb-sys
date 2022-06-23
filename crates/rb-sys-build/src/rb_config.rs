@@ -165,7 +165,7 @@ impl RbConfig {
         let static_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).a$").unwrap();
         let dynamic_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).(so|dylib|dll)$").unwrap();
         let framework_regex_short = Regex::new(r"^-F\s*(?P<name>.*)$").unwrap();
-        let framework_regex_long = Regex::new(r"^--framework\s*(?P<name>.*)$").unwrap();
+        let framework_regex_long = Regex::new(r"^-framework\s*(?P<name>.*)$").unwrap();
 
         for arg in split_args {
             let arg = self.subst_shell_variables(arg);
@@ -403,6 +403,20 @@ mod tests {
             [SearchPath {
                 kind: SearchPathKind::Framework,
                 name: "/some/path".into(),
+            }]
+        );
+    }
+
+    #[test]
+    fn test_framework_arg_real() {
+        let mut rb_config = RbConfig::new();
+        rb_config.push_dldflags("-framework CoreFoundation");
+
+        assert_eq!(
+            rb_config.libs,
+            [Library {
+                kind: LibraryKind::Framework,
+                name: "CoreFoundation".into(),
             }]
         );
     }
