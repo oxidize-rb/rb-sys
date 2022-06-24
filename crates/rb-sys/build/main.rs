@@ -157,6 +157,7 @@ fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig.get(key));
 }
 
+#[cfg(feature = "ruby-macros")]
 fn compile_ruby_macros(rbconfig: &mut RbConfig) {
     let mut build = cc::Build::new();
     let mut cc_args =
@@ -189,6 +190,9 @@ fn compile_ruby_macros(rbconfig: &mut RbConfig) {
 
     build.compile("ruby_macros");
 }
+
+#[cfg(not(feature = "ruby-macros"))]
+fn compile_ruby_macros(_rbconfig: &mut RbConfig) {}
 
 fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
     let major = rbconfig.get("MAJOR").parse::<i32>().unwrap();
