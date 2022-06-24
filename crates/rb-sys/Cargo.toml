@@ -33,12 +33,14 @@ libc = "0.2.126"
 default = ["ruby-macros", "gem"]
 gem = ["ruby-abi-version"]
 link-ruby = []
+no-link-ruby = []
 ruby-macros = ["cc", "shell-words"]
 ruby-static = []
 ruby-abi-version = []
 global-allocator = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []
+debug-build = []
 
 [lib]
 doctest = false

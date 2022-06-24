@@ -43,8 +43,24 @@ impl RbConfig {
         }
     }
 
+    /// Sets a value for a key
     pub fn set_value_for_key(&mut self, key: &str, value: Value) {
         self.value_map.insert(key.to_owned(), value);
+    }
+
+    /// Get the name for libruby-static (i.e. `ruby.3.1-static`)
+    pub fn libruby_static_name(&self) -> String {
+        self.get("LIBRUBY_A")
+            .strip_prefix("lib")
+            .unwrap()
+            .strip_suffix(".a")
+            .unwrap()
+            .to_string()
+    }
+
+    /// Get the name for libruby (i.e. `ruby.3.1`)
+    pub fn libruby_so_name(&self) -> String {
+        self.get("RUBY_SO_NAME")
     }
 
     /// Instantiates a new `RbConfig` for the current Ruby.
