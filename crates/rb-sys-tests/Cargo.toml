@@ -3,13 +3,13 @@ name = "rb-sys-tests"
 version = "0.9.9"
 edition = "2018"
 autotests = false
+publish = false
 
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby", "ruby-macros"] } 
+rb-sys = { path = "../rb-sys" } 
 ctor = "0.1"
 
 [features]
-default = ["link-ruby", "ruby-macros"]
 link-ruby = ["rb-sys/link-ruby"]
 ruby-macros = ["rb-sys/ruby-macros"]
 
