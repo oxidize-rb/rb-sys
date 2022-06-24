@@ -90,7 +90,7 @@ task :publish do
   ["crates/rb-sys-build", "crates/rb-sys"].each do |dir|
     Dir.chdir(dir) do
       sh "cargo publish || true"
-      sleep 5
+      sleep 10
     end
   end
 end
