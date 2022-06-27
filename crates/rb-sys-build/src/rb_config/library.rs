@@ -12,12 +12,24 @@ pub enum LibraryKind {
 pub struct Library {
     pub kind: LibraryKind,
     pub name: String,
+    pub rename: Option<String>,
+    pub modifiers: Vec<String>,
 }
 
 impl Library {
     /// Creates a new library.
-    pub fn new(name: String, kind: LibraryKind) -> Self {
-        Self { kind, name }
+    pub fn new(
+        name: String,
+        kind: LibraryKind,
+        rename: Option<String>,
+        modifiers: Vec<String>,
+    ) -> Self {
+        Self {
+            kind,
+            name,
+            rename,
+            modifiers,
+        }
     }
 }
 
@@ -41,10 +53,14 @@ impl From<&str> for Library {
             1 => Library {
                 kind: LibraryKind::Native,
                 name: parts.first().expect("lib name is empty").to_owned(),
+                rename: None,
+                modifiers: vec![],
             },
             2 => Library {
                 kind: parts.first().expect("no kind for lib").as_str().into(),
                 name: parts.last().expect("lib name is empty").to_owned(),
+                rename: None,
+                modifiers: vec![],
             },
             _ => panic!("Invalid library specification: {}", s),
         }
@@ -53,11 +69,23 @@ impl From<&str> for Library {
 
 impl std::fmt::Display for Library {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let modifiers = if self.modifiers.is_empty() {
+            String::new()
+        } else {
+            format!(":{}", self.modifiers.join(","))
+        };
+
+        let rename = if let Some(rename) = &self.rename {
+            format!("{}:", rename)
+        } else {
+            String::new()
+        };
+
         match self.kind {
             LibraryKind::Framework => write!(f, "framework={}", self.name),
-            LibraryKind::Dylib => write!(f, "dylib={}", self.name),
-            LibraryKind::Static => write!(f, "static={}", self.name),
-            LibraryKind::Native => write!(f, "{}", self.name),
+            LibraryKind::Dylib => write!(f, "dylib{}={}{}", modifiers, rename, self.name),
+            LibraryKind::Static => write!(f, "static{}={}{}", modifiers, rename, self.name),
+            LibraryKind::Native => write!(f, "{}{}", rename, self.name),
         }
     }
 }
