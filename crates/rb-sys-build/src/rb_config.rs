@@ -204,7 +204,10 @@ impl RbConfig {
                 });
             } else if let Some(name) = capture_name(&libruby_regex, &arg) {
                 let (kind, modifiers) = if name.ends_with("-static") {
-                    (LibraryKind::Static, vec!["+whole-archive".to_string()])
+                    // Enable when native_link_modifiers is stable
+                    // (LibraryKind::Static, vec!["+whole-archive".to_string()])
+
+                    (LibraryKind::Static, vec![])
                 } else {
                     (LibraryKind::Dylib, vec![])
                 };
@@ -486,7 +489,7 @@ mod tests {
 
         assert_eq!(
             rb_config.cargo_args(),
-            ["cargo:rustc-link-lib=static:+whole-archive=ruby.3.1-static"]
+            ["cargo:rustc-link-lib=static=ruby.3.1-static"]
         );
     }
 
