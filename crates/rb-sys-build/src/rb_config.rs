@@ -203,7 +203,7 @@ impl RbConfig {
                     name,
                 });
             } else if let Some(name) = capture_name(&libruby_regex, &arg) {
-                let (kind, modifiers) = if name.contains("static") {
+                let (kind, modifiers) = if name.ends_with("-static") {
                     (LibraryKind::Static, vec!["+whole-archive".to_string()])
                 } else {
                     (LibraryKind::Dylib, vec![])
@@ -212,7 +212,7 @@ impl RbConfig {
                 self.libs.push(Library {
                     kind,
                     name: format!("ruby{}", name.to_owned()),
-                    rename: Some("rb".to_string()),
+                    rename: None,
                     modifiers,
                 });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
@@ -486,7 +486,7 @@ mod tests {
 
         assert_eq!(
             rb_config.cargo_args(),
-            ["cargo:rustc-link-lib=static:+whole-archive=rb:ruby.3.1-static"]
+            ["cargo:rustc-link-lib=static:+whole-archive=ruby.3.1-static"]
         );
     }
 
@@ -497,7 +497,7 @@ mod tests {
 
         assert_eq!(
             rb_config.cargo_args(),
-            ["cargo:rustc-link-lib=dylib=rb:ruby.3.1"]
+            ["cargo:rustc-link-lib=dylib=ruby.3.1"]
         );
     }
 
