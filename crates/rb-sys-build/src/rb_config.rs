@@ -186,6 +186,7 @@ impl RbConfig {
         let split_args = Flags::new(input);
 
         let search_path_regex = Regex::new(r"^-L\s*(?P<name>.*)$").unwrap();
+        let libruby_regex = Regex::new(r"^-l\s*ruby(?P<name>\S+)$").unwrap();
         let lib_regex_short = Regex::new(r"^-l\s*(?P<name>\w+\S+)$").unwrap();
         let lib_regex_long = Regex::new(r"^--library=(?P<name>\w+\S+)$").unwrap();
         let static_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).a$").unwrap();
@@ -201,35 +202,60 @@ impl RbConfig {
                     kind: SearchPathKind::Native,
                     name,
                 });
+            } else if let Some(name) = capture_name(&libruby_regex, &arg) {
+                let (kind, modifiers) = if name.contains("static") {
+                    (LibraryKind::Static, vec!["+whole-archive".to_string()])
+                } else {
+                    (LibraryKind::Dylib, vec![])
+                };
+
+                self.libs.push(Library {
+                    kind,
+                    name: format!("ruby{}", name.to_owned()),
+                    rename: Some("rb".to_string()),
+                    modifiers,
+                });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
                 self.libs.push(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&framework_regex_short, &arg) {
                 self.search_paths.push(SearchPath {
@@ -240,6 +266,8 @@ impl RbConfig {
                 self.libs.push(Library {
                     kind: LibraryKind::Framework,
                     name: name.to_owned(),
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else {
                 self.link_args.push(arg.to_owned());
@@ -293,6 +321,8 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use super::*;
     #[test]
     fn test_extract_lib_search_paths() {
@@ -443,7 +473,31 @@ mod tests {
             [Library {
                 kind: LibraryKind::Framework,
                 name: "CoreFoundation".into(),
+                rename: None,
+                modifiers: vec![],
             }]
+        );
+    }
+
+    #[test]
+    fn test_libruby_static() {
+        let mut rb_config = RbConfig::new();
+        rb_config.push_dldflags("-lruby.3.1-static");
+
+        assert_eq!(
+            rb_config.cargo_args(),
+            ["cargo:rustc-link-lib=static:+whole-archive=rb:ruby.3.1-static"]
+        );
+    }
+
+    #[test]
+    fn test_libruby_dynamic() {
+        let mut rb_config = RbConfig::new();
+        rb_config.push_dldflags("-lruby.3.1");
+
+        assert_eq!(
+            rb_config.cargo_args(),
+            ["cargo:rustc-link-lib=dylib=rb:ruby.3.1"]
         );
     }
 
@@ -496,6 +550,8 @@ mod tests {
             vec![Library {
                 kind: LibraryKind::Static,
                 name: "ssp".to_string(),
+                rename: None,
+                modifiers: vec![],
             }]
         );
         assert_eq!(
