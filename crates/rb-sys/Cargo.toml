@@ -19,7 +19,6 @@ rb-sys-build = { path = "../rb-sys-build", version = "0.9.13" }
 cc = { version = "1.0", optional = true }
 
 [features]
-default = ["gem"]
 gem = ["ruby-abi-version"]
 link-ruby = []
 no-link-ruby = []

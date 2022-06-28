@@ -64,7 +64,7 @@ jobs:
           bundle exec rake test:examples
 
   build_and_test_static:
-    name: 🔘 Static 
+    name: 🔘 Static
     strategy:
       fail-fast: false
       matrix:
