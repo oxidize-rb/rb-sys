@@ -9,3 +9,4 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 
 [dependencies]
 regex = "1" 
+shell-words = "1.1"

@@ -133,7 +133,12 @@ impl RbConfig {
 
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
-        for flag in cflags.split_whitespace() {
+        for flag in shell_words::split(cflags).unwrap_or_else(|_| {
+            cflags
+                .split_whitespace()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+        }) {
             self.cflags.push(flag.to_string());
         }
 

@@ -2,7 +2,13 @@ use rb_sys_build::RbConfig;
 
 #[cfg(feature = "ruby-macros")]
 fn shellsplit(s: &str) -> Vec<String> {
-    s.split_whitespace().map(|s| s.to_owned()).collect()
+    match shell_words::split(s) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("shellsplit failed: {}", e);
+            s.split_whitespace().map(|s| s.to_string()).collect()
+        }
+    }
 }
 
 #[cfg(feature = "ruby-macros")]
@@ -32,7 +38,7 @@ pub fn compile(rbconfig: &mut RbConfig) {
     build.include(rbconfig.get("rubyhdrdir"));
     build.include(rbconfig.get("rubyarchhdrdir"));
     build.flag("-fms-extensions");
-    build.flag("-Wunused-parameter");
+    build.flag("-Wno-error"); // not actionable by user
 
     for flag in &rbconfig.cflags {
         build.flag(flag);
