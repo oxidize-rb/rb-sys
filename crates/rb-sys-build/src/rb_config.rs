@@ -7,7 +7,6 @@ mod search_path;
 
 use library::*;
 use search_path::*;
-use serde_json::{Map, Value};
 use std::ffi::OsString;
 
 use self::flags::Flags;
@@ -21,7 +20,7 @@ pub struct RbConfig {
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
     pub blocklist_lib: Vec<String>,
-    value_map: HashMap<String, Value>,
+    value_map: HashMap<String, String>,
 }
 
 impl Default for RbConfig {
@@ -44,7 +43,7 @@ impl RbConfig {
     }
 
     /// Sets a value for a key
-    pub fn set_value_for_key(&mut self, key: &str, value: Value) {
+    pub fn set_value_for_key(&mut self, key: &str, value: String) {
         self.value_map.insert(key.to_owned(), value);
     }
 
@@ -73,28 +72,28 @@ impl RbConfig {
         let config = Command::new(ruby)
             .arg("--disable-gems")
             .arg("-rrbconfig")
-            .arg("-rjson")
             .arg("-e")
-            .arg("print RbConfig::CONFIG.to_json")
+            .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
             .output()
             .unwrap_or_else(|e| panic!("ruby not found: {}", e));
 
         let output = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
-        let parsed: serde_json::Value =
-            serde_json::from_str(&output).expect("Could not parse RbConfig output");
-        let value_map: Map<String, Value> = parsed.as_object().unwrap().clone();
-        let cflags = value_map.get("cflags").unwrap().as_str().unwrap();
-        let ldflags = value_map.get("DLDFLAGS").unwrap().as_str().unwrap();
+
+        let mut parsed = HashMap::new();
+        for line in output.split('\x1E') {
+            let mut parts = line.splitn(2, '\x1F');
+            if let (Some(key), Some(val)) = (parts.next(), parts.next()) {
+                parsed.insert(key.to_owned(), val.to_owned());
+            }
+        }
+
+        let cflags = parsed.get("cflags").unwrap().as_str();
+        let ldflags = parsed.get("DLDFLAGS").unwrap().as_str();
 
         rbconfig.push_cflags(cflags);
         rbconfig.push_dldflags(ldflags);
-        let mut hash_map = HashMap::new();
 
-        for (key, value) in value_map {
-            hash_map.insert(key, value);
-        }
-
-        rbconfig.value_map = hash_map;
+        rbconfig.value_map = parsed;
 
         rbconfig
     }
@@ -117,13 +116,7 @@ impl RbConfig {
 
         match env::var(format!("RBCONFIG_{}", key)) {
             Ok(val) => val,
-            _ => self
-                .value_map
-                .get(key)
-                .expect("key not found")
-                .as_str()
-                .unwrap()
-                .to_owned(),
+            _ => self.value_map.get(key).expect("key not found").to_owned(),
         }
     }
 
@@ -134,11 +127,7 @@ impl RbConfig {
 
         match env::var(format!("RBCONFIG_{}", key)) {
             Ok(val) => Some(val),
-            _ => self
-                .value_map
-                .get(key)
-                .map(|val| val.as_str())
-                .map(|val| val.unwrap().to_owned()),
+            _ => self.value_map.get(key).map(|val| val.to_owned()),
         }
     }
 
