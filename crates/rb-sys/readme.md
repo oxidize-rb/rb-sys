@@ -44,6 +44,18 @@ rb-sys = { version = "0.9", features = ["ruby-static"] }
 
 Alternatively, you can set the `RUBY_STATIC=true` environment variable.
 
+## Ruby Macros
+
+The `rb-sys` crates comes with an optional [`ruby-macros` feature](./crates/rb-sys/src/macros/mod.rs). This feature
+compiles a small bit of C code to give access to some commonly used C macros in Ruby.
+
+```toml
+# Cargo.toml
+
+[dependencies]
+rb-sys = { version = "0.9",  features = ["ruby-macros"] }
+```
+
 ### Other features
 
 - `gem`: Setup boilerplate for a Ruby gem (enabled by default).

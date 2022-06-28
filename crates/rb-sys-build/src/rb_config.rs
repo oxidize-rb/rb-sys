@@ -133,12 +133,9 @@ impl RbConfig {
 
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
-        shell_words::split(cflags)
-            .expect("cannot split cflags")
-            .iter()
-            .for_each(|cflag| {
-                self.cflags.push(cflag.to_owned());
-            });
+        for flag in cflags.split_whitespace() {
+            self.cflags.push(flag.to_string());
+        }
         self
     }
 

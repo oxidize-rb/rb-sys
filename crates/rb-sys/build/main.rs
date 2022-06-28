@@ -2,6 +2,7 @@ extern crate bindgen;
 
 mod bindings;
 mod features;
+mod ruby_macros;
 mod version;
 
 use features::*;
@@ -32,7 +33,7 @@ fn main() {
     add_platform_link_args(&mut rbconfig);
 
     if is_ruby_macros_enabled() {
-        compile_ruby_macros(&mut rbconfig);
+        ruby_macros::compile(&mut rbconfig);
     }
 
     if is_link_ruby_enabled() {
@@ -161,46 +162,6 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig.get(key));
 }
-
-#[cfg(feature = "ruby-macros")]
-fn compile_ruby_macros(rbconfig: &mut RbConfig) {
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
-
-    let mut build = cc::Build::new();
-    let mut cc_args =
-        shell_words::split(&rbconfig.get("CC")).expect("CC is not a valid shell word");
-    let libs = shell_words::split(&rbconfig.get("LIBS")).expect("cannot split LIBS");
-
-    cc_args.reverse();
-    build.compiler(cc_args.pop().expect("CC is empty"));
-    cc_args.reverse();
-
-    for arg in cc_args {
-        build.flag(&arg);
-    }
-
-    for lib in libs {
-        build.flag(&lib);
-    }
-
-    build.file("src/macros/ruby_macros.c");
-    build.include(format!("{}/include/internal", rbconfig.get("rubyhdrdir")));
-    build.include(format!("{}/include/impl", rbconfig.get("rubyhdrdir")));
-    build.include(rbconfig.get("rubyhdrdir"));
-    build.include(rbconfig.get("rubyarchhdrdir"));
-    build.flag("-fms-extensions");
-    build.flag("-Wunused-parameter");
-
-    for flag in &rbconfig.cflags {
-        build.flag(flag);
-    }
-
-    build.compile("ruby_macros");
-}
-
-#[cfg(not(feature = "ruby-macros"))]
-fn compile_ruby_macros(_rbconfig: &mut RbConfig) {}
 
 fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
     let major = rbconfig.get("MAJOR").parse::<i32>().unwrap();
