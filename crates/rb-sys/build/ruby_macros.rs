@@ -15,8 +15,8 @@ fn shellsplit(s: &str) -> Vec<String> {
 pub fn compile(rbconfig: &mut RbConfig) {
     use std::path::Path;
 
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
-    println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
+    println!("cargo:rerun-if-changed=src/macros/ruby_macros.h");
+    println!("cargo:rerun-if-changed=src/macros/ruby_macros.c");
 
     let mut build = cc::Build::new();
     let mut cc_args = shellsplit(&rbconfig.get("CC"));
