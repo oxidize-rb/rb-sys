@@ -9,7 +9,11 @@ pub fn is_ruby_abi_version_enabled() -> bool {
 }
 
 pub fn is_ruby_macros_enabled() -> bool {
-    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS") && !cfg!(windows)
+    if cfg!(windows) {
+        return false;
+    }
+
+    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
 }
 
 pub fn is_gem_enabled() -> bool {
@@ -46,7 +50,9 @@ pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
 pub fn is_link_ruby_enabled() -> bool {
     if is_linting() {
         return false;
-    } else if is_no_link_ruby_enabled() {
+    }
+
+    if is_no_link_ruby_enabled() {
         false
     } else if is_gem_enabled() {
         if cfg!(windows) {
