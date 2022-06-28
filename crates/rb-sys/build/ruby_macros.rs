@@ -1,5 +1,6 @@
 use rb_sys_build::RbConfig;
 
+#[cfg(feature = "ruby-macros")]
 fn shellsplit(s: &str) -> Vec<String> {
     s.split_whitespace().map(|s| s.to_owned()).collect()
 }
@@ -41,4 +42,4 @@ pub fn compile(rbconfig: &mut RbConfig) {
 }
 
 #[cfg(not(feature = "ruby-macros"))]
-fn compile(_rbconfig: &mut RbConfig) {}
+pub fn compile(_rbconfig: &mut RbConfig) {}

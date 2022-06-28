@@ -59,12 +59,12 @@ jobs:
         run: bundle exec rake test:gem
       - name: 💨 Smoke test
         env:
-          PROFILE: "release"
+          RB_SYS_CARGO_PROFILE: "release"
         run: |
           bundle exec rake test:examples
 
   build_and_test_static:
-    name: 🔘 Test static Ruby
+    name: 🔘 Static 
     strategy:
       fail-fast: false
       matrix:
