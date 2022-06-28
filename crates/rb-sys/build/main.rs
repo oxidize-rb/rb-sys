@@ -162,7 +162,9 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
-    println!("cargo:rustc-cfg={}=\"{}\"", name, rbconfig.get(key));
+    if let Some(k) = rbconfig.get_optional(key) {
+        println!("cargo:rustc-cfg={}=\"{}\"", name, k);
+    }
 }
 
 fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {

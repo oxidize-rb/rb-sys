@@ -116,7 +116,11 @@ impl RbConfig {
 
         match env::var(format!("RBCONFIG_{}", key)) {
             Ok(val) => val,
-            _ => self.value_map.get(key).expect("key not found").to_owned(),
+            _ => self
+                .value_map
+                .get(key)
+                .unwrap_or_else(|| panic!("Key not found: {}", key))
+                .to_owned(),
         }
     }
 
