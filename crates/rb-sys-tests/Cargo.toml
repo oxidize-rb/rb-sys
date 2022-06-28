@@ -6,10 +6,15 @@ autotests = false
 publish = false
 
 [dependencies]
-rb-sys = { path = "../rb-sys", default-features = false, features = ["link-ruby", "ruby-macros"] } 
+rb-sys = { path = "../rb-sys", default-features = false } 
 ctor = "0.1"
+
+[features]
+link-ruby = ["rb-sys/link-ruby"]
+ruby-macros = ["rb-sys/ruby-macros"]
 
 [[test]]
 name = "rb-sys-tests"
 path = "tests/lib.rs"
 harness = true
+required-features = ["link-ruby", "ruby-macros"]
