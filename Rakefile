@@ -9,7 +9,7 @@ namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
     cargo_args = extra_args || ["--quiet", "--workspace", "--exclude", "rust-reverse"]
-    sh "cargo", "+1.51", "test", *cargo_args
+    sh "cargo", "test", *cargo_args
   end
 
   desc "Test against all installed Rubies"

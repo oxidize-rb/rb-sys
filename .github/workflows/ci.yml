@@ -31,7 +31,7 @@ jobs:
         run: bundle exec standardrb --format github
 
   build_and_test:
-    name: 🧪 Build and test
+    name: 🧪 Test
     strategy:
       fail-fast: false
       matrix:
