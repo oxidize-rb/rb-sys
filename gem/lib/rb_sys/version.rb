@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module RbSys
-  VERSION = "0.1.14"
+  VERSION = "0.9.14"
 end
