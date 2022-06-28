@@ -79,6 +79,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
         .rustified_enum("*")
+        .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
