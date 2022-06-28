@@ -38,6 +38,8 @@ jobs:
         ruby_version: ["2.6", "2.7", "3.0", "3.1", "head"]
         sys:
           - os: ubuntu-latest
+            rust_toolchain: "1.51"
+          - os: ubuntu-latest
             rust_toolchain: stable
           - os: macos-latest
             rust_toolchain: stable

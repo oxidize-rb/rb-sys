@@ -109,32 +109,34 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 
     let version = Version::current(rbconfig);
 
-    for v in SUPPORTED_RUBY_VERSIONS {
-        if version < v {
+    for v in SUPPORTED_RUBY_VERSIONS.iter() {
+        let v = v.to_owned();
+
+        if &version < v {
             println!(r#"cargo:lt_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:lt_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if version <= v {
+        if &version <= v {
             println!(r#"cargo:lte_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:lte_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if version == v {
+        if &version == v {
             println!(r#"cargo:eq_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:eq_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if version >= v {
+        if &version >= v {
             println!(r#"cargo:gte_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:gte_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if version > v {
+        if &version > v {
             println!(r#"cargo:gt_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:gt_{}_{}=false"#, v.major(), v.minor());

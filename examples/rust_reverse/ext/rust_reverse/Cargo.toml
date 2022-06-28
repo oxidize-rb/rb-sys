@@ -2,7 +2,7 @@
 name = "rust-reverse"
 version = "0.9.13"
 autotests = false # set true if you want to use "cargo test"
-edition = "2021"
+edition = "2018"
 
 [dependencies]
 rb-sys = { path = "./../../../../crates/rb-sys", features = ["global-allocator"] }
