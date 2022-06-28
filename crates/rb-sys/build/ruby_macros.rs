@@ -13,6 +13,8 @@ fn shellsplit(s: &str) -> Vec<String> {
 
 #[cfg(feature = "ruby-macros")]
 pub fn compile(rbconfig: &mut RbConfig) {
+    use std::path::Path;
+
     println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.h");
     println!("cargo:rerun-if-changed=src/ruby_macros/ruby_macros.c");
 
@@ -32,7 +34,8 @@ pub fn compile(rbconfig: &mut RbConfig) {
         build.flag(&lib);
     }
 
-    build.file("src/macros/ruby_macros.c");
+    let path = Path::new("src").join("macros").join("ruby_macros.c");
+    build.file(path);
     build.include(format!("{}/include/internal", rbconfig.get("rubyhdrdir")));
     build.include(format!("{}/include/impl", rbconfig.get("rubyhdrdir")));
     build.include(rbconfig.get("rubyhdrdir"));
