@@ -9,7 +9,7 @@ pub fn is_ruby_abi_version_enabled() -> bool {
 }
 
 pub fn is_ruby_macros_enabled() -> bool {
-    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
+    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS") && !cfg!(windows)
 }
 
 pub fn is_gem_enabled() -> bool {
