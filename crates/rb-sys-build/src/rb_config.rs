@@ -136,6 +136,7 @@ impl RbConfig {
         for flag in cflags.split_whitespace() {
             self.cflags.push(flag.to_string());
         }
+
         self
     }
 
