@@ -58,6 +58,12 @@ module RbSys
           RB_SYS_TARGET_DIR ?= $(RB_SYS_CARGO_PROFILE)
         endif
 
+        ifeq ($(RB_SYS_CARGO_PROFILE),release)
+          RB_SYS_CARGO_PROFILE_FLAG = --release
+        else
+          RB_SYS_CARGO_PROFILE_FLAG = --profile $(RB_SYS_CARGO_PROFILE)
+        endif
+
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
@@ -141,7 +147,7 @@ module RbSys
     end
 
     def gsub_cargo_command!(cargo_command, builder:)
-      cargo_command.gsub!("--profile #{builder.profile}", "--profile $(RB_SYS_CARGO_PROFILE)")
+      cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{/target/\w+/}, "/target/$(RB_SYS_TARGET_DIR)/")
       cargo_command

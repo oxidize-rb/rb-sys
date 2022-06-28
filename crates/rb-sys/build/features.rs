@@ -9,7 +9,7 @@ pub fn is_ruby_abi_version_enabled() -> bool {
 }
 
 pub fn is_ruby_macros_enabled() -> bool {
-    is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
+    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS") && !cfg!(windows)
 }
 
 pub fn is_gem_enabled() -> bool {
@@ -21,6 +21,10 @@ pub fn is_no_link_ruby_enabled() -> bool {
 }
 
 pub fn is_debug_build_enabled() -> bool {
+    if is_linting() {
+        return false;
+    }
+
     println!("cargo:rerun-if-env-changed=RB_SYS_DEBUG_BUILD");
 
     is_env_variable_defined("CARGO_FEATURE_DEBUG_BUILD")
@@ -40,12 +44,18 @@ pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
 }
 
 pub fn is_link_ruby_enabled() -> bool {
-    if is_no_link_ruby_enabled() {
+    if is_linting() {
+        return false;
+    } else if is_no_link_ruby_enabled() {
         false
     } else if is_gem_enabled() {
         if cfg!(windows) {
             true
         } else if is_env_variable_defined("CARGO_FEATURE_LINK_RUBY") {
+            // print all env vars
+            for (key, value) in std::env::vars() {
+                println!("{}={}", key, value);
+            }
             let msg = "
                 The `gem` and `link-ruby` features are mutually exclusive on this
                 platform, since the libruby symbols will be available at runtime.
@@ -57,7 +67,7 @@ pub fn is_link_ruby_enabled() -> bool {
                 [dependencies.rb-sys] 
                 features = [\"link-ruby\", \"ruby-abi-version\"] # Living dangerously! 
             "
-            .split("\n")
+            .split('\n')
             .map(|line| line.trim())
             .collect::<Vec<_>>()
             .join("\n");
@@ -74,4 +84,18 @@ pub fn is_link_ruby_enabled() -> bool {
 
 fn is_env_variable_defined(name: &str) -> bool {
     std::env::var(name).is_ok()
+}
+
+fn is_linting() -> bool {
+    let clippy = match std::env::var_os("CARGO_CFG_FEATURE") {
+        Some(val) => val.to_str().unwrap_or("").contains("clippy"),
+        _ => false,
+    };
+
+    let rust_analyzer = match std::env::var_os("RUSTC_WRAPPER") {
+        Some(val) => val.to_str().unwrap_or("").contains("rust-analyzer"),
+        _ => false,
+    };
+
+    clippy || rust_analyzer
 }

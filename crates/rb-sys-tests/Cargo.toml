@@ -6,7 +6,7 @@ autotests = false
 publish = false
 
 [dependencies]
-rb-sys = { path = "../rb-sys" } 
+rb-sys = { path = "../rb-sys", default-features = false } 
 ctor = "0.1"
 
 [features]

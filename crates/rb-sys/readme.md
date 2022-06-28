@@ -14,41 +14,58 @@ If you actually _need_ raw/unsafe bindings to libruby, the this crate if for you
 
 ## Usage
 
-1. Add the following to your `Cargo.toml`:
+### Writing a Ruby gem
 
-   ```toml
-   [dependencies]
-   rb-sys = "0.9"
-   ```
+Ruby gems require a bit of boilerplate to be defined to be usable from Ruby. `rb-sys` makes this process painless by
+doing the work for you, by simply enabling the `gem` feature.
 
-2. [See this example of creating a Ruby gem in Rust](./examples/rust_reverse)
+```toml
+rb-sys = { version = "0.9",  features = ["gem"] }
+```
 
-### Linking libruby
+Under the hood this ensures we do not link libruby (unless on Windows), and defines a `ruby_abi_version` function for
+Ruby 3.2+.
+
+[See this example of creating a Ruby gem in Rust](./examples/rust_reverse)
+
+### Embedding libruby in your Rust app
+
+_IMPORTANT_: If you are authoring a Ruby gem, you do not need to enable this feature.
 
 If you need to link libruby (i.e. you are initializing a Ruby VM in your Rust code), use can enable the `link-ruby`
 feature:
 
-```rust
+```toml
 rb-sys = { version = "0.9",  features = ["link-ruby"] }
 ```
-
-If you are authoring a Ruby gem, you do not need to enable this feature.
 
 ### Static libruby
 
 You can also force static linking of libruby:
 
-```rust
+```toml
 rb-sys = { version = "0.9", features = ["ruby-static"] }
 ```
 
 Alternatively, you can set the `RUBY_STATIC=true` environment variable.
 
+## Ruby Macros
+
+The `rb-sys` crates comes with an optional [`ruby-macros` feature](./crates/rb-sys/src/macros/mod.rs). This feature
+compiles a small bit of C code to give access to some commonly used C macros in Ruby.
+
+```toml
+# Cargo.toml
+
+[dependencies]
+rb-sys = { version = "0.9",  features = ["ruby-macros"] }
+```
+
 ### Other features
 
-- `gem`: Setup boilerplate for a Ruby gem (enabled by default).
-- `ruby-abi-version`: Set the Ruby ABI version. (enabled by default).
-- `ruby-macros`: Generate Rust functions for Ruby macros like `RSTRING_PTR` (enabled by default).
+- `gem`: Setup boilerplate for a Ruby gem.
+- `ruby-abi-version`: Set the Ruby ABI version.
+- `ruby-macros`: Generate Rust functions for Ruby macros like `RSTRING_PTR`.
 - `global-allocator`: Report Rust memory allocations to the Ruby GC (_recommended_).
 - `ruby-static`: Link the static version of libruby.
 - `link-ruby`: Link libruby.
