@@ -7,6 +7,9 @@ on:
 jobs:
   docker_images:
     runs-on: ubuntu-latest
+    env:
+      RBSYS_DOCKER: "docker buildx"
+      RBSYS_DOCKER_BUILD_EXTRA_ARGS: "--cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new --load"
     strategy:
       fail-fast: false
       matrix:
@@ -53,12 +56,9 @@ jobs:
           restore-keys: |
             ${{ matrix.platform.ruby_target }}-buildx-v3
 
-      - name: Build container
+      - name: Build images
         env:
-          RBSYS_DOCKER: "docker buildx"
-          RBSYS_DOCKER_BUILD_EXTRA_ARGS: "--cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new --load"
-        run: |
-          rake docker:push:${{ matrix.platform.ruby_target }}
+        run: rake docker:build:${{ matrix.platform.ruby_target }}
 
       - name: Move cache
         run: |
@@ -75,3 +75,7 @@ jobs:
         with:
           platform: ${{ matrix.platform.ruby_target }}
           directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
+
+      - name: Push images
+        if: github.ref == 'refs/heads/main'
+        run: rake docker:push:${{ matrix.platform.ruby_target }}
