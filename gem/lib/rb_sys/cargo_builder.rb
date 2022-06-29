@@ -11,7 +11,7 @@ module RbSys
       @profile = ENV.fetch("RB_SYS_CARGO_BUILD_PROFILE", :release).to_sym
       @env = {}
       @features = []
-      @target = ENV["CARGO_BUILD_TARGET"]
+      @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
       @extra_rustc_args = []
       @dry_run = true
       @ext_dir = nil
