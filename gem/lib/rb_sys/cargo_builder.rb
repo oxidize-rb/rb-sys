@@ -70,6 +70,22 @@ module RbSys
       File.join(*path_parts)
     end
 
+    # We have to basically reimplement RbConfig::CONFIG['SOEXT'] here to support
+    # Ruby < 2.5
+    #
+    # @see https://github.com/ruby/ruby/blob/c87c027f18c005460746a74c07cd80ee355b16e4/configure.ac#L3185
+    def so_ext
+      return RbConfig::CONFIG["SOEXT"] if RbConfig::CONFIG.key?("SOEXT")
+
+      if win_target?
+        "dll"
+      elsif darwin_target?
+        "dylib"
+      else
+        "so"
+      end
+    end
+
     private
 
     def rb_config_env
@@ -225,22 +241,6 @@ module RbSys
       end
 
       deffile_path
-    end
-
-    # We have to basically reimplement RbConfig::CONFIG['SOEXT'] here to support
-    # Ruby < 2.5
-    #
-    # @see https://github.com/ruby/ruby/blob/c87c027f18c005460746a74c07cd80ee355b16e4/configure.ac#L3185
-    def so_ext
-      return RbConfig::CONFIG["SOEXT"] if RbConfig::CONFIG.key?("SOEXT")
-
-      if win_target?
-        "dll"
-      elsif darwin_target?
-        "dylib"
-      else
-        "so"
-      end
     end
 
     # Corresponds to $(LIBPATH) in mkmf

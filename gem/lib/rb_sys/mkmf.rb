@@ -48,34 +48,57 @@ module RbSys
 
       # rubocop:disable Style/GlobalVars
       make_install = +<<~MAKE
-        RB_SYS_CARGO_PROFILE ?= #{builder.profile}
-        RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
         CARGO ?= cargo
+        CARGO_BUILD_TARGET ?= #{builder.target}
+        SOEXT ?= #{builder.so_ext}
 
-        ifeq ($(RB_SYS_CARGO_PROFILE),dev)
-          RB_SYS_TARGET_DIR ?= debug
-        else
-          RB_SYS_TARGET_DIR ?= $(RB_SYS_CARGO_PROFILE)
+        # Determine the prefix Cargo uses for the lib.
+        ifneq ($(SOEXT),dll)
+          SOEXT_PREFIX ?= lib
         endif
 
+        RB_SYS_CARGO_PROFILE ?= #{builder.profile}
+        RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
+
+        # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
+        ifeq ($(RB_SYS_CARGO_PROFILE),dev)
+          RB_SYS_CARGO_PROFILE_DIR ?= debug
+        else
+          RB_SYS_CARGO_PROFILE_DIR ?= $(RB_SYS_CARGO_PROFILE)
+        endif
+
+        # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
         ifeq ($(RB_SYS_CARGO_PROFILE),release)
           RB_SYS_CARGO_PROFILE_FLAG = --release
         else
           RB_SYS_CARGO_PROFILE_FLAG = --profile $(RB_SYS_CARGO_PROFILE)
         endif
 
+        # Account for sub-directories when using `--target` argument with Cargo
+        ifneq ($(CARGO_BUILD_TARGET),)
+          RB_SYS_CARGO_BUILD_TARGET_DIR ?= target/$(CARGO_BUILD_TARGET)
+        else
+          RB_SYS_CARGO_BUILD_TARGET_DIR ?= target
+        endif
+
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
         CLEANLIBS = $(RUSTLIB) $(DLLIB) $(DEFFILE)
-        DISTCLEANDIRS = target/
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
-        RUSTLIB = #{dllib_path(builder)}
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        TARGET_DIR = #{Dir.pwd}/target/$(RB_SYS_TARGET_DIR)
+        TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
+        RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+
+        DISTCLEANDIRS = $(TARGET_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
+
+        ifneq ($(RB_SYS_VERBOSE),)
+          Q = $(0=@)
+        endif
+
         #{env_vars(builder)}
 
         FORCE: ;
@@ -123,7 +146,7 @@ module RbSys
       args = ARGV.dup
       args.shift if args.first == "--"
       cargo_cmd = builder.cargo_command(dest_path, args)
-      Shellwords.join(cargo_cmd).gsub("\\=", "=").gsub(/\Acargo/, "$(CARGO)")
+      Shellwords.join(cargo_cmd).gsub("\\=", "=").gsub(/\Acargo/, "$(CARGO)").gsub(/-v=\d/, "")
     end
 
     def env_vars(builder)
@@ -142,14 +165,12 @@ module RbSys
       ENV[key] || RbConfig::MAKEFILE_CONFIG[key]
     end
 
-    def dllib_path(builder)
-      builder.cargo_dylib_path(File.join(Dir.pwd, "target"))
-    end
-
     def gsub_cargo_command!(cargo_command, builder:)
       cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
-      cargo_command.gsub!(%r{/target/\w+/}, "/target/$(RB_SYS_TARGET_DIR)/")
+      cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
+      target_dir = "target/#{builder.target}".chomp("/")
+      cargo_command.gsub!(%r{/#{target_dir}/[^/]+}, "/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)")
       cargo_command
     end
   end
