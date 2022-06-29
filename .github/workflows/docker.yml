@@ -57,7 +57,6 @@ jobs:
             ${{ matrix.platform.ruby_target }}-buildx-v3
 
       - name: Build images
-        env:
         run: rake docker:build:${{ matrix.platform.ruby_target }}
 
       - name: Move cache
