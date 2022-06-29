@@ -15,12 +15,10 @@ namespace :test do
 
   desc "Test against all installed Rubies"
   task :rubies do
-    cargo_args = extra_args || ["--quiet"]
-
     cmd = <<~SH
-      gem install bundler:2.3.7
-      bundle check || bundle install -j3
-      cargo test #{cargo_args.join(" ")}
+      gem install bundler:2.3.7 > /dev/null 2>&1
+      bundle check || bundle install -j3 > /dev/null 2>&1
+      bundle exec rake test:cargo
     SH
 
     sh "./script/xruby", "-c", cmd

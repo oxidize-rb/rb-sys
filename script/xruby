@@ -21,8 +21,15 @@ RUBIES = {}
 RUBY_DIRS = ENV.key?("RUBIES_DIR") ? Dir["#{ENV["RUBIES_DIR"]}/*"] : [
   *Dir["#{ENV["HOME"]}/.asdf/installs/ruby/*"],
   *Dir["/opt/rubies/*"],
+  *Dir["#{ENV["HOME"]}/.rubies/*"],
   *Dir["#{ENV["HOME"]}/.rbenv/versions/*"]
 ].sort
+
+RUBY_DIRS.select! do |d|
+  File.directory?(File.join(d, "lib")) && !d.end_with?("rubygems-head")
+end
+
+puts RUBY_DIRS
 
 RUBY_DIRS.each do |dir|
   version = dir.split("/")[-1]
@@ -50,7 +57,7 @@ RUBIES.each do |version, ruby_dir|
     "GEM_HOME" => gem_home
   }
 
-  puts "Running against Ruby #{version}: #{cmd}"
+  puts "Running against Ruby #{version}"
   sleep 1
 
   run_cmd = proc do
