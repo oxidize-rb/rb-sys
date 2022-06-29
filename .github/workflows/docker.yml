@@ -68,7 +68,7 @@ jobs:
       # Test the container
       - uses: actions/checkout@v3
         with:
-          repo: "oxidize-rb/cross-gem-action"
+          repository: "oxidize-rb/cross-gem-action"
           path: "tmp/cross-gem-action"
 
       - uses: "oxidize-rb/cross-gem-action@v1"
