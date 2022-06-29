@@ -11,7 +11,7 @@ module RbSys
       @profile = ENV.fetch("RB_SYS_CARGO_BUILD_PROFILE", :release).to_sym
       @env = {}
       @features = []
-      @target = ENV["CARGO_BUILD_TARGET"]
+      @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
       @extra_rustc_args = []
       @dry_run = true
       @ext_dir = nil
@@ -68,6 +68,22 @@ module RbSys
       path_parts << target if target
       path_parts += [profile_target_directory, "#{prefix}#{cargo_crate_name}.#{so_ext}"]
       File.join(*path_parts)
+    end
+
+    # We have to basically reimplement RbConfig::CONFIG['SOEXT'] here to support
+    # Ruby < 2.5
+    #
+    # @see https://github.com/ruby/ruby/blob/c87c027f18c005460746a74c07cd80ee355b16e4/configure.ac#L3185
+    def so_ext
+      return RbConfig::CONFIG["SOEXT"] if RbConfig::CONFIG.key?("SOEXT")
+
+      if win_target?
+        "dll"
+      elsif darwin_target?
+        "dylib"
+      else
+        "so"
+      end
     end
 
     private
@@ -225,22 +241,6 @@ module RbSys
       end
 
       deffile_path
-    end
-
-    # We have to basically reimplement RbConfig::CONFIG['SOEXT'] here to support
-    # Ruby < 2.5
-    #
-    # @see https://github.com/ruby/ruby/blob/c87c027f18c005460746a74c07cd80ee355b16e4/configure.ac#L3185
-    def so_ext
-      return RbConfig::CONFIG["SOEXT"] if RbConfig::CONFIG.key?("SOEXT")
-
-      if win_target?
-        "dll"
-      elsif darwin_target?
-        "dylib"
-      else
-        "so"
-      end
     end
 
     # Corresponds to $(LIBPATH) in mkmf

@@ -7,6 +7,9 @@ on:
 jobs:
   docker_images:
     runs-on: ubuntu-latest
+    env:
+      RBSYS_DOCKER: "docker buildx"
+      RBSYS_DOCKER_BUILD_EXTRA_ARGS: "--cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new --load"
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +25,16 @@ jobs:
           # - ruby_target: x86-linux
     steps:
       - uses: actions/checkout@v2
+
+      # Test the container
+      - uses: actions/checkout@v3
+        with:
+          repository: "oxidize-rb/cross-gem-action"
+          path: "tmp/cross-gem-action"
+      
+      - name: Print env info
+        run: |
+          env
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -53,25 +66,19 @@ jobs:
           restore-keys: |
             ${{ matrix.platform.ruby_target }}-buildx-v3
 
-      - name: Build container
-        env:
-          RBSYS_DOCKER: "docker buildx"
-          RBSYS_DOCKER_BUILD_EXTRA_ARGS: "--cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new --load"
-        run: |
-          rake docker:push:${{ matrix.platform.ruby_target }}
+      - name: Build images
+        run: rake docker:build:${{ matrix.platform.ruby_target }}
 
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # Test the container
-      - uses: actions/checkout@v3
-        with:
-          repository: "oxidize-rb/cross-gem-action"
-          path: "tmp/cross-gem-action"
-
-      - uses: "oxidize-rb/cross-gem-action@v1"
+      - uses: "oxidize-rb/cross-gem-action@main"
         with:
           platform: ${{ matrix.platform.ruby_target }}
           directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
+
+      - name: Push images
+        if: github.ref == 'refs/heads/main'
+        run: rake docker:push:${{ matrix.platform.ruby_target }}

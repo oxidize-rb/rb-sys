@@ -58,7 +58,8 @@ class TestRbSys < Minitest::Test
       b.target = "wasm32-unknown-unknown"
     end
 
-    assert_match(/--target wasm32-unknown-unknown/, makefile.read)
+    assert_match(/CARGO_BUILD_TARGET \?= wasm32-unknown-unknown/, makefile.read)
+    assert_match(/--target \$\(CARGO_BUILD_TARGET\)/, makefile.read)
   end
 
   def test_generates_deffile
