@@ -169,7 +169,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.15"
+version = "0.9.16"
 dependencies = [
  "bindgen",
  "cc",
@@ -180,7 +180,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.15"
+version = "0.9.16"
 dependencies = [
  "regex",
  "shell-words",
@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.15"
+version = "0.9.16"
 dependencies = [
  "ctor",
  "rb-sys",
@@ -213,7 +213,7 @@ checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "rust-reverse"
-version = "0.9.15"
+version = "0.9.16"
 dependencies = [
  "rb-sys",
 ]
