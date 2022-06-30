@@ -9,7 +9,7 @@ namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
     cargo_args = extra_args || ["--workspace"]
-    sh *["cargo", "test", *cargo_args].compact
+    sh "cargo", "test", *cargo_args
   rescue
     if ENV["CI"]
       ENV["RB_SYS_DEBUG_BUILD"] = "1"

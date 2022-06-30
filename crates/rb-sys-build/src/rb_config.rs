@@ -156,9 +156,14 @@ impl RbConfig {
     pub fn cargo_args(&self) -> Vec<String> {
         let mut result = vec![];
 
+        let mut search_paths = vec![];
+
         for search_path in &self.search_paths {
             result.push(format!("cargo:rustc-link-search={}", search_path));
+            search_paths.push(search_path.name.as_str());
         }
+
+        append_ld_library_path(search_paths);
 
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
@@ -638,4 +643,25 @@ mod tests {
             result
         );
     }
+}
+
+// Needed because Rust 1.51 does not support link-arg, and thus rpath
+// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
+fn append_ld_library_path(search_paths: Vec<&str>) {
+    let env_var_name = if cfg!(windows) {
+        "PATH"
+    } else if cfg!(target_os = "macos") {
+        "DYLD_FALLBACK_LIBRARY_PATH"
+    } else {
+        "LD_LIBRARY_PATH"
+    };
+
+    let new_path = match std::env::var_os(env_var_name) {
+        Some(val) => {
+            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+        }
+        None => search_paths.join(":").to_string(),
+    };
+
+    println!("cargo:rustc-env={}={}", env_var_name, new_path);
 }
