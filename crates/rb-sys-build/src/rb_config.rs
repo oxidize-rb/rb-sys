@@ -42,26 +42,6 @@ impl RbConfig {
         }
     }
 
-    /// Sets a value for a key
-    pub fn set_value_for_key(&mut self, key: &str, value: String) {
-        self.value_map.insert(key.to_owned(), value);
-    }
-
-    /// Get the name for libruby-static (i.e. `ruby.3.1-static`)
-    pub fn libruby_static_name(&self) -> String {
-        self.get("LIBRUBY_A")
-            .strip_prefix("lib")
-            .unwrap()
-            .strip_suffix(".a")
-            .unwrap()
-            .to_string()
-    }
-
-    /// Get the name for libruby (i.e. `ruby.3.1`)
-    pub fn libruby_so_name(&self) -> String {
-        self.get("RUBY_SO_NAME")
-    }
-
     /// Instantiates a new `RbConfig` for the current Ruby.
     pub fn current() -> RbConfig {
         println!("cargo:rerun-if-env-changed=RUBY");
@@ -96,6 +76,27 @@ impl RbConfig {
         rbconfig.value_map = parsed;
 
         rbconfig
+    }
+
+    /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
+    pub fn link_ruby(&mut self) -> &mut Self {
+        self.push_dldflags(&self.get("LIBRUBYARG"));
+        self
+    }
+
+    /// Get the name for libruby-static (i.e. `ruby.3.1-static`).
+    pub fn libruby_static_name(&self) -> String {
+        self.get("LIBRUBY_A")
+            .strip_prefix("lib")
+            .unwrap()
+            .strip_suffix(".a")
+            .unwrap()
+            .to_string()
+    }
+
+    /// Get the name for libruby (i.e. `ruby.3.1`)
+    pub fn libruby_so_name(&self) -> String {
+        self.get("RUBY_SO_NAME")
     }
 
     /// Filter the libs, removing the ones that are not needed.
@@ -276,6 +277,11 @@ impl RbConfig {
         }
 
         self
+    }
+
+    /// Sets a value for a key
+    pub fn set_value_for_key(&mut self, key: &str, value: String) {
+        self.value_map.insert(key.to_owned(), value);
     }
 
     // Examines the string from shell variables and expands them with values in the value_map

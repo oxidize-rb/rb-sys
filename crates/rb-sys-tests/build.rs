@@ -1,8 +1,9 @@
+use rb_sys_build::rb_config;
 use std::env;
 
 fn main() {
     export_cargo_cfg();
-    rb_sys_build::print_cargo_args_for_rb_config();
+    rb_config().link_ruby().print_cargo_args();
 }
 
 fn export_cargo_cfg() {
