@@ -8,9 +8,9 @@ end
 namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
-    rust = ENV["RUST_VERSION"] || "stable"
+    rust = ENV["RUST_VERSION"]
     cargo_args = extra_args || ["--workspace"]
-    sh "cargo", "+#{rust}", "test", *cargo_args
+    sh *["cargo", rust ? "+#{rust}" : nil, "test", *cargo_args].compact
   rescue
     if ENV["CI"]
       ENV["RB_SYS_DEBUG_BUILD"] = "1"
