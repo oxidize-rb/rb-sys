@@ -54,14 +54,10 @@ pub fn is_link_ruby_enabled() -> bool {
 
     if is_no_link_ruby_enabled() {
         false
+    } else if cfg!(windows) {
+        true
     } else if is_gem_enabled() {
-        if cfg!(windows) {
-            true
-        } else if is_env_variable_defined("CARGO_FEATURE_LINK_RUBY") {
-            // print all env vars
-            for (key, value) in std::env::vars() {
-                println!("{}={}", key, value);
-            }
+        if is_env_variable_defined("CARGO_FEATURE_LINK_RUBY") {
             let msg = "
                 The `gem` and `link-ruby` features are mutually exclusive on this
                 platform, since the libruby symbols will be available at runtime.
