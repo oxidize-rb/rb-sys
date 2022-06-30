@@ -9,7 +9,7 @@ namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
     rust = ENV["RUST_VERSION"] || "stable"
-    cargo_args = extra_args || ["--workspace", "--exclude", "rust-reverse"]
+    cargo_args = extra_args || ["--workspace"]
     sh "cargo", "+#{rust}", "test", *cargo_args
   end
 
