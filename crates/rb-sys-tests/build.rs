@@ -2,22 +2,6 @@ use std::env;
 
 fn main() {
     export_cargo_cfg();
-
-    println!(
-        "cargo:rustc-link-lib=dylib={}",
-        env::var("DEP_RB_LIB").unwrap()
-    );
-    println!(
-        "cargo:rustc-link-search=native={}",
-        env::var("DEP_RB_LIBDIR").unwrap()
-    );
-
-    if cfg!(unix) {
-        println!(
-            "cargo:rustc-link-arg=-Wl,-rpath,{}",
-            env::var("DEP_RB_LIBDIR").unwrap()
-        );
-    }
 }
 
 fn export_cargo_cfg() {
@@ -26,10 +10,10 @@ fn export_cargo_cfg() {
     rustc_cfg("minor");
     rustc_cfg("teeny");
     rustc_cfg("patchlevel");
-    rustc_cfg("gte_3_2");
-    rustc_cfg("gte_3_1");
+    rustc_cfg("version_gte_3_2");
+    rustc_cfg("version_gte_3_1");
 
-    if env::var("DEP_RB_GTE_3_1") == Ok("true".to_string()) && cfg!(windows) {
+    if env::var("DEP_RB_VERSION_GTE_3_1") == Ok("true".to_string()) && cfg!(windows) {
         println!("cargo:rustc-cfg=windows_broken_vm_init_3_1");
     }
 }

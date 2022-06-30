@@ -113,33 +113,33 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         let v = v.to_owned();
 
         if &version < v {
-            println!(r#"cargo:lt_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lt_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version <= v {
-            println!(r#"cargo:lte_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lte_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_lte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version == v {
-            println!(r#"cargo:eq_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:eq_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version >= v {
-            println!(r#"cargo:gte_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gte_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_gte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version > v {
-            println!(r#"cargo:gt_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gt_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());
         }
     }
 
