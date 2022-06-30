@@ -1,6 +1,6 @@
 [book]
-title = "Rusty Ruby Book"
-description = "The definitive guide for building Ruby native gems using Rust"
+title = "Ruby on Rust"
+description = "The definitive guide for using Rust in Ruby"
 authors = ["Ian Ker-Seymer"]
 language = "en"
 multilingual = false
