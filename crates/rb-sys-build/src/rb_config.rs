@@ -42,26 +42,6 @@ impl RbConfig {
         }
     }
 
-    /// Sets a value for a key
-    pub fn set_value_for_key(&mut self, key: &str, value: String) {
-        self.value_map.insert(key.to_owned(), value);
-    }
-
-    /// Get the name for libruby-static (i.e. `ruby.3.1-static`)
-    pub fn libruby_static_name(&self) -> String {
-        self.get("LIBRUBY_A")
-            .strip_prefix("lib")
-            .unwrap()
-            .strip_suffix(".a")
-            .unwrap()
-            .to_string()
-    }
-
-    /// Get the name for libruby (i.e. `ruby.3.1`)
-    pub fn libruby_so_name(&self) -> String {
-        self.get("RUBY_SO_NAME")
-    }
-
     /// Instantiates a new `RbConfig` for the current Ruby.
     pub fn current() -> RbConfig {
         println!("cargo:rerun-if-env-changed=RUBY");
@@ -96,6 +76,27 @@ impl RbConfig {
         rbconfig.value_map = parsed;
 
         rbconfig
+    }
+
+    /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
+    pub fn link_ruby(&mut self) -> &mut Self {
+        self.push_dldflags(&self.get("LIBRUBYARG"));
+        self
+    }
+
+    /// Get the name for libruby-static (i.e. `ruby.3.1-static`).
+    pub fn libruby_static_name(&self) -> String {
+        self.get("LIBRUBY_A")
+            .strip_prefix("lib")
+            .unwrap()
+            .strip_suffix(".a")
+            .unwrap()
+            .to_string()
+    }
+
+    /// Get the name for libruby (i.e. `ruby.3.1`)
+    pub fn libruby_so_name(&self) -> String {
+        self.get("RUBY_SO_NAME")
     }
 
     /// Filter the libs, removing the ones that are not needed.
@@ -143,7 +144,9 @@ impl RbConfig {
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>()
         }) {
-            self.cflags.push(flag.to_string());
+            if !self.cflags.contains(&flag) {
+                self.cflags.push(flag.to_string());
+            }
         }
 
         self
@@ -153,9 +156,14 @@ impl RbConfig {
     pub fn cargo_args(&self) -> Vec<String> {
         let mut result = vec![];
 
+        let mut search_paths = vec![];
+
         for search_path in &self.search_paths {
             result.push(format!("cargo:rustc-link-search={}", search_path));
+            search_paths.push(search_path.name.as_str());
         }
+
+        append_ld_library_path(search_paths);
 
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
@@ -194,7 +202,7 @@ impl RbConfig {
             let arg = self.subst_shell_variables(arg);
 
             if let Some(name) = capture_name(&search_path_regex, &arg) {
-                self.search_paths.push(SearchPath {
+                self.push_search_path(SearchPath {
                     kind: SearchPathKind::Native,
                     name,
                 });
@@ -208,49 +216,49 @@ impl RbConfig {
                     (LibraryKind::Dylib, vec![])
                 };
 
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind,
                     name: format!("ruby{}", name.to_owned()),
                     rename: None,
                     modifiers,
                 });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                     rename: None,
@@ -262,18 +270,23 @@ impl RbConfig {
                     name: name.to_owned(),
                 });
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Framework,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else {
-                self.link_args.push(arg.to_owned());
+                self.push_link_arg(arg);
             }
         }
 
         self
+    }
+
+    /// Sets a value for a key
+    pub fn set_value_for_key(&mut self, key: &str, value: String) {
+        self.value_map.insert(key.to_owned(), value);
     }
 
     // Examines the string from shell variables and expands them with values in the value_map
@@ -309,6 +322,30 @@ impl RbConfig {
         }
 
         result
+    }
+
+    fn push_search_path(&mut self, path: SearchPath) -> &mut Self {
+        if !self.search_paths.contains(&path) {
+            self.search_paths.push(path);
+        }
+
+        self
+    }
+
+    fn push_library(&mut self, lib: Library) -> &mut Self {
+        if !self.libs.contains(&lib) {
+            self.libs.push(lib);
+        }
+
+        self
+    }
+
+    fn push_link_arg(&mut self, arg: String) -> &mut Self {
+        if !self.link_args.contains(&arg) {
+            self.link_args.push(arg);
+        }
+
+        self
     }
 }
 
@@ -606,4 +643,25 @@ mod tests {
             result
         );
     }
+}
+
+// Needed because Rust 1.51 does not support link-arg, and thus rpath
+// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
+fn append_ld_library_path(search_paths: Vec<&str>) {
+    let env_var_name = if cfg!(windows) {
+        "PATH"
+    } else if cfg!(target_os = "macos") {
+        "DYLD_FALLBACK_LIBRARY_PATH"
+    } else {
+        "LD_LIBRARY_PATH"
+    };
+
+    let new_path = match std::env::var_os(env_var_name) {
+        Some(val) => {
+            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+        }
+        None => search_paths.join(":").to_string(),
+    };
+
+    println!("cargo:rustc-env={}={}", env_var_name, new_path);
 }

@@ -8,9 +8,15 @@ end
 namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
-    rust = ENV["RUST_VERSION"] || "stable"
-    cargo_args = extra_args || ["--workspace", "--exclude", "rust-reverse"]
-    sh "cargo", "+#{rust}", "test", *cargo_args
+    cargo_args = extra_args || ["--workspace"]
+    sh "cargo", "test", *cargo_args
+  rescue
+    if ENV["CI"]
+      ENV["RB_SYS_DEBUG_BUILD"] = "1"
+      sh "cargo", "test", *cargo_args
+    end
+
+    raise
   end
 
   desc "Test against all installed Rubies"

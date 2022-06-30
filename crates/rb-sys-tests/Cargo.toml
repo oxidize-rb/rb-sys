@@ -5,16 +5,18 @@ edition = "2018"
 autotests = false
 publish = false
 
-[dependencies]
-rb-sys = { path = "../rb-sys", default-features = false } 
-ctor = "0.1"
+[lib]
+bench = false
+doctest = false  
+doc = false
 
 [features]
-link-ruby = ["rb-sys/link-ruby"]
+default = ["ruby-macros"]
 ruby-macros = ["rb-sys/ruby-macros"]
 
-[[test]]
-name = "rb-sys-tests"
-path = "tests/lib.rs"
-harness = true
-required-features = ["link-ruby", "ruby-macros"]
+[dependencies]
+rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
+ctor = "0.1"
+
+[build-dependencies]
+rb-sys-build = { path = "../rb-sys-build" }

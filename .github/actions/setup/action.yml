@@ -37,8 +37,7 @@ runs:
           ~/.cargo/git/db/
           target/
           examples/rust_reverse/tmp/
-          crates/rb-sys/target/
-        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v3-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v4-${{ hashFiles('**/Cargo.lock') }}
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust_toolchain }}

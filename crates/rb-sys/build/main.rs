@@ -42,11 +42,11 @@ fn main() {
         add_libruby_to_blocklist(&mut rbconfig)
     }
 
+    rbconfig.print_cargo_args();
+
     if is_debug_build_enabled() {
         debug_and_exit(&mut rbconfig);
     }
-
-    rbconfig.print_cargo_args();
 }
 
 fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
@@ -55,7 +55,13 @@ fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
 }
 
 fn debug_and_exit(rbconfig: &mut RbConfig) {
+    eprintln!("========== RbConfig\n");
     dbg!(rbconfig);
+
+    eprintln!("========== Environment Variables\n");
+    let env: std::collections::HashMap<_, _> = std::env::vars().collect();
+    dbg!(env);
+
     eprintln!("==========\n");
     eprintln!("The \"debug-build\" feature for rb-sys is enabled, aborting.");
     std::process::exit(1);
@@ -113,33 +119,33 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         let v = v.to_owned();
 
         if &version < v {
-            println!(r#"cargo:lt_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lt_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version <= v {
-            println!(r#"cargo:lte_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:lte_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_lte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version == v {
-            println!(r#"cargo:eq_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:eq_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version >= v {
-            println!(r#"cargo:gte_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gte_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_gte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version > v {
-            println!(r#"cargo:gt_{}_{}=true"#, v.major(), v.minor());
+            println!(r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:gt_{}_{}=false"#, v.major(), v.minor());
+            println!(r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());
         }
     }
 
