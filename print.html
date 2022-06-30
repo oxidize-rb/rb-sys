@@ -208,6 +208,32 @@ end
   ]
 }
 </code></pre>
+<h3 id="debugging-the-ruby-c-api"><a class="header" href="#debugging-the-ruby-c-api">Debugging the Ruby C API</a></h3>
+<p>With this basic setup, you can set breakpoints and interactively debug your Rust code. However, if Ruby is not built
+with debug symbols, any calls into the Ruby C API become a black box. Luckily, it's straight-forward to fix this.</p>
+<h4 id="compiling-ruby-with-debug-symbols-and-source-code"><a class="header" href="#compiling-ruby-with-debug-symbols-and-source-code">Compiling Ruby with debug symbols and source code</a></h4>
+<h4 id="using-chruby-or-ruby-build"><a class="header" href="#using-chruby-or-ruby-build">Using <a href="https://github.com/postmodern/chruby"><code>chruby</code></a> or <a href="https://github.com/rbenv/ruby-build"><code>ruby-build</code></a></a></h4>
+<ol>
+<li>
+<p>First, compile Ruby like so:</p>
+<pre><code class="language-sh">$ RUBY_CFLAGS=&quot;-Og -ggdb&quot; ruby-build --keep 3.1.2 /opt/rubies/3.1.2-debug
+</code></pre>
+</li>
+<li>
+<p>Make sure your <code>.vscode/launch.json</code> file is configured to use <code>/opt/rubies/3.1.2-debug/bin/ruby</code>.</p>
+</li>
+</ol>
+<h4 id="using-rbenv"><a class="header" href="#using-rbenv">Using <a href="https://github.com/rbenv/rbenv"><code>rbenv</code></a></a></h4>
+<ol>
+<li>
+<p>First, compile Ruby like so:</p>
+<pre><code class="language-sh">$ RUBY_CFLAGS=&quot;-Og -ggdb&quot; rbenv install --keep 3.1.2
+</code></pre>
+</li>
+<li>
+<p>Make sure your <code>.vscode/launch.json</code> file is configured to use <code>$RBENV_ROOT/versions/3.1.2/bin/ruby</code>.</p>
+</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="publishing"><a class="header" href="#publishing">Publishing</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cross-compilation"><a class="header" href="#cross-compilation">Cross-Compilation</a></h1>
 <p>TODO!</p>
