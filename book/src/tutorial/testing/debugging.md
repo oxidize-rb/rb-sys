@@ -41,3 +41,30 @@ The [code-lldb]() extension for VSCode is a great way to debug Rust code. Here i
   ]
 }
 ```
+
+### Debugging the Ruby C API
+
+With this basic setup, you can set breakpoints and interactively debug your Rust code. However, if Ruby is not built
+with debug symbols, any calls into the Ruby C API become a black box. Luckily, it's straight-forward to fix this.
+
+#### Compiling Ruby with debug symbols and source code
+
+#### Using [`chruby`](https://github.com/postmodern/chruby) or [`ruby-build`](https://github.com/rbenv/ruby-build)
+
+1. First, compile Ruby like so:
+
+   ```sh
+   $ RUBY_CFLAGS="-Og -ggdb" ruby-build --keep 3.1.2 /opt/rubies/3.1.2-debug
+   ```
+
+2. Make sure your `.vscode/launch.json` file is configured to use `/opt/rubies/3.1.2-debug/bin/ruby`.
+
+#### Using [`rbenv`](https://github.com/rbenv/rbenv)
+
+1. First, compile Ruby like so:
+
+   ```sh
+   $ RUBY_CFLAGS="-Og -ggdb" rbenv install --keep 3.1.2
+   ```
+
+2. Make sure your `.vscode/launch.json` file is configured to use `$RBENV_ROOT/versions/3.1.2/bin/ruby`.
