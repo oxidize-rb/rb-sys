@@ -2,6 +2,7 @@ use std::env;
 
 fn main() {
     export_cargo_cfg();
+    rb_sys_build::print_cargo_args_for_rb_config();
 }
 
 fn export_cargo_cfg() {

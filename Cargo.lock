@@ -192,6 +192,7 @@ version = "0.9.17"
 dependencies = [
  "ctor",
  "rb-sys",
+ "rb-sys-build",
 ]
 
 [[package]]

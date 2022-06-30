@@ -17,3 +17,6 @@ ruby-macros = ["rb-sys/ruby-macros"]
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
 ctor = "0.1"
+
+[build-dependencies]
+rb-sys-build = { path = "../rb-sys-build" }

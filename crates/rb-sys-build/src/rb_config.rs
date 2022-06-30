@@ -143,7 +143,9 @@ impl RbConfig {
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>()
         }) {
-            self.cflags.push(flag.to_string());
+            if !self.cflags.contains(&flag) {
+                self.cflags.push(flag.to_string());
+            }
         }
 
         self
@@ -194,7 +196,7 @@ impl RbConfig {
             let arg = self.subst_shell_variables(arg);
 
             if let Some(name) = capture_name(&search_path_regex, &arg) {
-                self.search_paths.push(SearchPath {
+                self.push_search_path(SearchPath {
                     kind: SearchPathKind::Native,
                     name,
                 });
@@ -208,49 +210,49 @@ impl RbConfig {
                     (LibraryKind::Dylib, vec![])
                 };
 
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind,
                     name: format!("ruby{}", name.to_owned()),
                     rename: None,
                     modifiers,
                 });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Native,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Static,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Dylib,
                     name: name.to_owned(),
                     rename: None,
@@ -262,14 +264,14 @@ impl RbConfig {
                     name: name.to_owned(),
                 });
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
-                self.libs.push(Library {
+                self.push_library(Library {
                     kind: LibraryKind::Framework,
                     name: name.to_owned(),
                     rename: None,
                     modifiers: vec![],
                 });
             } else {
-                self.link_args.push(arg.to_owned());
+                self.push_link_arg(arg);
             }
         }
 
@@ -309,6 +311,30 @@ impl RbConfig {
         }
 
         result
+    }
+
+    fn push_search_path(&mut self, path: SearchPath) -> &mut Self {
+        if !self.search_paths.contains(&path) {
+            self.search_paths.push(path);
+        }
+
+        self
+    }
+
+    fn push_library(&mut self, lib: Library) -> &mut Self {
+        if !self.libs.contains(&lib) {
+            self.libs.push(lib);
+        }
+
+        self
+    }
+
+    fn push_link_arg(&mut self, arg: String) -> &mut Self {
+        if !self.link_args.contains(&arg) {
+            self.link_args.push(arg);
+        }
+
+        self
     }
 }
 
