@@ -31,7 +31,7 @@ jobs:
         with:
           repository: "oxidize-rb/cross-gem-action"
           path: "tmp/cross-gem-action"
-      
+
       - name: Print env info
         run: |
           env

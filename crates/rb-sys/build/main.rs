@@ -42,11 +42,11 @@ fn main() {
         add_libruby_to_blocklist(&mut rbconfig)
     }
 
+    rbconfig.print_cargo_args();
+
     if is_debug_build_enabled() {
         debug_and_exit(&mut rbconfig);
     }
-
-    rbconfig.print_cargo_args();
 }
 
 fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
@@ -55,7 +55,13 @@ fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
 }
 
 fn debug_and_exit(rbconfig: &mut RbConfig) {
+    eprintln!("========== RbConfig\n");
     dbg!(rbconfig);
+
+    eprintln!("========== Environment Variables\n");
+    let env: std::collections::HashMap<_, _> = std::env::vars().collect();
+    dbg!(env);
+
     eprintln!("==========\n");
     eprintln!("The \"debug-build\" feature for rb-sys is enabled, aborting.");
     std::process::exit(1);
