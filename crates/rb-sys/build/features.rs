@@ -1,7 +1,21 @@
 use rb_sys_build::RbConfig;
 
-pub fn is_global_allocator_enabled() -> bool {
-    is_env_variable_defined("CARGO_FEATURE_GLOBAL_ALLOCATOR")
+use crate::version::Version;
+
+pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
+    let (major, minor) = rb_config.major_minor();
+    let current_version = Version::new(major, minor);
+    let two_four = Version::new(2, 4);
+    let is_enabled = is_env_variable_defined("CARGO_FEATURE_GLOBAL_ALLOCATOR");
+
+    if current_version >= two_four {
+        is_enabled
+    } else {
+        if is_enabled {
+            eprintln!("WARN: The global allocator feature is only supported on Ruby 2.4+.");
+        }
+        false
+    }
 }
 
 pub fn is_ruby_abi_version_enabled() -> bool {

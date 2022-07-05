@@ -152,6 +152,12 @@ impl RbConfig {
         self
     }
 
+    pub fn major_minor(&self) -> (u32, u32) {
+        let major = self.get("MAJOR").parse::<u32>().unwrap();
+        let minor = self.get("MINOR").parse::<u32>().unwrap();
+        (major, minor)
+    }
+
     /// Get the rb_config output for cargo
     pub fn cargo_args(&self) -> Vec<String> {
         let mut result = vec![];
