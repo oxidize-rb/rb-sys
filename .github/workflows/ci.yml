@@ -44,7 +44,9 @@ jobs:
             rust_toolchain: stable
           - os: macos-latest
             rust_toolchain: stable
-          - os: windows-2019
+          # - os: windows-2019
+          #   rust_toolchain: stable-x86_64-pc-windows-gnu
+          - os: windows-2022
             rust_toolchain: stable-x86_64-pc-windows-gnu
     runs-on: ${{ matrix.sys.os }}
     steps:
