@@ -1,5 +1,38 @@
 # Background and Concepts
 
+## World's Simplest Rust Extension
+
+To illustrate how native extensions work, we are going to create the simplest possible native extension for Ruby. This
+is only to shows the core concepts of how native extensions work under the hood.
+
+```rust
+// simplest_rust_extenion.rs
+
+// Define the libruby functions we need so we can use them (in a real gem, rb-sys would do this for you)
+extern "C" {
+    fn rb_define_global_function(name: *const u8, func: extern "C" fn() -> usize, arity: isize);
+    fn rb_str_new(ptr: *const u8, len: isize) -> usize;
+}
+
+extern "C" fn hello_from_rust() -> usize {
+    unsafe { rb_str_new("Hello, world!".as_ptr(), 12) }
+}
+
+// Initialize the extension
+#[no_mangle]
+unsafe extern "C" fn Init_simplest_rust_extension() {
+    rb_define_global_function("hello_from_rust\0".as_ptr(), hello_from_rust, 0);
+}
+```
+
+Then, its a matter of compiling and running like so:
+
+```sh
+$ rustc --crate-type=cdylib simplest_rust_extension.rs -o simplest_rust_extension.bundle -C link-arg="-Wl,-undefined,dynamic_lookup"
+
+$ ruby -r ./simplest_rust_extension -e "puts hello_from_rust" #=> "Hello, world!"
+```
+
 ## What is a native extension?
 
 Typically, Ruby code is compiled to a special instruction set which executes on a stack-based virtual machine. You can
