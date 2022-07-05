@@ -169,7 +169,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "bindgen",
  "cc",
@@ -180,7 +180,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "regex",
  "shell-words",
@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.18"
+version = "0.9.19"
 dependencies = [
  "ctor",
  "rb-sys",

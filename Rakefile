@@ -85,6 +85,7 @@ task :bump do
   sh "fastmod", "--extensions=toml", "version = \"#{old_version}\"", "version = #{new_version.inspect}"
   sh "fastmod", "--extensions=rb", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
   sh "cargo check"
+  Dir.chdir("examples/rust_reverse") { sh("cargo", "check") }
   sh "bundle"
 end
 

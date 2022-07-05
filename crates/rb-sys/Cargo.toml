@@ -1,7 +1,7 @@
 [package]
 build = "build/main.rs"
 name = "rb-sys"
-version = "0.9.18"
+version = "0.9.19"
 edition = "2018"
 readme = "readme.md"
 categories = ["external-ffi-bindings"]
@@ -15,7 +15,7 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 [build-dependencies]
 bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
 linkify = "0.8"
-rb-sys-build = { path = "../rb-sys-build", version = "0.9.18" }
+rb-sys-build = { path = "../rb-sys-build", version = "0.9.19" }
 cc = { version = "1.0", optional = true }
 shell-words = { version = "1.1", optional = true }
 
