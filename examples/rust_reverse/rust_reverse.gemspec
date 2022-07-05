@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "A test gem"
   spec.homepage = "https://github.com/oxidize-rb/rb-sys"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 2.3.0"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.

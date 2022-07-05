@@ -8,15 +8,17 @@ end
 namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
-    cargo_args = extra_args || ["--workspace"]
-    sh "cargo", "test", *cargo_args
-  rescue
-    if ENV["CI"]
-      ENV["RB_SYS_DEBUG_BUILD"] = "1"
+    begin
+      cargo_args = extra_args || ["--workspace"]
       sh "cargo", "test", *cargo_args
-    end
+    rescue
+      if ENV["CI"]
+        ENV["RB_SYS_DEBUG_BUILD"] = "1"
+        sh "cargo", "test", *cargo_args
+      end
 
-    raise
+      raise
+    end
   end
 
   desc "Test against all installed Rubies"
@@ -57,7 +59,7 @@ task test: ["test:cargo", "test:gem", "test:examples"]
 desc "Pretty the files"
 task :fmt do
   sh "cargo fmt"
-  sh "standardrb --fix"
+  sh "bundle exec standardrb --fix" if RUBY_VERSION >= "2.6.0"
   sh "npx prettier --write $(git ls-files '*.yml')"
   md_files = `git ls-files '*.md'`.split("\n").select { |f| File.exist?(f) }
   sh "npx", "prettier", "--write", "--print-width=120", "--prose-wrap=always", *md_files
@@ -66,7 +68,7 @@ task format: [:fmt]
 
 desc "Lint"
 task :lint do
-  sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}"
+  sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}" if RUBY_VERSION >= "2.6.0"
   sh "cargo fmt --check"
   sh "cargo clippy"
   sh "shellcheck $(git ls-files '*.sh')"

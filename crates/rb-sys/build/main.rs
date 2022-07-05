@@ -10,7 +10,11 @@ use rb_sys_build::RbConfig;
 use std::fs;
 use version::Version;
 
-const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
+const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
+    Version::new(2, 3),
+    Version::new(2, 4),
+    Version::new(2, 5),
+    Version::new(2, 6),
     Version::new(2, 7),
     Version::new(3, 0),
     Version::new(3, 1),
@@ -105,7 +109,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
-    if is_global_allocator_enabled() {
+    if is_global_allocator_enabled(&rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
 
@@ -119,30 +123,35 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         let v = v.to_owned();
 
         if &version < v {
+            println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version <= v {
+            println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:version_lte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version == v {
+            println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version >= v {
+            println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:version_gte_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version > v {
+            println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {
             println!(r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());

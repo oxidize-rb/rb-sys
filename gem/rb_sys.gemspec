@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Helpers for compiling Rust extensions for ruby"
   spec.homepage = "https://github.com/oxidize-rb/rb-sys"
   spec.licenses = ["MIT", "Apache-2.0"]
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 2.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/oxidize-rb/rb-sys"
@@ -23,10 +23,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # spec.add_dependency "rubygems", "~> 3.4"
-
   # Security
   spec.cert_chain = ["certs/ianks.pem"]
-  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if /gem\z/.match?($0) # rubocop:disable Performance/EndWith
+  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
   spec.metadata = {"rubygems_mfa_required" => "true"}
 end
