@@ -46,10 +46,5 @@ runs:
       if: ${{ contains(inputs.os, 'windows') }}
       shell: bash
       run: |
-        if [ -n "$MINGW_PACKAGE_PREFIX" ]; then
-          pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
-          pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang 
-        else
-          pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
-          pacman --sync --noconfirm --needed mingw-w64-x86_64-gnu
-        fi
+        pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
+        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang
