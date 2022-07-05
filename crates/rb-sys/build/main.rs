@@ -10,7 +10,11 @@ use rb_sys_build::RbConfig;
 use std::fs;
 use version::Version;
 
-const SUPPORTED_RUBY_VERSIONS: [Version; 4] = [
+const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
+    Version::new(2, 3),
+    Version::new(2, 4),
+    Version::new(2, 5),
+    Version::new(2, 6),
     Version::new(2, 7),
     Version::new(3, 0),
     Version::new(3, 1),
