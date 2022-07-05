@@ -43,8 +43,10 @@ runs:
         toolchain: ${{ inputs.rust_toolchain }}
         default: true
     - name: Fix clang dep for rust-bindgen (see https://github.com/rubygems/rubygems/pull/5175#discussion_r794873977)
-      if: ${{ inputs.os == 'windows-2019' }}
+      if: ${{ contains(inputs.os, 'windows') }}
       shell: bash
       run: |
-        pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
-        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang || true
+        if [[ -z $MINGW_PACKAGE_PREFIX ]]; then
+          pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
+          pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang 
+        fi
