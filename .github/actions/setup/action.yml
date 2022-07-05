@@ -47,4 +47,4 @@ runs:
       shell: bash
       run: |
         pacman --remove --cascade --noconfirm mingw-w64-x86_64-clang
-        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang
+        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang || true
