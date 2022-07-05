@@ -149,6 +149,36 @@ key.</p>
 <h2 id="contributing-to-this-book"><a class="header" href="#contributing-to-this-book">Contributing to this book</a></h2>
 <p>This book is open source! Find a typo? Did we overlook something? <a href="https://github.com/oxidize-rb/rb-sys"><strong>Send us a pull request!</strong></a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="background-and-concepts"><a class="header" href="#background-and-concepts">Background and Concepts</a></h1>
+<h2 id="worlds-simplest-rust-extension"><a class="header" href="#worlds-simplest-rust-extension">World's Simplest Rust Extension</a></h2>
+<p>To illustrate how native extensions work, we are going to create the simplest possible native extension for Ruby. This
+is only to shows the core concepts of how native extensions work under the hood.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// simplest_rust_extenion.rs
+
+// Define the libruby functions we need so we can use them (in a real gem, rb-sys would do this for you)
+extern &quot;C&quot; {
+    fn rb_define_global_function(name: *const u8, func: extern &quot;C&quot; fn() -&gt; usize, arity: isize);
+    fn rb_str_new(ptr: *const u8, len: isize) -&gt; usize;
+}
+
+extern &quot;C&quot; fn hello_from_rust() -&gt; usize {
+    unsafe { rb_str_new(&quot;Hello, world!&quot;.as_ptr(), 12) }
+}
+
+// Initialize the extension
+#[no_mangle]
+unsafe extern &quot;C&quot; fn Init_simplest_rust_extension() {
+    rb_define_global_function(&quot;hello_from_rust\0&quot;.as_ptr(), hello_from_rust, 0);
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Then, its a matter of compiling and running like so:</p>
+<pre><code class="language-sh">$ rustc --crate-type=cdylib simplest_rust_extension.rs -o simplest_rust_extension.bundle -C link-arg=&quot;-Wl,-undefined,dynamic_lookup&quot;
+
+$ ruby -r ./simplest_rust_extension -e &quot;puts hello_from_rust&quot; #=&gt; &quot;Hello, world!&quot;
+</code></pre>
 <h2 id="what-is-a-native-extension"><a class="header" href="#what-is-a-native-extension">What is a native extension?</a></h2>
 <p>Typically, Ruby code is compiled to a special instruction set which executes on a stack-based virtual machine. You can
 see what these instructions look like by running:</p>
