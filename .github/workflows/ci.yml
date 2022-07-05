@@ -35,7 +35,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ["2.6", "2.7", "3.0", "3.1", "head"]
+        # Test against all versions supported by rubygems
+        ruby_version: ["2.3", "2.4", "2.5", "2.6", "2.7", "3.0", "3.1", "head"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: "1.51"

@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Helpers for compiling Rust extensions for ruby"
   spec.homepage = "https://github.com/oxidize-rb/rb-sys"
   spec.licenses = ["MIT", "Apache-2.0"]
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 2.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/oxidize-rb/rb-sys"
