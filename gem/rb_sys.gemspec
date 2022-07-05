@@ -25,6 +25,6 @@ Gem::Specification.new do |spec|
 
   # Security
   spec.cert_chain = ["certs/ianks.pem"]
-  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if /gem\z/.match?($0) # rubocop:disable Performance/EndWith
+  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
   spec.metadata = {"rubygems_mfa_required" => "true"}
 end
