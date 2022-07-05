@@ -23,8 +23,6 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # spec.add_dependency "rubygems", "~> 3.4"
-
   # Security
   spec.cert_chain = ["certs/ianks.pem"]
   spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if /gem\z/.match?($0) # rubocop:disable Performance/EndWith

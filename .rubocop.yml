@@ -1,4 +1,8 @@
 require: standard
 
 inherit_gem:
-  standard: config/base.yml
+  standard: config/ruby-2.3.yml
+
+AllCops:
+  Exclude:
+    - examples/rust_reverse/tmp/
