@@ -1,6 +1,6 @@
 use crate::RbConfig;
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub struct Version(u32, u32);
 
 impl Version {

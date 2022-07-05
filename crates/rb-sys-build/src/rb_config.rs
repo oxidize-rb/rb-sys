@@ -660,7 +660,7 @@ fn append_ld_library_path(search_paths: Vec<&str>) {
         Some(val) => {
             format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
         }
-        None => search_paths.join(":").to_string(),
+        None => search_paths.join(":"),
     };
 
     println!("cargo:rustc-env={}={}", env_var_name, new_path);
