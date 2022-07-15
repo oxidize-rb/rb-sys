@@ -1,6 +1,6 @@
 module RbSys
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir
+    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags
 
     def initialize(spec)
       require "rubygems/command"
@@ -15,6 +15,7 @@ module RbSys
       @extra_rustc_args = []
       @dry_run = true
       @ext_dir = nil
+      @extra_rustflags = []
     end
 
     def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)

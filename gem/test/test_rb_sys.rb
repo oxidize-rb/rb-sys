@@ -53,6 +53,17 @@ class TestRbSys < Minitest::Test
     assert_match(/-C debuginfo=42$/, makefile.read)
   end
 
+  def test_uses_extra_rustflags
+    makefile = create_makefile do |b|
+      b.extra_rustflags = ["--cfg=foo"]
+    end
+
+    content = makefile.read
+
+    assert content.include?("$(DLLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
+    assert content.include?("RB_SYS_EXTRA_RUSTFLAGS ?= --cfg=foo")
+  end
+
   def test_uses_custom_target
     makefile = create_makefile do |b|
       b.target = "wasm32-unknown-unknown"

@@ -18,4 +18,7 @@ create_rust_makefile("rust_reverse") do |r|
 
   # If your Cargo.toml is in a different directory, you can specify it here (optional)
   r.ext_dir = "."
+
+  # Extra flags to pass to the $RUSTFLAGS environment variable (optional)
+  r.extra_rustflags = ["--cfg=some_nested_config_var_for_crate"]
 end

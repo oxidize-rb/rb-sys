@@ -4,3 +4,5 @@
 ruby_version: 2.3
 ignore:
   - "examples/rust_reverse/tmp/**/*"
+  - "target/**/*"
+  - "tmp/**/*"
