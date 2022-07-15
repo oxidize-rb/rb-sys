@@ -35,9 +35,12 @@ namespace :test do
   namespace :examples do
     task :rust_reverse do
       cargo_args = extra_args || []
+      envs = [{}, {"ALTERNATE_CONFIG_SCRIPT" => "extconf_bare.rb"}]
 
       Dir.chdir("examples/rust_reverse") do
-        sh "rake", "clean", "compile", "test", *cargo_args
+        envs.each do |env|
+          sh env, "rake", "clean", "compile", "test", *cargo_args
+        end
       end
     end
   end
