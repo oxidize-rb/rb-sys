@@ -59,6 +59,7 @@ module RbSys
 
         RB_SYS_CARGO_PROFILE ?= #{builder.profile}
         RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
+        RB_SYS_EXTRA_RUSTFLAGS ?= #{builder.extra_rustflags.join(" ")}
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
         ifeq ($(RB_SYS_CARGO_PROFILE),dev)
@@ -100,6 +101,7 @@ module RbSys
         endif
 
         #{env_vars(builder)}
+        $(DLLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
 
         FORCE: ;
 
