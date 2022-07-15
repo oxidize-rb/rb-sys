@@ -3,6 +3,7 @@
 require "rubygems/ext"
 require "shellwords"
 require_relative "cargo_builder"
+require_relative "mkmf/config"
 
 # Root module
 module RbSys
@@ -37,7 +38,8 @@ module RbSys
       end
 
       spec = Struct.new(:name, :metadata).new(target, {})
-      builder = CargoBuilder.new(spec)
+      cargo_builder = CargoBuilder.new(spec)
+      builder = Config.new(cargo_builder)
 
       yield builder if blk
 
@@ -48,6 +50,7 @@ module RbSys
 
       # rubocop:disable Style/GlobalVars
       make_install = +<<~MAKE
+        RB_SYS_BUILD_DIR ?= #{File.join(Dir.pwd, ".rb-sys")}
         CARGO ?= cargo
         CARGO_BUILD_TARGET ?= #{builder.target}
         SOEXT ?= #{builder.so_ext}
@@ -92,7 +95,7 @@ module RbSys
         TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        DISTCLEANDIRS = $(TARGET_DIR)
+        DISTCLEANDIRS = $(TARGET_DIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
 
@@ -112,6 +115,8 @@ module RbSys
         $(DEFFILE): $(TARGET_DIR)
         \t$(ECHO) generating $(@)
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+
+        #{optional_rust_toolchain(builder)}
 
         $(DLLIB): $(DEFFILE) FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
@@ -174,6 +179,45 @@ module RbSys
       target_dir = "target/#{builder.target}".chomp("/")
       cargo_command.gsub!(%r{/#{target_dir}/[^/]+}, "/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)")
       cargo_command
+    end
+
+    def optional_rust_toolchain(builder)
+      <<~MAKE
+        RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN ?= #{builder.force_install_rust_toolchain}
+
+        # Only run if the we are told to explicitly install the Rust toolchain
+        ifneq ($(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN),false)
+        RB_SYS_RUSTUP_PROFILE ?= minimal
+
+        # If the user passed true, we assume stable Rust. Otherwise, use what
+        # was specified (i.e. RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN=beta)
+        ifeq ($(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN),true)
+          RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN = stable
+        endif
+
+        # If a $RUST_TARGET is specified (i.e. for rake-compiler-dock), append
+        # that to the profile.
+        ifeq ($(RUST_TARGET),)
+          RB_SYS_DEFAULT_TOOLCHAIN = $(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)
+        else
+          RB_SYS_DEFAULT_TOOLCHAIN = $(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)-$(RUST_TARGET)
+        endif
+
+        export CARGO_HOME ?= $(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/cargo
+        export RUSTUP_HOME ?= $(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/rustup
+        export PATH := $(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)
+        export RUSTUP_TOOLCHAIN := $(RB_SYS_DEFAULT_TOOLCHAIN)
+        export CARGO := $(CARGO_HOME)/bin/cargo
+
+        $(CARGO): 
+        \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
+        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
+        \trustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
+        \trustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
+
+        $(DLLIB): $(CARGO)
+        endif
+      MAKE
     end
   end
 end

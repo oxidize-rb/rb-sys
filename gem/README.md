@@ -18,24 +18,23 @@ require "rb_sys/mkmf"
 create_rust_makefile("rust_reverse") do |r|
   # Create debug builds in dev. Make sure that release gems are compiled with
   # `RB_SYS_CARGO_PROFILE=release` (optional)
-  # (optional)
   r.profile = ENV.fetch("RB_SYS_CARGO_PROFILE", :dev).to_sym
 
-  # Can be overridden with `RB_SYS_CARGO_FEATURES` env var
-  # (optional)
+  # Can be overridden with `RB_SYS_CARGO_FEATURES` env var (optional)
   r.features = ["test-feature"]
 
-  # You can add whatever env vars you want to the env hash
-  # (optional)
+  # You can add whatever env vars you want to the env hash (optional)
   r.env = {"FOO" => "BAR"}
 
-  # If your Cargo.toml is in a different directory, you can specify it here
-  # (optional)
+  # If your Cargo.toml is in a different directory, you can specify it here (optional)
   r.ext_dir = "."
 
-  # You can add extra rustc args for Cargo
-  # (optional)
-  r.extra_rustc_args = ["-C", "foo=bar"]
+  # Extra flags to pass to the $RUSTFLAGS environment variable (optional)
+  r.extra_rustflags = ["--cfg=some_nested_config_var_for_crate"]
+
+  # Force a rust toolchain to be installed via rustup (optional)
+  # You can also set the env var `RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN=true`
+  r.force_install_rust_toolchain = "nightly"
 end
 ```
 
@@ -45,3 +44,11 @@ end
   Cargo profile (i.e. `release` or `dev`).
 
 - You can pass Cargo arguments to `rake-compiler` like so: `rake compile -- --verbose`
+
+- It's possible to force an installation of a Rust toolchain by setting the `RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN`
+  environment variable. This will install [`rustup`][rustup] and [`cargo`][cargo] in the build directory, so the end
+  user does not have to have Rust pre-installed. Ideally, this should be a last resort, as it's better to already have
+  the toolchain installed on your system.
+
+[rustup]: https://rustup.rs/
+[cargo]: https://crates.io/
