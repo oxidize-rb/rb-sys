@@ -8,7 +8,7 @@ The primary goal of `rb-sys` is to make building native Ruby extensions in Rust 
 it's not easy, it's a bug.
 
 - [Rust bindings (`rb-sys` crate)](./crates/rb-sys/readme.md)
-- [Ruby gem for compiling extensions](./gem/readme.md)
+- [Ruby gem for compiling extensions](./gem/README.md)
 
 ## Features
 
