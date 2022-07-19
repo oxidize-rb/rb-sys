@@ -88,7 +88,7 @@ jobs:
           path: |
             /opt/rubies/${{ matrix.ruby_version }}
             ~/.gem/ruby/${{ matrix.ruby_version }}
-          key: ${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          key: rb-sys-ruby-static-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
       - name: 🔘 Build static ruby
         working-directory: /tmp
         run: |

@@ -27,5 +27,5 @@ create_rust_makefile("rust_reverse") do |r|
   r.force_install_rust_toolchain = false
 
   # Clean up the target/ dir after `gem install` to reduce bloat (optional)
-  r.clean_after_install = false # default: true if rubygems invoked the command
+  r.clean_after_install = true # default: true if rubygems invoked the command
 end
