@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module RustReverse
-  VERSION = "0.9.20"
+  VERSION = "0.9.21"
 end
