@@ -34,7 +34,10 @@ create_rust_makefile("rust_reverse") do |r|
 
   # Force a rust toolchain to be installed via rustup (optional)
   # You can also set the env var `RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN=true`
-  r.force_install_rust_toolchain = "nightly"
+  r.force_install_rust_toolchain = "stable"
+
+  # Clean up the target/ dir after `gem install` to reduce bloat (optional)
+  r.clean_after_install = false # default: true if invoked by rubygems
 end
 ```
 

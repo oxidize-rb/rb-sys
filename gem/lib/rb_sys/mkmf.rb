@@ -88,14 +88,14 @@ module RbSys
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        CLEANLIBS = $(RUSTLIB) $(DLLIB) $(DEFFILE)
+        CLEANLIBS = $(RUSTLIB)
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
         TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        DISTCLEANDIRS = $(TARGET_DIR) $(RB_SYS_BUILD_DIR)
+        CLEANOBJS = $(RB_SYS_CARGO_BUILD_TARGET_DIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
         #{base_makefile(srcdir)}
 
@@ -123,10 +123,12 @@ module RbSys
         \t$(Q) #{full_cargo_command}
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
 
-        install: $(DLLIB) Makefile
+        install-so: $(DLLIB) Makefile
         \t$(ECHO) installing $(DLLIB)
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(Q) $(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
+
+        install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
 
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE
@@ -141,8 +143,7 @@ module RbSys
 
     def base_makefile(cargo_dir)
       base_makefile = dummy_makefile(__dir__).join("\n")
-      base_makefile.gsub!("all install static install-so install-rb", "all static install-so install-rb")
-      base_makefile.gsub!("clean-so::", "clean-so:\n\t-$(Q)$(RM) $(DLLIB)\n")
+      base_makefile.gsub!("all install static install-so install-rb", "all static install-rb")
       base_makefile.gsub!(/^srcdir = .*$/, "srcdir = #{cargo_dir}")
       base_makefile
     end
