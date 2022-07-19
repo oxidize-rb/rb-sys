@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "bundler/gem_tasks"
 require "rake/testtask"
 require "rake/extensiontask"
 
@@ -16,6 +15,30 @@ Rake::ExtensionTask.new("rust_reverse") do |ext|
   ext.cross_compile = true
   ext.cross_platform = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32 x86-linux x86_64-linux x86_64-darwin arm64-darwin aarch64-linux]
   ext.config_script = ENV["ALTERNATE_CONFIG_SCRIPT"] || "extconf.rb"
+end
+
+task :build do
+  require "bundler"
+
+  spec = Bundler.load_gemspec("rust_reverse.gemspec")
+
+  FileUtils.rm_rf("pkg/rust_reverse-0.9.21")
+
+  spec.files.each do |file|
+    FileUtils.mkdir_p("pkg/rust_reverse-0.9.21/#{File.dirname(file)}")
+    FileUtils.cp(file, "pkg/rust_reverse-0.9.21/#{file}")
+  end
+
+  FileUtils.cp("rust_reverse.gemspec", "pkg/rust_reverse-0.9.21")
+
+  cargo_toml_path = "pkg/rust_reverse-0.9.21/ext/rust_reverse/Cargo.toml"
+  new_contents = File.read(cargo_toml_path).gsub(' path = "./../../../../crates/rb-sys",', "")
+  FileUtils.rm(cargo_toml_path)
+  File.write(cargo_toml_path, new_contents)
+
+  Dir.chdir("pkg/rust_reverse-0.9.21") do
+    sh "gem build rust_reverse.gemspec --output=../rust_reverse-0.9.21.gem"
+  end
 end
 
 task default: %i[compile test]
