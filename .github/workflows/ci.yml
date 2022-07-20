@@ -69,7 +69,7 @@ jobs:
         run: |
           set -ex
           export RUBYOPT="-I$(PWD)/gem/lib"
-          cd ../examples/rust_reverse
+          cd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
