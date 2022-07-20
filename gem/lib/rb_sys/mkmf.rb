@@ -119,11 +119,11 @@ module RbSys
 
         #{optional_rust_toolchain(builder)}
 
-        $(RUSTLIB): FORCE
+        $(RUSTLIB): $(DEFFILE) FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t$(Q) #{full_cargo_command}
 
-        $(DLLIB): $(RUSTLIB) $(DEFFILE)
+        $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
 
         install-so: $(DLLIB)
