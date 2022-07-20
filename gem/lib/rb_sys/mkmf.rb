@@ -88,7 +88,6 @@ module RbSys
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        CLEANLIBS = $(RUSTLIB)
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
@@ -97,6 +96,8 @@ module RbSys
 
         CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
+        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+
         #{base_makefile(srcdir)}
 
         ifneq ($(RB_SYS_VERBOSE),)

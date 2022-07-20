@@ -60,11 +60,18 @@ jobs:
         run: bundle exec rake test:cargo
       - name: 💎 Gem test
         run: bundle exec rake test:gem
-      - name: 💨 Smoke test
+      - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
         run: |
           bundle exec rake test:examples
+      - name: 💨 Smoke test
+        run: |
+          set -e
+          cd examples/rust_reverse
+          rake build
+          gem install pkg/*.gem --verbose
+          ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
 
   build_and_test_static:
     name: 🔘 Static
