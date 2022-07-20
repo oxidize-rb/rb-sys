@@ -88,15 +88,16 @@ module RbSys
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        CLEANLIBS = $(RUSTLIB)
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
         TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(RB_SYS_BUILD_DIR)
+        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
+        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+
         #{base_makefile(srcdir)}
 
         ifneq ($(RB_SYS_VERBOSE),)
@@ -104,7 +105,7 @@ module RbSys
         endif
 
         #{env_vars(builder)}
-        $(DLLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
+        $(RUSTLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
 
         FORCE: ;
 
@@ -118,15 +119,17 @@ module RbSys
 
         #{optional_rust_toolchain(builder)}
 
-        $(DLLIB): $(DEFFILE) FORCE
+        $(RUSTLIB): $(DEFFILE) FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t$(Q) #{full_cargo_command}
+
+        $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
 
-        install-so: $(DLLIB) Makefile
-        \t$(ECHO) installing $(DLLIB)
+        install-so: $(DLLIB)
+        \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
-        \t$(Q) $(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
+        \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
         install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
 
@@ -167,7 +170,7 @@ module RbSys
 
     def env_line(k, v)
       return unless v
-      %($(DLLIB): export #{k} = #{v.gsub("\n", '\n')})
+      %($(RUSTLIB): export #{k} = #{v.gsub("\n", '\n')})
     end
 
     def env_or_makefile_config(key)
@@ -213,11 +216,11 @@ module RbSys
 
         $(CARGO): 
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
-        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
+        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile minimal --default-toolchain none -y
         \trustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
         \trustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
 
-        $(DLLIB): $(CARGO)
+        $(RUSTLIB): $(CARGO)
         endif
       MAKE
     end
