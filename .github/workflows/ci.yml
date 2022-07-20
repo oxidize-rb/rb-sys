@@ -68,8 +68,8 @@ jobs:
       - name: 💨 Smoke test
         run: |
           set -ex
-          gem update --system 3.2.3
-          export RUBYOPT="-I$(PWD)/gem/lib"
+          gem update --system 3.2.3 > /dev/null
+          export RUBYOPT="-I$PWD/gem/lib"
           cd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
