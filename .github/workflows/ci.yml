@@ -67,8 +67,9 @@ jobs:
           bundle exec rake test:examples
       - name: 💨 Smoke test
         run: |
-          set -e
-          cd examples/rust_reverse
+          set -ex
+          export RUBYOPT="-I$(PWD)/gem/lib"
+          cd ../examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
