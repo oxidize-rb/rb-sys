@@ -66,6 +66,7 @@ jobs:
         run: |
           bundle exec rake test:examples
       - name: 💨 Smoke test
+        shell: bash
         run: |
           set -ex
           gem update --system > /dev/null
