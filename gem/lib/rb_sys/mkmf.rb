@@ -216,7 +216,7 @@ module RbSys
 
         $(CARGO): 
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
-        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile minimal --default-toolchain none -y
+        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
         \trustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
         \trustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
 
