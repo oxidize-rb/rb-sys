@@ -6,7 +6,14 @@ ENV RUBY_TARGET="x86-mingw32" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:$PATH"
+    PATH="/usr/local/cargo/bin:$PATH" \
+    BINDGEN_EXTRA_CLANG_ARGS_i686_pc_windows_gnu="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/lib/clang/14.0.0/include" \
+    LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
+    CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="i686-w64-mingw32-ld" \
+    CC_i686_pc_windows_gnu="i686-w64-mingw32-gcc" \
+    CXX_i686_pc_windows_gnu="i686-w64-mingw32-g++" \
+    AR_i686_pc_windows_gnu="i686-w64-mingw32-gcc-ar" \
+    QEMU_LD_PREFIX="/usr/i686-w64-mingw32"
 
 COPY setup/lib.sh /lib.sh
 
@@ -16,6 +23,9 @@ RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
 
+COPY setup/cmake.sh /
+RUN /cmake.sh
+
 RUN bash -c "source /lib.sh && install_packages libclang-dev"
 
 RUN set -ex; \
@@ -23,9 +33,6 @@ RUN set -ex; \
     mkdir /llvm-mingw; \
     unzip /llvm-mingw.zip -d /llvm-mingw; \
     rm /llvm-mingw.zip;
-
-ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/lib/clang/14.0.0/include" \
-    LIBCLANG_PATH="/usr/lib/llvm-10/lib/"
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh

@@ -109,7 +109,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
-    if is_global_allocator_enabled(&rbconfig) {
+    if is_global_allocator_enabled(rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
 

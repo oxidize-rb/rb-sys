@@ -6,7 +6,15 @@ ENV RUBY_TARGET="arm-linux" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:$PATH"
+    PATH="/usr/local/cargo/bin:$PATH" \
+    LIBCLANG_PATH="/usr/lib/llvm-10/lib" \
+    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER="arm-linux-gnueabihf-ld" \
+    CC_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-gcc" \
+    CXX_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-g++" \
+    AR_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-ar" \
+    BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf" \
+    QEMU_LD_PREFIX="/usr/arm-linux-gnueabihf"
+
 
 COPY setup/lib.sh /lib.sh
 
@@ -16,10 +24,10 @@ RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
 
-RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-armhf-cross libc6-dev-armhf-cross"
+COPY setup/cmake.sh /
+RUN /cmake.sh
 
-ENV LIBCLANG_PATH="/usr/lib/llvm-10/lib" \
-    BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/arm-linux-gnueabihf"
+RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-armhf-cross libc6-dev-armhf-cross"
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh

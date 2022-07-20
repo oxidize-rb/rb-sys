@@ -6,7 +6,15 @@ ENV RUBY_TARGET="x86_64-linux" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:$PATH"
+    PATH="/usr/local/cargo/bin:$PATH" \
+    LIBCLANG_PATH="/opt/rh/llvm-toolset-7/root/usr/lib64" \
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="ld" \
+    CC_x86_64_unknown_linux_gnu="x86_64-redhat-linux-gcc" \
+    CXX_x86_64_unknown_linux_gnu="x86_64-redhat-linux-g++" \
+    AR_x86_64_unknown_linux_gnu="ar" \
+    BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/x86_64-redhat-linux/4.8.2/include" \
+    QEMU_LD_PREFIX="/usr"
+
 
 COPY setup/lib.sh /lib.sh
 
@@ -16,10 +24,10 @@ RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
 
-RUN source /lib.sh && install_packages llvm-toolset-7
+COPY setup/cmake.sh /
+RUN /cmake.sh
 
-ENV LIBCLANG_PATH="/opt/rh/llvm-toolset-7/root/usr/lib64" \
-    BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr -I/usr/lib/gcc/x86_64-redhat-linux/4.8.2/include"
+RUN source /lib.sh && install_packages llvm-toolset-7
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh

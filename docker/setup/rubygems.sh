@@ -12,7 +12,7 @@ main() {
   builtin pushd "${td}"
 
   # Using my fork for now
-  git clone --single-branch --branch cargo-builder-target --depth 1 https://github.com/ianks/rubygems .
+  git clone --single-branch --depth 1 https://github.com/rubygems/rubygems .
   ruby setup.rb
 
   builtin popd

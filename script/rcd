@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+PLATFORM="$1"
+export RCD_IMAGE="rbsys/rcd:$PLATFORM"
+shift
+
+docker pull "$RCD_IMAGE" --quiet
+exec rake-compiler-dock $@

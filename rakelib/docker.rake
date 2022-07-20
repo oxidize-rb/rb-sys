@@ -2,7 +2,7 @@
 
 require "yaml"
 
-RCD_TAG = "1.2.1"
+RCD_TAG = "1.2.2"
 DOCKERFILES = Dir["docker/Dockerfile.*"]
 DOCKERFILE_PLATFORMS = DOCKERFILES.map { |f| File.extname(f).delete(".") }
 DOCKERFILE_PLATFORM_PAIRS = DOCKERFILES.zip(DOCKERFILE_PLATFORMS)

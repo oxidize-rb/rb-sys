@@ -7,8 +7,14 @@ ENV RUBY_TARGET="arm64-darwin" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
     PATH="/usr/local/cargo/bin:$PATH" \
+    CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER="aarch64-apple-darwin-clang" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
-    BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/opt/osxcross/target/SDK/MacOSX11.1.sdk/"
+    CC_aarch64_apple_darwin="aarch64-apple-darwin-cc" \
+    CXX_aarch64_apple_darwin="aarch64-apple-darwin-c++" \
+    AR_aarch64_apple_darwin="aarch64-apple-darwin-ar" \
+    BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin="--sysroot=/opt/osxcross/target/SDK/MacOSX11.1.sdk/" \
+    QEMU_LD_PREFIX="/opt/osxcross/target/SDK/MacOSX11.1.sdk/"
+
 
 COPY setup/lib.sh /lib.sh
 
@@ -20,6 +26,9 @@ RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
+
+COPY setup/cmake.sh /
+RUN /cmake.sh
 
 RUN bash -c "source /lib.sh && install_packages libclang-dev clang libc6-arm64-cross libc6-dev-arm64-cross"
 
