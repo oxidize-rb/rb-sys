@@ -68,3 +68,6 @@
 #ifdef HAVE_RUBY_WIN32_H
 #include "ruby/win32.h"
 #endif
+#ifdef HAVE_RUBY_IO_BUFFER_H
+#include "ruby/io/buffer.h"
+#endif
