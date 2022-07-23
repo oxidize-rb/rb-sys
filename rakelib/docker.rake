@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "./../gem/lib/rb_sys/version"
 
-RCD_TAG = "1.2.2"
+RCD_TAG = RbSys::VERSION
 DOCKERFILES = Dir["docker/Dockerfile.*"]
 DOCKERFILE_PLATFORMS = DOCKERFILES.map { |f| File.extname(f).delete(".") }
 DOCKERFILE_PLATFORM_PAIRS = DOCKERFILES.zip(DOCKERFILE_PLATFORMS)

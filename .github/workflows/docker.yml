@@ -3,6 +3,7 @@ name: Build and push docker images
 
 on:
   - workflow_dispatch
+  - tags: [v*]
 
 jobs:
   docker_images:
@@ -80,5 +81,5 @@ jobs:
           directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
 
       - name: Push images
-        if: github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/v')
         run: rake docker:push:${{ matrix.platform.ruby_target }}
