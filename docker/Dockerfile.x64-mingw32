@@ -6,7 +6,15 @@ ENV RUBY_TARGET="x64-mingw32" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:$PATH"
+    PATH="/usr/local/cargo/bin:$PATH" \
+    BINDGEN_EXTRA_CLANG_ARGS_x86_64_pc_windows_gnu="--sysroot=/usr/x86_64-w64-mingw32 -I/usr/lib/llvm-10/lib/clang/10.0.0/include" \
+    LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
+    CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER="x86_64-w64-mingw32-ld" \
+    CC_x86_64_pc_windows_gnu="x86_64-w64-mingw32-gcc" \
+    CXX_x86_64_pc_windows_gnu="x86_64-w64-mingw32-g++" \
+    AR_x86_64_pc_windows_gnu="x86_64-w64-mingw32-ar" \
+    QEMU_LD_PREFIX="/usr/x86_64-w64-mingw32"
+
 
 COPY setup/lib.sh /lib.sh
 
@@ -16,16 +24,10 @@ RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
 
+COPY setup/cmake.sh /
+RUN /cmake.sh
+
 RUN bash -c "source /lib.sh && install_packages libclang-dev"
-
-# RUN set -ex; \
-#     curl -Lo /llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-msvcrt-ubuntu-18.04-x86_64.tar.xz; \
-#     mkdir /llvm-mingw; \
-#     tar xf /llvm-mingw.tar.xz -C /llvm-mingw --strip-components=1; \
-#     rm /llvm-mingw.tar.xz;
-
-ENV BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr/x86_64-w64-mingw32 -I/usr/lib/llvm-10/lib/clang/10.0.0/include" \
-    LIBCLANG_PATH="/usr/lib/llvm-10/lib/"
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh

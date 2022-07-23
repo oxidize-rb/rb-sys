@@ -6,7 +6,16 @@ ENV RUBY_TARGET="x86-linux" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    PATH="/usr/local/cargo/bin:$PATH"
+    RUSTUP_UNPACK_RAM="63554432" \
+    RUSTUP_IO_THREADS="1" \
+    PATH="/usr/local/cargo/bin:$PATH" \
+    LIBCLANG_PATH="/usr/lib" \
+    CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER="ld" \
+    CC_i686_unknown_linux_gnu="i686-redhat-linux-gcc" \
+    CXX_i686_unknown_linux_gnu="i686-redhat-linux-g++" \
+    AR_i686_unknown_linux_gnu="ar" \
+    BINDGEN_EXTRA_CLANG_ARGS_i686_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/i686-redhat-linux/4.8.2/include" \
+    QEMU_LD_PREFIX="/usr"
 
 COPY setup/lib.sh /lib.sh
 
@@ -17,8 +26,8 @@ RUN /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
 
 RUN set -ex; \
     wget https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/clang-libs-12.0.1-4.module_el8.5.0+1025+93159d6c.i686.rpm \
-         https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/llvm-libs-12.0.1-2.module_el8.5.0+918+ed335b90.i686.rpm \
-         https://vault.centos.org/centos/8/BaseOS/x86_64/os/Packages/ncurses-libs-6.1-9.20180224.el8.i686.rpm; \
+    https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/llvm-libs-12.0.1-2.module_el8.5.0+918+ed335b90.i686.rpm \
+    https://vault.centos.org/centos/8/BaseOS/x86_64/os/Packages/ncurses-libs-6.1-9.20180224.el8.i686.rpm; \
     rpm -Uvh --nodeps *.rpm; \
     ln -s /usr/lib/libtinfo.so.6 /usr/lib/libtinfo.so.5; \
     rm *.rpm;
@@ -26,8 +35,8 @@ RUN set -ex; \
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
 
-ENV LIBCLANG_PATH="/usr/lib" \
-    BINDGEN_EXTRA_CLANG_ARGS="--sysroot=/usr -I/usr/lib/gcc/i686-redhat-linux/4.8.2/include"
+COPY setup/cmake.sh /
+RUN /cmake.sh
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh
