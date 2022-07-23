@@ -3,7 +3,8 @@ name: Build and push docker images
 
 on:
   - workflow_dispatch
-  - tags: [v*]
+  - push:
+      tags: [v*]
 
 jobs:
   docker_images:
