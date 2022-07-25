@@ -15,11 +15,12 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v2
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby-pkgs@v1
       if: inputs.ruby_version != 'skip'
       with:
         ruby-version: ${{ inputs.ruby_version }}
         bundler-cache: true
+        mingw: clang
     - name: Bundle install
       if: inputs.ruby_version == 'skip'
       shell: bash
@@ -42,8 +43,4 @@ runs:
       with:
         toolchain: ${{ inputs.rust_toolchain }}
         default: true
-    - name: Fix clang dep for rust-bindgen (see https://github.com/rubygems/rubygems/pull/5175#discussion_r794873977)
-      if: ${{ contains(inputs.os, 'windows') }}
-      shell: bash
-      run: |
-        pacman --sync --noconfirm --needed $MINGW_PACKAGE_PREFIX-clang
+
