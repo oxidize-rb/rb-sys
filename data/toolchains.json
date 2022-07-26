@@ -7,9 +7,9 @@
       "supported": true
     },
     {
-      "ruby-platform": "arm64-linux",
+      "ruby-platform": "aarch64-linux",
       "rust-target": "aarch64-unknown-linux-gnu",
-      "dockerfile": "docker/Dockerfile.arm64-linux",
+      "dockerfile": "docker/Dockerfile.aarch64-linux",
       "supported": true
     },
     {

@@ -118,8 +118,11 @@ namespace :data do
 
     ruby_to_rust = {}
 
-    toolchains["toolchains"].each do |toolchain|
-      ruby_to_rust[toolchain["ruby-platform"]] = toolchain["rust-target"]
+    toolchains["toolchains"].each do |t|
+      raise "no dockerfile" unless File.exist?(t["dockerfile"])
+      raise "wrong ruby target" unless File.read(t["dockerfile"]).include?(t["ruby-platform"])
+
+      ruby_to_rust[t["ruby-platform"]] = t["rust-target"]
     end
 
     github_actions_matrix = toolchains["toolchains"]

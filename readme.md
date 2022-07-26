@@ -32,8 +32,7 @@ We support cross compilation to the following platforms:
 | x86-mingw32    | ❌        |                                             |
 | x86-linux      | ❌        |                                             |
 
-This information is also available in the [`./data`](./data) directory for
-automation purposes.
+This information is also available in the [`./data`](./data) directory for automation purposes.
 
 ## Usage
 
