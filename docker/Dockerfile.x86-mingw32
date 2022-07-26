@@ -9,7 +9,7 @@ ENV RUBY_TARGET="x86-mingw32" \
     PATH="/usr/local/cargo/bin:$PATH" \
     BINDGEN_EXTRA_CLANG_ARGS_i686_pc_windows_gnu="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/lib/clang/14.0.0/include" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
-    CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="i686-w64-mingw32-ld" \
+    # CARGO_TARGET_I686_PC_WINDOWS_GNU_LINKER="i686-w64-mingw32-ld" \
     CC_i686_pc_windows_gnu="i686-w64-mingw32-gcc" \
     CXX_i686_pc_windows_gnu="i686-w64-mingw32-g++" \
     AR_i686_pc_windows_gnu="i686-w64-mingw32-gcc-ar"
