@@ -41,7 +41,7 @@ namespace :docker do
     namespace :build do
       desc "Build docker image for %s" % arch
       task arch do
-        sh "#{DOCKER} build #{ENV["RBSYS_DOCKER_BUILD_EXTRA_ARGS"]} -f #{dockerfile} --tag rbsys/rcd:#{arch} --tag rbsys/rake-compiler-dock-mri-#{arch}:#{RbSys::VERSION} --tag rbsys/#{arch}:#{RbSys::VERSION} --tag rbsys/#{arch}:#{RbSys::VERSION} /docker"
+        sh "#{DOCKER} build #{ENV["RBSYS_DOCKER_BUILD_EXTRA_ARGS"]} -f #{dockerfile} --tag rbsys/rcd:#{arch} --tag rbsys/rake-compiler-dock-mri-#{arch}:#{RbSys::VERSION} --tag rbsys/#{arch}:#{RbSys::VERSION} ./docker"
       end
     end
 
