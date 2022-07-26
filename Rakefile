@@ -85,6 +85,7 @@ task :bump do
   printf "What is the new version (current: #{old_version})?: "
   new_version = $stdin.gets.chomp
 
+  sh "fastmod", "--extensions=md", old_version.to_s, new_version.to_s
   sh "fastmod", "--extensions=toml", "version = \"#{old_version}\"", "version = #{new_version.inspect}"
   sh "fastmod", "--extensions=rb", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
   sh "cargo check"

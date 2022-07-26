@@ -8,7 +8,6 @@ ENV RUBY_TARGET="x86_64-linux" \
     CARGO_HOME="/usr/local/cargo" \
     PATH="/usr/local/cargo/bin:$PATH" \
     LIBCLANG_PATH="/opt/rh/llvm-toolset-7/root/usr/lib64" \
-    # CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="ld" \
     CC_x86_64_unknown_linux_gnu="x86_64-redhat-linux-gcc" \
     CXX_x86_64_unknown_linux_gnu="x86_64-redhat-linux-g++" \
     AR_x86_64_unknown_linux_gnu="ar" \

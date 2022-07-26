@@ -32,7 +32,6 @@ main() {
   set_target_env_for_key_matching "^CC_"
   set_target_env_for_key_matching "^CXX_"
   set_target_env_for_key_matching "^AR_"
-  # set_target_env_for_key_matching "^CARGO_TARGET_.*_LINKER"
 
   rm "${0}"
 }

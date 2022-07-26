@@ -8,7 +8,6 @@ ENV RUBY_TARGET="aarch64-linux" \
     CARGO_HOME="/usr/local/cargo" \
     PATH="/usr/local/cargo/bin:$PATH" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib" \
-    # CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="aarch64-linux-gnu-ld" \
     CC_aarch64_unknown_linux_gnu="aarch64-linux-gnu-gcc" \
     CXX_aarch64_unknown_linux_gnu="aarch64-linux-gnu-g++" \
     AR_aarch64_unknown_linux_gnu="aarch64-linux-gnu-ar" \
