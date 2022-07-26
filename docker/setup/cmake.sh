@@ -9,7 +9,9 @@ source /lib.sh
 main() {
     local version=3.23.1
 
-    install_packages curl
+    if ! command -v curl &> /dev/null; then
+        install_packages curl
+    fi
 
     local td
     td="$(mktemp -d)"
@@ -20,8 +22,6 @@ main() {
     sh cmake.sh --skip-license --prefix=/usr/local
 
     popd
-
-    purge_packages
 
     rm -rf "${td}"
     rm -rf /var/lib/apt/lists/*
