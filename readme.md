@@ -32,6 +32,9 @@ We support cross compilation to the following platforms:
 | x86-mingw32    | ❌        |                                             |
 | x86-linux      | ❌        |                                             |
 
+This information is also available in the [`./data`](./data) directory for
+automation purposes.
+
 ## Usage
 
 Please see the [examples](./examples) to see a full example of how to use `rb-sys`.

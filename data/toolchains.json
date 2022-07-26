@@ -1,0 +1,58 @@
+{
+  "toolchains": [
+    {
+      "ruby-platform": "arm-linux",
+      "rust-target": "arm-unknown-linux-gnueabihf",
+      "dockerfile": "docker/Dockerfile.arm-linux",
+      "supported": true
+    },
+    {
+      "ruby-platform": "arm64-linux",
+      "rust-target": "aarch64-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.arm64-linux",
+      "supported": true
+    },
+    {
+      "ruby-platform": "arm64-darwin",
+      "rust-target": "aarch64-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.arm64-darwin",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x64-mingw-ucrt",
+      "rust-target": "x86_64-pc-windows-gnu",
+      "dockerfile": "docker/Dockerfile.x64-mingw-ucrt",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x64-mingw32",
+      "rust-target": "x86_64-pc-windows-gnu",
+      "dockerfile": "docker/Dockerfile.x64-mingw32",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x86-linux",
+      "rust-target": "i686-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.x86-linux",
+      "supported": false
+    },
+    {
+      "ruby-platform": "x86-mingw32",
+      "rust-target": "i686-pc-windows-gnu",
+      "dockerfile": "docker/Dockerfile.x86-mingw32",
+      "supported": false
+    },
+    {
+      "ruby-platform": "x86_64-darwin",
+      "rust-target": "x86_64-apple-darwin",
+      "dockerfile": "docker/Dockerfile.x86_64-darwin",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x86_64-linux",
+      "rust-target": "x86_64-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.x86_64-linux",
+      "supported": true
+    }
+  ]
+}

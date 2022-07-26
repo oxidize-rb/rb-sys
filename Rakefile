@@ -78,7 +78,7 @@ task :lint do
 end
 
 desc "Bump the gem version"
-task :bump do
+task bump: ["data:derive"] do
   require_relative "./gem/lib/rb_sys/version"
   old_version = RbSys::VERSION
 
@@ -91,6 +91,7 @@ task :bump do
   sh "cargo check"
   Dir.chdir("examples/rust_reverse") { sh("cargo", "check") }
   sh "bundle"
+  sh "rake test:examples"
 end
 
 desc "Publish the crates and gems"
@@ -104,5 +105,28 @@ task :publish do
       sh "cargo publish || true"
       sleep 30
     end
+  end
+end
+
+namespace :data do
+  desc "Derive useful data from data/toolchains.json"
+  task :derive do
+    require "json"
+
+    gen = ->(name, value) { File.write(File.join("data/derived", name), JSON.pretty_generate(value)) }
+    toolchains = JSON.parse(File.read("data/toolchains.json"))
+
+    ruby_to_rust = {}
+
+    toolchains["toolchains"].each do |toolchain|
+      ruby_to_rust[toolchain["ruby-platform"]] = toolchain["rust-target"]
+    end
+
+    github_actions_matrix = toolchains["toolchains"]
+      .select { |t| t["supported"] }
+      .map { |t| t.slice("ruby-platform", "rust-target") if t["supported"] }
+
+    gen.call("ruby-to-rust.json", ruby_to_rust)
+    gen.call("github-actions-matrix.json", {include: github_actions_matrix})
   end
 end
