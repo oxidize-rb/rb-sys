@@ -8,12 +8,11 @@ ENV RUBY_TARGET="aarch64-linux" \
     CARGO_HOME="/usr/local/cargo" \
     PATH="/usr/local/cargo/bin:$PATH" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib" \
-    # CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="aarch64-linux-gnu-ld" \
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="aarch64-linux-gnu-ld" \
     CC_aarch64_unknown_linux_gnu="aarch64-linux-gnu-gcc" \
     CXX_aarch64_unknown_linux_gnu="aarch64-linux-gnu-g++" \
     AR_aarch64_unknown_linux_gnu="aarch64-linux-gnu-ar" \
     BINDGEN_EXTRA_CLANG_ARGS_aarch64_unknown_linux_gnu="--sysroot=/usr/aarch64-linux-gnu" \
-    QEMU_LD_PREFIX="/usr/aarch64-linux-gnu" \
     PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}"
 
 COPY setup/lib.sh /lib.sh
