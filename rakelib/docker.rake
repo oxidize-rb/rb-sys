@@ -35,6 +35,37 @@ task ".github/workflows/ci.yml" do |t, _args|
 end
 
 namespace :docker do
+  # New images based on cross-rs
+  cross_tasks = Dir["docker/cross/*/Dockerfile"].map do |dockerfile|
+    platform = File.basename(File.dirname(dockerfile))
+
+    namespace :cross do
+      image = "rbsys/cross-#{platform}:#{RbSys::VERSION}"
+
+      namespace :build do
+        desc "Build the #{image.inspect} docker image (based on cross-rs)"
+        task platform do
+          sh "#{DOCKER} build #{ENV["RBSYS_DOCKER_BUILD_EXTRA_ARGS"]} -t #{image} -f #{dockerfile} --progress=plain ./docker/cross"
+        end
+      end
+
+      namespace :push do
+        desc "Push the #{image.inspect} docker image (based on cross-rs)"
+        task platform => "docker:cross:build:#{platform}" do
+          sh "docker push #{image}"
+        end
+      end
+    end
+
+    platform
+  end
+
+  desc "Build the cross docker images (based on cross-rs)"
+  task "cross:build" => cross_tasks.map { |t| "cross:build:#{t}" }
+
+  desc "Push the cross docker images (based on cross-rs)"
+  task "cross:push" => cross_tasks.map { |t| "cross:push:#{t}" }
+
   DOCKERFILE_PLATFORM_PAIRS.each do |pair|
     dockerfile, arch = pair
 
