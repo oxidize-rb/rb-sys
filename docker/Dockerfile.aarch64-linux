@@ -12,7 +12,8 @@ ENV RUBY_TARGET="aarch64-linux" \
     CXX_aarch64_unknown_linux_gnu="aarch64-linux-gnu-g++" \
     AR_aarch64_unknown_linux_gnu="aarch64-linux-gnu-ar" \
     BINDGEN_EXTRA_CLANG_ARGS_aarch64_unknown_linux_gnu="--sysroot=/usr/aarch64-linux-gnu" \
-    PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}"
+    PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}" \
+    CMAKE_aarch64_unknown_linux_gnu="/usr/local/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 

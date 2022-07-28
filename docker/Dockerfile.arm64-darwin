@@ -11,7 +11,9 @@ ENV RUBY_TARGET="arm64-darwin" \
     CC_aarch64_apple_darwin="aarch64-apple-darwin-cc" \
     CXX_aarch64_apple_darwin="aarch64-apple-darwin-c++" \
     AR_aarch64_apple_darwin="aarch64-apple-darwin-ar" \
-    BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin="--sysroot=/opt/osxcross/target/SDK/MacOSX11.1.sdk/"
+    BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin="--sysroot=/opt/osxcross/target/SDK/MacOSX11.1.sdk/" \
+    CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER="aarch64-apple-darwin-clang" \
+    CMAKE_aarch64_apple_darwin="/usr/local/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 

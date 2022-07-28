@@ -11,7 +11,8 @@ ENV RUBY_TARGET="x64-mingw32" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
     CC_x86_64_pc_windows_gnu="x86_64-w64-mingw32-gcc" \
     CXX_x86_64_pc_windows_gnu="x86_64-w64-mingw32-g++" \
-    AR_x86_64_pc_windows_gnu="x86_64-w64-mingw32-ar"
+    AR_x86_64_pc_windows_gnu="x86_64-w64-mingw32-ar" \
+    CMAKE_x86_64_pc_windows_gnu="/usr/local/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 

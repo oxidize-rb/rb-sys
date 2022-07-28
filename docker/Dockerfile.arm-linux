@@ -11,7 +11,8 @@ ENV RUBY_TARGET="arm-linux" \
     CC_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-gcc" \
     CXX_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-g++" \
     AR_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-ar" \
-    BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf"
+    BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf" \
+    CMAKE_arm_unknown_linux_gnueabihf="/usr/local/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 

@@ -11,7 +11,8 @@ ENV RUBY_TARGET="x86_64-linux" \
     CC_x86_64_unknown_linux_gnu="x86_64-redhat-linux-gcc" \
     CXX_x86_64_unknown_linux_gnu="x86_64-redhat-linux-g++" \
     AR_x86_64_unknown_linux_gnu="ar" \
-    BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/x86_64-redhat-linux/4.8.2/include"
+    BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/x86_64-redhat-linux/4.8.2/include" \
+    CMAKE_x86_64_unknown_linux_gnu="/usr/local/bin/cmake"
 
 
 COPY setup/lib.sh /lib.sh
