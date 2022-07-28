@@ -20,11 +20,11 @@ COPY setup/lib.sh /lib.sh
 COPY setup/cmake.sh /
 RUN /cmake.sh
 
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
 COPY setup/rustup.sh /
 RUN /rustup.sh
+
+COPY setup/rubybashrc.sh /
+RUN /rubybashrc.sh
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
