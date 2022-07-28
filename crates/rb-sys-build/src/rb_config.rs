@@ -67,11 +67,8 @@ impl RbConfig {
             }
         }
 
-        let cflags = parsed.get("cflags").unwrap().as_str();
-        let ldflags = parsed.get("DLDFLAGS").unwrap().as_str();
-
-        rbconfig.push_cflags(cflags);
-        rbconfig.push_dldflags(ldflags);
+        parsed.get("cflags").map(|f| rbconfig.push_cflags(f));
+        parsed.get("DLDFLAGS").map(|f| rbconfig.push_dldflags(f));
 
         rbconfig.value_map = parsed;
 
