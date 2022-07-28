@@ -1,6 +1,8 @@
 #include "ruby.h"
 #ifdef HAVE_RUBY_ATOMIC_H
+#if !RBIMPL_COMPILER_IS(MSVC)
 #include "ruby/atomic.h"
+#endif
 #endif
 #ifdef HAVE_RUBY_DEBUG_H
 #include "ruby/debug.h"
