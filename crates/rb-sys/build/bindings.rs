@@ -13,6 +13,18 @@ pub fn generate(rbconfig: &RbConfig) {
         "-fms-extensions".to_string(),
     ];
 
+    let mut src_wrapper_h = File::open("wrapper.h").unwrap();
+    let mut wrapper_h =
+        File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("wrapper.h")).unwrap();
+
+    std::io::copy(&mut src_wrapper_h, &mut wrapper_h).expect("to copy wrapper.h");
+
+    if !is_msvc() {
+        writeln!(wrapper_h, "#ifdef HAVE_RUBY_ATOMIC_H").unwrap();
+        writeln!(wrapper_h, "#include \"ruby/atomic.h\"").unwrap();
+        writeln!(wrapper_h, "#endif").unwrap();
+    }
+
     let bindings = default_bindgen(clang_args)
         .header("wrapper.h")
         .allowlist_file(".*ruby.*")
@@ -104,4 +116,8 @@ where
 {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+fn is_msvc() -> bool {
+    env::var("TARGET").unwrap().contains("msvc")
 }
