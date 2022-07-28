@@ -17,6 +17,9 @@ ENV RUBY_TARGET="arm64-darwin" \
 
 COPY setup/lib.sh /lib.sh
 
+COPY setup/cmake.sh /
+RUN /cmake.sh
+
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh
 
@@ -25,9 +28,6 @@ RUN /rustup.sh
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
 
 RUN bash -c "source /lib.sh && install_packages libclang-dev clang libc6-arm64-cross libc6-dev-arm64-cross"
 
