@@ -6,7 +6,6 @@ ENV RUBY_TARGET="x86_64-darwin" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
-    BINDGEN_EXTRA_CLANG_ARGS="-I/usr/include/x86_64-linux-gnu/" \
     PATH="/usr/local/cargo/bin:$PATH" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib" \
     CC_x86_64_apple_darwin="x86_64-apple-darwin-clang" \
@@ -14,7 +13,7 @@ ENV RUBY_TARGET="x86_64-darwin" \
     AR_x86_64_apple_darwin="x86_64-apple-darwin-ar" \
     BINDGEN_EXTRA_CLANG_ARGS_x86_64_apple_darwin="--sysroot=/opt/osxcross/target/SDK/MacOSX11.1.sdk/" \
     CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER="x86_64-apple-darwin-clang" \
-    CMAKE_x86_64_apple_darwin="/usr/local/bin/cmake"
+    CMAKE_x86_64_apple_darwin="/opt/cmake/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 
@@ -22,7 +21,7 @@ COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh
 
 COPY setup/rustup.sh /
-RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
+RUN /rustup.sh
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh

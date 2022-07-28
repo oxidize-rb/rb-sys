@@ -11,7 +11,6 @@ main() {
   td="$(mktemp -d)"
   builtin pushd "${td}"
 
-  # Using my fork for now
   git clone --single-branch --depth 1 https://github.com/rubygems/rubygems .
   ruby setup.rb
 
