@@ -15,6 +15,8 @@ pub fn generate(rbconfig: &RbConfig) {
 
     add_system_includes(&mut clang_args);
 
+    eprintln!("Using bindgen with clang args: {:?}", clang_args);
+
     let mut src_wrapper_h = File::open("wrapper.h").unwrap();
     let mut wrapper_h =
         File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("wrapper.h")).unwrap();
@@ -58,7 +60,7 @@ pub fn generate(rbconfig: &RbConfig) {
 fn add_system_includes(clang_args: &mut Vec<String>) {
     if let Some(include) = env::var_os("INCLUDE") {
         for path in env::split_paths(&include) {
-            clang_args.push(format!("-I{}", path.display()));
+            clang_args.push(format!("-I{}", path.to_string_lossy().replace("\\", "/")));
         }
     }
 }
