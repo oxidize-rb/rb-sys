@@ -12,12 +12,12 @@ ENV RUBY_TARGET="x64-mingw-ucrt" \
     CC_x86_64_pc_windows_gnu="x86_64-w64-mingw32-gcc" \
     CXX_x86_64_pc_windows_gnu="x86_64-w64-mingw32-g++" \
     AR_x86_64_pc_windows_gnu="x86_64-w64-mingw32-ar" \
-    CMAKE_x86_64_pc_windows_gnu="/usr/local/bin/cmake"
+    CMAKE_x86_64_pc_windows_gnu="/opt/cmake/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 
 COPY setup/rustup.sh /
-RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
+RUN /rustup.sh
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh

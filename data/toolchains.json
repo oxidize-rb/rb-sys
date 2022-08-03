@@ -4,54 +4,81 @@
       "ruby-platform": "arm-linux",
       "rust-target": "arm-unknown-linux-gnueabihf",
       "dockerfile": "docker/Dockerfile.arm-linux",
+      "rake-compiler-dock": {
+        "cc": "arm-linux-gnueabihf-gcc"
+      },
       "supported": true
     },
     {
       "ruby-platform": "aarch64-linux",
       "rust-target": "aarch64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.aarch64-linux",
+      "rake-compiler-dock": {
+        "cc": "aarch64-linux-gnu-gcc"
+      },
       "supported": true
     },
     {
       "ruby-platform": "arm64-darwin",
       "rust-target": "aarch64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.arm64-darwin",
+      "rake-compiler-dock": {
+        "cc": "aarch64-apple-darwin-clang"
+      },
       "supported": true
     },
     {
       "ruby-platform": "x64-mingw-ucrt",
       "rust-target": "x86_64-pc-windows-gnu",
       "dockerfile": "docker/Dockerfile.x64-mingw-ucrt",
+      "rake-compiler-dock": {
+        "cc": "x86_64-windows-gnu-gcc"
+      },
       "supported": true
     },
     {
       "ruby-platform": "x64-mingw32",
       "rust-target": "x86_64-pc-windows-gnu",
       "dockerfile": "docker/Dockerfile.x64-mingw32",
+      "rake-compiler-dock": {
+        "cc": "x86_64-windows-gnu-gcc"
+      },
       "supported": true
     },
     {
       "ruby-platform": "x86-linux",
       "rust-target": "i686-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.x86-linux",
+      "rake-compiler-dock": {
+        "cc": "i686-redhat-linux-gcc"
+      },
       "supported": false
     },
     {
       "ruby-platform": "x86-mingw32",
       "rust-target": "i686-pc-windows-gnu",
       "dockerfile": "docker/Dockerfile.x86-mingw32",
+      "rake-compiler-dock": {
+        "cc": "i686-w64-mingw32-gcc"
+      },
       "supported": false
     },
     {
       "ruby-platform": "x86_64-darwin",
       "rust-target": "x86_64-apple-darwin",
       "dockerfile": "docker/Dockerfile.x86_64-darwin",
+      "rake-compiler-dock": {
+        "cc": "x86_64-apple-darwin-clang"
+      },
       "supported": true
     },
     {
       "ruby-platform": "x86_64-linux",
       "rust-target": "x86_64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.x86_64-linux",
+      "rake-compiler-dock": {
+        "cc": "x86_64-redhat-linux-gcc"
+      },
       "supported": true
     }
   ]

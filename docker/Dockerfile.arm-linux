@@ -12,12 +12,12 @@ ENV RUBY_TARGET="arm-linux" \
     CXX_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-g++" \
     AR_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-ar" \
     BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf" \
-    CMAKE_arm_unknown_linux_gnueabihf="/usr/local/bin/cmake"
+    CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
 
 COPY setup/rustup.sh /
-RUN /rustup.sh x86_64-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
+RUN /rustup.sh
 
 COPY setup/rubygems.sh /
 RUN /rubygems.sh

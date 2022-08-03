@@ -153,7 +153,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.28"
+version = "0.9.29"
 dependencies = [
  "bindgen",
  "linkify",
@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.28"
+version = "0.9.29"
 dependencies = [
  "regex",
  "shell-words",
@@ -187,7 +187,7 @@ checksum = "49b3de9ec5dc0a3417da371aab17d729997c15010e7fd24ff707773a33bddb64"
 
 [[package]]
 name = "rust-reverse"
-version = "0.9.28"
+version = "0.9.29"
 dependencies = [
  "rb-sys",
 ]
