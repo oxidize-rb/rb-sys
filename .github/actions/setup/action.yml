@@ -26,7 +26,9 @@ runs:
       shell: bash
       run: bundle install -j3
     - name: 🐛 Print debug info
-      run: ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
+      run: |
+        find / -name emmintrin.h 2>/dev/null
+        ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
       shell: bash
     - name: ⚡ Cache
       uses: actions/cache@v3
@@ -43,4 +45,3 @@ runs:
       with:
         toolchain: ${{ inputs.rust_toolchain }}
         default: true
-
