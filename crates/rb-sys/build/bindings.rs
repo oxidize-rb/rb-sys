@@ -13,8 +13,6 @@ pub fn generate(rbconfig: &RbConfig) {
         "-fms-extensions".to_string(),
     ];
 
-    add_system_includes(&mut clang_args);
-
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 
     let mut src_wrapper_h = File::open("wrapper.h").unwrap();
@@ -55,12 +53,6 @@ pub fn generate(rbconfig: &RbConfig) {
 
     write_bindings(bindings, "bindings-raw.rs");
     clean_docs();
-}
-
-fn add_system_includes(clang_args: &mut Vec<String>) {
-    if let Some(include) = env::var_os("INCLUDE") {
-        clang_args.push("-fms-compatibility-version=19".into())
-    }
 }
 
 fn clean_docs() {
