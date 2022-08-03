@@ -19,7 +19,7 @@ module RbSys
     def initialize(platform)
       @platform = platform
       @gem_platform = Gem::Platform.new(platform)
-      data = DATA.fetch("#{gem_platform.cpu}-#{gem_platform.os}") { raise ArgumentError, "unknown ruby platform: #{platform}" }
+      data = DATA[platform] || DATA["#{gem_platform.cpu}-#{gem_platform.os}"] || raise(ArgumentError, "unknown ruby platform: #{platform.inspect}")
       @rust_target = data["rust-target"]
       @rake_compiler_dock_cc = data["rake-compiler-dock"]["cc"]
       @supported = data["supported"]
