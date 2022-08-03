@@ -31,6 +31,10 @@ runs:
         echo "======================"
         find / -name emmintrin.h -print 2>/dev/null || true
 
+        echo "Finding libclang..."
+        echo "======================"
+        find / -name '*libclang*' -print 2>/dev/null || true
+
         echo "Printing rbconfig..."
         echo "======================"
         ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
