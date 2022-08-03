@@ -43,7 +43,7 @@ runs:
     - name: Set LIBCLANG_PATH
       run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
       if: inputs.os == 'windows-2022'
-      shell: bash
+      shell: pwsh
 
     - name: ⚡ Cache
       uses: actions/cache@v3
