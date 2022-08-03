@@ -12,14 +12,14 @@ module RbSys
       end
 
       def local
-        @current ||= new(Gem::Platform.local)
+        @current ||= new(RbConfig::CONFIG["arch"])
       end
     end
 
-    def initialize(plat)
-      @gem_platform = plat.is_a?(Gem::Platform) ? plat : Gem::Platform.new(plat)
-      @platform = "#{@gem_platform.cpu}-#{@gem_platform.os}"
-      data = DATA.fetch(platform) { raise ArgumentError, "unknown ruby platform: #{platform}" }
+    def initialize(platform)
+      @platform = platform
+      @gem_platform = Gem::Platform.new(platform)
+      data = DATA.fetch("#{gem_platform.cpu}-#{gem_platform.os}") { raise ArgumentError, "unknown ruby platform: #{platform}" }
       @rust_target = data["rust-target"]
       @rake_compiler_dock_cc = data["rake-compiler-dock"]["cc"]
       @supported = data["supported"]
@@ -31,7 +31,7 @@ module RbSys
     end
 
     def to_s
-      @platform
+      "#{gem_platform.cpu}-#{gem_platform.os}"
     end
 
     def ==(other)
