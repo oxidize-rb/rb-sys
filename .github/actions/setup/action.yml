@@ -33,12 +33,18 @@ runs:
 
         echo "Finding libclang..."
         echo "======================"
-        find / -name '*libclang*' -print 2>/dev/null || true
+        find / -name '*clang*' -print 2>/dev/null || true
 
         echo "Printing rbconfig..."
         echo "======================"
         ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
       shell: bash
+
+    - name: Set LIBCLANG_PATH
+      run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
+      if: inputs.os == 'windows-latest'
+      shell: bash
+
     - name: ⚡ Cache
       uses: actions/cache@v3
       with:
