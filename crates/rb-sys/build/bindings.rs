@@ -7,11 +7,13 @@ use std::path::Path;
 use std::path::PathBuf;
 
 pub fn generate(rbconfig: &RbConfig) {
-    let clang_args = vec![
+    let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
+
+    add_system_includes(&mut clang_args);
 
     let mut src_wrapper_h = File::open("wrapper.h").unwrap();
     let mut wrapper_h =
@@ -51,6 +53,14 @@ pub fn generate(rbconfig: &RbConfig) {
 
     write_bindings(bindings, "bindings-raw.rs");
     clean_docs();
+}
+
+fn add_system_includes(clang_args: &mut Vec<String>) {
+    if let Some(include) = env::var_os("INCLUDE") {
+        for path in env::split_paths(&include) {
+            clang_args.push(format!("-I{}", path.display()));
+        }
+    }
 }
 
 fn clean_docs() {
