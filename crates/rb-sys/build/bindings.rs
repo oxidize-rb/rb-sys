@@ -62,6 +62,8 @@ fn add_system_includes(clang_args: &mut Vec<String>) {
         for path in env::split_paths(&include) {
             clang_args.push(format!("-I{}", path.to_string_lossy().replace("\\", "/")));
         }
+
+        clang_args.push("-I/ucrt64/lib/gcc/x86_64-w64-mingw32/12.1.0/include".into())
     }
 }
 
