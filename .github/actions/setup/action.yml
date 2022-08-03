@@ -27,7 +27,12 @@ runs:
       run: bundle install -j3
     - name: 🐛 Print debug info
       run: |
-        find / -name emmintrin.h 2>/dev/null
+        echo "Finding emmintrin.h..."
+        echo "======================"
+        find / -name emmintrin.h -print 2>/dev/null || true
+
+        echo "Printing rbconfig..."
+        echo "======================"
         ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
       shell: bash
     - name: ⚡ Cache
