@@ -8,16 +8,6 @@ macro_rules! rstring {
     };
 }
 
-#[test]
-fn test_nil_p() {
-    assert!(unsafe { NIL_P(Qnil as u64) });
-}
-
-#[test]
-fn test_rb_test() {
-    assert!(!unsafe { RB_TEST(Qnil as u64) });
-}
-
 #[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_symbol_p() {

@@ -48,27 +48,6 @@ extern "C" {
     #[link_name = "ruby_macros_SYMBOL_P"]
     pub fn SYMBOL_P(obj: VALUE) -> bool;
 
-    /// Checks if the given object is nil.
-    ///
-    /// @param[in]  obj    An arbitrary ruby object.
-    /// @retval     true   `obj` is ::Qnil.
-    /// @retval     false  Anything else.
-    #[link_name = "ruby_macros_NIL_P"]
-    pub fn NIL_P(obj: VALUE) -> bool;
-
-    /// Emulates Ruby's "if" statement.
-    ///
-    /// @param[in]  obj    An arbitrary ruby object.
-    /// @retval     false  `obj` is either ::Qfalse or ::Qnil.
-    /// @retval     true   Anything else.
-    ///
-    /// @internal
-    ///
-    /// It HAS to be `__attribute__((const))` in  order for clang to properly deduce
-    /// `__builtin_assume()`.
-    #[link_name = "ruby_macros_RB_TEST"]
-    pub fn RB_TEST(obj: VALUE) -> bool;
-
     /// Allocates an instance of ::rb_cSymbol that has the given id.
     ///
     /// @param[in]  id           An id.
