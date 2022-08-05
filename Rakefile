@@ -154,3 +154,22 @@ namespace :data do
     gen.call("github-actions-matrix.json", {include: github_actions_matrix})
   end
 end
+
+namespace :bindings do
+  desc "Copy bindings to /tmp/bindings"
+  task :generate do
+    require "rbconfig"
+
+    c = RbConfig::CONFIG
+    version = RbSys::VERSION
+    sh "cargo build || env RB_SYS_DEBUG_BUILD=1 cargo build"
+    out_dir = "/tmp/bindings/rb-sys-#{version}/#{c["ruby_version"]}/#{c["arch"]}"
+    bindings_file = Dir["target/debug/build/rb-sys-*/out/bindings.rs"].max_by { |f| File.mtime(f) }
+
+    abort "No bindings file found" unless bindings_file
+
+    puts "Copying #{bindings_file} to #{out_dir}/bindings.rs"
+    FileUtils.mkdir_p(out_dir)
+    FileUtils.cp(bindings_file, out_dir)
+  end
+end
