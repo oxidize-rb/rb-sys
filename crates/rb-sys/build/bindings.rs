@@ -46,6 +46,7 @@ fn clean_docs() {
     let mut outfile =
         File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs")).unwrap();
     let lines = read_lines(&path).unwrap();
+    let mut in_doctest = false;
 
     for line in lines {
         let line = line.unwrap();
@@ -55,8 +56,20 @@ fn clean_docs() {
         }
 
         if !line.contains("#[doc") {
+            if !line.chars().all(|c| c.is_whitespace()) {
+                in_doctest = false;
+            }
+
             outfile.write_all(line.as_bytes()).unwrap();
         } else {
+            if line.contains("```") {
+                in_doctest = true;
+            }
+
+            if in_doctest {
+                continue;
+            };
+
             let finder = LinkFinder::new();
             let mut outline = line.to_owned();
             let links: Vec<_> = finder.links(&line).collect();
