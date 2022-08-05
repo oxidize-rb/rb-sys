@@ -66,7 +66,7 @@ fn clean_docs() {
                 in_doctest = true;
             }
 
-            if in_doctest {
+            if in_doctest || line.chars().filter(|c| c == &'`').count() > 2 {
                 continue;
             };
 
