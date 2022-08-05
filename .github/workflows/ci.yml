@@ -44,29 +44,38 @@ jobs:
             rust_toolchain: stable
           - os: macos-latest
             rust_toolchain: stable
-          # - os: windows-2019
-          #   rust_toolchain: stable-x86_64-pc-windows-gnu
           - os: windows-2022
             rust_toolchain: stable-x86_64-pc-windows-gnu
         include:
-          - { ruby_version: mswin, sys: {os: windows-2022, rust_toolchain: stable-x86_64-pc-windows-msvc }}
+          - {
+              ruby_version: mswin,
+              sys:
+                {
+                  os: windows-2022,
+                  rust_toolchain: stable-x86_64-pc-windows-msvc,
+                },
+            }
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: ${{ matrix.sys.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
-      - name: 🧪 Cargo test
-        run: bundle exec rake test:cargo
-      - name: 💎 Gem test
-        run: bundle exec rake test:gem
+
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: |
-          bundle exec rake test:examples
+        run: bundle exec rake test:examples
+
+      - name: 🧪 Cargo test
+        run: bundle exec rake test:cargo
+
+      - name: 💎 Gem test
+        run: bundle exec rake test:gem
+
       - name: 💨 Smoke test
         shell: bash
         run: |

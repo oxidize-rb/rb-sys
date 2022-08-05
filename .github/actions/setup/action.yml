@@ -27,14 +27,6 @@ runs:
       run: bundle install -j3
     - name: 🐛 Print debug info
       run: |
-        echo "Finding emmintrin.h..."
-        echo "======================"
-        find / -name emmintrin.h -print 2>/dev/null || true
-
-        echo "Finding libclang..."
-        echo "======================"
-        find / -name '*clang*' -print 2>/dev/null || true
-
         echo "Printing rbconfig..."
         echo "======================"
         ruby -rrbconfig -ryaml -e 'puts RbConfig::CONFIG.to_yaml'
@@ -42,7 +34,7 @@ runs:
 
     - name: Set LIBCLANG_PATH
       run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
-      if: inputs.os == 'windows-2022'
+      if: contains(inputs.os, 'windows')
       shell: pwsh
 
     - name: ⚡ Cache
@@ -56,6 +48,7 @@ runs:
           target/
           examples/rust_reverse/tmp/
         key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v4-${{ hashFiles('**/Cargo.lock', '**/extconf.rb') }}
+
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: ${{ inputs.rust_toolchain }}
