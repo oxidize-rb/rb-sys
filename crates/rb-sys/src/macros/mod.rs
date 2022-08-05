@@ -6,48 +6,9 @@
 
 use std::os::raw::{c_char, c_long};
 
-use crate::{ruby_value_type, ID, VALUE};
+use crate::{ID, VALUE};
 
 extern "C" {
-
-    /// Queries if the given object is of given type.
-    ///
-    /// @param[in]  obj    An object.
-    /// @param[in]  t      A type.
-    /// @retval     true   `obj` is of type `t`.
-    /// @retval     false  Otherwise.
-    ///
-    /// @internal
-    ///
-    /// This  function is  a super-duper  hot  path.  Optimised  targeting modern  C
-    /// compilers and x86_64 architecture.
-    #[link_name = "ruby_macros_RB_TYPE_P"]
-    pub fn RB_TYPE_P(obj: VALUE, t: ruby_value_type) -> bool;
-
-    /// Queries if the object is an instance of ::ruby_macros_cInteger.
-    ///
-    /// @param[in]  obj    Object in question.
-    /// @retval     true   It is.
-    /// @retval     false  It isn't.
-    #[link_name = "ruby_macros_RB_INTEGER_TYPE_P"]
-    pub fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool;
-
-    /// Queries if the object is an instance of ::ruby_macros_cFloat.
-    ///
-    /// @param[in]  obj    Object in question.
-    /// @retval     true   It is.
-    /// @retval     false  It isn't.
-    #[link_name = "ruby_macros_RB_FLOAT_TYPE_P"]
-    pub fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool;
-
-    /// Queries if the object is an instance of ::ruby_macros_cSymbol.
-    ///
-    /// @param[in]  obj    Object in question.
-    /// @retval     true   It is.
-    /// @retval     false  It isn't.
-    #[link_name = "ruby_macros_SYMBOL_P"]
-    pub fn SYMBOL_P(obj: VALUE) -> bool;
-
     /// Allocates an instance of ::rb_cSymbol that has the given id.
     ///
     /// @param[in]  id           An id.

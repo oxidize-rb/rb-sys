@@ -33,9 +33,9 @@ impl Into<VALUE> for ruby_special_consts {
 /// ```
 /// use rb_sys::special_consts::*;
 ///
-/// assert!(!RB_TEST(Qfalse));
-/// assert!(!RB_TEST(Qnil));
-/// assert!(RB_TEST(Qtrue));
+/// assert!(!TEST(Qfalse));
+/// assert!(!TEST(Qnil));
+/// assert!(TEST(Qtrue));
 /// ```
 #[inline(always)]
 pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
@@ -51,8 +51,8 @@ pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
 /// ```
 /// use rb_sys::special_consts::*;
 ///
-/// assert!(RB_NIL_P(Qnil));
-/// assert!(!RB_NIL_P(Qtrue));
+/// assert!(NIL_P(Qnil));
+/// assert!(!NIL_P(Qtrue));
 /// ```
 #[inline(always)]
 pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
@@ -81,7 +81,7 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// @note       These days  there are static  and dynamic symbols, just  like we
 ///             once had Fixnum/Bignum back in the old days.
 pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
-    (obj.into() & VALUE::MAX) == SYMBOL_FLAG as VALUE
+    (obj.into() & 0xff) == SYMBOL_FLAG as VALUE
 }
 
 /// Checks if the given object is a so-called Flonum.
@@ -119,9 +119,9 @@ pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
 /// ```
 /// use rb_sys::special_consts::*;
 ///
-/// assert!(RB_SPECIAL_CONST_P(Qnil));
-/// assert!(RB_SPECIAL_CONST_P(Qtrue));
-/// assert!(RB_SPECIAL_CONST_P(Qfalse));
+/// assert!(SPECIAL_CONST_P(Qnil));
+/// assert!(SPECIAL_CONST_P(Qtrue));
+/// assert!(SPECIAL_CONST_P(Qfalse));
 /// ```
 #[inline(always)]
 pub fn SPECIAL_CONST_P<T: Into<VALUE>>(obj: T) -> bool {

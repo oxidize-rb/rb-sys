@@ -1,30 +1,6 @@
 #include "ruby.h"
 #include "stdbool.h"
 
-#ifndef RB_INTEGER_TYPE_P
-#define RB_INTEGER_TYPE_P(c) (FIXNUM_P(c) || RB_TYPE_P(c, T_BIGNUM))
-#endif
-
-bool ruby_macros_RB_TYPE_P(VALUE obj, enum ruby_value_type t)
-{
-  return RB_TYPE_P(obj, (int)t);
-};
-
-bool ruby_macros_RB_INTEGER_TYPE_P(VALUE obj)
-{
-  return RB_INTEGER_TYPE_P(obj);
-}
-
-bool ruby_macros_SYMBOL_P(VALUE obj)
-{
-  return SYMBOL_P(obj);
-}
-
-bool ruby_macros_RB_FLOAT_TYPE_P(VALUE obj)
-{
-  return RB_FLOAT_TYPE_P(obj);
-}
-
 VALUE
 ruby_macros_ID2SYM(ID obj)
 {

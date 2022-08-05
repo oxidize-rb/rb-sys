@@ -2,37 +2,6 @@ use rb_sys::macros::*;
 use rb_sys::*;
 use std::{slice, str};
 
-macro_rules! rstring {
-    ($s:expr) => {
-        unsafe { rb_str_new($s.as_ptr() as _, $s.len() as _) }
-    };
-}
-
-#[cfg(not(windows_broken_vm_init_3_1))]
-#[test]
-fn test_symbol_p() {
-    let name = std::ffi::CString::new("foo").unwrap();
-    let ptr = name.as_ptr();
-    let symbol = unsafe { rb_intern(ptr) };
-    let sym = unsafe { ID2SYM(symbol) };
-
-    assert!(unsafe { SYMBOL_P(sym) });
-}
-
-#[test]
-fn test_integer_type_p() {
-    let int = unsafe { rb_num2fix(1) };
-
-    assert!(unsafe { RB_INTEGER_TYPE_P(int) });
-}
-
-#[test]
-fn test_rb_float_type_p() {
-    let float = unsafe { rb_float_new(1.0) };
-
-    assert!(unsafe { RB_FLOAT_TYPE_P(float) });
-}
-
 #[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rstring_len() {
