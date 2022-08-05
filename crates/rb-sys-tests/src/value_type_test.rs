@@ -16,7 +16,7 @@ fn test_builtin_type_p() {
 fn test_rb_integer_type_p() {
     unsafe {
         let int = rb_num2fix(1);
-        let big = rb_int2big(isize::MAX);
+        let big = rb_int2big(9999999);
 
         assert!(RB_INTEGER_TYPE_P(int));
         assert!(RB_INTEGER_TYPE_P(big));

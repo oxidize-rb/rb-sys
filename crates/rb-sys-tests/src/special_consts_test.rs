@@ -6,7 +6,7 @@ use rb_sys::*;
 fn test_fixnum_p() {
     unsafe {
         let int = rb_num2fix(1);
-        let big = rb_int2big(isize::MAX);
+        let big = rb_int2big(9999999);
 
         assert!(FIXNUM_P(int));
         assert!(!FIXNUM_P(big));
