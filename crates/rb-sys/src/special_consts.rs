@@ -18,6 +18,7 @@ pub const FLONUM_MASK: ruby_special_consts = ruby_special_consts::RUBY_FLONUM_MA
 pub const FLONUM_FLAG: ruby_special_consts = ruby_special_consts::RUBY_FLONUM_FLAG;
 pub const SYMBOL_FLAG: ruby_special_consts = ruby_special_consts::RUBY_SYMBOL_FLAG;
 
+#[allow(clippy::from_over_into)]
 impl Into<VALUE> for ruby_special_consts {
     fn into(self) -> VALUE {
         self as VALUE

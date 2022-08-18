@@ -20,6 +20,10 @@ pub use ruby_value_type::*;
 /// @param[in]  obj  Object in question.
 /// @pre        `obj` must not be a special constant.
 /// @return     The type of `obj`.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
     debug_assert!(!SPECIAL_CONST_P(obj));
@@ -37,6 +41,10 @@ pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
 /// @param[in]  obj    Object in question.
 /// @retval     true   It is.
 /// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool {
     if FIXNUM_P(obj) {
@@ -53,6 +61,10 @@ pub unsafe fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool {
 /// @param[in]  obj    Object in question.
 /// @retval     true   It is.
 /// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_DYNAMIC_SYM_P(obj: VALUE) -> bool {
     if SPECIAL_CONST_P(obj) {
@@ -67,52 +79,62 @@ pub unsafe fn RB_DYNAMIC_SYM_P(obj: VALUE) -> bool {
 /// @param[in]  obj    Object in question.
 /// @retval     true   It is.
 /// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_SYMBOL_P(obj: VALUE) -> bool {
-    return STATIC_SYM_P(obj) || RB_DYNAMIC_SYM_P(obj);
+    STATIC_SYM_P(obj) || RB_DYNAMIC_SYM_P(obj)
 }
 
 /// Identical to RB_BUILTIN_TYPE(), except it can also accept special constants.
 ///
 /// @param[in]  obj  Object in question.
 /// @return     The type of `obj`.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_TYPE_P<T: Into<VALUE>>(value: T) -> ruby_value_type {
     let obj = value.into();
 
     if !SPECIAL_CONST_P(obj) {
-        return RB_BUILTIN_TYPE(obj);
+        RB_BUILTIN_TYPE(obj)
     } else if obj == Qfalse as VALUE {
-        return RUBY_T_FALSE;
+        RUBY_T_FALSE
     } else if obj == Qnil as VALUE {
-        return RUBY_T_NIL;
+        RUBY_T_NIL
     } else if obj == Qtrue as VALUE {
-        return RUBY_T_TRUE;
+        RUBY_T_TRUE
     } else if obj == Qundef as VALUE {
-        return RUBY_T_UNDEF;
+        RUBY_T_UNDEF
     } else if FIXNUM_P(obj) {
-        return RUBY_T_FIXNUM;
+        RUBY_T_FIXNUM
     } else if STATIC_SYM_P(obj) {
-        return RUBY_T_SYMBOL;
+        RUBY_T_SYMBOL
     } else {
         debug_assert!(FLONUM_P(obj));
-        return RUBY_T_FLOAT;
+        RUBY_T_FLOAT
     }
 }
 
-/**
- * Queries if the object is an instance of ::rb_cFloat.
- *
- * @param[in]  obj    Object in question.
- * @retval     true   It is.
- * @retval     false  It isn't.
- */
+/// Queries if the object is an instance of ::rb_cFloat.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is.
+/// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
 pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
     if FLONUM_P(obj) {
-        return true;
+        true
     } else if SPECIAL_CONST_P(obj) {
-        return false;
+        false
     } else {
-        return RB_BUILTIN_TYPE(obj) == RUBY_T_FLOAT;
+        RB_BUILTIN_TYPE(obj) == RUBY_T_FLOAT
     }
 }
