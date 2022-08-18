@@ -33,4 +33,4 @@ bindgen-deprecated-types = []
 debug-build = []
 
 [lib]
-doctest = true
+doctest = false
