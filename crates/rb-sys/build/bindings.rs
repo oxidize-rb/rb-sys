@@ -68,6 +68,9 @@ fn clean_docs() {
                 );
             }
 
+            // Remove anything cargo thinks is executable
+            outline = outline.replace('`', "");
+
             outfile.write_all(outline.as_bytes()).unwrap();
         }
 
