@@ -7,9 +7,11 @@ set -eo pipefail
 source /lib.sh
 
 main() {
-    local version=3.23.1
+    local version=3.23.2
 
-    install_packages curl
+    if ! command -v curl &> /dev/null; then
+        install_packages curl
+    fi
 
     local td
     td="$(mktemp -d)"
@@ -17,11 +19,11 @@ main() {
     pushd "${td}"
 
     curl --retry 3 -sSfL "https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh" -o cmake.sh
-    sh cmake.sh --skip-license --prefix=/usr/local
+    mkdir -p /opt/cmake
+    sh cmake.sh --skip-license --prefix=/opt/cmake
+    /opt/cmake/bin/cmake --version
 
     popd
-
-    purge_packages
 
     rm -rf "${td}"
     rm -rf /var/lib/apt/lists/*

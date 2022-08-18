@@ -64,9 +64,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{ matrix.platform.ruby_target }}-buildx-v3-${{ github.sha }}
+          key: ${{ matrix.platform.ruby_target }}-buildx-v4-${{ github.sha }}
           restore-keys: |
-            ${{ matrix.platform.ruby_target }}-buildx-v3
+            ${{ matrix.platform.ruby_target }}-buildx-v4
 
       - name: Build images
         run: rake docker:build:${{ matrix.platform.ruby_target }}
@@ -76,10 +76,10 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - uses: "oxidize-rb/cross-gem-action@main"
-        with:
-          platform: ${{ matrix.platform.ruby_target }}
-          directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
+      # - uses: "oxidize-rb/cross-gem-action@main"
+      #   with:
+      #     platform: ${{ matrix.platform.ruby_target }}
+      #     directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
 
       - name: Push images
         if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'

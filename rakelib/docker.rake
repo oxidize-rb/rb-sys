@@ -3,7 +3,6 @@
 require "yaml"
 require_relative "./../gem/lib/rb_sys/version"
 
-RCD_TAG = RbSys::VERSION
 DOCKERFILES = Dir["docker/Dockerfile.*"]
 DOCKERFILE_PLATFORMS = DOCKERFILES.map { |f| File.extname(f).delete(".") }
 DOCKERFILE_PLATFORM_PAIRS = DOCKERFILES.zip(DOCKERFILE_PLATFORMS)
@@ -42,7 +41,7 @@ namespace :docker do
     namespace :build do
       desc "Build docker image for %s" % arch
       task arch do
-        sh "#{DOCKER} build #{ENV["RBSYS_DOCKER_BUILD_EXTRA_ARGS"]} -f #{dockerfile} --tag rbsys/rcd:#{arch} --tag rbsys/rake-compiler-dock-mri-#{arch}:#{RCD_TAG} ./docker"
+        sh "#{DOCKER} build #{ENV["RBSYS_DOCKER_BUILD_EXTRA_ARGS"]} -f #{dockerfile} --tag rbsys/rcd:#{arch} --tag rbsys/rake-compiler-dock-mri-#{arch}:#{RbSys::VERSION} --tag rbsys/#{arch}:#{RbSys::VERSION} ./docker"
       end
     end
 
@@ -60,8 +59,9 @@ namespace :docker do
   DOCKERFILE_PLATFORMS.each do |arch|
     desc "Push #{arch} docker image"
     task "push:#{arch}" => "build:#{arch}" do
-      sh "docker push rbsys/rake-compiler-dock-mri-#{arch}:#{RCD_TAG}"
+      sh "docker push rbsys/rake-compiler-dock-mri-#{arch}:#{RbSys::VERSION}"
       sh "docker push rbsys/rcd:#{arch}"
+      sh "docker push rbsys/#{arch}:#{RbSys::VERSION}"
     end
   end
 
