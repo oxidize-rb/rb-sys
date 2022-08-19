@@ -125,36 +125,86 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
         if &version < v {
             println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_lt_{}_{}=\"true\"",
+                v.major(),
+                v.minor()
+            );
         } else {
             println!(r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_lt_{}_{}=\"false\"",
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version <= v {
             println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_lte_{}_{}=\"true\"",
+                v.major(),
+                v.minor()
+            );
         } else {
             println!(r#"cargo:version_lte_{}_{}=false"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_lte_{}_{}=\"false\"",
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version == v {
             println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_eq_{}_{}=\"true\"",
+                v.major(),
+                v.minor()
+            );
         } else {
             println!(r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_eq_{}_{}=\"false\"",
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version >= v {
             println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_gte_{}_{}=\"true\"",
+                v.major(),
+                v.minor()
+            );
         } else {
             println!(r#"cargo:version_gte_{}_{}=false"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_gte_{}_{}=\"false\"",
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version > v {
             println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
             println!(r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_gt_{}_{}=\"true\"",
+                v.major(),
+                v.minor()
+            );
         } else {
             println!(r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());
+            println!(
+                "cargo:rustc-cfg=version_gt_{}_{}=\"false\"",
+                v.major(),
+                v.minor()
+            );
         }
     }
 

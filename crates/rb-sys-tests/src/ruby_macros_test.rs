@@ -12,16 +12,6 @@ fn test_rstring_len() {
 
 #[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
-fn test_rarray_len() {
-    let rstr: VALUE = rstring!("foo");
-    let rarray = unsafe { rb_ary_new() };
-    unsafe { rb_ary_push(rarray, rstr) };
-
-    assert_eq!(unsafe { RARRAY_LEN(rarray) }, 1);
-}
-
-#[cfg(not(windows_broken_vm_init_3_1))]
-#[test]
 fn test_rstring_ptr() {
     let rstr = rstring!("foo");
 

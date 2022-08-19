@@ -23,11 +23,6 @@ long ruby_macros_RSTRING_LEN(VALUE obj)
   return RSTRING_LEN(obj);
 }
 
-long ruby_macros_RARRAY_LEN(VALUE obj)
-{
-  return RARRAY_LEN(obj);
-}
-
 const VALUE *
 ruby_macros_RARRAY_PTR(VALUE ary)
 {

@@ -41,3 +41,6 @@ mod value_type_test;
 
 #[cfg(test)]
 mod special_consts_test;
+
+#[cfg(test)]
+mod rarray_test;

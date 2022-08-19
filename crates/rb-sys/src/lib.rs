@@ -1,6 +1,7 @@
 pub mod bindings;
 #[cfg(feature = "ruby-macros")]
 pub mod macros;
+pub mod rarray;
 pub mod special_consts;
 pub mod value_type;
 
@@ -11,6 +12,7 @@ mod ruby_abi_version;
 #[cfg(use_global_allocator)]
 pub use allocator::*;
 pub use bindings::*;
+pub use rarray::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
 pub use value_type::*;

@@ -41,14 +41,6 @@ extern "C" {
     #[link_name = "ruby_macros_RSTRING_LEN"]
     pub fn RSTRING_LEN(obj: VALUE) -> c_long;
 
-    /// Queries the length of the array.
-    ///
-    /// @param[in]  a  Array in question.
-    /// @return     Its number of elements.
-    /// @pre        `a` must be an instance of ::RArray.
-    #[link_name = "ruby_macros_RARRAY_LEN"]
-    pub fn RARRAY_LEN(a: VALUE) -> c_long;
-
     /// Wild  use of  a  C  pointer.  This  function  accesses  the backend  storage
     /// directly.   This is  slower  than  #RARRAY_PTR_USE_TRANSIENT.  It  exercises
     /// extra manoeuvres  to protect our generational  GC.  Use of this  function is
