@@ -7,6 +7,7 @@ pub mod value_type;
 
 #[cfg(use_global_allocator)]
 mod allocator;
+mod assert;
 mod ruby_abi_version;
 
 #[cfg(use_global_allocator)]

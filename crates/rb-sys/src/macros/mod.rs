@@ -41,18 +41,4 @@ extern "C" {
     #[link_name = "ruby_macros_RSTRING_LEN"]
     pub fn RSTRING_LEN(obj: VALUE) -> c_long;
 
-    /// Wild  use of  a  C  pointer.  This  function  accesses  the backend  storage
-    /// directly.   This is  slower  than  #RARRAY_PTR_USE_TRANSIENT.  It  exercises
-    /// extra manoeuvres  to protect our generational  GC.  Use of this  function is
-    /// considered archaic.  Use a modern way instead.
-
-    /// @param[in]  ary  An object of ::RArray.
-    /// @return     The backend C array.
-
-    /// @internal
-
-    /// That said...  there are  extension libraries  in the wild  who uses  it.  We
-    /// cannot but continue supporting.
-    #[link_name = "ruby_macros_RARRAY_PTR"]
-    pub fn RARRAY_PTR(a: VALUE) -> *const VALUE;
 }

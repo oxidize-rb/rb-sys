@@ -32,9 +32,7 @@ pub fn generate(rbconfig: &RbConfig) {
     let bindings = if cfg!(feature = "bindgen-deprecated-types") {
         bindings
     } else {
-        bindings
-            .blocklist_item("^ruby_fl_type.*")
-            .blocklist_item("^_bindgen_ty_9.*")
+        bindings.blocklist_item("^_bindgen_ty_9.*")
     };
 
     write_bindings(bindings, "bindings-raw.rs");
