@@ -6,13 +6,13 @@
 #![allow(non_snake_case)]
 
 #[cfg(version_gte_3_0 = "true")]
-use crate::ruby_rarray_consts::{RARRAY_EMBED_LEN_SHIFT, RARRAY_TRANSIENT_FLAG};
+use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
 #[cfg(version_gte_3_0 = "false")]
 use crate::ruby_rarray_flags::{RARRAY_EMBED_LEN_SHIFT, RARRAY_TRANSIENT_FLAG};
 use crate::{
     debug_assert_ruby_type, rb_gc_writebarrier_unprotect, refute_flag,
     ruby_fl_type::{RUBY_FL_USER12, RUBY_FL_USER14},
-    ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK},
+    ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK, RARRAY_TRANSIENT_FLAG},
     ruby_xmalloc2, RArray, RBasic, RGENGC_WB_PROTECTED_ARRAY, RUBY_T_ARRAY, USE_TRANSIENT_HEAP,
     VALUE,
 };

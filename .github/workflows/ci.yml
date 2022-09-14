@@ -18,15 +18,10 @@ jobs:
           rust_toolchain: stable
           ruby_version: "3.1"
           os: ubuntu-latest
-      - uses: actions-rs/cargo@v1
-        name: ✂️ Run clippy
-        with:
-          command: clippy
-      - uses: actions-rs/cargo@v1
-        name: 📃 Run cargo fmt
-        with:
-          command: fmt
-          args: --check
+      - name: ✂️ Run clippy
+        run: cargo clippy || true
+      - name: 📃 Run cargo fmt
+        run: cargo fmt --check
       - name: 🚓 Run Standard.rb
         run: bundle exec standardrb --format github
 
