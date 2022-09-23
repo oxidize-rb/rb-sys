@@ -1,4 +1,4 @@
-# rb-sys
+# `rb-sys`
 
 [![.github/workflows/ci.yml](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml/badge.svg)](https://github.com/oxidize-rb/rb-sys/actions/workflows/ci.yml)
 [![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)][slack]
@@ -19,6 +19,21 @@ it's not easy, it's a bug.
 - Cross compilation of gems
 - Integration with [`rake-compiler`][rake-compiler]
 
+## Usage
+
+Below are some examples of how to use `rb-sys` to build native Rust extensions. Use these as a starting point for your
+building your own gem.
+
+- The [`oxi-test` gem][oxi-test] is the canonical example of how to use `rb-sys`. It is a minimal, fully tested with
+  GitHub actions, and cross-compiles native gem binaries. This should be your first stop for learning how to use
+  `rb-sys`.
+- [Docs for the `rb_sys` gem][rb-sys-gem-docs] and using it with an `extconf.rb` file.
+- The [`magnus` repo has some solid examples][magnus-examples].
+- This [demo repository][rust-talk] that @ianks made for a talk has a gem which has 4 native extensions in the `ext`
+  directory.
+- This [PR for the `yrb` gem][yrb] shows how to integrate `rb-sys` and [`magnus`][magnus] into an existing gem.
+- A [guide for setting debug breakpoints in VSCode][debugging-guide] is available.
+
 ## Supported Platforms
 
 We support cross compilation to the following platforms (this information is also available in the [`./data`](./data)
@@ -32,20 +47,6 @@ directory for automation purposes):
 | arm64-darwin   | ✅        | [`rbsys/arm64-darwin:0.9.30`][docker-hub]   |
 | x64-mingw32    | ✅        | [`rbsys/x64-mingw32:0.9.30`][docker-hub]    |
 | x64-mingw-ucrt | ✅        | [`rbsys/x64-mingw-ucrt:0.9.30`][docker-hub] |
-
-## Usage
-
-Below are some examples of how to use `rb-sys` to build native Rust extensions. Use these as a starting point for your
-building your own gem.
-
-- The [`oxi-test` gem][oxi-test] is the canonical example of how to use `rb-sys`. It is a minimal, fully tested with
-  GitHub actions, and cross-compiles native gem binaries. This should be your first stop for learning how to use
-  `rb-sys`.
-- The [`magnus` repo has some solid examples][magnus-examples].
-- This [demo repository][rust-talk] that @ianks made for a talk has a gem which has 4 native extensions in the `ext`
-  directory.
-- This [PR for the `yrb` gem][yrb] shows how to integrate `rb-sys` and [`magnus`][magnus] into an existing gem.
-- A [guide for setting debug breakpoints in VSCode][debugging-guide] is available.
 
 ## Getting Help
 
@@ -85,3 +86,4 @@ defined in the Apache-2.0 license, shall be dual licensed as above, without any 
 [issues]: https://github.com/oxidize-rb/rb-sys/issues
 [magnus-examples]: https://github.com/matsadler/magnus/tree/main/examples
 [debugging-guide]: https://oxidize-rb.github.io/rb-sys/tutorial/testing/debugging.html
+[rb-sys-gem-docs]: https://github.com/oxidize-rb/rb-sys/tree/main/gem#the-rb_sys-gem
