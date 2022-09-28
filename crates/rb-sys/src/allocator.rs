@@ -29,13 +29,13 @@ unsafe impl GlobalAlloc for RbAllocator {
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         System.dealloc(ptr, layout);
-        rb_gc_adjust_memory_usage(-(layout.size() as i64 as _));
+        rb_gc_adjust_memory_usage(-(layout.size() as i64));
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let ret = System.realloc(ptr, layout, new_size);
         if !ret.is_null() {
-            rb_gc_adjust_memory_usage(new_size as i64 as _ - layout.size() as i64 as _);
+            rb_gc_adjust_memory_usage(new_size as i64 - layout.size() as i64);
         }
         ret
     }
