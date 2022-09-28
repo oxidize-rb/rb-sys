@@ -4,7 +4,7 @@ FROM mcr.microsoft.com/vscode/devcontainers/rust:${VARIANT}
 ENV CHRUBY_VERSION="0.3.9" \
   BUILD_LIST="build-essential clang libclang-dev openssh-server" \
   DEBIAN_FRONTEND="noninteractive" \
-  RUBY_VERSIONS="2.6.9 2.7.6 3.1.2 3.2.0-preview1" 
+  RUBY_VERSIONS="2.6.9 2.7.6 3.1.2 3.2.0-preview2"
 
 USER root
 
