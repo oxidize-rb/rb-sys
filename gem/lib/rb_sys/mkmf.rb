@@ -258,7 +258,7 @@ module RbSys
 
     def conditional_assign(a, b, export: false)
       if $nmake
-        "!IFNDEF #{a}\n  set #{a} = #{b}\n!ENDIF"
+        "!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF"
       else
         "#{export ? "export " : ""}#{a} ?= #{b}"
       end
