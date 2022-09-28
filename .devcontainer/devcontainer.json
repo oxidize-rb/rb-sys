@@ -16,8 +16,13 @@
     "type=volume,target=${containerWorkspaceFolder}/examples/rust_reverse/tmp",
     "type=volume,target=${containerWorkspaceFolder}/examples/rust_reverse/ext/rust_reverse/target"
   ],
-  "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"],
-
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--privileged",
+    "--init"
+  ],
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "lldb.executable": "/usr/bin/lldb",
@@ -26,8 +31,7 @@
       "**/target/**": true,
       "**/tmp/**": true
     },
-    "rust-analyzer.checkOnSave.command": "clippy",
-    "terminal.integrated.shell.*": "/usr/bin/zsh"
+    "rust-analyzer.checkOnSave.command": "clippy"
   },
   "extensions": [
     "vadimcn.vscode-lldb",
@@ -37,5 +41,10 @@
     "serayuzgur.crates",
     "rebornix.Ruby"
   ],
-  "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/on-post-attach.sh"
+  "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/on-post-attach.sh",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+      "version": "latest"
+    }
+  }
 }

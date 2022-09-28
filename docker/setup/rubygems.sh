@@ -7,16 +7,12 @@ set -euo pipefail
 source /lib.sh
 
 main() {
-  local td
-  td="$(mktemp -d)"
-  builtin pushd "${td}"
-
-  git clone --single-branch --depth 1 https://github.com/rubygems/rubygems .
-  ruby setup.rb
-
-  builtin popd
-  rm -rf "${td}"
-  rm "${0}"
+  local version
+  version="3.3.22"
+  gem update --system "${version}" --no-document
+  set +u
+  rvm rubygems "${version}"
+  set -u
 }
 
 main "${@}"
