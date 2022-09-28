@@ -39,6 +39,7 @@ pub fn generate(rbconfig: &RbConfig) {
 
     write_bindings(bindings, "bindings-raw.rs");
     clean_docs();
+    let _ = push_cargo_cfg_from_bindings();
 }
 
 fn clean_docs() {
@@ -107,4 +108,32 @@ where
 {
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
+}
+
+// Add things like `#[cfg(ruby_use_transient_heap = "true")]` to the bindings config
+fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
+    let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
+    let lines = read_lines(&path)?;
+
+    fn is_have_cfg(line: &str) -> bool {
+        line.starts_with("pub const HAVE_RUBY")
+            || line.starts_with("pub const HAVE_RB")
+            || line.starts_with("pub const USE")
+    }
+
+    for line in lines {
+        let line = line?;
+
+        if is_have_cfg(&line) {
+            let parts: Vec<_> = line.split_whitespace().collect();
+            let mut name = parts[2].to_lowercase();
+            name.pop(); // remove trailing colon
+            if let Some(value) = parts.last() {
+                let value = if value == &"1;" { "true" } else { "false" };
+                println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, value);
+            }
+        }
+    }
+
+    Ok(())
 }
