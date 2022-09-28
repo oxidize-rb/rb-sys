@@ -74,6 +74,13 @@ jobs:
           RB_SYS_CARGO_PROFILE: "release"
         run: bundle exec rake test:examples
 
+      - name: Upload tmp folder if failed
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: failed-example-tmp-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          path: examples/rust_reverse/tmp
+
       - name: 🧪 Cargo test
         run: bundle exec rake test:cargo
 
