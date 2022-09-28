@@ -81,7 +81,7 @@ module RbSys
         # Account for sub-directories when using `--target` argument with Cargo
         #{if_neq_stmt("$(CARGO_BUILD_TARGET)", "")}
           #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)")}
-        else
+        #{else_stmt}
           #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target")}
         #{endif_stmt}
 
