@@ -22,4 +22,8 @@ Run the tests:
   $ rake test:rubies
   $ rake test:examples
 
+Choosing a Ruby version:
+  $ ls /opt/rubies
+  $ chruby 3.1.2
+
 ===========================================================

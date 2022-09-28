@@ -10,7 +10,7 @@ install_packages() {
       if ! dpkg -L "${pkg}" > /dev/null 2> /dev/null; then
         apt-get update -qq
         apt-get install --assume-yes --no-install-recommends "${pkg}"
-        rm -rf /var/lib/apt/lists/* /var/cache/apt/archives
+        rm -r /var/lib/apt/lists /var/cache/apt/archives
 
         purge_list+=("${pkg}")
       fi
