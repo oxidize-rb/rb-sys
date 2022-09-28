@@ -24,7 +24,7 @@ class TestRbSys < Minitest::Test
       b.env = {"NO_LINK_RUTIE" => "true"}
     end
 
-    assert_match(/\$\(RUSTLIB\): export NO_LINK_RUTIE = true/, makefile.read)
+    assert_match(/export NO_LINK_RUTIE := true/, makefile.read)
   end
 
   def test_uses_custom_profile
@@ -60,7 +60,7 @@ class TestRbSys < Minitest::Test
 
     content = makefile.read
 
-    assert content.include?("$(RUSTLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
+    assert content.include?("export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
     assert content.include?("RB_SYS_EXTRA_RUSTFLAGS ?= --cfg=foo")
   end
 

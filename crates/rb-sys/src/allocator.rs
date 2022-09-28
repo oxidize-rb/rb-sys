@@ -4,7 +4,8 @@
 //! simple wrapper over the system allocator which reports memory usage to Ruby using
 //! `rb_gc_adjust_memory_usage`
 
-use crate::{rb_gc_adjust_memory_usage, ssize_t};
+use crate::rb_gc_adjust_memory_usage;
+
 use std::alloc::{GlobalAlloc, Layout, System};
 
 pub struct RbAllocator;
@@ -28,13 +29,13 @@ unsafe impl GlobalAlloc for RbAllocator {
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         System.dealloc(ptr, layout);
-        rb_gc_adjust_memory_usage(-(layout.size() as ssize_t));
+        rb_gc_adjust_memory_usage(-(layout.size() as i64 as _));
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
         let ret = System.realloc(ptr, layout, new_size);
         if !ret.is_null() {
-            rb_gc_adjust_memory_usage(new_size as ssize_t - layout.size() as ssize_t);
+            rb_gc_adjust_memory_usage(new_size as i64 as _ - layout.size() as i64 as _);
         }
         ret
     }

@@ -31,14 +31,6 @@ module RbSys
     # .   r.features = %w[some_cargo_feature]
     # . end
     def create_rust_makefile(target, &blk)
-      if $nmake
-        create_rust_makefile_nmake(target, &blk)
-      else
-        create_rust_makefile_gmake(target, &blk)
-      end
-    end
-
-    def create_rust_makefile_gmake(target, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"
@@ -58,40 +50,40 @@ module RbSys
       full_cargo_command = cargo_command(srcdir, builder)
 
       make_install = +<<~MAKE
-        RB_SYS_BUILD_DIR ?= #{File.join(Dir.pwd, ".rb-sys")}
-        CARGO ?= cargo
-        CARGO_BUILD_TARGET ?= #{builder.target}
-        SOEXT ?= #{builder.so_ext}
+        #{conditional_assign("RB_SYS_BUILD_DIR", File.join(Dir.pwd, ".rb-sys"))}
+        #{conditional_assign("CARGO", "cargo")}
+        #{conditional_assign("CARGO_BUILD_TARGET", builder.target)}
+        #{conditional_assign("SOEXT", builder.so_ext)}
 
         # Determine the prefix Cargo uses for the lib.
-        ifneq ($(SOEXT),dll)
-          SOEXT_PREFIX ?= lib
-        endif
+        #{if_neq_stmt("$(SOEXT)", "dll")}
+          #{conditional_assign("SOEXT_PREFIX", "lib")}
+        #{endif_stmt}
 
-        RB_SYS_CARGO_PROFILE ?= #{builder.profile}
-        RB_SYS_CARGO_FEATURES ?= #{builder.features.join(",")}
-        RB_SYS_EXTRA_RUSTFLAGS ?= #{builder.extra_rustflags.join(" ")}
+        #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
+        #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
+        #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
-        ifeq ($(RB_SYS_CARGO_PROFILE),dev)
-          RB_SYS_CARGO_PROFILE_DIR ?= debug
-        else
-          RB_SYS_CARGO_PROFILE_DIR ?= $(RB_SYS_CARGO_PROFILE)
-        endif
+        #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "dev")}
+          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "debug")}
+        #{else_stmt}
+          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)")}
+        #{endif_stmt}
 
         # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
-        ifeq ($(RB_SYS_CARGO_PROFILE),release)
+        #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "release")}
           RB_SYS_CARGO_PROFILE_FLAG = --release
-        else
+        #{else_stmt}
           RB_SYS_CARGO_PROFILE_FLAG = --profile $(RB_SYS_CARGO_PROFILE)
-        endif
+        #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
-        ifneq ($(CARGO_BUILD_TARGET),)
-          RB_SYS_CARGO_BUILD_TARGET_DIR ?= target/$(CARGO_BUILD_TARGET)
+        #{if_neq_stmt("$(CARGO_BUILD_TARGET)", "")}
+          #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)")}
         else
-          RB_SYS_CARGO_BUILD_TARGET_DIR ?= target
-        endif
+          #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target")}
+        #{endif_stmt}
 
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
@@ -108,12 +100,12 @@ module RbSys
 
         #{base_makefile(srcdir)}
 
-        ifneq ($(RB_SYS_VERBOSE),)
+        #{if_neq_stmt("$(RB_SYS_VERBOSE)", "")}
           Q = $(0=@)
-        endif
+        #{endif_stmt}
 
         #{env_vars(builder)}
-        $(RUSTLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
+        #{export_env("RUSTFLAGS", "$(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")}
 
         FORCE: ;
 
@@ -126,86 +118,6 @@ module RbSys
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
 
         #{optional_rust_toolchain(builder)}
-
-        $(RUSTLIB): $(DEFFILE) FORCE
-        \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
-        \t$(Q) #{full_cargo_command}
-
-        $(DLLIB): $(RUSTLIB)
-        \t$(Q) $(COPY) "$(RUSTLIB)" $@
-
-        install-so: $(DLLIB)
-        \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
-        \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
-        \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
-
-        install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
-
-        all: #{$extout ? "install" : "$(DLLIB)"}
-      MAKE
-
-      gsub_cargo_command!(make_install, builder: builder)
-
-      File.write("Makefile", make_install)
-    end
-
-    def create_rust_makefile_nmake(target, &blk)
-      if target.include?("/")
-        target_prefix, target = File.split(target)
-        target_prefix[0, 0] = "/"
-      else
-        target_prefix = ""
-      end
-
-      spec = Struct.new(:name, :metadata).new(target, {})
-      cargo_builder = CargoBuilder.new(spec)
-      builder = Config.new(cargo_builder)
-
-      yield builder if blk
-
-      srcprefix = "$(srcdir)/#{builder.ext_dir}".chomp("/")
-      RbConfig.expand(srcdir = srcprefix.dup)
-
-      full_cargo_command = cargo_command(srcdir, builder)
-
-      make_install = +<<~MAKE
-        RB_SYS_BUILD_DIR = #{File.join(Dir.pwd, ".rb-sys")}
-        CARGO = cargo
-        CARGO_BUILD_TARGET = #{builder.target}
-        SOEXT = #{builder.so_ext}
-
-        RB_SYS_CARGO_PROFILE = #{builder.profile}
-        RB_SYS_CARGO_FEATURES = #{builder.features.join(",")}
-        RB_SYS_EXTRA_RUSTFLAGS = #{builder.extra_rustflags.join(" ")}
-        RB_SYS_CARGO_PROFILE_DIR = $(RB_SYS_CARGO_PROFILE)
-        RB_SYS_CARGO_PROFILE_FLAG = --release
-        RB_SYS_CARGO_BUILD_TARGET_DIR = target
-
-        target_prefix = #{target_prefix}
-        TARGET_NAME = #{target[/\A\w+/]}
-        TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
-        TARGET = #{target}
-        DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
-        RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
-
-        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
-        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
-        RUSTFLAGS = $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
-
-        #{base_makefile(srcdir)}
-
-        FORCE: ;
-
-        $(TARGET_DIR):
-        \t$(ECHO) creating target directory \\($(@)\\)
-        \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
-
-        $(DEFFILE): $(TARGET_DIR)
-        \t$(ECHO) generating $(@)
-        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
 
         $(RUSTLIB): $(DEFFILE) FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
@@ -257,7 +169,7 @@ module RbSys
 
     def env_line(k, v)
       return unless v
-      %($(RUSTLIB): export #{k} = #{v.gsub("\n", '\n')})
+      export_env(k, v.gsub("\n", '\n'))
     end
 
     def env_or_makefile_config(key)
@@ -275,31 +187,31 @@ module RbSys
 
     def optional_rust_toolchain(builder)
       <<~MAKE
-        RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN ?= #{builder.force_install_rust_toolchain}
+        #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", builder.force_install_rust_toolchain)}
 
         # Only run if the we are told to explicitly install the Rust toolchain
-        ifneq ($(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN),false)
-        RB_SYS_RUSTUP_PROFILE ?= minimal
+        #{if_neq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "false")}
+        #{conditional_assign("RB_SYS_RUSTUP_PROFILE", "minimal")}
 
         # If the user passed true, we assume stable Rust. Otherwise, use what
         # was specified (i.e. RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN=beta)
-        ifeq ($(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN),true)
+        #{if_eq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "true")}
           RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN = stable
-        endif
+        #{endif_stmt}
 
         # If a $RUST_TARGET is specified (i.e. for rake-compiler-dock), append
         # that to the profile.
-        ifeq ($(RUST_TARGET),)
+        #{if_eq_stmt("$(RUST_TARGET)", "")}
           RB_SYS_DEFAULT_TOOLCHAIN = $(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)
-        else
+        #{else_stmt}
           RB_SYS_DEFAULT_TOOLCHAIN = $(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)-$(RUST_TARGET)
-        endif
+        #{endif_stmt}
 
-        export CARGO_HOME ?= $(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/cargo
-        export RUSTUP_HOME ?= $(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/rustup
-        export PATH := $(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)
-        export RUSTUP_TOOLCHAIN := $(RB_SYS_DEFAULT_TOOLCHAIN)
-        export CARGO := $(CARGO_HOME)/bin/cargo
+        #{conditional_assign("CARGO_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/cargo", export: true)}
+        #{conditional_assign("RUSTUP_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/rustup", export: true)}
+        #{export_env("PATH", "$(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)")}
+        #{export_env("RUSTUP_TOOLCHAIN", "$(RB_SYS_DEFAULT_TOOLCHAIN)")}
+        #{export_env("CARGO", "$(CARGO_HOME)/bin/cargo")}
 
         $(CARGO): 
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
@@ -308,8 +220,56 @@ module RbSys
         \trustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
 
         $(RUSTLIB): $(CARGO)
-        endif
+        #{endif_stmt}
       MAKE
+    end
+
+    def if_eq_stmt(a, b)
+      if $nmake
+        "!IF #{a.inspect} == #{b.inspect}"
+      else
+        "ifeq (#{a},#{b})"
+      end
+    end
+
+    def if_neq_stmt(a, b)
+      if $nmake
+        "!IF #{a.inspect} != #{b.inspect}"
+      else
+        "ifneq (#{a},#{b})"
+      end
+    end
+
+    def else_stmt
+      if $nmake
+        "!ELSE"
+      else
+        "else"
+      end
+    end
+
+    def endif_stmt
+      if $nmake
+        "!ENDIF"
+      else
+        "endif"
+      end
+    end
+
+    def conditional_assign(a, b, export: false)
+      if $nmake
+        "!IFNDEF #{a}\n  set #{a} = #{b}\n!ENDIF"
+      else
+        "#{export ? "export " : ""}#{a} ?= #{b}"
+      end
+    end
+
+    def export_env(k, v)
+      if $nmake
+        "set #{k} = #{v}"
+      else
+        "export #{k} := #{v}"
+      end
     end
   end
 end
