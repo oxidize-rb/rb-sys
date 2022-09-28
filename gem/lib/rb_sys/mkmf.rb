@@ -5,6 +5,7 @@ require "shellwords"
 require_relative "cargo_builder"
 require_relative "mkmf/config"
 
+# rubocop:disable Style/GlobalVars
 # Root module
 module RbSys
   # Helper class for creating Rust Makefiles
@@ -30,6 +31,14 @@ module RbSys
     # .   r.features = %w[some_cargo_feature]
     # . end
     def create_rust_makefile(target, &blk)
+      if $nmake
+        create_rust_makefile_nmake(target, &blk)
+      else
+        create_rust_makefile_gmake(target, &blk)
+      end
+    end
+
+    def create_rust_makefile_gmake(target, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"
@@ -48,7 +57,6 @@ module RbSys
 
       full_cargo_command = cargo_command(srcdir, builder)
 
-      # rubocop:disable Style/GlobalVars
       make_install = +<<~MAKE
         RB_SYS_BUILD_DIR ?= #{File.join(Dir.pwd, ".rb-sys")}
         CARGO ?= cargo
@@ -140,7 +148,86 @@ module RbSys
 
       File.write("Makefile", make_install)
     end
-    # rubocop:enable Style/GlobalVars
+
+    def create_rust_makefile_nmake(target, &blk)
+      if target.include?("/")
+        target_prefix, target = File.split(target)
+        target_prefix[0, 0] = "/"
+      else
+        target_prefix = ""
+      end
+
+      spec = Struct.new(:name, :metadata).new(target, {})
+      cargo_builder = CargoBuilder.new(spec)
+      builder = Config.new(cargo_builder)
+
+      yield builder if blk
+
+      srcprefix = "$(srcdir)/#{builder.ext_dir}".chomp("/")
+      RbConfig.expand(srcdir = srcprefix.dup)
+
+      full_cargo_command = cargo_command(srcdir, builder)
+
+      make_install = +<<~MAKE
+        RB_SYS_BUILD_DIR = #{File.join(Dir.pwd, ".rb-sys")}
+        CARGO = cargo
+        CARGO_BUILD_TARGET = #{builder.target}
+        SOEXT = #{builder.so_ext}
+
+        RB_SYS_CARGO_PROFILE = #{builder.profile}
+        RB_SYS_CARGO_FEATURES = #{builder.features.join(",")}
+        RB_SYS_EXTRA_RUSTFLAGS = #{builder.extra_rustflags.join(" ")}
+        RB_SYS_CARGO_PROFILE_DIR = $(RB_SYS_CARGO_PROFILE)
+        RB_SYS_CARGO_PROFILE_FLAG = --release
+        RB_SYS_CARGO_BUILD_TARGET_DIR = target
+
+        target_prefix = #{target_prefix}
+        TARGET_NAME = #{target[/\A\w+/]}
+        TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
+        RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
+        TARGET = #{target}
+        DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
+        TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
+        RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+
+        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
+        DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
+        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+        RUSTFLAGS = $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)
+
+        #{base_makefile(srcdir)}
+
+        FORCE: ;
+
+        $(TARGET_DIR):
+        \t$(ECHO) creating target directory \\($(@)\\)
+        \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
+
+        $(DEFFILE): $(TARGET_DIR)
+        \t$(ECHO) generating $(@)
+        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+
+        $(RUSTLIB): $(DEFFILE) FORCE
+        \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
+        \t$(Q) #{full_cargo_command}
+
+        $(DLLIB): $(RUSTLIB)
+        \t$(Q) $(COPY) "$(RUSTLIB)" $@
+
+        install-so: $(DLLIB)
+        \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
+        \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
+        \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
+
+        install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
+
+        all: #{$extout ? "install" : "$(DLLIB)"}
+      MAKE
+
+      gsub_cargo_command!(make_install, builder: builder)
+
+      File.write("Makefile", make_install)
+    end
 
     private
 
@@ -226,5 +313,6 @@ module RbSys
     end
   end
 end
+# rubocop:enable Style/GlobalVars
 
 include RbSys::Mkmf # rubocop:disable Style/MixinUsage
