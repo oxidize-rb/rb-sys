@@ -258,7 +258,9 @@ module RbSys
 
     def conditional_assign(a, b, export: false)
       if $nmake
-        "!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF"
+        result = +"!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF\n"
+        result << export_env(a, b) if export
+        result
       else
         "#{export ? "export " : ""}#{a} ?= #{b}"
       end
@@ -266,7 +268,7 @@ module RbSys
 
     def export_env(k, v)
       if $nmake
-        "set #{k} = #{v}"
+        "!if [set #{k}=#{v}]\n!endif"
       else
         "export #{k} := #{v}"
       end
