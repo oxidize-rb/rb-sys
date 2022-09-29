@@ -256,9 +256,10 @@ module RbSys
       end
     end
 
-    def conditional_assign(a, b, export: false)
+    def conditional_assign(a, b, export: false, indent: 0)
       if $nmake
-        result = +"!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF\n"
+        indent = "\t" * indent
+        result = +"#{indent}!IFNDEF #{a}#{indent}\n#{a} = #{b}#{indent}\n!ENDIF\n"
         result << export_env(a, b) if export
         result
       else
