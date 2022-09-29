@@ -66,13 +66,13 @@ jobs:
         run: bundle exec rake test:examples
 
       - name: 🧪 Cargo test
-        if: contains(matrix.sys.rust_toolchain , "msvc") == true
+        if: contains(matrix.sys.rust_toolchain , 'msvc') == true
         run: |
           cargo test -p rb-sys-tests
           cargo test -p rb-sys-build
 
       - name: 🧪 Cargo test
-        if: contains(matrix.sys.rust_toolchain , "msvc") == false
+        if: contains(matrix.sys.rust_toolchain , 'msvc') == false
         run: bundle exec rake test:cargo
 
       - name: 💎 Gem test
