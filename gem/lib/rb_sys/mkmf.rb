@@ -66,9 +66,9 @@ module RbSys
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "dev")}
-          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "debug")}
+          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "debug", indent: 1)}
         #{else_stmt}
-          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)")}
+          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)", indent: 1)}
         #{endif_stmt}
 
         # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
