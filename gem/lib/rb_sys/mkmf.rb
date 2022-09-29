@@ -57,7 +57,7 @@ module RbSys
 
         # Determine the prefix Cargo uses for the lib.
         #{if_neq_stmt("$(SOEXT)", "dll")}
-          SOEXT_PREFIX = lib
+        #{conditional_assign("SOEXT_PREFIX", "lib", indent: 1)}
         #{endif_stmt}
 
         #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
@@ -66,23 +66,23 @@ module RbSys
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "dev")}
-          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "debug", indent: 1)}
+        #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "debug", indent: 1)}
         #{else_stmt}
-          #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)", indent: 1)}
+        #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)", indent: 1)}
         #{endif_stmt}
 
         # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "release")}
-          RB_SYS_CARGO_PROFILE_FLAG = --release
+        #{conditional_assign("RB_SYS_CARGO_PROFILE_FLAG", "--release", indent: 1)}
         #{else_stmt}
-          RB_SYS_CARGO_PROFILE_FLAG = --profile $(RB_SYS_CARGO_PROFILE)
+        #{conditional_assign("RB_SYS_CARGO_PROFILE_FLAG", "--profile $(RB_SYS_CARGO_PROFILE", indent: 1)}
         #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
         #{if_neq_stmt("$(CARGO_BUILD_TARGET)", "")}
-          #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)")}
+        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)", indent: 1)}
         #{else_stmt}
-          #{conditional_assign("RB_SYS_CARGO_BUILD_TARGET_DIR", "target")}
+        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target", indent: 1)}
         #{endif_stmt}
 
         target_prefix = #{target_prefix}
@@ -101,7 +101,7 @@ module RbSys
         #{base_makefile(srcdir)}
 
         #{if_neq_stmt("$(RB_SYS_VERBOSE)", "")}
-          Q = $(0=@)
+        #{assign_stmt("Q", "$(0=@)", indent: 1)}
         #{endif_stmt}
 
         #{env_vars(builder)}
@@ -258,12 +258,19 @@ module RbSys
 
     def conditional_assign(a, b, export: false, indent: 0)
       if $nmake
-        indent = "\t" * indent
-        result = +"#{indent}!IFNDEF #{a}#{indent}\n#{a} = #{b}#{indent}\n!ENDIF\n"
+        result = +"!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF\n"
         result << export_env(a, b) if export
         result
       else
-        "#{export ? "export " : ""}#{a} ?= #{b}"
+        "#{"\t" * indent}#{export ? "export " : ""}#{a} ?= #{b}"
+      end
+    end
+
+    def assign_stmt(a, b, indent: 0)
+      if $nmake
+        "#{a} = #{b}"
+      else
+        "#{"\t" * indent}#{a} = #{b}"
       end
     end
 
