@@ -73,9 +73,9 @@ module RbSys
 
         # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "release")}
-        #{conditional_assign("RB_SYS_CARGO_PROFILE_FLAG", "--release", indent: 1)}
+        #{assign_stmt("RB_SYS_CARGO_PROFILE_FLAG", "--release", indent: 1)}
         #{else_stmt}
-        #{conditional_assign("RB_SYS_CARGO_PROFILE_FLAG", "--profile $(RB_SYS_CARGO_PROFILE", indent: 1)}
+        #{assign_stmt("RB_SYS_CARGO_PROFILE_FLAG", "--profile $(RB_SYS_CARGO_PROFILE)", indent: 1)}
         #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
