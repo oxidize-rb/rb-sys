@@ -57,7 +57,7 @@ module RbSys
 
         # Determine the prefix Cargo uses for the lib.
         #{if_neq_stmt("$(SOEXT)", "dll")}
-          #{conditional_assign("SOEXT_PREFIX", "lib")}
+          SOEXT_PREFIX = lib
         #{endif_stmt}
 
         #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
