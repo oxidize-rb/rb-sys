@@ -16,7 +16,7 @@ fn export_cargo_cfg() {
     rustc_cfg("version_gte_3_1");
 
     if env::var("DEP_RB_VERSION_GTE_3_1") == Ok("true".to_string()) && cfg!(windows) {
-        println!("cargo:rustc-cfg=windows_broken_vm_init_3_1");
+        // println!("cargo:rustc-cfg=windows_broken_vm_init_3_1");
     }
 }
 
