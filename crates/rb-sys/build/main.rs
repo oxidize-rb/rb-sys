@@ -7,7 +7,7 @@ mod version;
 
 use features::*;
 use rb_sys_build::RbConfig;
-use std::fs;
+use std::{env, fs};
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
@@ -86,6 +86,8 @@ fn link_libruby(rbconfig: &mut RbConfig) {
             rbconfig.libs.iter().for_each(|lib| {
                 println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
             });
+        } else if is_msvc() {
+            rbconfig.push_dldflags("/LINK");
         }
     }
 }
@@ -187,4 +189,8 @@ fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
     let minor = rbconfig.get("MINOR").parse::<i32>().unwrap();
 
     major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
+}
+
+fn is_msvc() -> bool {
+    env::var("TARGET").unwrap().contains("msvc")
 }

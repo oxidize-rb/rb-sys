@@ -60,9 +60,6 @@ jobs:
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
 
-      - name: "🧱 Generate bindings"
-        run: "bundle exec rake bindings:generate"
-
       - uses: actions/upload-artifact@v3
         with:
           name: generated-bindings
@@ -140,3 +137,6 @@ jobs:
           os: ${{ matrix.sys.os }}
       - name: 🧪 Run tests
         run: bundle exec rake test
+
+      - name: "🧱 Generate bindings"
+        run: "bundle exec rake bindings:generate"
