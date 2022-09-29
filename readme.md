@@ -39,14 +39,15 @@ building your own gem.
 We support cross compilation to the following platforms (this information is also available in the [`./data`](./data)
 directory for automation purposes):
 
-| Platform       | Supported | Docker Image                                |
-| -------------- | --------- | ------------------------------------------- |
-| x86_64-linux   | ✅        | [`rbsys/x86_64-linux:0.9.31`][docker-hub]   |
-| aarch64-linux  | ✅        | [`rbsys/aarch64-linux:0.9.31`][docker-hub]  |
-| arm-linux      | ✅        | [`rbsys/arm-linux:0.9.31`][docker-hub]      |
-| arm64-darwin   | ✅        | [`rbsys/arm64-darwin:0.9.31`][docker-hub]   |
-| x64-mingw32    | ✅        | [`rbsys/x64-mingw32:0.9.31`][docker-hub]    |
-| x64-mingw-ucrt | ✅        | [`rbsys/x64-mingw-ucrt:0.9.31`][docker-hub] |
+| Platform          | Supported | Docker Image                                   |
+|-------------------|-----------|------------------------------------------------|
+| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.31`][docker-hub]      |
+| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.31`][docker-hub] |
+| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.31`][docker-hub]     |
+| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.31`][docker-hub]         |
+| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.31`][docker-hub]      |
+| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.31`][docker-hub]       |
+| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.31`][docker-hub]    |
 
 ## Getting Help
 
@@ -74,16 +75,29 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
 
 [docker-hub]: https://hub.docker.com/r/rbsys/rcd
+
 [magnus]: https://github.com/matsadler/magnus
+
 [yrb]: https://github.com/y-crdt/yrb/pull/32/files
+
 [rust-talk]: https://github.com/ianks/2022-09-09-ruby-on-rust-intro
+
 [oxi-test]: https://github.com/oxidize-rb/oxi-test
+
 [cross-gem-action]: https://github.com/oxidize-rb/cross-gem-action
+
 [rake-compiler]: https://github.com/rake-compiler/rake-compiler
+
 [setup-action]: https://github.com/oxidize-rb/actions/tree/main/setup-ruby-and-rust
+
 [ruby-c-api]: https://docs.ruby-lang.org/en/master/doc/extension_rdoc.html
+
 [slack]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw
+
 [issues]: https://github.com/oxidize-rb/rb-sys/issues
+
 [magnus-examples]: https://github.com/matsadler/magnus/tree/main/examples
+
 [debugging-guide]: https://oxidize-rb.github.io/rb-sys/tutorial/testing/debugging.html
+
 [rb-sys-gem-docs]: https://github.com/oxidize-rb/rb-sys/tree/main/gem#the-rb_sys-gem
