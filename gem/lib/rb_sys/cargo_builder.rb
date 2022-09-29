@@ -130,7 +130,7 @@ module RbSys
       # Have to handle CC="cl /nologo" on mswin
       cc_flag = Shellwords.split(makefile_config("CC"))
       linker = cc_flag.shift
-      cc_flag.unshift("/LINK") if linker == "cl"
+      return [] if linker == "cl"
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
 
       ["-C", "linker=#{linker}", *link_args]

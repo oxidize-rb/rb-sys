@@ -3,11 +3,13 @@ extern crate bindgen;
 mod bindings;
 mod features;
 mod ruby_macros;
+mod utils;
 mod version;
 
 use features::*;
 use rb_sys_build::RbConfig;
-use std::{env, fs};
+use std::fs;
+use utils::is_msvc;
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
@@ -93,7 +95,7 @@ fn link_libruby(rbconfig: &mut RbConfig) {
 }
 
 fn add_platform_link_args(rbconfig: &mut RbConfig) {
-    if cfg!(windows) {
+    if cfg!(windows) && !is_msvc() {
         println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
         println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
         rbconfig.push_dldflags("-static-libgcc");
@@ -189,8 +191,4 @@ fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
     let minor = rbconfig.get("MINOR").parse::<i32>().unwrap();
 
     major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
-}
-
-fn is_msvc() -> bool {
-    env::var("TARGET").unwrap().contains("msvc")
 }

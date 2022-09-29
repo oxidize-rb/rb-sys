@@ -1,3 +1,4 @@
+use crate::utils::is_msvc;
 use crate::RbConfig;
 use linkify::{self, LinkFinder};
 use std::env;
@@ -150,8 +151,4 @@ fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-fn is_msvc() -> bool {
-    env::var("TARGET").unwrap().contains("msvc")
 }
