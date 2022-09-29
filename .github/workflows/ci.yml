@@ -54,26 +54,27 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: ./.github/actions/setup
         with:
           rust_toolchain: ${{ matrix.sys.rust_toolchain }}
           ruby_version: ${{ matrix.ruby_version }}
           os: ${{ matrix.sys.os }}
 
-      - name: 📍 Examples test
-        env:
-          RB_SYS_CARGO_PROFILE: "release"
-        run: bundle exec rake test:examples
-
       - name: 🧪 Cargo test
-        if: contains(matrix.sys.rust_toolchain , 'msvc') == true
+        if: contains(matrix.sys.rust_toolchain , 'msvc')
         run: |
           cargo test -p rb-sys-tests
           cargo test -p rb-sys-build
 
       - name: 🧪 Cargo test
-        if: contains(matrix.sys.rust_toolchain , 'msvc') == false
+        if: "!contains(matrix.sys.rust_toolchain , 'msvc')"
         run: bundle exec rake test:cargo
+
+      - name: 📍 Examples test
+        env:
+          RB_SYS_CARGO_PROFILE: "release"
+        run: bundle exec rake test:examples
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem
