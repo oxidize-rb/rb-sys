@@ -1,4 +1,6 @@
+#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::special_consts::*;
+#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::*;
 
 #[cfg(not(windows_broken_vm_init_3_1))]
