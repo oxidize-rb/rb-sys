@@ -139,7 +139,7 @@ module RbSys
 
     def mswin_link_args
       libruby = ruby_static? ? makefile_config("LIBRUBY_A") : makefile_config("LIBRUBY")
-      return ["-C", "link-arg=#{libruby}"] 
+      ["-C", "link-arg=#{libruby}"]
     end
 
     def libruby_args(dest_dir)
