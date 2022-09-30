@@ -96,9 +96,4 @@ class TestRbSys < Minitest::Test
       Pathname.new(File.join(cargo_dir, "Makefile"))
     end
   end
-
-  def win_target?
-    target_platform = RbConfig::CONFIG["target_os"]
-    !!Gem::WIN_PATTERNS.find { |r| target_platform =~ r }
-  end
 end
