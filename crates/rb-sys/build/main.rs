@@ -36,7 +36,6 @@ fn main() {
 
     bindings::generate(&rbconfig);
     export_cargo_cfg(&mut rbconfig);
-    add_platform_link_args(&mut rbconfig);
 
     if is_ruby_macros_enabled() {
         ruby_macros::compile(&mut rbconfig);
@@ -91,14 +90,6 @@ fn link_libruby(rbconfig: &mut RbConfig) {
         } else if is_msvc() {
             rbconfig.push_dldflags("/LINK");
         }
-    }
-}
-
-fn add_platform_link_args(rbconfig: &mut RbConfig) {
-    if cfg!(windows) && !is_msvc() {
-        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
-        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
-        rbconfig.push_dldflags("-static-libgcc");
     }
 }
 
