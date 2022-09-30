@@ -1,3 +1,4 @@
+use crate::utils::is_msvc;
 use crate::RbConfig;
 use linkify::{self, LinkFinder};
 use std::env;
@@ -12,6 +13,20 @@ pub fn generate(rbconfig: &RbConfig) {
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
+
+    eprintln!("Using bindgen with clang args: {:?}", clang_args);
+
+    let mut src_wrapper_h = File::open("wrapper.h").unwrap();
+    let mut wrapper_h =
+        File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("wrapper.h")).unwrap();
+
+    std::io::copy(&mut src_wrapper_h, &mut wrapper_h).expect("to copy wrapper.h");
+
+    if !is_msvc() {
+        writeln!(wrapper_h, "#ifdef HAVE_RUBY_ATOMIC_H").unwrap();
+        writeln!(wrapper_h, "#include \"ruby/atomic.h\"").unwrap();
+        writeln!(wrapper_h, "#endif").unwrap();
+    }
 
     let bindings = default_bindgen(clang_args)
         .header("wrapper.h")

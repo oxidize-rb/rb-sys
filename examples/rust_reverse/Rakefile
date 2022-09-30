@@ -22,22 +22,22 @@ task :build do
 
   spec = Bundler.load_gemspec("rust_reverse.gemspec")
 
-  FileUtils.rm_rf("pkg/rust_reverse-0.9.21")
+  FileUtils.rm_rf("pkg/rust_reverse")
 
   spec.files.each do |file|
-    FileUtils.mkdir_p("pkg/rust_reverse-0.9.21/#{File.dirname(file)}")
-    FileUtils.cp(file, "pkg/rust_reverse-0.9.21/#{file}")
+    FileUtils.mkdir_p("pkg/rust_reverse/#{File.dirname(file)}")
+    FileUtils.cp(file, "pkg/rust_reverse/#{file}")
   end
 
-  FileUtils.cp("rust_reverse.gemspec", "pkg/rust_reverse-0.9.21")
+  FileUtils.cp("rust_reverse.gemspec", "pkg/rust_reverse")
 
-  cargo_toml_path = "pkg/rust_reverse-0.9.21/ext/rust_reverse/Cargo.toml"
+  cargo_toml_path = "pkg/rust_reverse/ext/rust_reverse/Cargo.toml"
   new_contents = File.read(cargo_toml_path).gsub(' path = "./../../../../crates/rb-sys",', "")
   FileUtils.rm(cargo_toml_path)
   File.write(cargo_toml_path, new_contents)
 
-  Dir.chdir("pkg/rust_reverse-0.9.21") do
-    sh "gem build rust_reverse.gemspec --output=../rust_reverse-0.9.21.gem"
+  Dir.chdir("pkg/rust_reverse") do
+    sh "gem build rust_reverse.gemspec --output=../rust_reverse.gem"
   end
 end
 

@@ -20,11 +20,13 @@ class TestRbSys < Minitest::Test
   end
 
   def test_invokes_custom_env
+    skip("Skipping for mswin") if win_target?
+
     makefile = create_makefile do |b|
       b.env = {"NO_LINK_RUTIE" => "true"}
     end
 
-    assert_match(/\$\(RUSTLIB\): export NO_LINK_RUTIE = true/, makefile.read)
+    assert_match(/export NO_LINK_RUTIE := true/, makefile.read)
   end
 
   def test_uses_custom_profile
@@ -32,7 +34,7 @@ class TestRbSys < Minitest::Test
       b.profile = :dev
     end
 
-    assert(makefile.read.include?("RB_SYS_CARGO_PROFILE ?= dev"), "Expected to find RB_SYS_CARGO_PROFILE ?= dev")
+    assert(makefile.read.include?("RB_SYS_CARGO_PROFILE ?= dev"), "Expected to find RB_SYS_CARGO_PROFILE ?= dev") unless win_target?
     assert_match(/--profile \$\(RB_SYS_CARGO_PROFILE\)/, makefile.read)
   end
 
@@ -41,7 +43,7 @@ class TestRbSys < Minitest::Test
       b.features = ["foo", "bar"]
     end
 
-    assert(makefile.read.include?("RB_SYS_CARGO_FEATURES ?= foo,bar"), "Expected to find RB_SYS_CARGO_PROFILE ?= foo,bar")
+    assert(makefile.read.include?("RB_SYS_CARGO_FEATURES ?= foo,bar"), "Expected to find RB_SYS_CARGO_PROFILE ?= foo,bar") unless win_target?
     assert_match(/--features \$\(RB_SYS_CARGO_FEATURES\)/, makefile.read)
   end
 
@@ -54,13 +56,15 @@ class TestRbSys < Minitest::Test
   end
 
   def test_uses_extra_rustflags
+    skip("Skipping for mswin") if win_target?
+
     makefile = create_makefile do |b|
       b.extra_rustflags = ["--cfg=foo"]
     end
 
     content = makefile.read
 
-    assert content.include?("$(RUSTLIB): export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
+    assert content.include?("export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
     assert content.include?("RB_SYS_EXTRA_RUSTFLAGS ?= --cfg=foo")
   end
 
@@ -69,7 +73,7 @@ class TestRbSys < Minitest::Test
       b.target = "wasm32-unknown-unknown"
     end
 
-    assert_match(/CARGO_BUILD_TARGET \?= wasm32-unknown-unknown/, makefile.read)
+    assert_match(/CARGO_BUILD_TARGET \?= wasm32-unknown-unknown/, makefile.read) unless win_target?
     assert_match(/--target \$\(CARGO_BUILD_TARGET\)/, makefile.read)
   end
 

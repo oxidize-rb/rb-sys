@@ -1,7 +1,5 @@
 #include "ruby.h"
-#ifdef HAVE_RUBY_ATOMIC_H
-#include "ruby/atomic.h"
-#endif
+
 #ifdef HAVE_RUBY_DEBUG_H
 #include "ruby/debug.h"
 #endif

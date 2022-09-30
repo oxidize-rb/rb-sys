@@ -132,7 +132,14 @@ module RbSys
       linker = cc_flag.shift
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
 
+      return mswin_link_args if linker == "cl"
+
       ["-C", "linker=#{linker}", *link_args]
+    end
+
+    def mswin_link_args
+      libruby = ruby_static? ? makefile_config("LIBRUBY_A") : makefile_config("LIBRUBY")
+      ["-C", "link-arg=#{libruby}"]
     end
 
     def libruby_args(dest_dir)

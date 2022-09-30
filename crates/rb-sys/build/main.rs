@@ -3,11 +3,13 @@ extern crate bindgen;
 mod bindings;
 mod features;
 mod ruby_macros;
+mod utils;
 mod version;
 
 use features::*;
 use rb_sys_build::RbConfig;
 use std::fs;
+use utils::is_msvc;
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
@@ -86,12 +88,14 @@ fn link_libruby(rbconfig: &mut RbConfig) {
             rbconfig.libs.iter().for_each(|lib| {
                 println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
             });
+        } else if is_msvc() {
+            rbconfig.push_dldflags("/LINK");
         }
     }
 }
 
 fn add_platform_link_args(rbconfig: &mut RbConfig) {
-    if cfg!(windows) {
+    if cfg!(windows) && !is_msvc() {
         println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
         println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
         rbconfig.push_dldflags("-static-libgcc");
