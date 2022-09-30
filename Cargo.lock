@@ -182,6 +182,8 @@ dependencies = [
 name = "rb-sys-build"
 version = "0.9.31"
 dependencies = [
+ "bindgen",
+ "linkify",
  "regex",
  "shell-words",
 ]

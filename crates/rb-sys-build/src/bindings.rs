@@ -7,6 +7,7 @@ use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::path::PathBuf;
 
+/// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig) {
     let clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),

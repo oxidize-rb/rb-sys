@@ -1,15 +1,12 @@
 extern crate bindgen;
 
-mod bindings;
 mod features;
 mod ruby_macros;
-mod utils;
 mod version;
 
 use features::*;
-use rb_sys_build::RbConfig;
+use rb_sys_build::{bindings, utils::is_msvc, RbConfig};
 use std::fs;
-use utils::is_msvc;
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [

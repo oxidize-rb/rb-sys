@@ -9,6 +9,8 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
+use crate::utils::shellsplit;
+
 use self::flags::Flags;
 
 /// Extracts structured information from raw compiler/linker flags to make
@@ -135,12 +137,7 @@ impl RbConfig {
 
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
-        for flag in shell_words::split(cflags).unwrap_or_else(|_| {
-            cflags
-                .split_whitespace()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()
-        }) {
+        for flag in shellsplit(cflags) {
             if !self.cflags.contains(&flag) {
                 self.cflags.push(flag.to_string());
             }
