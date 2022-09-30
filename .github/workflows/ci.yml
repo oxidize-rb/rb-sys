@@ -62,7 +62,7 @@ jobs:
           os: ${{ matrix.sys.os }}
 
       - name: 🧪 Cargo test
-        if: "!contains(matrix.sys.rust_toolchain , 'msvc')"
+        # if: "!contains(matrix.sys.rust_toolchain , 'msvc')"
         run: bundle exec rake test:cargo
 
       - name: 📍 Examples test

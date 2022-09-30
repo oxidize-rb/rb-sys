@@ -130,10 +130,16 @@ module RbSys
       # Have to handle CC="cl /nologo" on mswin
       cc_flag = Shellwords.split(makefile_config("CC"))
       linker = cc_flag.shift
-      return ["-C", "link-arg=#{makefile_config("LIBRUBY")}"] if linker == "cl"
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
 
+      return mswin_link_args if linker == "cl"
+
       ["-C", "linker=#{linker}", *link_args]
+    end
+
+    def mswin_link_args
+      libruby = ruby_static? ? makefile_config("LIBRUBY_A") : makefile_config("LIBRUBY")
+      return ["-C", "link-arg=#{libruby}"] 
     end
 
     def libruby_args(dest_dir)
