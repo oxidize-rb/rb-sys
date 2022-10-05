@@ -13,18 +13,15 @@ links = "rb"
 repository = "https://github.com/oxidize-rb/rb-sys"
 
 [build-dependencies]
-bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
-linkify = "0.9"
 rb-sys-build = { path = "../rb-sys-build", version = "0.9.31" }
 cc = { version = "1.0", optional = true }
-shell-words = { version = "1.1", optional = true }
 
 [features]
 default = []
 gem = ["ruby-abi-version"]
 link-ruby = []
 no-link-ruby = []
-ruby-macros = ["cc", "shell-words"]
+ruby-macros = ["cc"]
 ruby-static = []
 ruby-abi-version = []
 global-allocator = []

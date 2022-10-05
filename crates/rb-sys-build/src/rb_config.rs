@@ -289,6 +289,14 @@ impl RbConfig {
         self.value_map.insert(key.to_owned(), value);
     }
 
+    // Check if has ABI version
+    pub fn has_ruby_dln_check_abi(&self) -> bool {
+        let major = self.get("MAJOR").parse::<i32>().unwrap();
+        let minor = self.get("MINOR").parse::<i32>().unwrap();
+
+        major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
+    }
+
     // Examines the string from shell variables and expands them with values in the value_map
     fn subst_shell_variables(&self, input: &str) -> String {
         let mut result = String::new();

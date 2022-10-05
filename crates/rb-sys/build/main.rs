@@ -1,5 +1,3 @@
-extern crate bindgen;
-
 mod features;
 mod ruby_macros;
 mod version;
@@ -97,7 +95,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if has_ruby_dln_check_abi(rbconfig) {
+    if rbconfig.has_ruby_dln_check_abi() {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
@@ -172,11 +170,4 @@ fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     if let Some(k) = rbconfig.get_optional(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
     }
-}
-
-fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
-    let major = rbconfig.get("MAJOR").parse::<i32>().unwrap();
-    let minor = rbconfig.get("MINOR").parse::<i32>().unwrap();
-
-    major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
 }
