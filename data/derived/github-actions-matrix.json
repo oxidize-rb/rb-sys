@@ -27,6 +27,10 @@
     {
       "ruby-platform": "x86_64-linux",
       "rust-target": "x86_64-unknown-linux-gnu"
+    },
+    {
+      "ruby-platform": "x86_64-linux-musl",
+      "rust-target": "x86_64-unknown-linux-musl"
     }
   ]
 }

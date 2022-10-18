@@ -80,6 +80,15 @@
         "cc": "x86_64-redhat-linux-gcc"
       },
       "supported": true
+    },
+    {
+      "ruby-platform": "x86_64-linux-musl",
+      "rust-target": "x86_64-unknown-linux-musl",
+      "dockerfile": "docker/Dockerfile.x86_64-linux-musl",
+      "rake-compiler-dock": {
+        "cc": "x86_64-unknown-linux-musl-gcc"
+      },
+      "supported": true
     }
   ]
 }

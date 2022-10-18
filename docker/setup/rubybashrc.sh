@@ -60,6 +60,15 @@ main() {
   echo "export CARGO=\"/usr/local/cargo/bin/cargo\"" >> "$OUTFILE"
   echo "export RB_SYS_CARGO_PROFILE=\"release\"" >> "$OUTFILE"
 
+  # add musl path if exists
+  if [ -d "/usr/local/musl/bin/" ]
+  then
+    # https://github.com/rust-lang/cargo/issues/10143
+    # https://github.com/rust-lang/cargo/blob/master/src/cargo/core/compiler/build_context/target_info.rs#L612
+    echo "export RUSTFLAGS=\"-C target-feature=-crt-static \$RUSTFLAGS\"" >> "$OUTFILE"
+    echo "export PATH=\"/usr/local/musl/bin:\$PATH\"" >> "$OUTFILE"
+  fi
+
   cat "$OUTFILE"
   validate
 
