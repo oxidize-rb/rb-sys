@@ -39,7 +39,8 @@ fn main() {
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);
     } else {
-        add_libruby_to_blocklist(&mut rbconfig)
+        add_libruby_to_blocklist(&mut rbconfig);
+        enable_dynamic_lookup(&mut rbconfig);
     }
 
     rbconfig.print_cargo_args();
@@ -169,5 +170,12 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     if let Some(k) = rbconfig.get_optional(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
+    }
+}
+
+fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
+    // See https://github.com/oxidize-rb/rb-sys/issues/88
+    if cfg!(target_os = "macos") {
+        rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");
     }
 }
