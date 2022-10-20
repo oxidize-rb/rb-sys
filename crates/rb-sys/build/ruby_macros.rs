@@ -1,19 +1,10 @@
 use rb_sys_build::RbConfig;
 
 #[cfg(feature = "ruby-macros")]
-fn shellsplit(s: &str) -> Vec<String> {
-    match shell_words::split(s) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("shellsplit failed: {}", e);
-            s.split_whitespace().map(|s| s.to_string()).collect()
-        }
-    }
-}
-
-#[cfg(feature = "ruby-macros")]
 pub fn compile(rbconfig: &mut RbConfig) {
     use std::path::Path;
+
+    use rb_sys_build::utils::shellsplit;
 
     println!("cargo:rerun-if-changed=src/macros/ruby_macros.h");
     println!("cargo:rerun-if-changed=src/macros/ruby_macros.c");

@@ -1,4 +1,6 @@
+pub mod bindings;
 mod rb_config;
+pub mod utils;
 
 pub use rb_config::*;
 

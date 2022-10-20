@@ -9,6 +9,8 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
+use crate::utils::shellsplit;
+
 use self::flags::Flags;
 
 /// Extracts structured information from raw compiler/linker flags to make
@@ -135,12 +137,7 @@ impl RbConfig {
 
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
-        for flag in shell_words::split(cflags).unwrap_or_else(|_| {
-            cflags
-                .split_whitespace()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()
-        }) {
+        for flag in shellsplit(cflags) {
             if !self.cflags.contains(&flag) {
                 self.cflags.push(flag.to_string());
             }
@@ -290,6 +287,14 @@ impl RbConfig {
     /// Sets a value for a key
     pub fn set_value_for_key(&mut self, key: &str, value: String) {
         self.value_map.insert(key.to_owned(), value);
+    }
+
+    // Check if has ABI version
+    pub fn has_ruby_dln_check_abi(&self) -> bool {
+        let major = self.get("MAJOR").parse::<i32>().unwrap();
+        let minor = self.get("MINOR").parse::<i32>().unwrap();
+
+        major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
     }
 
     // Examines the string from shell variables and expands them with values in the value_map

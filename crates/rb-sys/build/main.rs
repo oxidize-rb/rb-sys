@@ -1,15 +1,10 @@
-extern crate bindgen;
-
-mod bindings;
 mod features;
 mod ruby_macros;
-mod utils;
 mod version;
 
 use features::*;
-use rb_sys_build::RbConfig;
+use rb_sys_build::{bindings, utils::is_msvc, RbConfig};
 use std::fs;
-use utils::is_msvc;
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
@@ -36,7 +31,6 @@ fn main() {
 
     bindings::generate(&rbconfig);
     export_cargo_cfg(&mut rbconfig);
-    add_platform_link_args(&mut rbconfig);
 
     if is_ruby_macros_enabled() {
         ruby_macros::compile(&mut rbconfig);
@@ -94,14 +88,6 @@ fn link_libruby(rbconfig: &mut RbConfig) {
     }
 }
 
-fn add_platform_link_args(rbconfig: &mut RbConfig) {
-    if cfg!(windows) && !is_msvc() {
-        println!("cargo:rustc-link-arg=-Wl,--dynamicbase");
-        println!("cargo:rustc-link-arg=-Wl,--disable-auto-image-base");
-        rbconfig.push_dldflags("-static-libgcc");
-    }
-}
-
 fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     rustc_cfg(rbconfig, "ruby_major", "MAJOR");
     rustc_cfg(rbconfig, "ruby_minor", "MINOR");
@@ -109,7 +95,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if has_ruby_dln_check_abi(rbconfig) {
+    if rbconfig.has_ruby_dln_check_abi() {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
@@ -184,11 +170,4 @@ fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     if let Some(k) = rbconfig.get_optional(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
     }
-}
-
-fn has_ruby_dln_check_abi(rbconfig: &RbConfig) -> bool {
-    let major = rbconfig.get("MAJOR").parse::<i32>().unwrap();
-    let minor = rbconfig.get("MINOR").parse::<i32>().unwrap();
-
-    major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
 }
