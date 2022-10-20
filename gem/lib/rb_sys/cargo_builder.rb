@@ -119,6 +119,10 @@ module RbSys
         # run on one that isn't the missing libraries will cause the extension
         # to fail on start.
         flags += ["-C", "link-arg=-static-libgcc"]
+      elsif darwin_target?
+        # See https://github.com/oxidize-rb/rb-sys/issues/88
+        dl_flag = "-Wl,-undefined,dynamic_lookup"
+        flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
       end
 
       flags
