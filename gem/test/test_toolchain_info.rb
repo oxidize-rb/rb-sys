@@ -22,4 +22,9 @@ class TestRbSys < Minitest::Test
   def test_to_s
     assert_equal "arm64-darwin", RbSys::ToolchainInfo.new("arm64-darwin-21").to_s
   end
+
+  def test_docker_platform
+    t = RbSys::ToolchainInfo.new("aarch64-linux")
+    assert_equal "linux/arm64/v8", t.docker_platform
+  end
 end

@@ -4,7 +4,7 @@ require_relative "toolchain_info/data"
 
 module RbSys
   class ToolchainInfo
-    attr_reader :platform, :gem_platform, :rust_target, :rake_compiler_dock_cc, :supported, :rake_compiler_dock_image
+    attr_reader :platform, :gem_platform, :rust_target, :rake_compiler_dock_cc, :supported, :rake_compiler_dock_image, :docker_platform
 
     class << self
       def all
@@ -24,6 +24,7 @@ module RbSys
       @rake_compiler_dock_cc = data["rake-compiler-dock"]["cc"]
       @supported = data["supported"]
       @rake_compiler_dock_image = "rbsys/#{platform}:#{RbSys::VERSION}"
+      @docker_platform = data["docker-platform"]
     end
 
     def supported?

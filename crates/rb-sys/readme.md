@@ -10,7 +10,7 @@ generate bindings from the `ruby.h` header.https://github.com/rust-lang/rust-bin
 This is a very low-level library. If you are looking to write a gem in Rust, you should probably use
 https://github.com/matsadler/magnus crate, with the `rb-sys-interop` feature.
 
-If you actually _need_ raw/unsafe bindings to libruby, the this crate if for you!
+If you actually _need_ raw/unsafe bindings to libruby, then this crate if for you!
 
 ## Usage
 

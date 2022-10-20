@@ -39,14 +39,15 @@ building your own gem.
 We support cross compilation to the following platforms (this information is also available in the [`./data`](./data)
 directory for automation purposes):
 
-| Platform       | Supported | Docker Image                                |
-| -------------- | --------- | ------------------------------------------- |
-| x86_64-linux   | ✅        | [`rbsys/x86_64-linux:0.9.31`][docker-hub]   |
-| aarch64-linux  | ✅        | [`rbsys/aarch64-linux:0.9.31`][docker-hub]  |
-| arm-linux      | ✅        | [`rbsys/arm-linux:0.9.31`][docker-hub]      |
-| arm64-darwin   | ✅        | [`rbsys/arm64-darwin:0.9.31`][docker-hub]   |
-| x64-mingw32    | ✅        | [`rbsys/x64-mingw32:0.9.31`][docker-hub]    |
-| x64-mingw-ucrt | ✅        | [`rbsys/x64-mingw-ucrt:0.9.31`][docker-hub] |
+| Platform          | Supported | Docker Image                                   |
+| ----------------- | --------- | ---------------------------------------------- |
+| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.32`][docker-hub]      |
+| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.32`][docker-hub] |
+| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.32`][docker-hub]     |
+| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.32`][docker-hub]         |
+| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.32`][docker-hub]      |
+| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.32`][docker-hub]       |
+| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.32`][docker-hub]    |
 
 ## Getting Help
 

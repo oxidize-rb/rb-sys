@@ -7,6 +7,7 @@
       "rake-compiler-dock": {
         "cc": "arm-linux-gnueabihf-gcc"
       },
+      "docker-platform": "linux/arm/v7",
       "supported": true
     },
     {
@@ -16,6 +17,7 @@
       "rake-compiler-dock": {
         "cc": "aarch64-linux-gnu-gcc"
       },
+      "docker-platform": "linux/arm64/v8",
       "supported": true
     },
     {
@@ -25,6 +27,7 @@
       "rake-compiler-dock": {
         "cc": "aarch64-apple-darwin-clang"
       },
+      "docker-platform": "linux/arm64/v8",
       "supported": true
     },
     {
@@ -34,6 +37,7 @@
       "rake-compiler-dock": {
         "cc": "x86_64-windows-gnu-gcc"
       },
+      "docker-platform": "linux/amd64",
       "supported": true
     },
     {
@@ -43,6 +47,7 @@
       "rake-compiler-dock": {
         "cc": "x86_64-windows-gnu-gcc"
       },
+      "docker-platform": "linux/amd64",
       "supported": true
     },
     {
@@ -52,6 +57,7 @@
       "rake-compiler-dock": {
         "cc": "i686-redhat-linux-gcc"
       },
+      "docker-platform": "linux/i386",
       "supported": false
     },
     {
@@ -61,6 +67,7 @@
       "rake-compiler-dock": {
         "cc": "i686-w64-mingw32-gcc"
       },
+      "docker-platform": "linux/i386",
       "supported": false
     },
     {
@@ -70,6 +77,7 @@
       "rake-compiler-dock": {
         "cc": "x86_64-apple-darwin-clang"
       },
+      "docker-platform": "linux/amd64",
       "supported": true
     },
     {
@@ -79,6 +87,17 @@
       "rake-compiler-dock": {
         "cc": "x86_64-redhat-linux-gcc"
       },
+      "docker-platform": "linux/amd64",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x86_64-linux-musl",
+      "rust-target": "x86_64-unknown-linux-musl",
+      "dockerfile": "docker/Dockerfile.x86_64-linux-musl",
+      "rake-compiler-dock": {
+        "cc": "x86_64-unknown-linux-musl-gcc"
+      },
+      "docker-platform": "linux/amd64",
       "supported": true
     }
   ]
