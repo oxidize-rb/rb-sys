@@ -207,13 +207,15 @@ module RbSys
           RB_SYS_DEFAULT_TOOLCHAIN = $(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)-$(RUST_TARGET)
         #{endif_stmt}
 
-        #{conditional_assign("CARGO_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/cargo", export: true)}
-        #{conditional_assign("RUSTUP_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/rustup", export: true)}
+        # Since we are forcing the installation of the Rust toolchain, we need
+        # to set these env vars unconditionally for the build.
+        #{export_env("CARGO_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/cargo")}
+        #{export_env("RUSTUP_HOME", "$(RB_SYS_BUILD_DIR)/$(RB_SYS_DEFAULT_TOOLCHAIN)/rustup")}
         #{export_env("PATH", "$(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)")}
         #{export_env("RUSTUP_TOOLCHAIN", "$(RB_SYS_DEFAULT_TOOLCHAIN)")}
         #{export_env("CARGO", "$(CARGO_HOME)/bin/cargo")}
 
-        $(CARGO): 
+        $(CARGO):
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
         \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
         \trustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
