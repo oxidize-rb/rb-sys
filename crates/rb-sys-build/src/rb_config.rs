@@ -22,6 +22,7 @@ pub struct RbConfig {
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
     pub blocklist_lib: Vec<String>,
+    use_rpath: bool,
     value_map: HashMap<String, String>,
 }
 
@@ -41,6 +42,7 @@ impl RbConfig {
             link_args: Vec::new(),
             cflags: Vec::new(),
             value_map: HashMap::new(),
+            use_rpath: false,
         }
     }
 
@@ -135,6 +137,12 @@ impl RbConfig {
         }
     }
 
+    /// Enables the use of rpath for linking.
+    pub fn use_rpath(&mut self) -> &mut RbConfig {
+        self.use_rpath = true;
+        self
+    }
+
     /// Push cflags string
     pub fn push_cflags(&mut self, cflags: &str) -> &mut Self {
         for flag in shellsplit(cflags) {
@@ -146,6 +154,7 @@ impl RbConfig {
         self
     }
 
+    /// Get major/minor version tuple of Ruby
     pub fn major_minor(&self) -> (u32, u32) {
         let major = self.get("MAJOR").parse::<u32>().unwrap();
         let minor = self.get("MINOR").parse::<u32>().unwrap();
@@ -168,6 +177,10 @@ impl RbConfig {
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
                 result.push(format!("cargo:rustc-link-lib={}", lib));
+            }
+
+            if self.use_rpath {
+                result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib));
             }
         }
 
@@ -300,28 +313,32 @@ impl RbConfig {
     // Examines the string from shell variables and expands them with values in the value_map
     fn subst_shell_variables(&self, input: &str) -> String {
         let mut result = String::new();
-        let mut chars = input.chars();
+        let mut chars = input.chars().enumerate();
 
-        while let Some(c) = chars.next() {
+        while let Some((i, c)) = chars.next() {
             if c == '$' {
-                if let Some(c) = chars.next() {
+                if let Some((i, c)) = chars.next() {
                     if c == '(' {
-                        let mut key = String::new();
+                        let start = i + 1;
+                        let mut end = start;
 
-                        for c in chars.by_ref() {
+                        for (i, c) in chars.by_ref() {
                             if c == ')' {
+                                end = i;
                                 break;
-                            } else {
-                                key.push(c);
                             }
                         }
 
-                        if let Some(val) = self.get_optional(&key) {
+                        let key = &input[start..end];
+
+                        if let Some(val) = self.get_optional(key) {
                             result.push_str(&val);
                         } else {
                             // Consume whitespace
                             chars.next();
                         }
+                    } else {
+                        result.push(c);
                     }
                 }
             } else {
@@ -649,6 +666,24 @@ mod tests {
         assert_eq!(
             vec!["cargo:rustc-link-arg=--enable-auto-import foo"],
             result
+        );
+    }
+
+    #[test]
+    fn test_use_rpath() {
+        let mut rb_config = RbConfig::new();
+        rb_config.push_dldflags("-lfoo");
+
+        assert_eq!(vec!["cargo:rustc-link-lib=foo"], rb_config.cargo_args());
+
+        rb_config.use_rpath();
+
+        assert_eq!(
+            vec![
+                "cargo:rustc-link-lib=foo",
+                "cargo:rustc-link-arg=-Wl,-rpath,foo"
+            ],
+            rb_config.cargo_args()
         );
     }
 }
