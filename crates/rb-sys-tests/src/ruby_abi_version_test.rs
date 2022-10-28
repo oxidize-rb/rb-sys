@@ -4,7 +4,7 @@ rb_sys::ruby_abi_version!();
 #[cfg(ruby_version_gte_3_2 = "true")]
 #[test]
 fn test_ruby_abi_version() {
-    assert_eq!(ruby_abi_version(), 2)
+    assert!(ruby_abi_version() >= 3)
 }
 
 #[cfg(unix)]
