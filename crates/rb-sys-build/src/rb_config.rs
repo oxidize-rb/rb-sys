@@ -315,7 +315,7 @@ impl RbConfig {
         let mut result = String::new();
         let mut chars = input.chars().enumerate();
 
-        while let Some((i, c)) = chars.next() {
+        while let Some((_, c)) = chars.next() {
             if c == '$' {
                 if let Some((i, c)) = chars.next() {
                     if c == '(' {
