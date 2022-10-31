@@ -24,6 +24,8 @@ it's not easy, it's a bug.
 Below are some examples of how to use `rb-sys` to build native Rust extensions. Use these as a starting point for your
 building your own gem.
 
+- The [`wasmtime-rb`][wasmtime-rb] gem uses `rb-sys` and [`magnus`][magnus] to package the rust [`wasmtime`][wasmtime]
+  library as a Ruby gem.
 - The [`oxi-test` gem][oxi-test] is the canonical example of how to use `rb-sys`. It is a minimal, fully tested with
   GitHub actions, and cross-compiles native gem binaries. This should be your first stop for learning how to use
   `rb-sys`.
@@ -41,13 +43,13 @@ directory for automation purposes):
 
 | Platform          | Supported | Docker Image                                   |
 | ----------------- | --------- | ---------------------------------------------- |
-| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.34`][docker-hub]      |
-| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.34`][docker-hub] |
-| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.34`][docker-hub]     |
-| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.34`][docker-hub]         |
-| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.34`][docker-hub]      |
-| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.34`][docker-hub]       |
-| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.34`][docker-hub]    |
+| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.35`][docker-hub]      |
+| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.35`][docker-hub] |
+| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.35`][docker-hub]     |
+| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.35`][docker-hub]         |
+| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.35`][docker-hub]      |
+| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.35`][docker-hub]       |
+| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.35`][docker-hub]    |
 
 ## Getting Help
 
@@ -88,3 +90,5 @@ defined in the Apache-2.0 license, shall be dual licensed as above, without any 
 [magnus-examples]: https://github.com/matsadler/magnus/tree/main/examples
 [debugging-guide]: https://oxidize-rb.github.io/rb-sys/tutorial/testing/debugging.html
 [rb-sys-gem-docs]: https://github.com/oxidize-rb/rb-sys/tree/main/gem#the-rb_sys-gem
+[wasmtime-rb]: https://github.com/bytecodealliance/wasmtime-rb
+[wasmtime]: https://github.com/bytecodealliance/wasmtime
