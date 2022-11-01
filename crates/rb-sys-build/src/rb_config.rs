@@ -1,4 +1,8 @@
-use std::{collections::HashMap, env, process::Command};
+use std::{
+    collections::{hash_map::Keys, HashMap},
+    env,
+    process::Command,
+};
 
 use regex::Regex;
 mod flags;
@@ -42,6 +46,11 @@ impl RbConfig {
             cflags: Vec::new(),
             value_map: HashMap::new(),
         }
+    }
+
+    /// All keys in the `RbConfig`'s value map.
+    pub fn all_keys(&self) -> Keys<'_, String, String> {
+        self.value_map.keys()
     }
 
     /// Instantiates a new `RbConfig` for the current Ruby.
