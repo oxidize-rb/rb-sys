@@ -9,7 +9,7 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::utils::shellsplit;
+use crate::utils::{is_msvc, shellsplit};
 
 use self::flags::Flags;
 
@@ -78,19 +78,35 @@ impl RbConfig {
     }
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
-    pub fn link_ruby(&mut self) -> &mut Self {
+    pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
         let libruby_so = self.libruby_so();
         let libruby_static = self.libruby_static();
-        let result = self.push_dldflags(&self.get("LIBRUBYARG"));
 
-        if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby") {
-            libruby.kind = LibraryKind::Dylib;
-            libruby.name = libruby_so.expect("LIBRUBY_SO to be set");
+        match is_static {
+            false => {
+                let result = self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
+                if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby") {
+                    libruby.kind = LibraryKind::Dylib;
+                    libruby.name = libruby_so.expect("LIBRUBY_SO to be set");
+                }
+
+                if cfg!(unix) {
+                    self.libs.iter().for_each(|lib| {
+                        println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
+                    });
+                }
+            }
+            true => {
+                let result = self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
+                if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby-static") {
+                    libruby.kind = LibraryKind::Static;
+                    libruby.name = libruby_static.expect("LIBRUBY_A to be set");
+                }
+            }
         }
 
-        if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby-static") {
-            libruby.kind = LibraryKind::Static;
-            libruby.name = libruby_static.expect("LIBRUBY_A to be set");
+        if is_msvc() {
+            self.push_dldflags("/LINK");
         }
 
         self
@@ -106,6 +122,13 @@ impl RbConfig {
                 .trim_end_matches(".a")
                 .to_owned(),
         )
+    }
+
+    /// If the current Ruby is built with `--enable-shared`, then true
+    pub fn enable_shared(&self) -> bool {
+        self.get_optional("ENABLE_SHARED")
+            .unwrap_or_else(|| "no".into())
+            == "yes"
     }
 
     /// Get the name for libruby (i.e. `ruby.3.1`)

@@ -3,7 +3,7 @@ mod ruby_macros;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, utils::is_msvc, RbConfig};
+use rb_sys_build::{bindings, RbConfig};
 use std::fs;
 use version::Version;
 
@@ -68,24 +68,11 @@ fn debug_and_exit(rbconfig: &mut RbConfig) {
 }
 
 fn link_libruby(rbconfig: &mut RbConfig) {
-    if is_link_ruby_enabled() {
-        rbconfig.push_dldflags(&format!("-L{}", &rbconfig.get("libdir")));
-
-        if is_ruby_static_enabled(rbconfig) {
-            rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_STATIC"));
-        } else {
-            rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_SHARED"));
-        }
-
-        // Setup rpath on unix to hardcode the ruby library path
-        if cfg!(unix) {
-            rbconfig.libs.iter().for_each(|lib| {
-                println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
-            });
-        } else if is_msvc() {
-            rbconfig.push_dldflags("/LINK");
-        }
+    if !is_link_ruby_enabled() {
+        return;
     }
+
+    rbconfig.link_ruby(is_ruby_static_enabled(rbconfig));
 }
 
 fn export_cargo_cfg(rbconfig: &mut RbConfig) {
