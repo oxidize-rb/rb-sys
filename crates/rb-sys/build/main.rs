@@ -51,8 +51,7 @@ fn main() {
 }
 
 fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
-    rbconfig.blocklist_lib(&rbconfig.libruby_so_name());
-    rbconfig.blocklist_lib(&rbconfig.libruby_static_name());
+    rbconfig.blocklist_lib("ruby");
 }
 
 fn debug_and_exit(rbconfig: &mut RbConfig) {
@@ -159,9 +158,17 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     println!("cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
     if is_ruby_static_enabled(rbconfig) {
-        println!("cargo:lib={}", rbconfig.libruby_static_name());
+        println!(
+            "cargo:lib={}",
+            rbconfig
+                .libruby_static()
+                .unwrap_or_else(|| "ruby-static".into())
+        );
     } else {
-        println!("cargo:lib={}", rbconfig.libruby_so_name());
+        println!(
+            "cargo:lib={}",
+            rbconfig.libruby_so().unwrap_or_else(|| "ruby".into())
+        );
     }
 
     println!("cargo:libdir={}", rbconfig.get("libdir"));

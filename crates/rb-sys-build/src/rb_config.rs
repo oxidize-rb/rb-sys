@@ -79,23 +79,43 @@ impl RbConfig {
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self) -> &mut Self {
-        self.push_dldflags(&self.get("LIBRUBYARG"));
+        let libruby_so = self.libruby_so();
+        let libruby_static = self.libruby_static();
+        let result = self.push_dldflags(&self.get("LIBRUBYARG"));
+
+        if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby") {
+            if let Some(name) = libruby_so {
+                libruby.kind = LibraryKind::Dylib;
+                libruby.name = name
+            }
+        }
+
+        if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby-static") {
+            if let Some(name) = libruby_static {
+                libruby.kind = LibraryKind::Static;
+                libruby.name = name
+            }
+        }
         self
     }
 
     /// Get the name for libruby-static (i.e. `ruby.3.1-static`).
-    pub fn libruby_static_name(&self) -> String {
-        self.get("LIBRUBY_A")
-            .strip_prefix("lib")
-            .unwrap()
-            .strip_suffix(".a")
-            .unwrap()
-            .to_string()
+    pub fn libruby_static(&self) -> Option<String> {
+        let libruby_a = self.get_optional("LIBRUBY_A")?;
+
+        Some(
+            libruby_a
+                .trim_start_matches("lib")
+                .trim_end_matches(".a")
+                .to_owned(),
+        )
     }
 
     /// Get the name for libruby (i.e. `ruby.3.1`)
-    pub fn libruby_so_name(&self) -> String {
-        self.get("RUBY_SO_NAME")
+    pub fn libruby_so(&self) -> Option<String> {
+        let libruby = self.get_optional("LIBRUBY_SO")?;
+
+        Some(libruby.trim_start_matches("lib").to_owned())
     }
 
     /// Filter the libs, removing the ones that are not needed.
