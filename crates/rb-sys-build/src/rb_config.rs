@@ -84,18 +84,15 @@ impl RbConfig {
         let result = self.push_dldflags(&self.get("LIBRUBYARG"));
 
         if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby") {
-            if let Some(name) = libruby_so {
-                libruby.kind = LibraryKind::Dylib;
-                libruby.name = name
-            }
+            libruby.kind = LibraryKind::Dylib;
+            libruby.name = libruby_so.expect("LIBRUBY_SO to be set");
         }
 
         if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby-static") {
-            if let Some(name) = libruby_static {
-                libruby.kind = LibraryKind::Static;
-                libruby.name = name
-            }
+            libruby.kind = LibraryKind::Static;
+            libruby.name = libruby_static.expect("LIBRUBY_A to be set");
         }
+
         self
     }
 
