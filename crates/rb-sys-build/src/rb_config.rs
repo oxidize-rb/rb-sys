@@ -81,7 +81,11 @@ impl RbConfig {
     pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
         match is_static {
             false => {
-                self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
+                self.push_dldflags(
+                    &self
+                        .get("LIBRUBYARG_SHARED")
+                        .replace("-lruby", &format!("-l{}", self.libruby_so().unwrap())),
+                );
 
                 if cfg!(unix) {
                     self.libs.iter().for_each(|lib| {
@@ -90,7 +94,11 @@ impl RbConfig {
                 }
             }
             true => {
-                self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
+                self.push_dldflags(
+                    &self
+                        .get("LIBRUBYARG_STATIC")
+                        .replace("-lruby", &format!("-l{}", self.libruby_static().unwrap())),
+                );
             }
         }
 
@@ -124,7 +132,7 @@ impl RbConfig {
     pub fn libruby_so(&self) -> Option<String> {
         let libruby = self.get_optional("LIBRUBY_SO")?;
 
-        Some(libruby.trim_start_matches("lib").to_owned())
+        Some(libruby.trim_start_matches("lib").replace(".so", ""))
     }
 
     /// Filter the libs, removing the ones that are not needed.
