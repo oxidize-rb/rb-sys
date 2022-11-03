@@ -79,16 +79,9 @@ impl RbConfig {
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
-        let libruby_so = self.libruby_so();
-        let libruby_static = self.libruby_static();
-
         match is_static {
             false => {
-                let result = self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
-                if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby") {
-                    libruby.kind = LibraryKind::Dylib;
-                    libruby.name = libruby_so.expect("LIBRUBY_SO to be set");
-                }
+                self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
 
                 if cfg!(unix) {
                     self.libs.iter().for_each(|lib| {
@@ -97,11 +90,7 @@ impl RbConfig {
                 }
             }
             true => {
-                let result = self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
-                if let Some(libruby) = result.libs.iter_mut().find(|l| l.name == "ruby-static") {
-                    libruby.kind = LibraryKind::Static;
-                    libruby.name = libruby_static.expect("LIBRUBY_A to be set");
-                }
+                self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
             }
         }
 
