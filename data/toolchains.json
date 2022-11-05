@@ -22,7 +22,7 @@
     },
     {
       "ruby-platform": "arm64-darwin",
-      "rust-target": "aarch64-unknown-linux-gnu",
+      "rust-target": "aarch64-apple-darwin",
       "dockerfile": "docker/Dockerfile.arm64-darwin",
       "rake-compiler-dock": {
         "cc": "aarch64-apple-darwin-clang"
