@@ -10,8 +10,7 @@ require_relative "mkmf/config"
 module RbSys
   # Helper class for creating Rust Makefiles
   module Mkmf
-    # GLOBAL_RUSTFLAGS = ["--cfg=rb_sys_gem"]
-    GLOBAL_RUSTFLAGS = []
+    GLOBAL_RUSTFLAGS = ["--cfg=rb_sys_gem"]
 
     # Helper for building Rust extensions by creating a Ruby compatible makefile
     # for Rust. By using this class, your rust extension will be 100% compatible
