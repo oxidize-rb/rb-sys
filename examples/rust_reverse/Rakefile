@@ -33,7 +33,7 @@ task :build do
 
   full_path = File.expand_path("./../../../crates/rb-sys", __FILE__)
   cargo_toml_path = "pkg/rust_reverse/ext/rust_reverse/Cargo.toml"
-  new_contents = File.read(cargo_toml_path).gsub('./../../../../crates/rb-sys', full_path)
+  new_contents = File.read(cargo_toml_path).gsub("./../../../../crates/rb-sys", full_path)
   FileUtils.rm(cargo_toml_path)
   File.write(cargo_toml_path, new_contents)
 
