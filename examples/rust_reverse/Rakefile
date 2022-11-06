@@ -36,6 +36,10 @@ task :build do
   FileUtils.rm(cargo_toml_path)
   File.write(cargo_toml_path, new_contents)
 
+  Dir.chdir(File.dirname(cargo_toml_path)) do
+    sh "cargo update -p rb-sys"
+  end
+
   Dir.chdir("pkg/rust_reverse") do
     sh "gem build rust_reverse.gemspec --output=../rust_reverse.gem"
   end
