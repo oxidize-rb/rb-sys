@@ -33,6 +33,7 @@ task :build do
 
   cargo_toml_path = "pkg/rust_reverse/ext/rust_reverse/Cargo.toml"
   new_contents = File.read(cargo_toml_path).gsub(' path = "./../../../../crates/rb-sys",', "git = \"https://github.com/oxidize-rb/rb-sys\", rev = #{ENV["GITHUB_SHA"].inspect},")
+  new_contents << "[workspace]"
   FileUtils.rm(cargo_toml_path)
   File.write(cargo_toml_path, new_contents)
 
