@@ -47,7 +47,7 @@ runs:
           ~/.cargo/git/db/
           target/
           examples/rust_reverse/tmp/
-        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v4-${{ hashFiles('**/Cargo.lock', '**/extconf.rb') }}
+        key: ${{ inputs.os }}-${{ inputs.ruby_version }}-${{ inputs.rust_toolchain }}-cargo-v5-${{ hashFiles('**/Cargo.lock', '**/extconf.rb') }}
 
     - uses: actions-rs/toolchain@v1
       with:
