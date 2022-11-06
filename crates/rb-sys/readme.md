@@ -20,7 +20,7 @@ Ruby gems require a bit of boilerplate to be defined to be usable from Ruby. `rb
 doing the work for you, by simply enabling the `gem` feature.
 
 ```toml
-rb-sys = { version = "0.9",  features = ["gem"] }
+rb-sys = "0.9"
 ```
 
 Under the hood this ensures we do not link libruby (unless on Windows), and defines a `ruby_abi_version` function for
@@ -63,8 +63,6 @@ rb-sys = { version = "0.9",  features = ["ruby-macros"] }
 
 ### Other features
 
-- `gem`: Setup boilerplate for a Ruby gem.
-- `ruby-abi-version`: Set the Ruby ABI version.
 - `ruby-macros`: Generate Rust functions for Ruby macros like `RSTRING_PTR`.
 - `global-allocator`: Report Rust memory allocations to the Ruby GC (_recommended_).
 - `ruby-static`: Link the static version of libruby.
