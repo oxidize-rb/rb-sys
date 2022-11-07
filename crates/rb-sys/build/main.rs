@@ -96,16 +96,16 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if rbconfig.has_ruby_dln_check_abi() {
-        println!("cargo:rustc-cfg=has_ruby_abi_version");
-    }
-
     if is_global_allocator_enabled(rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
 
-    if is_ruby_abi_version_enabled() {
+    if is_gem_enabled() {
         println!("cargo:rustc-cfg=use_ruby_abi_version");
+    }
+
+    if rbconfig.has_ruby_dln_check_abi() {
+        println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
     let version = Version::current(rbconfig);

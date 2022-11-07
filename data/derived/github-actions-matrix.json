@@ -10,7 +10,7 @@
     },
     {
       "ruby-platform": "arm64-darwin",
-      "rust-target": "aarch64-unknown-linux-gnu"
+      "rust-target": "aarch64-apple-darwin"
     },
     {
       "ruby-platform": "x64-mingw-ucrt",

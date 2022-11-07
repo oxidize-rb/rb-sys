@@ -64,7 +64,7 @@ class TestRbSys < Minitest::Test
 
     content = makefile.read
 
-    assert content.include?("export RUSTFLAGS := $(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")
+    assert content.include?("export RUSTFLAGS := $(RB_SYS_GLOBAL_RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS) $(RUSTFLAGS)")
     assert content.include?("RB_SYS_EXTRA_RUSTFLAGS ?= --cfg=foo")
   end
 
