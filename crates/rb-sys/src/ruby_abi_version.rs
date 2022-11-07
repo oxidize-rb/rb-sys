@@ -2,8 +2,8 @@
 //!
 //! Since Ruby 3.2, gems are required to define a `ruby_abi_version` function.
 //! For C extensions, this is done transparently by including `ruby.h`, but for
-//! Rust we have to define it ourselves. This is enabled automatically by the
-//! `ruby-abi-versions` Cargo feature flag.
+//! Rust we have to define it ourselves. This is enabled automatically by when
+//! compiling a gem.
 
 #[doc(hidden)]
 #[cfg(not(has_ruby_abi_version))]

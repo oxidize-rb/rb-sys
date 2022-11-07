@@ -18,12 +18,10 @@ cc = { version = "1.0", optional = true }
 
 [features]
 default = []
-gem = ["ruby-abi-version"]
 link-ruby = []
 no-link-ruby = []
 ruby-macros = ["cc"]
 ruby-static = []
-ruby-abi-version = []
 global-allocator = []
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]

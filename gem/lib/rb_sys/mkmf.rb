@@ -10,6 +10,8 @@ require_relative "mkmf/config"
 module RbSys
   # Helper class for creating Rust Makefiles
   module Mkmf
+    GLOBAL_RUSTFLAGS = ["--cfg=rb_sys_gem"]
+
     # Helper for building Rust extensions by creating a Ruby compatible makefile
     # for Rust. By using this class, your rust extension will be 100% compatible
     # with the rake-compiler gem, which allows for easy cross compilation.
@@ -62,6 +64,7 @@ module RbSys
 
         #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
         #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
+        #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
@@ -105,7 +108,7 @@ module RbSys
         #{endif_stmt}
 
         #{env_vars(builder)}
-        #{export_env("RUSTFLAGS", "$(RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS)")}
+        #{export_env("RUSTFLAGS", "$(RB_SYS_GLOBAL_RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS) $(RUSTFLAGS)")}
 
         FORCE: ;
 
