@@ -13,12 +13,18 @@ fn basic_smoke_test() {
     unsafe {
         let rb_string_one = rb_utf8_str_new_cstr(str);
         let mut rb_string_two = rb_str_cat(rb_string_one, world, 6);
-        let c_string = rb_string_value_cstr(&mut rb_string_two);
+        let result = rstring_to_string!(rb_string_two);
 
-        let result_str = std::ffi::CStr::from_ptr(c_string)
-            .to_string_lossy()
-            .into_owned();
+        assert_eq!(result, "hello world");
+    }
+}
 
-        assert_eq!(result_str, "hello world");
+#[cfg(not(windows_broken_vm_init_3_1))]
+#[test]
+fn test_global_variables() {
+    unsafe {
+        let result = rstring_to_string!(rb_inspect(rb_eArgError));
+
+        assert_eq!(result, "ArgumentError");
     }
 }

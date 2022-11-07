@@ -1,4 +1,9 @@
 {
   "rust-analyzer.checkOnSave.command": "clippy",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "rust-analyzer.procMacro.attributes.enable": true,
+  "rust-analyzer.linkedProjects": [
+    "examples/rust_reverse/ext/rust_reverse/Cargo.toml",
+    "Cargo.toml"
+  ]
 }
