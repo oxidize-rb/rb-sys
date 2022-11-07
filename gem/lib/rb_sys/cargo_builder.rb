@@ -58,7 +58,6 @@ module RbSys
       cmd += Gem::Command.build_args
       cmd += args
       cmd += ["--"]
-      cmd += ["--cfg=use_ruby_abi_version=\"true\""]
       cmd += [*cargo_rustc_args(dest_path)]
       cmd += extra_rustc_args
       cmd

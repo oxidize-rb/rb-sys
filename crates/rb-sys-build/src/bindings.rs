@@ -131,7 +131,6 @@ where
 fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
     let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
     let lines = read_lines(&path)?;
-    let mut buffer = vec![];
 
     fn is_have_cfg(line: &str) -> bool {
         line.starts_with("pub const HAVE_RUBY")
@@ -146,22 +145,16 @@ fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(val) = ConfValue::new(&line) {
                 let name = val.name().to_lowercase();
                 let val = val.as_bool();
-                buffer.push(format!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val));
-                buffer.push(format!("cargo:defines_{}=\"{}\"", name, val));
+                println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
+                println!("cargo:defines_{}=\"{}\"", name, val);
             }
         }
 
         if line.starts_with("pub const RUBY_ABI_VERSION") {
             if let Some(val) = ConfValue::new(&line) {
-                buffer.push(format!("cargo:ruby_abi_version=\"{}\"", val.value()));
+                println!("cargo:ruby_abi_version=\"{}\"", val.value());
             }
         }
-    }
-
-    buffer.sort();
-
-    for line in buffer {
-        println!("{}", line);
     }
 
     Ok(())
