@@ -158,6 +158,10 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
     println!("cargo:teeny={}", rbconfig.get("TEENY"));
     println!("cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
+    for key in rbconfig.all_keys() {
+        println!("cargo:rbconfig_{}=\"{}\"", key, rbconfig.get(key));
+    }
+
     if is_ruby_static_enabled(rbconfig) {
         println!("cargo:lib={}", rbconfig.libruby_static_name());
     } else {

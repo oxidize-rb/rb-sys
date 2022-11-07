@@ -81,7 +81,12 @@ class TestRbSys < Minitest::Test
     makefile = create_makefile.read
 
     assert makefile.include?("DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def")
-    assert makefile.include?("$(DEFFILE):")
+
+    if win_target?
+      assert makefile.include?("$(DEFFILE):")
+    else
+      assert !makefile.include?("$(DEFFILE):")
+    end
   end
 
   private

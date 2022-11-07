@@ -116,13 +116,11 @@ module RbSys
         \t$(ECHO) creating target directory \\($(@)\\)
         \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
 
-        $(DEFFILE): $(TARGET_DIR)
-        \t$(ECHO) generating $(@)
-        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+        #{deffile_definition}
 
         #{optional_rust_toolchain(builder)}
 
-        $(RUSTLIB): $(DEFFILE) FORCE
+        $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t$(Q) #{full_cargo_command}
 
@@ -186,6 +184,18 @@ module RbSys
       target_dir = "target/#{builder.target}".chomp("/")
       cargo_command.gsub!(%r{/#{target_dir}/[^/]+}, "/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)")
       cargo_command
+    end
+
+    def deffile_definition
+      warn("EXPORT_PREFIX is not defined, please require \"mkmf\" before requiring \"rb_sys/mkmf\"") unless defined?(EXPORT_PREFIX)
+
+      return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
+
+      @deffile_definition ||= <<~MAKE
+        $(DEFFILE): $(TARGET_DIR)
+        \t$(ECHO) generating $(@)
+        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+      MAKE
     end
 
     def optional_rust_toolchain(builder)
