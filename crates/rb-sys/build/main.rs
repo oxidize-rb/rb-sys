@@ -80,9 +80,7 @@ fn link_libruby(rbconfig: &mut RbConfig) {
 
         // Setup rpath on unix to hardcode the ruby library path
         if cfg!(unix) {
-            rbconfig.libs.iter().for_each(|lib| {
-                println!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name);
-            });
+            rbconfig.use_rpath();
         } else if is_msvc() {
             rbconfig.push_dldflags("/LINK");
         }

@@ -33,6 +33,7 @@ pub fn compile(rbconfig: &mut RbConfig) {
     build.include(rbconfig.get("rubyarchhdrdir"));
     build.flag("-fms-extensions");
     build.flag("-Wno-error"); // not actionable by user
+    build.flag("-Wno-unused-parameter");
 
     for flag in &rbconfig.cflags {
         build.flag(flag);
