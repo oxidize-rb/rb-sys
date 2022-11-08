@@ -18,13 +18,3 @@ fn basic_smoke_test() {
         assert_eq!(result, "hello world");
     }
 }
-
-#[cfg(not(windows_broken_vm_init_3_1))]
-#[test]
-fn test_global_variables() {
-    unsafe {
-        let result = rstring_to_string!(rb_inspect(rb_eArgError));
-
-        assert_eq!(result, "ArgumentError");
-    }
-}

@@ -99,10 +99,12 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3
+
       - name: Setup env
         run: |
           echo "PATH=/opt/rubies/${{ matrix.ruby_version }}/bin:$PATH" >> $GITHUB_ENV
           echo "GEM_HOME=~/.gem/ruby/${{ matrix.ruby_version }}" >> $GITHUB_ENV
+
       - name: ⚡ Cache
         uses: actions/cache@v3
         with:
@@ -110,6 +112,7 @@ jobs:
             /opt/rubies/${{ matrix.ruby_version }}
             ~/.gem/ruby/${{ matrix.ruby_version }}
           key: rb-sys-ruby-static-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+
       - name: 🔘 Build static ruby
         working-directory: /tmp
         run: |
@@ -122,11 +125,11 @@ jobs:
             export RUBY_CONFIGURE_OPTS="--disable-shared --disable-install-doc --disable-install-rdoc"
             sudo ruby-build ${{ matrix.ruby_version }} /opt/rubies/${{ matrix.ruby_version }}
           fi
-      - uses: ./.github/actions/setup
+
+      - uses: dtolnay/rust-toolchain@master
         with:
-          rust_toolchain: ${{ matrix.sys.rust_toolchain }}
-          ruby_version: skip
-          os: ${{ matrix.sys.os }}
+          toolchain: ${{ matrix.sys.rust_toolchain }}
+
       - name: 🧪 Run tests
         run: bundle exec rake test
 
