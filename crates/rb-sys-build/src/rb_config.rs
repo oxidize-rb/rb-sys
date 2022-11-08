@@ -13,7 +13,7 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::utils::shellsplit;
+use crate::utils::{is_msvc, shellsplit};
 
 use self::flags::Flags;
 
@@ -90,7 +90,19 @@ impl RbConfig {
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self) -> &mut Self {
-        self.push_dldflags(&self.get("LIBRUBYARG"));
+        if is_msvc() {
+            let name = format!("dylib={}", self.libruby_so_name().as_str());
+            self.push_library(Library::from(name.as_str()));
+            let flags = self.get("DLDFLAGS");
+            let args = shellsplit(&flags);
+            for arg in args {
+                let arg = self.subst_shell_variables(&arg);
+                self.push_link_arg(arg);
+            }
+        } else {
+            self.push_dldflags(&self.get("LIBRUBYARG"));
+        }
+
         self
     }
 
@@ -209,10 +221,10 @@ impl RbConfig {
 
     /// Adds items to the rb_config based on a string from LDFLAGS/DLDFLAGS
     pub fn push_dldflags(&mut self, input: &str) -> &mut Self {
-        let split_args = Flags::new(input);
+        let input = self.subst_shell_variables(input);
+        let split_args = Flags::new(input.as_str());
 
         let search_path_regex = Regex::new(r"^-L\s*(?P<name>.*)$").unwrap();
-        let libruby_regex = Regex::new(r"^-l\s*ruby(?P<name>\S+)$").unwrap();
         let lib_regex_short = Regex::new(r"^-l\s*(?P<name>\w+\S+)$").unwrap();
         let lib_regex_long = Regex::new(r"^--library=(?P<name>\w+\S+)$").unwrap();
         let static_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).a$").unwrap();
@@ -221,28 +233,19 @@ impl RbConfig {
         let framework_regex_long = Regex::new(r"^-framework\s*(?P<name>.*)$").unwrap();
 
         for arg in split_args {
-            let arg = self.subst_shell_variables(arg);
+            let arg = arg.trim().to_owned();
 
             if let Some(name) = capture_name(&search_path_regex, &arg) {
                 self.push_search_path(SearchPath {
                     kind: SearchPathKind::Native,
                     name,
                 });
-            } else if let Some(name) = capture_name(&libruby_regex, &arg) {
-                let (kind, modifiers) = if name.ends_with("-static") {
-                    // Enable when native_link_modifiers is stable
-                    // (LibraryKind::Static, vec!["+whole-archive".to_string()])
-
-                    (LibraryKind::Static, vec![])
-                } else {
-                    (LibraryKind::Dylib, vec![])
-                };
-
+            } else if let Some((name, kind)) = capture_libruby(&arg) {
                 self.push_library(Library {
                     kind,
-                    name: format!("ruby{}", name.to_owned()),
-                    rename: Some("rb".into()),
-                    modifiers,
+                    name,
+                    rename: None,
+                    modifiers: vec![],
                 });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
                 self.push_library(Library {
@@ -387,6 +390,53 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
     regex
         .captures(arg)
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
+}
+
+fn capture_libruby(arg: &str) -> Option<(String, LibraryKind)> {
+    let regex = Regex::new(r"^-l\s*(?P<name>\w+\S+)$").unwrap();
+
+    if let Some(libruby_cap) = regex.captures(arg) {
+        if let Some(name) = libruby_cap.name("name") {
+            let name = name.as_str();
+
+            if !name.contains("ruby") {
+                return None;
+            }
+
+            let kind = if name.contains("-static") {
+                LibraryKind::Static
+            } else {
+                LibraryKind::Dylib
+            };
+
+            Some((name.to_owned(), kind))
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
+// Needed because Rust 1.51 does not support link-arg, and thus rpath
+// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
+fn append_ld_library_path(search_paths: Vec<&str>) {
+    let env_var_name = if cfg!(windows) {
+        "PATH"
+    } else if cfg!(target_os = "macos") {
+        "DYLD_FALLBACK_LIBRARY_PATH"
+    } else {
+        "LD_LIBRARY_PATH"
+    };
+
+    let new_path = match std::env::var_os(env_var_name) {
+        Some(val) => {
+            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+        }
+        None => search_paths.join(":"),
+    };
+
+    println!("cargo:rustc-env={}={}", env_var_name, new_path);
 }
 
 #[cfg(test)]
@@ -695,25 +745,38 @@ mod tests {
             rb_config.cargo_args()
         );
     }
-}
 
-// Needed because Rust 1.51 does not support link-arg, and thus rpath
-// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
-fn append_ld_library_path(search_paths: Vec<&str>) {
-    let env_var_name = if cfg!(windows) {
-        "PATH"
-    } else if cfg!(target_os = "macos") {
-        "DYLD_FALLBACK_LIBRARY_PATH"
-    } else {
-        "LD_LIBRARY_PATH"
-    };
+    #[test]
+    fn test_link_mswin() {
+        let old_var = env::var("TARGET").ok();
+        env::set_var("TARGET", "x86_64-pc-windows-msvc");
 
-    let new_path = match std::env::var_os(env_var_name) {
-        Some(val) => {
-            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+        let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("RUBY_SO_NAME", "x64-vcruntime140-ruby320".into());
+        rb_config.set_value_for_key(
+            "DLDFLAGS",
+            "-incremental:no -debug -opt:ref -opt:icf -dll $(LIBPATH)".into(),
+        );
+        rb_config.set_value_for_key("LIBPATH", "C:\\Program Files\\Crazy".into());
+        rb_config.link_ruby();
+
+        assert_eq!(
+            vec![
+                "cargo:rustc-link-lib=dylib=x64-vcruntime140-ruby320",
+                "cargo:rustc-link-arg=-incremental:no",
+                "cargo:rustc-link-arg=-debug",
+                "cargo:rustc-link-arg=-opt:ref",
+                "cargo:rustc-link-arg=-opt:icf",
+                "cargo:rustc-link-arg=-dll",
+                "cargo:rustc-link-arg=C:\\Program Files\\Crazy"
+            ],
+            rb_config.cargo_args()
+        );
+
+        if let Some(old_var) = old_var {
+            env::set_var("TARGET", old_var);
+        } else {
+            env::remove_var("TARGET");
         }
-        None => search_paths.join(":"),
-    };
-
-    println!("cargo:rustc-env={}={}", env_var_name, new_path);
+    }
 }

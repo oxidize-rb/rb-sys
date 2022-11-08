@@ -29,7 +29,7 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    bindings::generate(&rbconfig);
+    bindings::generate(&rbconfig, is_ruby_static_enabled(&rbconfig));
     export_cargo_cfg(&mut rbconfig);
 
     if is_ruby_macros_enabled() {
