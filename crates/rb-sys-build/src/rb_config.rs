@@ -241,7 +241,7 @@ impl RbConfig {
                 self.push_library(Library {
                     kind,
                     name: format!("ruby{}", name.to_owned()),
-                    rename: None,
+                    rename: Some("rb".into()),
                     modifiers,
                 });
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
