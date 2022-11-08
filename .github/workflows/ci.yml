@@ -13,20 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup
+      - uses: oxidize-rb/setup-ruby-and-rust@main
         with:
-          rust_toolchain: stable
-          ruby_version: "3.1"
-          os: ubuntu-latest
-      - uses: actions-rs/cargo@v1
-        name: ✂️ Run clippy
-        with:
-          command: clippy
-      - uses: actions-rs/cargo@v1
-        name: 📃 Run cargo fmt
-        with:
-          command: fmt
-          args: --check
+          ruby-version: "3.1"
+          rustup-toolchain: "stable"
+          bundler-cache: true
+          cargo-cache: true
+      - name: ✂️ Run clippy
+        run: cargo clippy
+      - name: 📃 Run cargo fmt
+        run: cargo fmt --check
       - name: 🚓 Run Standard.rb
         run: bundle exec standardrb --format github
 
@@ -45,7 +41,7 @@ jobs:
           - os: macos-latest
             rust_toolchain: stable
           - os: windows-2022
-            rust_toolchain: stable-x86_64-pc-windows-gnu
+            rust_toolchain: stable
         include:
           - ruby_version: mswin
             sys:
@@ -55,11 +51,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: ./.github/actions/setup
+      - uses: oxidize-rb/setup-ruby-and-rust@main
+        if: matrix.ruby_version != 'skip'
         with:
-          rust_toolchain: ${{ matrix.sys.rust_toolchain }}
-          ruby_version: ${{ matrix.ruby_version }}
-          os: ${{ matrix.sys.os }}
+          ruby-version: ${{ matrix.ruby_version }}
+          rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
+          bundler-cache: true
+          cargo-cache: true
+
+      - name: Bundle install
+        if: matrix.ruby_version == 'skip'
+        shell: bash
+        run: bundle install -j3
 
       - name: 🧪 Cargo test
         if: "!contains(matrix.sys.rust_toolchain , 'msvc')"
@@ -116,7 +119,7 @@ jobs:
             git clone https://github.com/rbenv/ruby-build.git
             PREFIX=/usr/local sudo ./ruby-build/install.sh
             export MAKEFLAGS="-j$(nproc)"
-            export RUBY_CONFIGURE_OPTS="--disable-shared --disable-install-doc --disable-install-rdoc" 
+            export RUBY_CONFIGURE_OPTS="--disable-shared --disable-install-doc --disable-install-rdoc"
             sudo ruby-build ${{ matrix.ruby_version }} /opt/rubies/${{ matrix.ruby_version }}
           fi
       - uses: ./.github/actions/setup
