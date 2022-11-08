@@ -39,7 +39,7 @@
     "matklad.rust-analyzer",
     "tamasfe.even-better-toml",
     "serayuzgur.crates",
-    "rebornix.Ruby"
+    "Shopify.ruby-extensions-pack"
   ],
   "postAttachCommand": "${containerWorkspaceFolder}/.devcontainer/on-post-attach.sh",
   "features": {
