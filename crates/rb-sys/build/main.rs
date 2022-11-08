@@ -82,7 +82,7 @@ fn link_libruby(rbconfig: &mut RbConfig) {
         if cfg!(unix) {
             rbconfig.use_rpath();
         } else if is_msvc() {
-            rbconfig.push_dldflags("/LINK");
+            rbconfig.push_dldflags("-LD");
         }
     }
 }
