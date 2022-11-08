@@ -80,14 +80,13 @@ jobs:
         shell: bash
         run: bundle install -j3
 
-      - name: 🧪 Cargo test
-        if: "!contains(matrix.sys.rust_toolchain , 'msvc')"
-        run: bundle exec rake test:cargo
-
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
         run: bundle exec rake test:examples
+
+      - name: 🧪 Cargo test
+        run: bundle exec rake test:cargo
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem

@@ -141,9 +141,9 @@ module RbSys
     end
 
     def mswin_link_args
-      libruby = ruby_static? ? makefile_config("LIBRUBY_A") : makefile_config("LIBRUBY")
-      args = ["-C", "link-arg=#{libruby}"]
-      args += ["-C", "link-arg=-LD"] unless ruby_static?
+      args = []
+      args += ["-l", makefile_config("LIBRUBYARG_SHARED").chomp(".lib")]
+      args += split_flags("LIBS").flat_map { |lib| ["-l", lib.chomp(".lib")] }
       args
     end
 

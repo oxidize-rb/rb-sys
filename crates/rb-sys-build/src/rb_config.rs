@@ -356,6 +356,8 @@ impl RbConfig {
 
                         if let Some(val) = self.get_optional(key) {
                             result.push_str(&val);
+                        } else if let Some(val) = env::var_os(key) {
+                            result.push_str(&val.to_string_lossy());
                         } else {
                             // Consume whitespace
                             chars.next();
