@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: oxidize-rb/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
         with:
           ruby-version: "3.1"
           rustup-toolchain: "stable"
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: oxidize-rb/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
         if: matrix.ruby_version != 'skip'
         with:
           ruby-version: ${{ matrix.ruby_version }}
