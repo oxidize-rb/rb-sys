@@ -126,6 +126,9 @@ jobs:
             sudo ruby-build ${{ matrix.ruby_version }} /opt/rubies/${{ matrix.ruby_version }}
           fi
 
+      - name: Bundle install
+        run: bundle install -j3
+
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.sys.rust_toolchain }}
