@@ -59,6 +59,22 @@ jobs:
           bundler-cache: true
           cargo-cache: true
 
+      - name: Debug makefile
+        env:
+          BUNDLE_GEM__TEST: "rpec"
+          BUNDLE_GEM__CI: "github"
+          BUNDLE_GEM__MIT: "true"
+          BUNDLE_GEM__COC: "true"
+          BUNDLE_GEM__CHANGELOG: "true"
+          BUNDLE_GEM__LINTER: "standard"
+        run: |
+          mkdir tmp/
+          cd tmp/
+          bundle gem --ext testing
+          cd testing/ext/testing
+          ruby extconf.rb
+          cat Makefile
+
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
         shell: bash
