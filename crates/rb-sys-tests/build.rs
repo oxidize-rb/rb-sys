@@ -3,7 +3,9 @@ use std::env;
 
 fn main() {
     export_cargo_cfg();
-    rb_config().link_ruby().print_cargo_args();
+    let mut rbconfig = rb_config();
+    let is_static = rbconfig.get("ENABLE_SHARED") == "no";
+    rbconfig.link_ruby(is_static).print_cargo_args()
 }
 
 fn export_cargo_cfg() {

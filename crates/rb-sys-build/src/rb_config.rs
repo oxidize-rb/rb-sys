@@ -89,7 +89,9 @@ impl RbConfig {
     }
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
-    pub fn link_ruby(&mut self) -> &mut Self {
+    pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
+        self.push_dldflags(&format!("-L{}", &self.get("libdir")));
+
         if is_msvc() {
             let name = format!("dylib={}", self.libruby_so_name().as_str());
             self.push_library(Library::from(name.as_str()));
@@ -101,7 +103,15 @@ impl RbConfig {
                 self.push_link_arg(arg);
             }
         } else {
-            self.push_dldflags(&self.get("LIBRUBYARG"));
+            if is_static {
+                self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
+            } else {
+                self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
+            }
+
+            if cfg!(unix) {
+                self.use_rpath();
+            }
         }
 
         self
@@ -754,15 +764,17 @@ mod tests {
 
         let mut rb_config = RbConfig::new();
         rb_config.set_value_for_key("RUBY_SO_NAME", "x64-vcruntime140-ruby320".into());
+        rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
         rb_config.set_value_for_key(
             "DLDFLAGS",
             "-incremental:no -debug -opt:ref -opt:icf -dll $(LIBPATH)".into(),
         );
         rb_config.set_value_for_key("LIBPATH", "C:\\Program Files\\Crazy".into());
-        rb_config.link_ruby();
+        rb_config.link_ruby(false);
 
         assert_eq!(
             vec![
+                "cargo:rustc-link-search=native=D:/ruby-mswin/lib",
                 "cargo:rustc-link-lib=dylib=x64-vcruntime140-ruby320",
                 "cargo:rustc-link-arg=-link",
                 "cargo:rustc-link-arg=-incremental:no",
