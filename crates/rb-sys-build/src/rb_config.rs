@@ -93,6 +93,7 @@ impl RbConfig {
         if is_msvc() {
             let name = format!("dylib={}", self.libruby_so_name().as_str());
             self.push_library(Library::from(name.as_str()));
+            self.push_link_arg("-link".into());
             let flags = self.get("DLDFLAGS");
             let args = shellsplit(&flags);
             for arg in args {
@@ -763,6 +764,7 @@ mod tests {
         assert_eq!(
             vec![
                 "cargo:rustc-link-lib=dylib=x64-vcruntime140-ruby320",
+                "cargo:rustc-link-arg=-link",
                 "cargo:rustc-link-arg=-incremental:no",
                 "cargo:rustc-link-arg=-debug",
                 "cargo:rustc-link-arg=-opt:ref",
