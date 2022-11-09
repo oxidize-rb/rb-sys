@@ -91,7 +91,7 @@ impl RbConfig {
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
         let libdir = self.get("libdir");
-        self.push_search_path(libdir.as_str().into());
+        self.push_search_path(libdir.as_str());
         self.push_dldflags(&format!("-L{}", &self.get("libdir")));
 
         let librubyarg = if is_static {
@@ -102,26 +102,21 @@ impl RbConfig {
 
         if is_msvc() {
             for lib in librubyarg.split_whitespace() {
-                let lib = lib.trim_end_matches(".lib");
-                self.push_library(lib.into());
+                self.push_library(lib);
             }
 
-            let optional_libs = self.get_optional("LIBS");
+            let mut to_link: Vec<String> = vec![];
 
-            if let Some(libs) = optional_libs {
-                for lib in libs.split_whitespace() {
-                    let lib = lib.trim_end_matches(".lib");
-                    self.push_library(lib.into());
-                }
+            if let Some(libs) = self.get_optional("LIBS") {
+                to_link.extend(libs.split_whitespace().map(|s| s.to_string()));
             }
 
-            let optional_local_libs = self.get_optional("LOCAL_LIBS");
+            if let Some(libs) = self.get_optional("LOCAL_LIBS") {
+                to_link.extend(libs.split_whitespace().map(|s| s.to_string()));
+            }
 
-            if let Some(local_libs) = optional_local_libs {
-                for lib in local_libs.split_whitespace() {
-                    let lib = lib.trim_end_matches(".lib");
-                    self.push_library(lib.into());
-                }
+            for lib in to_link {
+                self.push_library(lib);
             }
         } else {
             self.push_dldflags(&librubyarg);
@@ -228,7 +223,7 @@ impl RbConfig {
                 result.push(format!("cargo:rustc-link-lib={}", lib));
             }
 
-            if self.use_rpath {
+            if self.use_rpath && !lib.is_static() {
                 result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib));
             }
         }
@@ -264,71 +259,23 @@ impl RbConfig {
             let arg = arg.trim().to_owned();
 
             if let Some(name) = capture_name(&search_path_regex, &arg) {
-                self.push_search_path(SearchPath {
-                    kind: SearchPathKind::Native,
-                    name,
-                });
-            } else if let Some((name, kind)) = capture_libruby(&arg) {
-                self.push_library(Library {
-                    kind,
-                    name,
-                    rename: None,
-                    modifiers: vec![],
-                });
+                self.push_search_path(name.as_str());
             } else if let Some(name) = capture_name(&lib_regex_long, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Native,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
+                self.push_library(name);
             } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Native,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
+                if name.contains("ruby") && name.contains("-static") {
+                    self.push_library((LibraryKind::Static, name));
+                } else {
+                    self.push_library(name);
+                }
             } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Static,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
+                self.push_library((LibraryKind::Static, name));
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Dylib,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
-            } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Static,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
-            } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Dylib,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
+                self.push_library((LibraryKind::Dylib, name));
             } else if let Some(name) = capture_name(&framework_regex_short, &arg) {
-                self.search_paths.push(SearchPath {
-                    kind: SearchPathKind::Framework,
-                    name: name.to_owned(),
-                });
+                self.push_search_path((SearchPathKind::Framework, name));
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
-                self.push_library(Library {
-                    kind: LibraryKind::Framework,
-                    name: name.to_owned(),
-                    rename: None,
-                    modifiers: vec![],
-                });
+                self.push_library((LibraryKind::Framework, name));
             } else {
                 self.push_link_arg(arg);
             }
@@ -391,7 +338,9 @@ impl RbConfig {
         result
     }
 
-    fn push_search_path(&mut self, path: SearchPath) -> &mut Self {
+    fn push_search_path<T: Into<SearchPath>>(&mut self, path: T) -> &mut Self {
+        let path = path.into();
+
         if !self.search_paths.contains(&path) {
             self.search_paths.push(path);
         }
@@ -399,7 +348,9 @@ impl RbConfig {
         self
     }
 
-    fn push_library(&mut self, lib: Library) -> &mut Self {
+    fn push_library<T: Into<Library>>(&mut self, lib: T) -> &mut Self {
+        let lib = lib.into();
+
         if !self.libs.contains(&lib) {
             self.libs.push(lib);
         }
@@ -407,7 +358,9 @@ impl RbConfig {
         self
     }
 
-    fn push_link_arg(&mut self, arg: String) -> &mut Self {
+    fn push_link_arg<T: Into<String>>(&mut self, arg: T) -> &mut Self {
+        let arg = arg.into();
+
         if !self.link_args.contains(&arg) {
             self.link_args.push(arg);
         }
@@ -420,32 +373,6 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
     regex
         .captures(arg)
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
-}
-
-fn capture_libruby(arg: &str) -> Option<(String, LibraryKind)> {
-    let regex = Regex::new(r"^-l\s*(?P<name>\w+\S+)$").unwrap();
-
-    if let Some(libruby_cap) = regex.captures(arg) {
-        if let Some(name) = libruby_cap.name("name") {
-            let name = name.as_str();
-
-            if !name.contains("ruby") {
-                return None;
-            }
-
-            let kind = if name.contains("-static") {
-                LibraryKind::Static
-            } else {
-                LibraryKind::Dylib
-            };
-
-            Some((name.to_owned(), kind))
-        } else {
-            None
-        }
-    } else {
-        None
-    }
 }
 
 // Needed because Rust 1.51 does not support link-arg, and thus rpath
@@ -623,7 +550,6 @@ mod tests {
             [Library {
                 kind: LibraryKind::Framework,
                 name: "CoreFoundation".into(),
-                rename: None,
                 modifiers: vec![],
             }]
         );
@@ -645,10 +571,7 @@ mod tests {
         let mut rb_config = RbConfig::new();
         rb_config.push_dldflags("-lruby.3.1");
 
-        assert_eq!(
-            rb_config.cargo_args(),
-            ["cargo:rustc-link-lib=dylib=ruby.3.1"]
-        );
+        assert_eq!(rb_config.cargo_args(), ["cargo:rustc-link-lib=ruby.3.1"]);
     }
 
     #[test]
@@ -700,7 +623,6 @@ mod tests {
             vec![Library {
                 kind: LibraryKind::Static,
                 name: "ssp".to_string(),
-                rename: None,
                 modifiers: vec![],
             }]
         );
@@ -801,5 +723,22 @@ mod tests {
         } else {
             env::remove_var("TARGET");
         }
+    }
+
+    #[test]
+    fn test_link_static() {
+        let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static".into());
+        rb_config.set_value_for_key("libdir", "/opt/ruby".into());
+
+        rb_config.link_ruby(true);
+
+        assert_eq!(
+            vec![
+                "cargo:rustc-link-search=native=/opt/ruby",
+                "cargo:rustc-link-lib=static=ruby-static",
+            ],
+            rb_config.cargo_args()
+        );
     }
 }

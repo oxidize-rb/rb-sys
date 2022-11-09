@@ -4,7 +4,7 @@ pub enum LibraryKind {
     Framework,
     Dylib,
     Static,
-    Native,
+    None,
 }
 
 /// Represents a search path that can be linked with Cargo.
@@ -12,24 +12,12 @@ pub enum LibraryKind {
 pub struct Library {
     pub kind: LibraryKind,
     pub name: String,
-    pub rename: Option<String>,
     pub modifiers: Vec<String>,
 }
 
 impl Library {
-    /// Creates a new library.
-    pub fn new(
-        name: String,
-        kind: LibraryKind,
-        rename: Option<String>,
-        modifiers: Vec<String>,
-    ) -> Self {
-        Self {
-            kind,
-            name,
-            rename,
-            modifiers,
-        }
+    pub fn is_static(&self) -> bool {
+        self.kind == LibraryKind::Static
     }
 }
 
@@ -39,30 +27,43 @@ impl From<&str> for LibraryKind {
             "framework" => LibraryKind::Framework,
             "dylib" => LibraryKind::Dylib,
             "static" => LibraryKind::Static,
-            "native" => LibraryKind::Native,
-            _ => panic!("Unknown lib kind: {}", s),
+            _ => LibraryKind::None,
         }
     }
 }
 
 impl From<&str> for Library {
     fn from(s: &str) -> Self {
-        let parts: Vec<_> = s.split('=').map(|s| s.to_owned()).collect();
+        let parts: Vec<_> = s.splitn(2, '=').collect();
 
         match parts.len() {
-            1 => Library {
-                kind: LibraryKind::Native,
-                name: parts.first().expect("lib name is empty").to_owned(),
-                rename: None,
-                modifiers: vec![],
-            },
-            2 => Library {
-                kind: parts.first().expect("no kind for lib").as_str().into(),
-                name: parts.last().expect("lib name is empty").to_owned(),
-                rename: None,
-                modifiers: vec![],
-            },
+            1 => (LibraryKind::None, sanitize_library_name(parts[0])).into(),
+            2 => (parts[0], sanitize_library_name(parts[1])).into(),
             _ => panic!("Invalid library specification: {}", s),
+        }
+    }
+}
+
+impl From<String> for Library {
+    fn from(s: String) -> Self {
+        s.as_str().into()
+    }
+}
+
+fn sanitize_library_name(name: &str) -> &str {
+    name.trim_end_matches(".lib")
+}
+
+impl<K, L> From<(K, L)> for Library
+where
+    K: Into<LibraryKind>,
+    L: Into<String>,
+{
+    fn from((kind, name): (K, L)) -> Self {
+        Self {
+            kind: kind.into(),
+            name: name.into(),
+            modifiers: vec![],
         }
     }
 }
@@ -75,17 +76,11 @@ impl std::fmt::Display for Library {
             format!(":{}", self.modifiers.join(","))
         };
 
-        let rename = if let Some(rename) = &self.rename {
-            format!("{}:", rename)
-        } else {
-            String::new()
-        };
-
         match self.kind {
             LibraryKind::Framework => write!(f, "framework={}", self.name),
-            LibraryKind::Dylib => write!(f, "dylib{}={}{}", modifiers, rename, self.name),
-            LibraryKind::Static => write!(f, "static{}={}{}", modifiers, rename, self.name),
-            LibraryKind::Native => write!(f, "{}{}", rename, self.name),
+            LibraryKind::Dylib => write!(f, "dylib{}={}", modifiers, self.name),
+            LibraryKind::Static => write!(f, "static{}={}", modifiers, self.name),
+            LibraryKind::None => write!(f, "{}", self.name),
         }
     }
 }

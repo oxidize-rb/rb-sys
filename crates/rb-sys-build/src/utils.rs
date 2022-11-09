@@ -1,6 +1,10 @@
 /// Check if current platform is mswin.
 pub fn is_msvc() -> bool {
-    std::env::var("TARGET").unwrap().contains("msvc")
+    if let Ok(target) = std::env::var("TARGET") {
+        target.contains("msvc")
+    } else {
+        false
+    }
 }
 
 /// Splits shell words.
