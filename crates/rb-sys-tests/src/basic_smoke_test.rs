@@ -18,3 +18,8 @@ fn basic_smoke_test() {
         assert_eq!(result, "hello world");
     }
 }
+
+#[test]
+fn test_global_variables_are_properly_linked() {
+    unsafe { assert!(rb_eArgError != rb_eTypeError) }
+}
