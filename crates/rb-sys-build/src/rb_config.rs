@@ -90,24 +90,41 @@ impl RbConfig {
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
+        let libdir = self.get("libdir");
+        self.push_search_path(libdir.as_str().into());
         self.push_dldflags(&format!("-L{}", &self.get("libdir")));
 
+        let librubyarg = if is_static {
+            self.get("LIBRUBYARG_STATIC")
+        } else {
+            self.get("LIBRUBYARG_SHARED")
+        };
+
         if is_msvc() {
-            let name = format!("dylib={}", self.libruby_so_name().as_str());
-            self.push_library(Library::from(name.as_str()));
-            self.push_link_arg("-link".into());
-            let flags = self.get("DLDFLAGS");
-            let args = shellsplit(&flags);
-            for arg in args {
-                let arg = self.subst_shell_variables(&arg);
-                self.push_link_arg(arg);
+            for lib in librubyarg.split_whitespace() {
+                let lib = lib.trim_end_matches(".lib");
+                self.push_library(lib.into());
+            }
+
+            let optional_libs = self.get_optional("LIBS");
+
+            if let Some(libs) = optional_libs {
+                for lib in libs.split_whitespace() {
+                    let lib = lib.trim_end_matches(".lib");
+                    self.push_library(lib.into());
+                }
+            }
+
+            let optional_local_libs = self.get_optional("LOCAL_LIBS");
+
+            if let Some(local_libs) = optional_local_libs {
+                for lib in local_libs.split_whitespace() {
+                    let lib = lib.trim_end_matches(".lib");
+                    self.push_library(lib.into());
+                }
             }
         } else {
-            if is_static {
-                self.push_dldflags(&self.get("LIBRUBYARG_STATIC"));
-            } else {
-                self.push_dldflags(&self.get("LIBRUBYARG_SHARED"));
-            }
+            self.push_dldflags(&librubyarg);
 
             if cfg!(unix) {
                 self.use_rpath();
@@ -765,26 +782,16 @@ mod tests {
         env::set_var("TARGET", "x86_64-pc-windows-msvc");
 
         let mut rb_config = RbConfig::new();
-        rb_config.set_value_for_key("RUBY_SO_NAME", "x64-vcruntime140-ruby320".into());
+        rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib".into());
         rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
-        rb_config.set_value_for_key(
-            "DLDFLAGS",
-            "-incremental:no -debug -opt:ref -opt:icf -dll $(LIBPATH)".into(),
-        );
-        rb_config.set_value_for_key("LIBPATH", "C:\\Program Files\\Crazy".into());
+        rb_config.set_value_for_key("LIBS", "user32.lib".into());
         rb_config.link_ruby(false);
 
         assert_eq!(
             vec![
                 "cargo:rustc-link-search=native=D:/ruby-mswin/lib",
-                "cargo:rustc-link-lib=dylib=x64-vcruntime140-ruby320",
-                "cargo:rustc-link-arg=-link",
-                "cargo:rustc-link-arg=-incremental:no",
-                "cargo:rustc-link-arg=-debug",
-                "cargo:rustc-link-arg=-opt:ref",
-                "cargo:rustc-link-arg=-opt:icf",
-                "cargo:rustc-link-arg=-dll",
-                "cargo:rustc-link-arg=C:\\Program Files\\Crazy"
+                "cargo:rustc-link-lib=x64-vcruntime140-ruby320",
+                "cargo:rustc-link-lib=user32",
             ],
             rb_config.cargo_args()
         );
