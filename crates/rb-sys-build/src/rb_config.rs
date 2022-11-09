@@ -550,7 +550,6 @@ mod tests {
             [Library {
                 kind: LibraryKind::Framework,
                 name: "CoreFoundation".into(),
-                modifiers: vec![],
             }]
         );
     }
@@ -623,7 +622,6 @@ mod tests {
             vec![Library {
                 kind: LibraryKind::Static,
                 name: "ssp".to_string(),
-                modifiers: vec![],
             }]
         );
         assert_eq!(

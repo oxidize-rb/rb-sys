@@ -12,7 +12,6 @@ pub enum LibraryKind {
 pub struct Library {
     pub kind: LibraryKind,
     pub name: String,
-    pub modifiers: Vec<String>,
 }
 
 impl Library {
@@ -51,7 +50,7 @@ impl From<String> for Library {
 }
 
 fn sanitize_library_name(name: &str) -> &str {
-    name.trim_end_matches(".lib")
+    name.trim_end_matches(".lib").trim_start_matches("-l")
 }
 
 impl<K, L> From<(K, L)> for Library
@@ -63,24 +62,71 @@ where
         Self {
             kind: kind.into(),
             name: name.into(),
-            modifiers: vec![],
         }
     }
 }
 
 impl std::fmt::Display for Library {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let modifiers = if self.modifiers.is_empty() {
-            String::new()
-        } else {
-            format!(":{}", self.modifiers.join(","))
-        };
-
         match self.kind {
             LibraryKind::Framework => write!(f, "framework={}", self.name),
-            LibraryKind::Dylib => write!(f, "dylib{}={}", modifiers, self.name),
-            LibraryKind::Static => write!(f, "static{}={}", modifiers, self.name),
+            LibraryKind::Dylib => write!(f, "dylib={}", self.name),
+            LibraryKind::Static => write!(f, "static={}", self.name),
             LibraryKind::None => write!(f, "{}", self.name),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_trim_leading_link_flag() {
+        let result: Library = "-lfoo".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_trim_trailing_lib_extension() {
+        let result: Library = "foo.lib".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_trim_leading_link_flag_and_trailing_lib_extension() {
+        let result: Library = "-lfoo.lib".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_display_framework() {
+        let result: Library = "framework=foo".to_string().into();
+
+        assert_eq!(result.to_string(), "framework=foo");
+    }
+
+    #[test]
+    fn test_display_dylib() {
+        let result: Library = "dylib=foo".to_string().into();
+
+        assert_eq!(result.to_string(), "dylib=foo");
+    }
+
+    #[test]
+    fn test_display_static() {
+        let result: Library = "static=-lfoo".to_string().into();
+
+        assert_eq!(result.to_string(), "static=foo");
+    }
+
+    #[test]
+    fn test_display_none() {
+        let result: Library = "foo".to_string().into();
+
+        assert_eq!(result.to_string(), "foo");
     }
 }

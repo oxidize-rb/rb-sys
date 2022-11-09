@@ -21,5 +21,5 @@ fn basic_smoke_test() {
 
 #[test]
 fn test_global_variables_are_properly_linked() {
-    unsafe { assert!(rb_eArgError != rb_eTypeError) }
+    unsafe { assert!(rb_sys::rb_eArgError != rb_sys::rb_eTypeError) }
 }
