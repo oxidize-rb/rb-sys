@@ -36,8 +36,8 @@ impl From<&str> for Library {
         let parts: Vec<_> = s.splitn(2, '=').collect();
 
         match parts.len() {
-            1 => (LibraryKind::None, sanitize_library_name(parts[0])).into(),
-            2 => (parts[0], sanitize_library_name(parts[1])).into(),
+            1 => (LibraryKind::None, parts[0]).into(),
+            2 => (parts[0], parts[1]).into(),
             _ => panic!("Invalid library specification: {}", s),
         }
     }
@@ -61,7 +61,7 @@ where
     fn from((kind, name): (K, L)) -> Self {
         Self {
             kind: kind.into(),
-            name: name.into(),
+            name: sanitize_library_name(&name.into()).into(),
         }
     }
 }
