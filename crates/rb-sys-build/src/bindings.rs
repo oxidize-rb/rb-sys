@@ -1,6 +1,5 @@
 use crate::utils::is_msvc;
 use crate::RbConfig;
-use linkify::{self, LinkFinder};
 use std::borrow::Cow;
 use std::env;
 use std::fs::File;
@@ -75,19 +74,8 @@ fn clean_docs() {
         if !line.contains("#[doc") {
             outfile.write_all(line.as_bytes()).unwrap();
         } else {
-            let finder = LinkFinder::new();
-            let mut outline = line.to_owned();
-            let links: Vec<_> = finder.links(&line).collect();
-
-            for link in links {
-                outline.replace_range(
-                    link.start()..link.end(),
-                    format!("<{}>", link.as_str()).as_str(),
-                );
-            }
-
-            // Remove anything cargo thinks is executable
-            outline = outline.replace('`', "");
+            let url_regex = regex::Regex::new(r#"https?://[^\s'"]+"#).unwrap();
+            let outline = url_regex.replace_all(&line, "<${0}>");
 
             outfile.write_all(outline.as_bytes()).unwrap();
         }

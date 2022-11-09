@@ -9,13 +9,12 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 
 [lib]
 bench = false
-doctest = false 
+doctest = false
 
 [dependencies]
-regex = "1" 
+regex = "1"
 shell-words = "1.1"
 bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
-linkify = "0.9"
 
 [features]
 default = []

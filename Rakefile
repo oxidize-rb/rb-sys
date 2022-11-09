@@ -8,6 +8,8 @@ end
 namespace :test do
   desc "Run cargo test against current Ruby"
   task :cargo do
+    ENV["RUST_TEST_THREADS"] = "1"
+
     begin
       cargo_args = extra_args || ["--workspace", "--lib"]
       sh "cargo", "test", *cargo_args
