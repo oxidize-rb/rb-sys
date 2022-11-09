@@ -115,22 +115,22 @@ fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbco
         .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
         .to_string();
 
-    // if cfg!(windows) {
-    //     let kind = if static_ruby { "static" } else { "dylib" };
-    //     let name = if static_ruby {
-    //         rbconfig.libruby_static_name()
-    //     } else {
-    //         rbconfig.libruby_so_name()
-    //     };
+    if is_msvc() {
+        let kind = if static_ruby { "static" } else { "dylib" };
+        let name = if static_ruby {
+            rbconfig.libruby_static_name()
+        } else {
+            rbconfig.libruby_so_name()
+        };
 
-    //     code = code.replace(
-    //         "extern \"C\" {",
-    //         &format!(
-    //             "#[link(name = \"{}\", kind = \"{}\")]\nextern \"C\" {{",
-    //             name, kind
-    //         ),
-    //     );
-    // }
+        code = code.replace(
+            "extern \"C\" {",
+            &format!(
+                "#[link(name = \"{}\", kind = \"{}\")]\nextern \"C\" {{",
+                name, kind
+            ),
+        );
+    }
 
     let mut outfile = File::create(out_path.join(path)).expect("Couldn't create bindings file");
     write!(outfile, "{}", code).unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
