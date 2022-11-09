@@ -116,7 +116,7 @@ fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbco
         .to_string();
 
     if is_msvc() {
-        qualify_symbols_for_msvc(&mut code, static_ruby, rbconfig);
+        code = qualify_symbols_for_msvc(&code, static_ruby, rbconfig);
     }
 
     let mut outfile = File::create(out_path.join(path)).expect("Couldn't create bindings file");
@@ -126,7 +126,7 @@ fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbco
 // This is needed because bindgen doesn't support the `__declspec(dllimport)` on
 // global variables. Without it, symbols are not found.
 // See https://stackoverflow.com/a/66182704/2057700
-fn qualify_symbols_for_msvc(code: &mut str, is_static: bool, rbconfig: &RbConfig) {
+fn qualify_symbols_for_msvc(code: &str, is_static: bool, rbconfig: &RbConfig) -> String {
     let kind = if is_static { "static" } else { "dylib" };
 
     let name = if is_static {
@@ -135,13 +135,13 @@ fn qualify_symbols_for_msvc(code: &mut str, is_static: bool, rbconfig: &RbConfig
         rbconfig.libruby_so_name()
     };
 
-    let _ = code.replace(
+    code.replace(
         "extern \"C\" {",
         &format!(
             "#[link(name = \"{}\", kind = \"{}\")]\nextern \"C\" {{",
             name, kind
         ),
-    );
+    )
 }
 
 // The output is wrapped in a Result to allow matching on errors

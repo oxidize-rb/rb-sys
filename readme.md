@@ -16,6 +16,7 @@ it's not easy, it's a bug.
 
 - Battle-tested Rust bindings for [the Ruby C API][ruby-c-api]
 - Support for Ruby 2.4+
+- Supports all major platforms (Linux, macOS, Windows)
 - Cross compilation of gems
 - Integration with [`rake-compiler`][rake-compiler]
 
@@ -50,6 +51,7 @@ directory for automation purposes):
 | arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.37`][docker-hub]      |
 | x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.37`][docker-hub]       |
 | x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.37`][docker-hub]    |
+| mswin             | ✅        | not available on Docker                        |
 
 ## Getting Help
 
