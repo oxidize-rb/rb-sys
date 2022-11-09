@@ -142,8 +142,12 @@ module RbSys
 
     def mswin_link_args
       args = []
+      # args = ["-C", "linker=cl"]
       args += ["-l", makefile_config("LIBRUBYARG_SHARED").chomp(".lib")]
       args += split_flags("LIBS").flat_map { |lib| ["-l", lib.chomp(".lib")] }
+      args += split_flags("LOCAL_LIBS").flat_map { |lib| ["-l", lib.chomp(".lib")] }
+      # args += ["-C", "link-arg=-link"]
+      # args += split_flags("DLDFLAGS").flat_map { |flag| ["-C", "link-arg=#{flag}"] }
       args
     end
 
