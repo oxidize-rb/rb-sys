@@ -27,10 +27,8 @@ RUN set -ex; \
   tar -xzvf chruby-$CHRUBY_VERSION.tar.gz; \
   cd chruby-$CHRUBY_VERSION/; \
   sudo bash -c "./scripts/setup.sh"; \
-  echo "source /usr/local/share/chruby/chruby.sh" >> "$HOME/.zshrc"; \
-  echo "chruby 3.1.2" >> "$HOME/.zshrc"; \
-  echo "source /usr/local/share/chruby/chruby.sh" >> "$HOME/.bashrc"; \
-  echo "chruby 3.1.2" >> "$HOME/.bashrc"; \
+  echo "source /usr/local/share/chruby/chruby.sh" >> "/etc/profile.d/10-ruby.sh"; \
+  echo "chruby 3.1" >> "/etc/profile.d/10-ruby.sh"; \
   cd /; \
 
   # Install ruby-build

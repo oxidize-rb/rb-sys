@@ -131,7 +131,6 @@ module RbSys
     # We want to use the same linker that Ruby uses, so that the linker flags from
     # mkmf work properly.
     def linker_args
-      # Have to handle CC="cl /nologo" on mswin
       cc_flag = Shellwords.split(makefile_config("CC"))
       linker = cc_flag.shift
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
@@ -142,8 +141,11 @@ module RbSys
     end
 
     def mswin_link_args
-      libruby = ruby_static? ? makefile_config("LIBRUBY_A") : makefile_config("LIBRUBY")
-      ["-C", "link-arg=#{libruby}"]
+      args = []
+      args += ["-l", makefile_config("LIBRUBYARG_SHARED").chomp(".lib")]
+      args += split_flags("LIBS").flat_map { |lib| ["-l", lib.chomp(".lib")] }
+      args += split_flags("LOCAL_LIBS").flat_map { |lib| ["-l", lib.chomp(".lib")] }
+      args
     end
 
     def libruby_args(dest_dir)

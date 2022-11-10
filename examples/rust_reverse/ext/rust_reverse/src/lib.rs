@@ -6,6 +6,11 @@ use std::os::raw::c_long;
 // Rust, you should probably use https://github.com/matsadler/magnus instead.
 
 unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
+    if rb_sys::NIL_P(input) {
+        // Just here to test out linking globals on msvc
+        rb_raise(rb_eTypeError, "cannot be nil\0".as_ptr() as *const i8);
+    }
+
     let ruby_string = CStr::from_ptr(rb_string_value_cstr(&mut input))
         .to_str()
         .unwrap();

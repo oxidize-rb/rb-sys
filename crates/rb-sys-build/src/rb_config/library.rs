@@ -4,7 +4,7 @@ pub enum LibraryKind {
     Framework,
     Dylib,
     Static,
-    Native,
+    None,
 }
 
 /// Represents a search path that can be linked with Cargo.
@@ -12,24 +12,11 @@ pub enum LibraryKind {
 pub struct Library {
     pub kind: LibraryKind,
     pub name: String,
-    pub rename: Option<String>,
-    pub modifiers: Vec<String>,
 }
 
 impl Library {
-    /// Creates a new library.
-    pub fn new(
-        name: String,
-        kind: LibraryKind,
-        rename: Option<String>,
-        modifiers: Vec<String>,
-    ) -> Self {
-        Self {
-            kind,
-            name,
-            rename,
-            modifiers,
-        }
+    pub fn is_static(&self) -> bool {
+        self.kind == LibraryKind::Static
     }
 }
 
@@ -39,53 +26,107 @@ impl From<&str> for LibraryKind {
             "framework" => LibraryKind::Framework,
             "dylib" => LibraryKind::Dylib,
             "static" => LibraryKind::Static,
-            "native" => LibraryKind::Native,
-            _ => panic!("Unknown lib kind: {}", s),
+            _ => LibraryKind::None,
         }
     }
 }
 
 impl From<&str> for Library {
     fn from(s: &str) -> Self {
-        let parts: Vec<_> = s.split('=').map(|s| s.to_owned()).collect();
+        let parts: Vec<_> = s.splitn(2, '=').collect();
 
         match parts.len() {
-            1 => Library {
-                kind: LibraryKind::Native,
-                name: parts.first().expect("lib name is empty").to_owned(),
-                rename: None,
-                modifiers: vec![],
-            },
-            2 => Library {
-                kind: parts.first().expect("no kind for lib").as_str().into(),
-                name: parts.last().expect("lib name is empty").to_owned(),
-                rename: None,
-                modifiers: vec![],
-            },
+            1 => (LibraryKind::None, parts[0]).into(),
+            2 => (parts[0], parts[1]).into(),
             _ => panic!("Invalid library specification: {}", s),
+        }
+    }
+}
+
+impl From<String> for Library {
+    fn from(s: String) -> Self {
+        s.as_str().into()
+    }
+}
+
+fn sanitize_library_name(name: &str) -> &str {
+    name.trim_end_matches(".lib").trim_start_matches("-l")
+}
+
+impl<K, L> From<(K, L)> for Library
+where
+    K: Into<LibraryKind>,
+    L: Into<String>,
+{
+    fn from((kind, name): (K, L)) -> Self {
+        Self {
+            kind: kind.into(),
+            name: sanitize_library_name(&name.into()).into(),
         }
     }
 }
 
 impl std::fmt::Display for Library {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let modifiers = if self.modifiers.is_empty() {
-            String::new()
-        } else {
-            format!(":{}", self.modifiers.join(","))
-        };
-
-        let rename = if let Some(rename) = &self.rename {
-            format!("{}:", rename)
-        } else {
-            String::new()
-        };
-
         match self.kind {
             LibraryKind::Framework => write!(f, "framework={}", self.name),
-            LibraryKind::Dylib => write!(f, "dylib{}={}{}", modifiers, rename, self.name),
-            LibraryKind::Static => write!(f, "static{}={}{}", modifiers, rename, self.name),
-            LibraryKind::Native => write!(f, "{}{}", rename, self.name),
+            LibraryKind::Dylib => write!(f, "dylib={}", self.name),
+            LibraryKind::Static => write!(f, "static={}", self.name),
+            LibraryKind::None => write!(f, "{}", self.name),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_trim_leading_link_flag() {
+        let result: Library = "-lfoo".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_trim_trailing_lib_extension() {
+        let result: Library = "foo.lib".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_trim_leading_link_flag_and_trailing_lib_extension() {
+        let result: Library = "-lfoo.lib".to_string().into();
+
+        assert_eq!(result.name, "foo");
+    }
+
+    #[test]
+    fn test_display_framework() {
+        let result: Library = "framework=foo".to_string().into();
+
+        assert_eq!(result.to_string(), "framework=foo");
+    }
+
+    #[test]
+    fn test_display_dylib() {
+        let result: Library = "dylib=foo".to_string().into();
+
+        assert_eq!(result.to_string(), "dylib=foo");
+    }
+
+    #[test]
+    fn test_display_static() {
+        let result: Library = "static=-lfoo".to_string().into();
+
+        assert_eq!(result.to_string(), "static=foo");
+    }
+
+    #[test]
+    fn test_display_none() {
+        let result: Library = "foo".to_string().into();
+
+        assert_eq!(result.to_string(), "foo");
     }
 }

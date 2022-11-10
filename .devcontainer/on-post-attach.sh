@@ -2,10 +2,10 @@
 
 set -ex
 
-# shellcheck disable=SC1091
-[[ -f /etc/rubybashrc ]] && source /etc/rubybashrc
+echo "source /usr/local/share/chruby/chruby.sh" >> "$HOME/.zshrc"
+echo "chruby 3.1" >> "$HOME/.zshrc"
+echo "source /usr/local/share/chruby/chruby.sh" >> "$HOME/.bashrc"
+echo "chruby 3.1" >> "$HOME/.bashrc"
 
-bundle install --jobs 3
-cargo update --dry-run
 rustup component add rustfmt
 rustup component add clippy

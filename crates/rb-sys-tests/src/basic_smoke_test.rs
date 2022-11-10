@@ -13,12 +13,14 @@ fn basic_smoke_test() {
     unsafe {
         let rb_string_one = rb_utf8_str_new_cstr(str);
         let mut rb_string_two = rb_str_cat(rb_string_one, world, 6);
-        let c_string = rb_string_value_cstr(&mut rb_string_two);
+        let result = rstring_to_string!(rb_string_two);
 
-        let result_str = std::ffi::CStr::from_ptr(c_string)
-            .to_string_lossy()
-            .into_owned();
-
-        assert_eq!(result_str, "hello world");
+        assert_eq!(result, "hello world");
     }
+}
+
+#[test]
+fn test_global_variables_are_properly_linked() {
+    unsafe { assert!(!rb_sys::rb_eArgError != 0) }
+    unsafe { assert!(!rb_sys::rb_eTypeError != 0) }
 }

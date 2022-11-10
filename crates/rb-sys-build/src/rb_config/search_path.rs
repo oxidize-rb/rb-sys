@@ -24,18 +24,25 @@ impl From<&str> for SearchPathKind {
 
 impl From<&str> for SearchPath {
     fn from(s: &str) -> Self {
-        let parts: Vec<_> = s.split('=').map(|s| s.to_owned()).collect();
+        let parts: Vec<_> = s.split('=').collect();
 
         match parts.len() {
-            1 => Self {
-                kind: SearchPathKind::Native,
-                name: parts.first().expect("search path is empty").to_owned(),
-            },
-            2 => Self {
-                kind: parts.first().expect("no kind for lib").as_str().into(),
-                name: parts.last().expect("search path is empty").to_owned(),
-            },
+            1 => (SearchPathKind::Native, parts[0]).into(),
+            2 => (parts[0], parts[1]).into(),
             _ => panic!("Invalid library specification: {}", s),
+        }
+    }
+}
+
+impl<K, T> From<(K, T)> for SearchPath
+where
+    K: Into<SearchPathKind>,
+    T: Into<String>,
+{
+    fn from((kind, name): (K, T)) -> Self {
+        Self {
+            kind: kind.into(),
+            name: name.into(),
         }
     }
 }

@@ -3,7 +3,7 @@ mod ruby_macros;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, utils::is_msvc, RbConfig};
+use rb_sys_build::{bindings, RbConfig};
 use std::fs;
 use version::Version;
 
@@ -29,7 +29,7 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    bindings::generate(&rbconfig);
+    bindings::generate(&rbconfig, is_ruby_static_enabled(&rbconfig));
     export_cargo_cfg(&mut rbconfig);
 
     if is_ruby_macros_enabled() {
@@ -70,20 +70,7 @@ fn debug_and_exit(rbconfig: &mut RbConfig) {
 
 fn link_libruby(rbconfig: &mut RbConfig) {
     if is_link_ruby_enabled() {
-        rbconfig.push_dldflags(&format!("-L{}", &rbconfig.get("libdir")));
-
-        if is_ruby_static_enabled(rbconfig) {
-            rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_STATIC"));
-        } else {
-            rbconfig.push_dldflags(&rbconfig.get("LIBRUBYARG_SHARED"));
-        }
-
-        // Setup rpath on unix to hardcode the ruby library path
-        if cfg!(unix) {
-            rbconfig.use_rpath();
-        } else if is_msvc() {
-            rbconfig.push_dldflags("/LINK");
-        }
+        rbconfig.link_ruby(is_ruby_static_enabled(rbconfig));
     }
 }
 

@@ -1,6 +1,5 @@
 use crate::utils::is_msvc;
 use crate::RbConfig;
-use linkify::{self, LinkFinder};
 use std::borrow::Cow;
 use std::env;
 use std::fs::File;
@@ -9,7 +8,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 /// Generate bindings for the Ruby using bindgen.
-pub fn generate(rbconfig: &RbConfig) {
+pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     let clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
@@ -54,7 +53,7 @@ pub fn generate(rbconfig: &RbConfig) {
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
-    write_bindings(bindings, "bindings-raw.rs");
+    write_bindings(bindings, "bindings-raw.rs", static_ruby, rbconfig);
     clean_docs();
     let _ = push_cargo_cfg_from_bindings();
 }
@@ -75,19 +74,8 @@ fn clean_docs() {
         if !line.contains("#[doc") {
             outfile.write_all(line.as_bytes()).unwrap();
         } else {
-            let finder = LinkFinder::new();
-            let mut outline = line.to_owned();
-            let links: Vec<_> = finder.links(&line).collect();
-
-            for link in links {
-                outline.replace_range(
-                    link.start()..link.end(),
-                    format!("<{}>", link.as_str()).as_str(),
-                );
-            }
-
-            // Remove anything cargo thinks is executable
-            outline = outline.replace('`', "");
+            let url_regex = regex::Regex::new(r#"https?://[^\s'"]+"#).unwrap();
+            let outline = url_regex.replace_all(&line, "<${0}>");
 
             outfile.write_all(outline.as_bytes()).unwrap();
         }
@@ -107,14 +95,41 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
 }
 
-fn write_bindings(builder: bindgen::Builder, path: &str) {
+fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbconfig: &RbConfig) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    builder
+    let mut code = builder
         .generate()
         .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
-        .write_to_file(out_path.join(path))
-        .unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
+        .to_string();
+
+    if is_msvc() {
+        code = qualify_symbols_for_msvc(&code, static_ruby, rbconfig);
+    }
+
+    let mut outfile = File::create(out_path.join(path)).expect("Couldn't create bindings file");
+    write!(outfile, "{}", code).unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
+}
+
+// This is needed because bindgen doesn't support the `__declspec(dllimport)` on
+// global variables. Without it, symbols are not found.
+// See https://stackoverflow.com/a/66182704/2057700
+fn qualify_symbols_for_msvc(code: &str, is_static: bool, rbconfig: &RbConfig) -> String {
+    let kind = if is_static { "static" } else { "dylib" };
+
+    let name = if is_static {
+        rbconfig.libruby_static_name()
+    } else {
+        rbconfig.libruby_so_name()
+    };
+
+    code.replace(
+        "extern \"C\" {",
+        &format!(
+            "#[link(name = \"{}\", kind = \"{}\")]\nextern \"C\" {{",
+            name, kind
+        ),
+    )
 }
 
 // The output is wrapped in a Result to allow matching on errors
