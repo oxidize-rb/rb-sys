@@ -27,7 +27,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### Available `rustc-cfg`
+## Available `rustc-cfg`
 
 Here is an example of the `rustc-cfg` flags that are set by this crate:
 
