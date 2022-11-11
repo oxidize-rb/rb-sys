@@ -54,40 +54,40 @@ impl RubyVersion {
         rustc_cfg!("ruby_{}_{}", self.major, self.minor);
         rustc_cfg!("ruby_{}_{}_{}", self.major, self.minor, self.teeny);
 
-        for v in COMPARABLE_RUBY_MINORS {
-            if self.major_minor() < v {
+        for v in &COMPARABLE_RUBY_MINORS {
+            if self.major_minor() < *v {
                 rustc_cfg!(r#"ruby_lt_{}_{}"#, v.0, v.1);
             }
-            if self.major_minor() <= v {
+            if self.major_minor() <= *v {
                 rustc_cfg!(r#"ruby_lte_{}_{}"#, v.0, v.1);
             }
-            if self.major_minor() == v {
+            if self.major_minor() == *v {
                 rustc_cfg!(r#"ruby_{}_{}"#, v.0, v.1);
                 rustc_cfg!(r#"ruby_eq_{}_{}"#, v.0, v.1);
             }
-            if self.major_minor() >= v {
+            if self.major_minor() >= *v {
                 rustc_cfg!(r#"ruby_gte_{}_{}"#, v.0, v.1);
             }
-            if self.major_minor() > v {
+            if self.major_minor() > *v {
                 rustc_cfg!(r#"ruby_gt_{}_{}"#, v.0, v.1);
             }
         }
 
-        for v in COMPARABLE_RUBY_MAJORS {
-            if self.major() < v {
+        for v in &COMPARABLE_RUBY_MAJORS {
+            if self.major() < *v {
                 rustc_cfg!(r#"ruby_lt_{}"#, v);
             }
-            if self.major() <= v {
+            if self.major() <= *v {
                 rustc_cfg!(r#"ruby_lte_{}"#, v);
             }
-            if self.major() == v {
+            if self.major() == *v {
                 rustc_cfg!(r#"ruby_{}"#, v);
                 rustc_cfg!(r#"ruby_eq_{}"#, v);
             }
-            if self.major() >= v {
+            if self.major() >= *v {
                 rustc_cfg!(r#"ruby_gte_{}"#, v);
             }
-            if self.major() > v {
+            if self.major() > *v {
                 rustc_cfg!(r#"ruby_gt_{}"#, v);
             }
         }
