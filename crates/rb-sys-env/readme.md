@@ -13,7 +13,7 @@ Helpers to integrate `rb-sys` into your high-level Ruby bindings library.
 Add this to your `Cargo.toml`:
 
 ```toml
-[dependencies]
+[build-dependencies]
 rb-sys-env = "0.1"
 ```
 
