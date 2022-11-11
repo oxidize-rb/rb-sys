@@ -39,8 +39,8 @@ impl RbEnv {
         keys.map(|k| k.replace('_', "-").to_lowercase()).collect()
     }
 
-    /// Tell Cargo to link to libruby.
-    pub fn link_ruby(self) -> Self {
+    /// Tell Cargo to link to libruby, even if `rb-sys` decided not to.
+    pub fn force_link_ruby(self) -> Self {
         let libdir = self.vars.get("LIBDIR").expect("DEP_RB_LIBDIR is not set");
         let lib = self.vars.get("LIB").expect("DEP_RB_LIB is not set");
 
@@ -88,6 +88,7 @@ impl RbEnv {
             println!("cargo:rerun-if-env-changed={}{}", ENV_PREFIX, key);
         }
 
+        println!("cargo:rerun-if-env-changed=RB_SYS_ENV_DEBUG");
         println!("cargo:rerun-if-env-changed=RUBY");
         println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     }
