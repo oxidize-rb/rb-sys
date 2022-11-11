@@ -161,7 +161,7 @@ fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
                 let name = val.name().to_lowercase();
                 let val = val.as_bool();
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
-                println!("cargo:defines_{}=\"{}\"", name, val);
+                println!("cargo:defines_{}={}", name, val);
             }
         }
 

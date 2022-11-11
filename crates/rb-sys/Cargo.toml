@@ -25,7 +25,6 @@ ruby-static = []
 global-allocator = []
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
-debug-build = []
 
 [lib]
 doctest = false

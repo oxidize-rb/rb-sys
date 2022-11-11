@@ -237,9 +237,16 @@ impl RbConfig {
 
     /// Print to rb_config output for cargo
     pub fn print_cargo_args(&self) {
-        for arg in self.cargo_args() {
+        let cargo_args = self.cargo_args();
+
+        for arg in &cargo_args {
             println!("{}", arg);
         }
+
+        let encoded_cargo_args = cargo_args.join("\x1E");
+        let encoded_cargo_args = encoded_cargo_args.replace('\n', "\x1F");
+
+        println!("cargo:encoded_cargo_args={}", encoded_cargo_args);
     }
 
     /// Adds items to the rb_config based on a string from LDFLAGS/DLDFLAGS

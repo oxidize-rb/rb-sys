@@ -176,12 +176,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rb-sys-env"
+version = "0.1.0"
+
+[[package]]
 name = "rb-sys-tests"
 version = "0.9.38"
 dependencies = [
  "ctor",
  "rb-sys",
- "rb-sys-build",
+ "rb-sys-env",
 ]
 
 [[package]]

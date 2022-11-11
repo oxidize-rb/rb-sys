@@ -43,6 +43,7 @@ fn main() {
         enable_dynamic_lookup(&mut rbconfig);
     }
 
+    expose_cargo_features();
     rbconfig.print_cargo_args();
 
     if is_debug_build_enabled() {
@@ -64,7 +65,7 @@ fn debug_and_exit(rbconfig: &mut RbConfig) {
     dbg!(env);
 
     eprintln!("==========\n");
-    eprintln!("The \"debug-build\" feature for rb-sys is enabled, aborting.");
+    eprintln!("The \"RB_SYS_DEBUG_BUILD\" env var was set, aborting.");
     std::process::exit(1);
 }
 
@@ -149,6 +150,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 
     if is_ruby_static_enabled(rbconfig) {
         println!("cargo:lib={}", rbconfig.libruby_static_name());
+        println!("cargo:ruby_static=true");
     } else {
         println!("cargo:lib={}", rbconfig.libruby_so_name());
     }
@@ -166,5 +168,15 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     // See https://github.com/oxidize-rb/rb-sys/issues/88
     if cfg!(target_os = "macos") {
         rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");
+    }
+}
+
+fn expose_cargo_features() {
+    for (key, val) in std::env::vars() {
+        if !key.starts_with("CARGO_FEATURE_") {
+            continue;
+        }
+
+        println!("cargo:{}={}", key.to_lowercase(), val);
     }
 }

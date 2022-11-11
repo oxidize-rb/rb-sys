@@ -3,5 +3,6 @@ members = [
     "crates/rb-sys",
     "crates/rb-sys-tests",
     "crates/rb-sys-build",
+    "crates/rb-sys-env",
 ]
 exclude = ["examples/rust_reverse/ext/rust_reverse"]
