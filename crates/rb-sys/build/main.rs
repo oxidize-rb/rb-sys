@@ -21,6 +21,7 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
 fn main() {
     let mut rbconfig = RbConfig::current();
 
+    println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-env-changed=RUBY");
     println!("cargo:rerun-if-changed=wrapper.h");

@@ -155,6 +155,16 @@ impl RbConfig {
         self.get("ruby_version")
     }
 
+    /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
+    pub fn cppflags(&self) -> Vec<String> {
+        if let Some(cppflags) = self.get_optional("CPPFLAGS") {
+            let flags = self.subst_shell_variables(&cppflags);
+            shellsplit(&flags)
+        } else {
+            vec![]
+        }
+    }
+
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get(&self, key: &str) -> String {

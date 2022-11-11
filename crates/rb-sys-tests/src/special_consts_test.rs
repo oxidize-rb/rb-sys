@@ -33,7 +33,11 @@ fn test_flonum_p() {
     unsafe {
         let flonum = rb_float_new(0.0);
 
+        #[cfg(ruby_use_flonum)]
         assert!(FLONUM_P(flonum));
+        #[cfg(not(ruby_use_flonum))]
+        assert!(!FLONUM_P(flonum));
+
         assert!(!FLONUM_P(Qnil));
     }
 }

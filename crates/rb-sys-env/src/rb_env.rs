@@ -91,6 +91,7 @@ impl RbEnv {
         println!("cargo:rerun-if-changed=build.rs");
         println!("cargo:rerun-if-env-changed=RB_SYS_ENV_DEBUG");
         println!("cargo:rerun-if-env-changed=RUBY");
+        println!("cargo:rerun-if-env-changed=RUBY_ROOT");
         println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     }
 }
