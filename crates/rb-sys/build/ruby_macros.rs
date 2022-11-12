@@ -6,7 +6,6 @@ pub fn compile(rbconfig: &mut RbConfig) {
 
     use rb_sys_build::utils::shellsplit;
 
-    println!("cargo:rerun-if-changed=src/macros/ruby_macros.h");
     println!("cargo:rerun-if-changed=src/macros/ruby_macros.c");
 
     let mut build = cc::Build::new();

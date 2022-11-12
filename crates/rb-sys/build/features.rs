@@ -1,4 +1,4 @@
-use rb_sys_build::RbConfig;
+use rb_sys_build::{utils::is_mswin_or_mingw, RbConfig};
 
 use crate::version::Version;
 
@@ -19,7 +19,7 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
 }
 
 pub fn is_ruby_macros_enabled() -> bool {
-    if cfg!(windows) {
+    if is_mswin_or_mingw() {
         return false;
     }
 
@@ -41,8 +41,7 @@ pub fn is_debug_build_enabled() -> bool {
 
     println!("cargo:rerun-if-env-changed=RB_SYS_DEBUG_BUILD");
 
-    is_env_variable_defined("CARGO_FEATURE_DEBUG_BUILD")
-        || is_env_variable_defined("RB_SYS_DEBUG_BUILD")
+    is_env_variable_defined("RB_SYS_DEBUG_BUILD")
 }
 
 pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
@@ -64,20 +63,20 @@ pub fn is_link_ruby_enabled() -> bool {
 
     if is_no_link_ruby_enabled() {
         false
-    } else if cfg!(windows) {
+    } else if is_mswin_or_mingw() {
         true
     } else if is_gem_enabled() {
         if is_env_variable_defined("CARGO_FEATURE_LINK_RUBY") {
             let msg = "
                 The `gem` and `link-ruby` features are mutually exclusive on this
                 platform, since the libruby symbols will be available at runtime.
-                
+
                 If you for some reason want to dangerously link libruby for your gem
                 (*not recommended*), you can remove the `gem` feature and add this
                 to your `Cargo.toml`:
-                
-                [dependencies.rb-sys] 
-                features = [\"link-ruby\"] # Living dangerously! 
+
+                [dependencies.rb-sys]
+                features = [\"link-ruby\"] # Living dangerously!
             "
             .split('\n')
             .map(|line| line.trim())

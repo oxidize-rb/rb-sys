@@ -13,7 +13,7 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::utils::{is_msvc, shellsplit};
+use crate::utils::{is_msvc, is_mswin_or_mingw, shellsplit};
 
 use self::flags::Flags;
 
@@ -155,6 +155,16 @@ impl RbConfig {
         self.get("ruby_version")
     }
 
+    /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
+    pub fn cppflags(&self) -> Vec<String> {
+        if let Some(cppflags) = self.get_optional("CPPFLAGS") {
+            let flags = self.subst_shell_variables(&cppflags);
+            shellsplit(&flags)
+        } else {
+            vec![]
+        }
+    }
+
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get(&self, key: &str) -> String {
@@ -237,9 +247,16 @@ impl RbConfig {
 
     /// Print to rb_config output for cargo
     pub fn print_cargo_args(&self) {
-        for arg in self.cargo_args() {
+        let cargo_args = self.cargo_args();
+
+        for arg in &cargo_args {
             println!("{}", arg);
         }
+
+        let encoded_cargo_args = cargo_args.join("\x1E");
+        let encoded_cargo_args = encoded_cargo_args.replace('\n', "\x1F");
+
+        println!("cargo:encoded_cargo_args={}", encoded_cargo_args);
     }
 
     /// Adds items to the rb_config based on a string from LDFLAGS/DLDFLAGS
@@ -378,7 +395,7 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
 // Needed because Rust 1.51 does not support link-arg, and thus rpath
 // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
 fn append_ld_library_path(search_paths: Vec<&str>) {
-    let env_var_name = if cfg!(windows) {
+    let env_var_name = if is_mswin_or_mingw() {
         "PATH"
     } else if cfg!(target_os = "macos") {
         "DYLD_FALLBACK_LIBRARY_PATH"

@@ -9,11 +9,14 @@ use std::path::PathBuf;
 
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
-    let clang_args = vec![
+    let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
         "-fms-extensions".to_string(),
     ];
+
+    clang_args.extend(rbconfig.cflags.clone());
+    clang_args.extend(rbconfig.cppflags());
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 
@@ -161,7 +164,7 @@ fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
                 let name = val.name().to_lowercase();
                 let val = val.as_bool();
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
-                println!("cargo:defines_{}=\"{}\"", name, val);
+                println!("cargo:defines_{}={}", name, val);
             }
         }
 

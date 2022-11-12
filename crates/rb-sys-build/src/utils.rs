@@ -7,6 +7,15 @@ pub fn is_msvc() -> bool {
     }
 }
 
+/// Check if current platform is mswin or mingw.
+pub fn is_mswin_or_mingw() -> bool {
+    if let Ok(target) = std::env::var("TARGET") {
+        target.contains("msvc") || target.contains("pc-windows-gnu")
+    } else {
+        false
+    }
+}
+
 /// Splits shell words.
 pub fn shellsplit(s: &str) -> Vec<String> {
     match shell_words::split(s) {
