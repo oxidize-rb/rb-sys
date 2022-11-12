@@ -177,7 +177,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-env"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "rb-sys-tests"
