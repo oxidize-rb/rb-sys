@@ -13,7 +13,7 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::utils::{is_msvc, shellsplit};
+use crate::utils::{is_msvc, is_mswin_or_mingw, shellsplit};
 
 use self::flags::Flags;
 
@@ -395,7 +395,7 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
 // Needed because Rust 1.51 does not support link-arg, and thus rpath
 // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
 fn append_ld_library_path(search_paths: Vec<&str>) {
-    let env_var_name = if cfg!(windows) {
+    let env_var_name = if is_mswin_or_mingw() {
         "PATH"
     } else if cfg!(target_os = "macos") {
         "DYLD_FALLBACK_LIBRARY_PATH"
