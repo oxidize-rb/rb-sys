@@ -18,7 +18,8 @@ main() {
   sed -i 's:\*target/x86_64-unknown-linux-gnu/release/::' rustup-init.sha256
   sha256sum -c rustup-init.sha256
   chmod +x rustup-init
-  ./rustup-init --no-modify-path --default-toolchain "$RUSTUP_DEFAULT_TOOLCHAIN" --profile minimal -y
+  # Need rustfmt for bindgen doc parsing
+  ./rustup-init --no-modify-path --default-toolchain "$RUSTUP_DEFAULT_TOOLCHAIN" --profile minimal --component rustfmt -y
   rustup target add "$RUST_TARGET"
   chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
