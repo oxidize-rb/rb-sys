@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require "yaml"
+require "json"
 require_relative "./../gem/lib/rb_sys/version"
 
-DOCKERFILES = Dir["docker/Dockerfile.*"]
-DOCKERFILE_PLATFORMS = DOCKERFILES.map { |f| File.extname(f).delete(".") }
-DOCKERFILE_PLATFORM_PAIRS = DOCKERFILES.zip(DOCKERFILE_PLATFORMS)
+TOOLCHAINS = JSON.parse(File.read("data/toolchains.json"))["toolchains"]
+DOCKERFILE_PLATFORM_PAIRS = TOOLCHAINS.select { |p| p["supported"] }.map { |p| [p["dockerfile"], p["ruby-platform"]] }
+DOCKERFILES = DOCKERFILE_PLATFORM_PAIRS.map(&:first)
+DOCKERFILE_PLATFORMS = DOCKERFILE_PLATFORM_PAIRS.map(&:last)
 DOCKER = ENV.fetch("RBSYS_DOCKER", "docker")
 
 def run_gh_workflow(file_name)
@@ -62,6 +64,7 @@ namespace :docker do
       sh "docker push rbsys/rake-compiler-dock-mri-#{arch}:#{RbSys::VERSION}"
       sh "docker push rbsys/rcd:#{arch}"
       sh "docker push rbsys/#{arch}:#{RbSys::VERSION}"
+      sh "docker push rbsys/#{arch}:latest"
     end
   end
 
