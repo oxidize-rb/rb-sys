@@ -9,6 +9,8 @@ use std::path::PathBuf;
 
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
+    ensure_rustfmt_available();
+
     let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
@@ -61,6 +63,22 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     let _ = push_cargo_cfg_from_bindings();
 }
 
+// We require rustfmt in order to properly parse the generated bindings for
+// Ruby's DEFINES macros. We could potentially use syn to parse them, but this
+// is simpler for now. Open to PRs!
+fn ensure_rustfmt_available() {
+    let err_msg = "rustfmt is required to generate bindings";
+
+    let output = std::process::Command::new("rustfmt")
+        .arg("--version")
+        .output()
+        .expect(err_msg);
+
+    if !output.status.success() {
+        panic!("{}", err_msg);
+    }
+}
+
 fn clean_docs(rbconfig: &RbConfig) {
     let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
     let outpath = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
@@ -96,6 +114,7 @@ fn clean_docs(rbconfig: &RbConfig) {
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
+        .rustfmt_bindings(true)
         .rustified_enum("*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
