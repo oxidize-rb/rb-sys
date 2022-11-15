@@ -3,6 +3,13 @@
 require_relative "toolchain_info/data"
 
 module RbSys
+  # A class to get information about the Rust toolchains, and how they map to
+  # Ruby platforms.
+  #
+  # @example
+  #   RbSys::ToolchainInfo.new("x86_64-unknown-linux-gnu").ruby_platform # => "x86_64-linux"
+  #   RbSys::ToolchainInfo.new("x86_64-unknown-linux-gnu").supported? # => true
+  #   RbSys::ToolchainInfo.new("x86_64-unknown-linux-gnu")
   class ToolchainInfo
     attr_reader :platform, :gem_platform, :rust_target, :rake_compiler_dock_cc, :supported, :rake_compiler_dock_image, :docker_platform
 
