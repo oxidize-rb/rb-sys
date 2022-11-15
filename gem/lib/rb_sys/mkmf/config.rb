@@ -12,6 +12,10 @@ module RbSys
         @clean_after_install = rubygems_invoked?
       end
 
+      def cross_compiling?
+        RbConfig::CONFIG["CROSS_COMPILING"] == "yes"
+      end
+
       def method_missing(name, *args, &blk)
         @builder.send(name, *args, &blk)
       end
@@ -19,8 +23,6 @@ module RbSys
       def respond_to_missing?(name, include_private = false)
         @builder.respond_to?(name) || super
       end
-
-      private
 
       # Seems to be the only way to reliably know if we were invoked by Rubygems.
       # We want to know this so we can cleanup the target directory after an

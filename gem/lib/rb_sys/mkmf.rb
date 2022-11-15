@@ -124,7 +124,7 @@ module RbSys
 
         $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
-        \t$(Q) #{full_cargo_command}
+        \t#{full_cargo_command}
 
         $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
@@ -199,12 +199,8 @@ module RbSys
       MAKE
     end
 
-    def optional_rust_toolchain(builder)
+    def rust_toolchain_env(builder)
       <<~MAKE
-        #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", builder.force_install_rust_toolchain)}
-
-        # Only run if the we are told to explicitly install the Rust toolchain
-        #{if_neq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "false")}
         #{conditional_assign("RB_SYS_RUSTUP_PROFILE", "minimal")}
 
         # If the user passed true, we assume stable Rust. Otherwise, use what
@@ -228,6 +224,16 @@ module RbSys
         #{export_env("PATH", "$(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)")}
         #{export_env("RUSTUP_TOOLCHAIN", "$(RB_SYS_DEFAULT_TOOLCHAIN)")}
         #{export_env("CARGO", "$(CARGO_HOME)/bin/cargo")}
+      MAKE
+    end
+
+    def optional_rust_toolchain(builder)
+      <<~MAKE
+        #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", force_install_rust_toolchain?(builder))}
+
+        # Only run if the we are told to explicitly install the Rust toolchain
+        #{if_neq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "false")}
+        #{rust_toolchain_env(builder)}
 
         $(CARGO):
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
@@ -238,6 +244,13 @@ module RbSys
         $(RUSTLIB): $(CARGO)
         #{endif_stmt}
       MAKE
+    end
+
+    def force_install_rust_toolchain?(builder)
+      return builder.force_install_rust_toolchain if builder.force_install_rust_toolchain
+      return false unless builder.rubygems_invoked?
+
+      find_executable("xxcargo").nil?
     end
 
     def if_eq_stmt(a, b)
