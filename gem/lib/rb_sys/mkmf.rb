@@ -18,20 +18,22 @@ module RbSys
     #
     # @example Basic
     #   require 'mkmf'
-    # . require 'rb_sys/mkmf'
+    #   require 'rb_sys/mkmf'
     #
-    # . create_rust_makefile("my_extension") #=> Generate a Makefile in the current directory
+    #   create_rust_makefile("my_extension") #=> Generate a Makefile in the current directory
     #
     # @example Configure a custom build profile
     #   require 'mkmf'
-    # . require 'rb_sys/mkmf'
+    #   require 'rb_sys/mkmf'
     #
-    # . create_rust_makefile("my_extension") do |r|
-    # .   # All of these are optional
-    # .   r.env = { 'FOO' => 'bar' }
-    # .   r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
-    # .   r.features = %w[some_cargo_feature]
-    # . end
+    #   create_rust_makefile("my_extension") do |r|
+    #     # All of these are optional
+    #     r.env = { 'FOO' => 'bar' }
+    #     r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
+    #     r.features = %w[some_cargo_feature]
+    #     r.rustflags = %w[--cfg=foo]
+    #     r.target_dir = "some/target/dir"
+    #   end
     def create_rust_makefile(target, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
@@ -94,8 +96,8 @@ module RbSys
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
-        RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+        #{conditional_assign("TARGET_DIR", "$(RB_SYS_CARGO_BUILD_TARGET_DIR)")}
+        RUSTLIB = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
         CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
@@ -153,7 +155,7 @@ module RbSys
 
     def cargo_command(cargo_dir, builder)
       builder.ext_dir = cargo_dir
-      dest_path = File.join(Dir.pwd, "target")
+      dest_path = builder.target_dir || File.join(Dir.pwd, "target")
       args = ARGV.dup
       args.shift if args.first == "--"
       cargo_cmd = builder.cargo_command(dest_path, args)
@@ -181,8 +183,7 @@ module RbSys
       cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
-      target_dir = "target/#{builder.target}".chomp("/")
-      cargo_command.gsub!(%r{/#{target_dir}/[^/]+}, "/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)")
+      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(TARGET_DIR) ")
       cargo_command
     end
 

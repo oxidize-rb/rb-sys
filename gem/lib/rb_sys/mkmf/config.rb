@@ -4,7 +4,7 @@ module RbSys
   module Mkmf
     # Config that delegates to CargoBuilder if needded
     class Config
-      attr_accessor :force_install_rust_toolchain, :clean_after_install
+      attr_accessor :force_install_rust_toolchain, :clean_after_install, :target_dir
 
       def initialize(builder)
         @builder = builder
