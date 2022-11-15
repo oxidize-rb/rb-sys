@@ -248,9 +248,9 @@ module RbSys
 
     def force_install_rust_toolchain?(builder)
       return builder.force_install_rust_toolchain if builder.force_install_rust_toolchain
-      return false unless builder.rubygems_invoked?
+      return false unless builder.rubygems_invoked? && builder.auto_install_rust_toolchain
 
-      find_executable("xxcargo").nil?
+      find_executable("cargo").nil?
     end
 
     def if_eq_stmt(a, b)

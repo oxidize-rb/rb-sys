@@ -9,6 +9,7 @@ module RbSys
       def initialize(builder)
         @builder = builder
         @force_install_rust_toolchain = false
+        @auto_install_rust_toolchain = true
         @clean_after_install = rubygems_invoked?
       end
 

@@ -38,6 +38,9 @@ create_rust_makefile("rust_reverse") do |r|
 
   # Clean up the target/ dir after `gem install` to reduce bloat (optional)
   r.clean_after_install = false # default: true if invoked by rubygems
+
+  # Auto-install Rust toolchain if not present on "gem install" (optional)
+  r.auto_install_rust_toolchain = false # default: true if invoked by rubygems
 end
 ```
 
