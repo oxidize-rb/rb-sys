@@ -64,7 +64,7 @@ module RbSys
         #{conditional_assign("SOEXT_PREFIX", "lib", indent: 1)}
         #{endif_stmt}
 
-        #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
+        #{set_cargo_profile(builder)}
         #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
         #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
@@ -316,6 +316,12 @@ module RbSys
       else
         "export #{k} := #{v}"
       end
+    end
+
+    def set_cargo_profile(builder)
+      return assign_stmt("RB_SYS_CARGO_PROFILE", "release") if builder.rubygems_invoked?
+
+      conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)
     end
   end
 end
