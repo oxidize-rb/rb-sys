@@ -100,11 +100,13 @@ module RbSys
         RUSTLIBDIR = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        CLEANOBJS = $(RUSTLIBDIR)/.fingerprint $(RUSTLIBDIR)/incremental $(RUSTLIBDIR)/examples $(RUSTLIBDIR)/deps $(RUSTLIBDIR)/build $(RUSTLIBDIR)/.cargo-lock $(RUSTLIBDIR)/*.d $(RUSTLIBDIR)/*.rlib $(RB_SYS_BUILD_DIR)
+        CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(RUSTLIBDIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
+
+        .PHONY: gemclean
 
         #{if_neq_stmt("$(RB_SYS_VERBOSE)", "")}
         #{assign_stmt("Q", "$(0=@)", indent: 1)}
@@ -135,7 +137,10 @@ module RbSys
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
-        install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
+        gemclean:
+        \t-$(Q)$(RM_RF) $(CLEANOBJS) $(CLEANFILES) 2> /dev/null || true
+
+        install: #{builder.clean_after_install ? "install-so gemclean" : "install-so"}
 
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE
