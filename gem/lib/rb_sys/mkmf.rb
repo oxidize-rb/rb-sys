@@ -97,10 +97,11 @@ module RbSys
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
         #{conditional_assign("TARGET_DIR", "$(RB_SYS_CARGO_BUILD_TARGET_DIR)")}
-        RUSTLIB = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+        RUSTLIBDIR = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
+        RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
+        CLEANOBJS = $(RUSTLIBDIR)/.fingerprint $(RUSTLIBDIR)/incremental $(RUSTLIBDIR)/examples $(RUSTLIBDIR)/deps $(RUSTLIBDIR)/build $(RUSTLIBDIR)/.cargo-lock $(RUSTLIBDIR)/*.d $(RUSTLIBDIR)/*.rlib $(RB_SYS_BUILD_DIR)
+        DEFFILE = $(RUSTLIBDIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
@@ -114,9 +115,9 @@ module RbSys
 
         FORCE: ;
 
-        $(TARGET_DIR):
+        $(RUSTLIBDIR):
         \t$(ECHO) creating target directory \\($(@)\\)
-        \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
+        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
 
         #{deffile_definition}
 
@@ -193,7 +194,7 @@ module RbSys
       return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
 
       @deffile_definition ||= <<~MAKE
-        $(DEFFILE): $(TARGET_DIR)
+        $(DEFFILE): $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
       MAKE

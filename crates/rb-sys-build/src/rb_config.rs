@@ -132,10 +132,8 @@ impl RbConfig {
     /// Get the name for libruby-static (i.e. `ruby.3.1-static`).
     pub fn libruby_static_name(&self) -> String {
         self.get("LIBRUBY_A")
-            .strip_prefix("lib")
-            .unwrap()
-            .strip_suffix(".a")
-            .unwrap()
+            .trim_start_matches("lib")
+            .trim_end_matches(".a")
             .to_string()
     }
 
