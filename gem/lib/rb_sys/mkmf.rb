@@ -194,7 +194,7 @@ module RbSys
       return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
 
       @deffile_definition ||= <<~MAKE
-        $(DEFFILE): $(TARGET_DIR)
+        $(DEFFILE): $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
       MAKE
