@@ -93,10 +93,11 @@ jobs:
 
       - name: 💨 Smoke test
         shell: bash
+        env:
+          SKIP_GEM_SIGNING_FOR_LOCAL_INSTALL_ONLY: "true"
         run: |
           set -ex
-          gem update --system > /dev/null
-          export RUBYOPT="-I$PWD/gem/lib"
+          pushd gem && bundle exec rake install && popd
           cd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose

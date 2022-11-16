@@ -24,7 +24,9 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Security
-  spec.cert_chain = ["certs/ianks.pem"]
-  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
-  spec.metadata = {"rubygems_mfa_required" => "true"}
+  unless ENV["SKIP_GEM_SIGNING_FOR_LOCAL_INSTALL_ONLY"] == "true"
+    spec.cert_chain = ["certs/ianks.pem"]
+    spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
+    spec.metadata = {"rubygems_mfa_required" => "true"}
+  end
 end
