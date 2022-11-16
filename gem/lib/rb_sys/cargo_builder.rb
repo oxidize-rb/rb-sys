@@ -1,4 +1,5 @@
 module RbSys
+  # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
   class CargoBuilder < Gem::Ext::Builder
     attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags
 

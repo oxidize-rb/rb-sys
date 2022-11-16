@@ -18,20 +18,22 @@ module RbSys
     #
     # @example Basic
     #   require 'mkmf'
-    # . require 'rb_sys/mkmf'
+    #   require 'rb_sys/mkmf'
     #
-    # . create_rust_makefile("my_extension") #=> Generate a Makefile in the current directory
+    #   create_rust_makefile("my_extension") #=> Generate a Makefile in the current directory
     #
     # @example Configure a custom build profile
     #   require 'mkmf'
-    # . require 'rb_sys/mkmf'
+    #   require 'rb_sys/mkmf'
     #
-    # . create_rust_makefile("my_extension") do |r|
-    # .   # All of these are optional
-    # .   r.env = { 'FOO' => 'bar' }
-    # .   r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
-    # .   r.features = %w[some_cargo_feature]
-    # . end
+    #   create_rust_makefile("my_extension") do |r|
+    #     # All of these are optional
+    #     r.env = { 'FOO' => 'bar' }
+    #     r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
+    #     r.features = %w[some_cargo_feature]
+    #     r.rustflags = %w[--cfg=foo]
+    #     r.target_dir = "some/target/dir"
+    #   end
     def create_rust_makefile(target, &blk)
       if target.include?("/")
         target_prefix, target = File.split(target)
@@ -94,8 +96,8 @@ module RbSys
         RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        TARGET_DIR = #{Dir.pwd}/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
-        RUSTLIB = $(TARGET_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+        #{conditional_assign("TARGET_DIR", "$(RB_SYS_CARGO_BUILD_TARGET_DIR)")}
+        RUSTLIB = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
         CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
         DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
@@ -122,7 +124,7 @@ module RbSys
 
         $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
-        \t$(Q) #{full_cargo_command}
+        \t#{full_cargo_command}
 
         $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
@@ -153,7 +155,7 @@ module RbSys
 
     def cargo_command(cargo_dir, builder)
       builder.ext_dir = cargo_dir
-      dest_path = File.join(Dir.pwd, "target")
+      dest_path = builder.target_dir || File.join(Dir.pwd, "target")
       args = ARGV.dup
       args.shift if args.first == "--"
       cargo_cmd = builder.cargo_command(dest_path, args)
@@ -181,8 +183,7 @@ module RbSys
       cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
-      target_dir = "target/#{builder.target}".chomp("/")
-      cargo_command.gsub!(%r{/#{target_dir}/[^/]+}, "/$(RB_SYS_CARGO_BUILD_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)")
+      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(TARGET_DIR) ")
       cargo_command
     end
 
@@ -198,12 +199,8 @@ module RbSys
       MAKE
     end
 
-    def optional_rust_toolchain(builder)
+    def rust_toolchain_env(builder)
       <<~MAKE
-        #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", builder.force_install_rust_toolchain)}
-
-        # Only run if the we are told to explicitly install the Rust toolchain
-        #{if_neq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "false")}
         #{conditional_assign("RB_SYS_RUSTUP_PROFILE", "minimal")}
 
         # If the user passed true, we assume stable Rust. Otherwise, use what
@@ -227,6 +224,16 @@ module RbSys
         #{export_env("PATH", "$(CARGO_HOME)/bin:$(RUSTUP_HOME)/bin:$(PATH)")}
         #{export_env("RUSTUP_TOOLCHAIN", "$(RB_SYS_DEFAULT_TOOLCHAIN)")}
         #{export_env("CARGO", "$(CARGO_HOME)/bin/cargo")}
+      MAKE
+    end
+
+    def optional_rust_toolchain(builder)
+      <<~MAKE
+        #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", force_install_rust_toolchain?(builder))}
+
+        # Only run if the we are told to explicitly install the Rust toolchain
+        #{if_neq_stmt("$(RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN)", "false")}
+        #{rust_toolchain_env(builder)}
 
         $(CARGO):
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
@@ -237,6 +244,13 @@ module RbSys
         $(RUSTLIB): $(CARGO)
         #{endif_stmt}
       MAKE
+    end
+
+    def force_install_rust_toolchain?(builder)
+      return builder.force_install_rust_toolchain if builder.force_install_rust_toolchain
+      return false unless builder.rubygems_invoked? && builder.auto_install_rust_toolchain
+
+      find_executable("cargo").nil?
     end
 
     def if_eq_stmt(a, b)
