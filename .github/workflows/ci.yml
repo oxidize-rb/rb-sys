@@ -89,6 +89,7 @@ jobs:
         run: cargo clippy
 
       - name: 📃 Run cargo fmt
+        if: matrix.sys.rust_toolchain == 'stable'
         run: cargo fmt --check
 
       - name: 🚓 Run Standard.rb
