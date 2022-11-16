@@ -100,8 +100,8 @@ module RbSys
         RUSTLIBDIR = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        CLEANOBJS = $(TARGET_DIR)/.fingerprint $(TARGET_DIR)/incremental $(TARGET_DIR)/examples $(TARGET_DIR)/deps $(TARGET_DIR)/build $(TARGET_DIR)/.cargo-lock $(TARGET_DIR)/*.d $(TARGET_DIR)/*.rlib $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(TARGET_DIR)/$(TARGET)-$(arch).def
+        CLEANOBJS = $(RUSTLIBDIR)/.fingerprint $(RUSTLIBDIR)/incremental $(RUSTLIBDIR)/examples $(RUSTLIBDIR)/deps $(RUSTLIBDIR)/build $(RUSTLIBDIR)/.cargo-lock $(RUSTLIBDIR)/*.d $(RUSTLIBDIR)/*.rlib $(RB_SYS_BUILD_DIR)
+        DEFFILE = $(RUSTLIBDIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
