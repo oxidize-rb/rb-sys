@@ -64,7 +64,7 @@ module RbSys
         #{conditional_assign("SOEXT_PREFIX", "lib", indent: 1)}
         #{endif_stmt}
 
-        #{conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)}
+        #{set_cargo_profile(builder)}
         #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
         #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
@@ -84,27 +84,29 @@ module RbSys
         #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
+        #{conditional_assign("RB_SYS_CARGO_TARGET_DIR", "target")}
         #{if_neq_stmt("$(CARGO_BUILD_TARGET)", "")}
-        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)", indent: 1)}
+        #{assign_stmt("RB_SYS_FULL_TARGET_DIR", "$(RB_SYS_CARGO_TARGET_DIR)/$(CARGO_BUILD_TARGET)", indent: 1)}
         #{else_stmt}
-        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target", indent: 1)}
+        #{assign_stmt("RB_SYS_FULL_TARGET_DIR", "$(RB_SYS_CARGO_TARGET_DIR)", indent: 1)}
         #{endif_stmt}
 
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
+        RUBYARCHDIR = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        #{conditional_assign("TARGET_DIR", "$(RB_SYS_CARGO_BUILD_TARGET_DIR)")}
-        RUSTLIBDIR = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
+        RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
-        CLEANOBJS = $(RUSTLIBDIR)/.fingerprint $(RUSTLIBDIR)/incremental $(RUSTLIBDIR)/examples $(RUSTLIBDIR)/deps $(RUSTLIBDIR)/build $(RUSTLIBDIR)/.cargo-lock $(RUSTLIBDIR)/*.d $(RUSTLIBDIR)/*.rlib $(RB_SYS_BUILD_DIR)
+        CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(RUSTLIBDIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
+
+        .PHONY: gemclean
 
         #{if_neq_stmt("$(RB_SYS_VERBOSE)", "")}
         #{assign_stmt("Q", "$(0=@)", indent: 1)}
@@ -135,7 +137,10 @@ module RbSys
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
-        install: #{builder.clean_after_install ? "install-so realclean" : "install-so"}
+        gemclean:
+        \t-$(Q)$(RM_RF) $(CLEANOBJS) $(CLEANFILES) 2> /dev/null || true
+
+        install: #{builder.clean_after_install ? "install-so gemclean" : "install-so"}
 
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE
@@ -184,7 +189,7 @@ module RbSys
       cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
-      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(TARGET_DIR) ")
+      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(RB_SYS_CARGO_TARGET_DIR) ")
       cargo_command
     end
 
@@ -238,9 +243,10 @@ module RbSys
 
         $(CARGO):
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
-        \tcurl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
-        \trustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
-        \trustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
+        \t$(Q) curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
+        \t$(Q) rustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
+        \t$(Q) rustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
+        \t$(Q) rustup component add rustfmt
 
         $(RUSTLIB): $(CARGO)
         #{endif_stmt}
@@ -310,6 +316,12 @@ module RbSys
       else
         "export #{k} := #{v}"
       end
+    end
+
+    def set_cargo_profile(builder)
+      return assign_stmt("RB_SYS_CARGO_PROFILE", "release") if builder.rubygems_invoked?
+
+      conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)
     end
   end
 end

@@ -1,7 +1,8 @@
 module RbSys
   # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :profile, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags
+    attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags
+    attr_writer :profile
 
     def initialize(spec)
       require "rubygems/command"
@@ -17,6 +18,12 @@ module RbSys
       @dry_run = true
       @ext_dir = nil
       @extra_rustflags = []
+    end
+
+    def profile
+      return :release if rubygems_invoked?
+
+      @profile
     end
 
     def build(_extension, dest_path, results, args = [], lib_dir = nil, cargo_dir = Dir.pwd)
@@ -322,6 +329,10 @@ module RbSys
       when :dev then "debug"
       else raise "unknown target directory for profile: #{profile}"
       end
+    end
+
+    def rubygems_invoked?
+      ENV.key?("SOURCE_DATE_EPOCH")
     end
 
     # Error raised when no cdylib artifact was created
