@@ -92,6 +92,7 @@ jobs:
         run: cargo fmt --check
 
       - name: 🚓 Run Standard.rb
+        if: matrix.ruby_version == '3.1'
         run: bundle exec standardrb --format github
 
   build_and_test_static:
