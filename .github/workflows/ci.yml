@@ -8,24 +8,6 @@ on:
   pull_request: {}
 
 jobs:
-  lint:
-    name: 💅 Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
-        with:
-          ruby-version: "3.1"
-          rustup-toolchain: "stable"
-          bundler-cache: true
-          cargo-cache: true
-      - name: ✂️ Run clippy
-        run: cargo clippy
-      - name: 📃 Run cargo fmt
-        run: cargo fmt --check
-      - name: 🚓 Run Standard.rb
-        run: bundle exec standardrb --format github
-
   build_and_test:
     name: 🧪 Test
     strategy:
@@ -59,21 +41,21 @@ jobs:
           bundler-cache: true
           cargo-cache: true
 
-      - name: Debug makefile
-        env:
-          BUNDLE_GEM__TEST: "rpec"
-          BUNDLE_GEM__CI: "github"
-          BUNDLE_GEM__MIT: "true"
-          BUNDLE_GEM__COC: "true"
-          BUNDLE_GEM__CHANGELOG: "true"
-          BUNDLE_GEM__LINTER: "standard"
-        run: |
-          mkdir tmp/
-          cd tmp/
-          bundle gem --ext testing
-          cd testing/ext/testing
-          ruby extconf.rb
-          cat Makefile
+      # - name: Debug makefile
+      #   env:
+      #     BUNDLE_GEM__TEST: "rpec"
+      #     BUNDLE_GEM__CI: "github"
+      #     BUNDLE_GEM__MIT: "true"
+      #     BUNDLE_GEM__COC: "true"
+      #     BUNDLE_GEM__CHANGELOG: "true"
+      #     BUNDLE_GEM__LINTER: "standard"
+      #   run: |
+      #     mkdir tmp/
+      #     cd tmp/
+      #     bundle gem --ext testing
+      #     cd testing/ext/testing
+      #     ruby extconf.rb
+      #     cat Makefile
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
@@ -93,15 +75,23 @@ jobs:
 
       - name: 💨 Smoke test
         shell: bash
-        env:
-          SKIP_GEM_SIGNING_FOR_LOCAL_INSTALL_ONLY: "true"
         run: |
           set -ex
-          pushd gem && bundle exec rake install && popd
+          gem update --system > /dev/null
+          export RUBYOPT="-I$PWD/gem/lib"
           cd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
+
+      - name: ✂️ Run clippy
+        run: cargo clippy
+
+      - name: 📃 Run cargo fmt
+        run: cargo fmt --check
+
+      - name: 🚓 Run Standard.rb
+        run: bundle exec standardrb --format github
 
   build_and_test_static:
     name: 🔘 Static
