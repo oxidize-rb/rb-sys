@@ -84,20 +84,20 @@ module RbSys
         #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
+        #{conditional_assign("RB_SYS_CARGO_TARGET_DIR", "target")}
         #{if_neq_stmt("$(CARGO_BUILD_TARGET)", "")}
-        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target/$(CARGO_BUILD_TARGET)", indent: 1)}
+        #{assign_stmt("RB_SYS_FULL_TARGET_DIR", "$(RB_SYS_CARGO_TARGET_DIR)/$(CARGO_BUILD_TARGET)", indent: 1)}
         #{else_stmt}
-        #{assign_stmt("RB_SYS_CARGO_BUILD_TARGET_DIR", "target", indent: 1)}
+        #{assign_stmt("RB_SYS_FULL_TARGET_DIR", "$(RB_SYS_CARGO_TARGET_DIR)", indent: 1)}
         #{endif_stmt}
 
         target_prefix = #{target_prefix}
         TARGET_NAME = #{target[/\A\w+/]}
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
-        RUBYARCHDIR   = $(sitearchdir)$(target_prefix)
+        RUBYARCHDIR = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
-        #{conditional_assign("TARGET_DIR", "$(RB_SYS_CARGO_BUILD_TARGET_DIR)")}
-        RUSTLIBDIR = $(TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
+        RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
@@ -189,7 +189,7 @@ module RbSys
       cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
-      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(TARGET_DIR) ")
+      cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(RB_SYS_CARGO_TARGET_DIR) ")
       cargo_command
     end
 
