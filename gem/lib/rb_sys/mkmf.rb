@@ -115,9 +115,9 @@ module RbSys
 
         FORCE: ;
 
-        $(TARGET_DIR):
+        $(RUSTLIBDIR):
         \t$(ECHO) creating target directory \\($(@)\\)
-        \t$(Q) $(MAKEDIRS) $(TARGET_DIR)
+        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
 
         #{deffile_definition}
 
