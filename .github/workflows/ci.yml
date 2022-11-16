@@ -40,7 +40,6 @@ jobs:
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true
           cargo-cache: true
-          cargo-cache-clean: true
 
       # - name: Debug makefile
       #   env:
