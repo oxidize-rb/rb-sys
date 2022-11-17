@@ -101,7 +101,7 @@ module RbSys
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(RB_SYS_FULL_TARGET_DIR)/$(TARGET)-$(arch).def
+        DEFFILE = $(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
@@ -201,7 +201,6 @@ module RbSys
       @deffile_definition ||= <<~MAKE
         $(DEFFILE): $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
-        \t$(Q) $(MAKEDIRS) $(RB_SYS_FULL_TARGET_DIR)
         \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
       MAKE
     end

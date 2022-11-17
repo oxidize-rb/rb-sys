@@ -249,13 +249,12 @@ module RbSys
       end
     end
 
-    def write_deffile(dest_path)
-      dest_dir = File.dirname(final_extension_path(dest_path))
-      FileUtils.mkdir_p(dest_dir)
-      deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
-      export_prefix = makefile_config("EXPORT_PREFIX") || ""
+    def write_deffile(_dest_path)
+      deffile_path = "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def"
 
       unless dry_run
+        export_prefix = makefile_config("EXPORT_PREFIX") || ""
+
         File.open(deffile_path, "w") do |f|
           f.puts "EXPORTS"
           f.puts "#{export_prefix.strip}Init_#{spec.name}"
