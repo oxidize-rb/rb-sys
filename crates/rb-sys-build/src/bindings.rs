@@ -59,7 +59,7 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     };
 
     write_bindings(bindings, "bindings-raw.rs", static_ruby, rbconfig);
-    clean_docs(&rbconfig);
+    clean_docs(rbconfig);
     let _ = push_cargo_cfg_from_bindings();
 }
 
@@ -83,7 +83,7 @@ fn clean_docs(rbconfig: &RbConfig) {
     let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
     let outpath = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
 
-    if let Some(_) = rbconfig.get_optional("CROSS_COMPILING") {
+    if rbconfig.get_optional("CROSS_COMPILING").is_some() {
         std::fs::copy(path, outpath).expect("to copy bindings-raw.rs to bindings.rs");
         return;
     }

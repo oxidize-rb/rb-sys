@@ -10,7 +10,7 @@ module RbSys
 
       @spec = spec
       @runner = self.class.method(:run)
-      @profile = ENV.fetch("RB_SYS_CARGO_BUILD_PROFILE", :release).to_sym
+      @profile = ENV.fetch("RB_SYS_CARGO_PROFILE", :release).to_sym
       @env = {}
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
