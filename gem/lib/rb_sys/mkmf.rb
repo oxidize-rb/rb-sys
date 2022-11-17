@@ -101,7 +101,7 @@ module RbSys
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(TARGET)-$(arch).def
+        DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
 
         #{base_makefile(srcdir)}
@@ -116,10 +116,6 @@ module RbSys
         #{export_env("RUSTFLAGS", "$(RB_SYS_GLOBAL_RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS) $(RUSTFLAGS)")}
 
         FORCE: ;
-
-        $(RUSTLIBDIR):
-        \t$(ECHO) creating target directory \\($(@)\\)
-        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
 
         #{deffile_definition}
 
@@ -199,9 +195,11 @@ module RbSys
       return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
 
       @deffile_definition ||= <<~MAKE
-        $(DEFFILE): $(RUSTLIBDIR)
+        $(DEFFILE):
+        \t$(ECHO) creating target directory \\($(@)\\)
+        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
-        \t$(Q) ($(COPY) $(srcdir)/$(TARGET).def $@ 2> /dev/null) || (echo EXPORTS && echo $(TARGET_ENTRY)) > $@
+        \t$(ECHO) "EXPORTS\\n$(TARGET_ENTRY)" > $@
       MAKE
     end
 
