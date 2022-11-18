@@ -199,7 +199,8 @@ module RbSys
         \t$(ECHO) creating target directory \\($(@)\\)
         \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
-        \t$(ECHO) "EXPORTS\\n$(TARGET_ENTRY)" > $@
+        \t$(ECHO) EXPORTS" > $@
+        \t$(ECHO) $(TARGET_ENTRY)" > $@
       MAKE
     end
 
