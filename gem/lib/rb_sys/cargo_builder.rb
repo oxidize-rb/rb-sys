@@ -10,7 +10,7 @@ module RbSys
 
       @spec = spec
       @runner = self.class.method(:run)
-      @profile = ENV.fetch("RB_SYS_CARGO_BUILD_PROFILE", :release).to_sym
+      @profile = ENV.fetch("RB_SYS_CARGO_PROFILE", :release).to_sym
       @env = {}
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
@@ -250,12 +250,12 @@ module RbSys
     end
 
     def write_deffile(dest_path)
-      dest_dir = File.dirname(final_extension_path(dest_path))
-      FileUtils.mkdir_p(dest_dir)
-      deffile_path = File.join(dest_dir, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
-      export_prefix = makefile_config("EXPORT_PREFIX") || ""
+      deffile_path = File.join(dest_path, "#{spec.name}-#{RbConfig::CONFIG["arch"]}.def")
 
       unless dry_run
+        FileUtils.mkdir_p(dest_dir)
+        export_prefix = makefile_config("EXPORT_PREFIX") || ""
+
         File.open(deffile_path, "w") do |f|
           f.puts "EXPORTS"
           f.puts "#{export_prefix.strip}Init_#{spec.name}"
