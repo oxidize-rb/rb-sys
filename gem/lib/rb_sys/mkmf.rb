@@ -200,7 +200,7 @@ module RbSys
         \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
         \t$(ECHO) EXPORTS > $@
-        \t$(ECHO) $(TARGET_ENTRY) > $@
+        \t$(ECHO) $(TARGET_ENTRY) >> $@
       MAKE
     end
 
