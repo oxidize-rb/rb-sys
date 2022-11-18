@@ -196,7 +196,7 @@ module RbSys
 
       @deffile_definition ||= <<~MAKE
         $(DEFFILE):
-        \t$(ECHO) creating target directory \\($(@)\\)
+        \t$(ECHO) creating target directory \\($(RUSTLIBDIR)\\)
         \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
         \t$(ECHO) generating $(@)
         \t$(ECHO) EXPORTS > $@
