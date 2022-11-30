@@ -99,6 +99,18 @@ jobs:
         if: matrix.ruby_version == '3.1'
         run: bundle exec standardrb --format github
 
+      - name: "🧱 Generate bindings"
+        if: env.ACTIONS_STEP_DEBUG == 'true'
+        run: "bundle exec rake bindings:generate"
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          path: |
+            /tmp/bindings/**/*
+            /tmp/debug/**/*
+
   build_and_test_static:
     name: 🔘 Static
     strategy:
@@ -147,14 +159,3 @@ jobs:
 
       - name: 🧪 Run tests
         run: bundle exec rake test
-
-      - name: "🧱 Generate bindings"
-        run: "bundle exec rake bindings:generate"
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
-          path: |
-            /tmp/bindings/**/*
-            /tmp/debug/**/*
