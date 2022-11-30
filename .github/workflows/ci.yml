@@ -32,6 +32,7 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
       - name: Setup debug info
+        shell: bash
         run: |
           mkdir -p /tmp/debug
 
