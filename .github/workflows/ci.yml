@@ -31,6 +31,15 @@ jobs:
               rust_toolchain: stable-x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
     steps:
+      - name: Setup debug info
+        run: |
+          mkdir -p /tmp/debug
+
+          if [ "$ACTIONS_STEP_DEBUG" = "true" ]; then
+            echo "RUST_BACKTRACE=1" >> $GITHUB_ENV
+            echo "RUST_LOG=debug" >> $GITHUB_ENV
+          fi
+
       - uses: actions/checkout@v3
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@main
@@ -41,26 +50,15 @@ jobs:
           bundler-cache: true
           cargo-cache: true
 
-      # - name: Debug makefile
-      #   env:
-      #     BUNDLE_GEM__TEST: "rpec"
-      #     BUNDLE_GEM__CI: "github"
-      #     BUNDLE_GEM__MIT: "true"
-      #     BUNDLE_GEM__COC: "true"
-      #     BUNDLE_GEM__CHANGELOG: "true"
-      #     BUNDLE_GEM__LINTER: "standard"
-      #   run: |
-      #     mkdir tmp/
-      #     cd tmp/
-      #     bundle gem --ext testing
-      #     cd testing/ext/testing
-      #     ruby extconf.rb
-      #     cat Makefile
-
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
         shell: bash
         run: bundle install -j3
+
+      - name: Debug makefile
+        if: env.ACTIONS_STEP_DEBUG == 'true'
+        shell: bash
+        run: bundle exec rake debug:mkmf > /tmp/debug/Makefile
 
       - name: 📍 Examples test
         env:
@@ -149,7 +147,9 @@ jobs:
         run: "bundle exec rake bindings:generate"
 
       - uses: actions/upload-artifact@v3
+        if: failure()
         with:
-          name: generated-bindings
-          path: /tmp/bindings/**/*
-          if-no-files-found: error
+          name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          path: |
+            /tmp/bindings/**/*
+            /tmp/debug/**/*

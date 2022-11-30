@@ -144,3 +144,19 @@ namespace :bindings do
     FileUtils.cp(bindings_file, out_dir)
   end
 end
+
+namespace :debug do
+  task :mkmf do
+    require "tmpdir"
+    tmpdir = Dir.mktmpdir
+
+    chdir(tmpdir) do
+      touch "testing.c"
+      touch "testing.h"
+      sh "ruby", "-rmkmf", "-e", "create_makefile('testing')"
+      puts File.read("Makefile")
+    end
+
+    rm_rf(tmpdir)
+  end
+end
