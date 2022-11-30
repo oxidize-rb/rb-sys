@@ -104,7 +104,7 @@ jobs:
         run: "bundle exec rake bindings:generate"
 
       - uses: actions/upload-artifact@v3
-        if: failure()
+        if: always()
         with:
           name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
           path: |
