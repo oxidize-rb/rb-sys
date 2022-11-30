@@ -103,6 +103,7 @@ module RbSys
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def
         CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+        RUBYGEMS_CLEAN_DIRS = $(CLEANOBJS) $(CLEANFILES) #{builder.rubygems_clean_dirs.join(" ")}
 
         #{base_makefile(srcdir)}
 
@@ -134,7 +135,8 @@ module RbSys
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
         gemclean:
-        \t-$(Q)$(RM_RF) $(CLEANOBJS) $(CLEANFILES) 2> /dev/null || true
+        \t$(ECHO) Cleaning gem artifacts
+        \t-$(Q)$(RM_RF) $(RUBYGEMS_CLEAN_DIRS) 2> /dev/null || true
 
         install: #{builder.clean_after_install ? "install-so gemclean" : "install-so"}
 

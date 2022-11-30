@@ -4,13 +4,14 @@ module RbSys
   module Mkmf
     # Config that delegates to CargoBuilder if needded
     class Config
-      attr_accessor :force_install_rust_toolchain, :clean_after_install, :target_dir, :auto_install_rust_toolchain
+      attr_accessor :force_install_rust_toolchain, :clean_after_install, :target_dir, :auto_install_rust_toolchain, :rubygems_clean_dirs
 
       def initialize(builder)
         @builder = builder
         @force_install_rust_toolchain = false
         @auto_install_rust_toolchain = true
         @clean_after_install = rubygems_invoked?
+        @rubygems_clean_dirs = ["./cargo-vendor"]
       end
 
       def cross_compiling?
