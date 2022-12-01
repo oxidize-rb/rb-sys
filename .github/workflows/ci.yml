@@ -71,21 +71,11 @@ jobs:
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: |
-          if ! bundle exec rake test:examples; then
-            echo "🎉 Examples test passed"
-          else
-            echo "❌ Examples test failed"
-
-            if [ "$DEBUG" = "true" ]; then
-              cp -R examples/ $DEBUG_OUTPUT_DIR/examples
-            fi
-
-            exit 1
-          fi
+        run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
-        run: bundle exec rake test:cargo
+        shell: bash
+        run: script/ci/upload-on-failure.sh "bundle exec rake test:cargo" "cargo-test" "./target"
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem
@@ -99,6 +89,7 @@ jobs:
           pushd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
+          script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
 
