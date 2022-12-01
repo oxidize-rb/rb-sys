@@ -1,5 +1,10 @@
 EXAMPLES = Dir["examples/*"]
 
+CLEAN = Rake::FileList.new.tap do |list|
+  list.include("**/target")
+  list.include("**/tmp")
+end
+
 def extra_args
   seperator_index = ARGV.index("--")
   seperator_index && ARGV[(seperator_index + 1)..-1]
@@ -159,4 +164,9 @@ namespace :debug do
 
     rm_rf(tmpdir)
   end
+end
+
+desc "Clean up"
+task :clean do
+  CLEAN.each { |f| rm_rf(f) }
 end

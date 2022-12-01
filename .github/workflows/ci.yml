@@ -7,6 +7,10 @@ on:
       - main
   pull_request: {}
 
+env:
+  DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+  DEBUG_OUTPUT_DIR: /tmp/debug
+
 jobs:
   build_and_test:
     name: 🧪 Test
@@ -31,17 +35,11 @@ jobs:
               rust_toolchain: stable-x86_64-pc-windows-msvc
     runs-on: ${{ matrix.sys.os }}
     steps:
+      - uses: actions/checkout@v3
+
       - name: Setup debug info
         shell: bash
-        run: |
-          mkdir -p /tmp/debug
-
-          if [ "$ACTIONS_STEP_DEBUG" = "true" ]; then
-            echo "RUST_BACKTRACE=1" >> $GITHUB_ENV
-            echo "RUST_LOG=debug" >> $GITHUB_ENV
-          fi
-
-      - uses: actions/checkout@v3
+        run: script/ci/set-debug-env.sh
 
       - name: Set LIBCLANG_PATH
         if: matrix.ruby_version == 'mswin'
@@ -62,14 +60,29 @@ jobs:
         run: bundle install -j3
 
       - name: Debug makefile
-        if: env.ACTIONS_STEP_DEBUG == 'true'
+        if: secrets.ACTIONS_STEP_DEBUG == 'true'
         shell: bash
-        run: bundle exec rake debug:mkmf > /tmp/debug/Makefile
+        run: |
+          bundle exec rake debug:mkmf > $DEBUG_OUTPUT_DIR/Makefile
+          echo "::group::Print mkmf generated Makefile"
+          cat $DEBUG_OUTPUT_DIR/Makefile
+          echo "::endgroup::"
 
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: bundle exec rake test:examples
+        run: |
+          if ! bundle exec rake test:examples; then
+            echo "🎉 Examples test passed"
+          else
+            echo "❌ Examples test failed"
+
+            if [ "$DEBUG" = "true" ]; then
+              cp -R examples/ $DEBUG_OUTPUT_DIR/examples
+            fi
+
+            exit 1
+          fi
 
       - name: 🧪 Cargo test
         run: bundle exec rake test:cargo
@@ -82,7 +95,7 @@ jobs:
         run: |
           set -ex
           gem update --system > /dev/null
-          export RUBYOPT="-I$PWD/gem/lib"
+          export RUBYOPT="$RUBYOPT -I$PWD/gem/lib"
           pushd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
@@ -102,15 +115,16 @@ jobs:
 
       - name: "🧱 Generate bindings"
         if: env.ACTIONS_STEP_DEBUG == 'true'
-        run: "bundle exec rake bindings:generate"
+        run: bundle exec rake bindings:generate
 
       - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          retention-days: 1
           path: |
             /tmp/bindings/**/*
-            /tmp/debug/**/*
+            ${{ env.DEBUG_OUTPUT_DIR }}/**/*
 
   build_and_test_static:
     name: 🔘 Static
