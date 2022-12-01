@@ -60,7 +60,7 @@ jobs:
         run: bundle install -j3
 
       - name: Debug makefile
-        if: secrets.ACTIONS_STEP_DEBUG == 'true'
+        if: env.ACTIONS_STEP_DEBUG == 'true'
         shell: bash
         run: |
           bundle exec rake debug:mkmf > $DEBUG_OUTPUT_DIR/Makefile
