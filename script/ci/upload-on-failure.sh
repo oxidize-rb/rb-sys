@@ -5,7 +5,7 @@
 # Example:
 #   $ run-and-upload-on-failure.sh "cargo test --all-features" "cargo-test" "target/debug"
 main() {
-  if "$1"; then
+  if eval "$1"; then
     if [[ "${DEBUG:-false}" == "true" ]]; then
       upload_dir "$2" "$3"
     fi

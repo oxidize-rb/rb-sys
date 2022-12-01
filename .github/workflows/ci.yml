@@ -111,7 +111,8 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          name: rb-sys-ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          if-no-files-found: ignore
           retention-days: 1
           path: |
             /tmp/bindings/**/*
