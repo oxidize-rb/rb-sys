@@ -69,6 +69,7 @@ jobs:
           echo "::endgroup::"
 
       - name: 📍 Examples test
+        shell: bash
         env:
           RB_SYS_CARGO_PROFILE: "release"
         run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
