@@ -85,7 +85,7 @@ jobs:
         run: |
           set -ex
           gem update --system > /dev/null
-          export RUBYOPT="$RUBYOPT -I$PWD/gem/lib"
+          export RUBYOPT="-I$PWD/gem/lib"
           pushd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
