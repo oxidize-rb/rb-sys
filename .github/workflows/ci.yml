@@ -44,7 +44,9 @@ jobs:
       - name: Set LIBCLANG_PATH
         if: matrix.ruby_version == 'mswin'
         shell: pwsh
-        run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
+        run: |
+          echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-IC:\Program Files\LLVM\include" >> $env:GITHUB_ENV
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@main
         if: matrix.ruby_version != 'skip'
