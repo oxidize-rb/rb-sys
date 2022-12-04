@@ -71,7 +71,7 @@ jobs:
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
+        run: ../../script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
         shell: bash
