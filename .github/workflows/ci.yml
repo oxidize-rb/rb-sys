@@ -71,7 +71,7 @@ jobs:
       - name: 📍 Examples test
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: ../../script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
+        run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
         shell: bash
@@ -89,7 +89,7 @@ jobs:
           pushd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
-          script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
+          ../../script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
 
