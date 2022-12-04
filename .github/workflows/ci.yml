@@ -7,6 +7,10 @@ on:
       - main
   pull_request: {}
 
+env:
+  DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
+  DEBUG_OUTPUT_DIR: /tmp/debug
+
 jobs:
   build_and_test:
     name: 🧪 Test
@@ -33,6 +37,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup debug info
+        shell: bash
+        run: script/ci/set-debug-env.sh
+
       - uses: oxidize-rb/actions/setup-ruby-and-rust@main
         if: matrix.ruby_version != 'skip'
         with:
@@ -41,34 +49,29 @@ jobs:
           bundler-cache: true
           cargo-cache: true
 
-      # - name: Debug makefile
-      #   env:
-      #     BUNDLE_GEM__TEST: "rpec"
-      #     BUNDLE_GEM__CI: "github"
-      #     BUNDLE_GEM__MIT: "true"
-      #     BUNDLE_GEM__COC: "true"
-      #     BUNDLE_GEM__CHANGELOG: "true"
-      #     BUNDLE_GEM__LINTER: "standard"
-      #   run: |
-      #     mkdir tmp/
-      #     cd tmp/
-      #     bundle gem --ext testing
-      #     cd testing/ext/testing
-      #     ruby extconf.rb
-      #     cat Makefile
-
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
         shell: bash
         run: bundle install -j3
 
+      - name: Debug makefile
+        if: env.ACTIONS_STEP_DEBUG == 'true'
+        shell: bash
+        run: |
+          bundle exec rake debug:mkmf > $DEBUG_OUTPUT_DIR/Makefile
+          echo "::group::Print mkmf generated Makefile"
+          cat $DEBUG_OUTPUT_DIR/Makefile
+          echo "::endgroup::"
+
       - name: 📍 Examples test
+        shell: bash
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: bundle exec rake test:examples
+        run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
-        run: bundle exec rake test:cargo
+        shell: bash
+        run: script/ci/upload-on-failure.sh "bundle exec rake test:cargo" "cargo-test" "./target"
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem
@@ -82,6 +85,7 @@ jobs:
           pushd examples/rust_reverse
           bundle exec rake build
           gem install pkg/*.gem --verbose
+          ../../script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
 
@@ -95,6 +99,20 @@ jobs:
       - name: 🚓 Run Standard.rb
         if: matrix.ruby_version == '3.1'
         run: bundle exec standardrb --format github
+
+      - name: "🧱 Generate bindings"
+        if: env.ACTIONS_STEP_DEBUG == 'true'
+        run: bundle exec rake bindings:generate
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: rb-sys-ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
+          if-no-files-found: ignore
+          retention-days: 1
+          path: |
+            /tmp/bindings/**/*
+            ${{ env.DEBUG_OUTPUT_DIR }}/**/*
 
   build_and_test_static:
     name: 🔘 Static
@@ -144,12 +162,3 @@ jobs:
 
       - name: 🧪 Run tests
         run: bundle exec rake test
-
-      - name: "🧱 Generate bindings"
-        run: "bundle exec rake bindings:generate"
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: generated-bindings
-          path: /tmp/bindings/**/*
-          if-no-files-found: error

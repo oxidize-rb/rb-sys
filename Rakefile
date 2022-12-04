@@ -1,5 +1,10 @@
 EXAMPLES = Dir["examples/*"]
 
+CLEAN = Rake::FileList.new.tap do |list|
+  list.include("**/target")
+  list.include("**/tmp")
+end
+
 def extra_args
   seperator_index = ARGV.index("--")
   seperator_index && ARGV[(seperator_index + 1)..-1]
@@ -143,4 +148,25 @@ namespace :bindings do
     FileUtils.mkdir_p(out_dir)
     FileUtils.cp(bindings_file, out_dir)
   end
+end
+
+namespace :debug do
+  task :mkmf do
+    require "tmpdir"
+    tmpdir = Dir.mktmpdir
+
+    chdir(tmpdir) do
+      touch "testing.c"
+      touch "testing.h"
+      sh "ruby", "-rmkmf", "-e", "create_makefile('testing')"
+      puts File.read("Makefile")
+    end
+
+    rm_rf(tmpdir)
+  end
+end
+
+desc "Clean up"
+task :clean do
+  CLEAN.each { |f| rm_rf(f) }
 end
