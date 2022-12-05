@@ -168,15 +168,19 @@ module RbSys
 
     def env_vars(builder)
       lines = builder.build_env.map { |k, v| env_line(k, v) }
-      lines << env_line("CC", env_or_makefile_config("CC"))
-      lines << env_line("CXX", env_or_makefile_config("CXX"))
-      lines << env_line("AR", env_or_makefile_config("AR")) unless env_or_makefile_config("AR") == "libtool -static"
+      lines << env_line("CC", strip_cmd(env_or_makefile_config("CC")))
+      lines << env_line("CXX", strip_cmd(env_or_makefile_config("CXX")))
+      lines << env_line("AR", strip_cmd(env_or_makefile_config("AR"))) unless env_or_makefile_config("AR") == "libtool -static"
       lines.compact.join("\n")
     end
 
     def env_line(k, v)
       return unless v
       export_env(k, v.gsub("\n", '\n'))
+    end
+
+    def strip_cmd(cmd)
+      cmd.gsub("-nologo", "").strip
     end
 
     def env_or_makefile_config(key)
