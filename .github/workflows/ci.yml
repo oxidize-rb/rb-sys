@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@sccache
         if: matrix.ruby_version != 'skip'
         with:
           ruby-version: ${{ matrix.ruby_version }}
@@ -127,7 +127,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@sccache
         with:
           ruby-version: ${{ matrix.ruby_version }}
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
