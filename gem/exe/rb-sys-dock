@@ -1,0 +1,124 @@
+#!/usr/bin/env ruby
+
+require "optparse"
+require "rb_sys/version"
+require "rb_sys/toolchain_info"
+
+options = {
+  version: RbSys::VERSION
+}
+
+def log(level, message, emoji: true, io: $stderr)
+  emoji_opt, shellcode = case level
+  when :error
+    ["❌", "\e[1;31m"]
+  when :warn
+    ["⚠️", "\e[1;33m"]
+  when :info
+    ["ℹ️", "\e[1;37m"]
+  when :notice
+    ["🐳", "\e[1;34m"]
+  else raise "Unknown log level: #{level.inspect}"
+  end
+
+  emoji_opt = if emoji.is_a?(String)
+    emoji
+  elsif emoji
+    emoji_opt
+  end
+
+  io.puts "#{shellcode}#{emoji_opt} #{message}\e[0m"
+end
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: rb-sys-dock --platform PLATFORM [COMMAND]"
+
+  opts.on("-v", "--version", "Prints version") do
+    require "rb_sys/version"
+    puts RbSys::VERSION
+    exit
+  end
+
+  opts.on("-p", "--platform PLATFORM", "Platform to build for (i.e. x86_64-linux)") do |p|
+    toolchain_info = begin
+      RbSys::ToolchainInfo.new(p)
+    rescue
+      supported_list = RbSys::ToolchainInfo.all
+      supported_list.select!(&:supported?)
+      list = supported_list.map { |p| "- #{p} (#{p.rust_target})" }.join("\n")
+      log(:error, "Platform #{p} is not supported, please use one of:\n\n#{list}")
+      exit(1)
+    end
+
+    options[:platform] = p
+    options[:toolchain_info] = toolchain_info
+  end
+
+  opts.on("--latest", "Use the latest version of the Docker image") do
+    log(:notice, "Using latest version of the Docker image", emoji: "🆕")
+    options[:version] = "latest"
+  end
+
+  opts.on("--list-platforms", "--list", "List all supported platforms") do
+    log(:notice, "Supported platforms listed below:")
+    RbSys::ToolchainInfo.supported.each do |p|
+      log(:info, "- #{p} (#{p.rust_target})", emoji: false, io: $stdout)
+    end
+
+    exit(0)
+  end
+
+  opts.on("-h", "--help", "Prints this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+def rcd(input_args)
+  begin
+    require "rake_compiler_dock"
+  rescue LoadError
+    abort "rake-compiler-dock is not installed. Please run `gem install rake-compiler-dock` to use this command."
+  end
+
+  args = input_args.empty? ? ["bash"] : input_args.dup
+
+  if $stdin.tty?
+    # An interactive session should not leave the container on Ctrl-C
+    args << {sigfw: false}
+  end
+
+  begin
+    RakeCompilerDock.exec(*args) do |ok, res|
+      exit(res.exitstatus)
+    end
+  rescue RakeCompilerDock::DockerIsNotAvailable
+    exit(-1)
+  end
+end
+
+def download_image(_options)
+  image = ENV.fetch("RCD_IMAGE")
+  if `docker images -q #{image}`.strip.empty?
+    # Nicely formatted message that we are downloading the image which might take awhile
+    warn "\e[1;34m🐳 Downloading container #{image.inspect}, this might take awhile...\e[0m"
+    system("docker pull #{image} --quiet")
+  end
+end
+
+def log_some_useful_info(_options)
+  if ARGV.empty?
+    warn "\e[1;34m🐳 Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}\e[0m"
+  else
+    warn "\e[1;34m🐳 Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}\e[0m"
+  end
+end
+
+def set_env(options)
+  ENV["RCD_IMAGE"] = "rbsys/#{options[:toolchain_info]}:#{options[:version]}"
+end
+
+set_env(options)
+download_image(options)
+log_some_useful_info(options)
+rcd(ARGV)
