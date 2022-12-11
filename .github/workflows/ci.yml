@@ -12,8 +12,20 @@ env:
   DEBUG_OUTPUT_DIR: /tmp/debug
 
 jobs:
+  fetch_ci_data:
+    name: 📥 Fetch CI data
+    runs-on: ubuntu-latest
+    outputs:
+      minimum-supported-ruby-version: ${{ steps.data.outputs.minimum-supported-ruby-version }}
+      minimum-supported-rust-version: ${{ steps.data.outputs.minimum-supported-rust-version }}
+    steps:
+      - id: data
+        run: |
+          curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
+          echo "minimum-supported-rust-version=$(jq -r '.policy["minimum-supported-rust-version"]' toolchains.json)" >> $GITHUB_OUTPUT
   build_and_test:
     name: 🧪 Test
+    needs: fetch_ci_data
     strategy:
       fail-fast: false
       matrix:
@@ -21,7 +33,7 @@ jobs:
         ruby_version: ["2.4", "2.5", "2.6", "2.7", "3.0", "3.1", "head"]
         sys:
           - os: ubuntu-latest
-            rust_toolchain: "1.51"
+            rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
           - os: ubuntu-latest
             rust_toolchain: stable
           - os: macos-latest
