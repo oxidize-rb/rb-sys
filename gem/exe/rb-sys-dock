@@ -22,12 +22,12 @@ def log(level, message, emoji: true, io: $stderr)
   end
 
   emoji_opt = if emoji.is_a?(String)
-    emoji
+    emoji + " "
   elsif emoji
-    emoji_opt
+    emoji_opt + " "
   end
 
-  io.puts "#{shellcode}#{emoji_opt} #{message}\e[0m"
+  io.puts "#{shellcode}#{emoji_opt}#{message}\e[0m"
 end
 
 OptionParser.new do |opts|
@@ -61,6 +61,7 @@ OptionParser.new do |opts|
 
   opts.on("--list-platforms", "--list", "List all supported platforms") do
     log(:notice, "Supported platforms listed below:")
+
     RbSys::ToolchainInfo.supported.each do |p|
       log(:info, "- #{p} (#{p.rust_target})", emoji: false, io: $stdout)
     end
@@ -101,16 +102,16 @@ def download_image(_options)
   image = ENV.fetch("RCD_IMAGE")
   if `docker images -q #{image}`.strip.empty?
     # Nicely formatted message that we are downloading the image which might take awhile
-    warn "\e[1;34m🐳 Downloading container #{image.inspect}, this might take awhile...\e[0m"
-    system("docker pull #{image} --quiet")
+    log(:notice, "Downloading container #{image.inspect}, this might take awhile...")
+    system("docker pull #{image} --quiet > /dev/null")
   end
 end
 
 def log_some_useful_info(_options)
   if ARGV.empty?
-    warn "\e[1;34m🐳 Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}\e[0m"
+    log(:notice, "Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}")
   else
-    warn "\e[1;34m🐳 Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}\e[0m"
+    log(:notice, "Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}")
   end
 end
 
