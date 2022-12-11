@@ -45,11 +45,16 @@ fn main() {
     }
 
     expose_cargo_features();
+    add_unsupported_link_args_to_blocklist(&mut rbconfig);
     rbconfig.print_cargo_args();
 
     if is_debug_build_enabled() {
         debug_and_exit(&mut rbconfig);
     }
+}
+
+fn add_unsupported_link_args_to_blocklist(rbconfig: &mut RbConfig) {
+    rbconfig.blocklist_link_arg("compress-debug-sections");
 }
 
 fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
