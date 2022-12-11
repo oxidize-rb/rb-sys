@@ -26,6 +26,7 @@ pub struct RbConfig {
     pub link_args: Vec<String>,
     pub cflags: Vec<String>,
     pub blocklist_lib: Vec<String>,
+    pub blocklist_link_arg: Vec<String>,
     use_rpath: bool,
     value_map: HashMap<String, String>,
 }
@@ -41,6 +42,7 @@ impl RbConfig {
     pub fn new() -> RbConfig {
         RbConfig {
             blocklist_lib: vec![],
+            blocklist_link_arg: vec![],
             search_paths: Vec::new(),
             libs: Vec::new(),
             link_args: Vec::new(),
@@ -145,6 +147,12 @@ impl RbConfig {
     /// Filter the libs, removing the ones that are not needed.
     pub fn blocklist_lib(&mut self, name: &str) -> &mut RbConfig {
         self.blocklist_lib.push(name.to_string());
+        self
+    }
+
+    /// Blocklist a link argument.
+    pub fn blocklist_link_arg(&mut self, name: &str) -> &mut RbConfig {
+        self.blocklist_link_arg.push(name.to_string());
         self
     }
 
@@ -291,7 +299,7 @@ impl RbConfig {
                 self.push_search_path((SearchPathKind::Framework, name));
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
                 self.push_library((LibraryKind::Framework, name));
-            } else {
+            } else if !self.blocklist_link_arg.iter().any(|b| arg.contains(b)) {
                 self.push_link_arg(arg);
             }
         }
