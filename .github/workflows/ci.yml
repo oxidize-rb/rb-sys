@@ -47,7 +47,7 @@ jobs:
           ruby-version: ${{ matrix.ruby_version }}
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true
-          cargo-cache: true
+          cargo-cache: "sccache"
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
@@ -119,13 +119,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby_version: ["3.1.2"]
+        ruby_version: ["3.1.3"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v3
+
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
+        with:
+          ruby-version: none
+          rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
+          cargo-cache: "sccache"
 
       - name: Setup env
         run: |
@@ -155,10 +161,6 @@ jobs:
 
       - name: Bundle install
         run: bundle install -j3
-
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.sys.rust_toolchain }}
 
       - name: 🧪 Run tests
         run: bundle exec rake test
