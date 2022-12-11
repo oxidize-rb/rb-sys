@@ -42,6 +42,7 @@ jobs:
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true
           cargo-cache: ${{ matrix.cache-strategy }}
+          cache-version: v123
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
