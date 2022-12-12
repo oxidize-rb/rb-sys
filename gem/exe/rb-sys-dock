@@ -3,6 +3,7 @@
 require "optparse"
 require "rb_sys/version"
 require "rb_sys/toolchain_info"
+require "fileutils"
 
 options = {
   version: RbSys::VERSION
@@ -18,6 +19,10 @@ def log(level, message, emoji: true, io: $stderr)
     ["ℹ️", "\e[1;37m"]
   when :notice
     ["🐳", "\e[1;34m"]
+  when :trace
+    return unless ENV["LOG_LEVEL"] == "trace"
+
+    ["🔍", "\e[1;2m"]
   else raise "Unknown log level: #{level.inspect}"
   end
 
@@ -27,7 +32,10 @@ def log(level, message, emoji: true, io: $stderr)
     emoji_opt + " "
   end
 
-  io.puts "#{shellcode}#{emoji_opt}#{message}\e[0m"
+  # Escape the message for bash shell codes (e.g. \e[1;31m)
+  escaped = message.gsub("\\", "\\\\\\").gsub("\e", "\\e")
+
+  io.puts "#{shellcode}#{emoji_opt}#{escaped}\e[0m"
 end
 
 OptionParser.new do |opts|
@@ -73,37 +81,123 @@ OptionParser.new do |opts|
     puts opts
     exit
   end
+
+  opts.on("-V", "--verbose", "Prints verbose output") do
+    ENV["LOG_LEVEL"] = "trace"
+    ENV["VERBOSE"] = "1"
+    options[:verbose] = true
+  end
 end.parse!
 
-def rcd(input_args)
-  begin
-    require "rake_compiler_dock"
-  rescue LoadError
-    abort "rake-compiler-dock is not installed. Please run `gem install rake-compiler-dock` to use this command."
-  end
+def determine_cache_dir
+  return ENV["RB_SYS_DOCK_CACHE_DIR"] if ENV["RB_SYS_DOCK_CACHE_DIR"]
+  return File.join(ENV["XDG_CACHE_HOME"], "rb-sys-dock") if ENV["XDG_CACHE_HOME"]
 
-  args = input_args.empty? ? ["bash"] : input_args.dup
+  File.join(ENV["HOME"], ".cache", "rb-sys-dock")
+end
 
-  if $stdin.tty?
-    # An interactive session should not leave the container on Ctrl-C
-    args << {sigfw: false}
-  end
+def cache_dir
+  return @cache_dir if defined?(@cache_dir)
 
-  begin
-    RakeCompilerDock.exec(*args) do |ok, res|
-      exit(res.exitstatus)
-    end
-  rescue RakeCompilerDock::DockerIsNotAvailable
-    exit(-1)
+  @cache_dir = determine_cache_dir
+  FileUtils.mkdir_p(@cache_dir)
+  @cache_dir
+end
+
+def mount_cargo_registry
+  dirs = []
+  dirs << File.join(cache_dir, "cargo", "registry", "index")
+  dirs << File.join(cache_dir, "cargo", "registry", "cache")
+  dirs << File.join(cache_dir, "cargo", "registry", "git", "db")
+
+  dirs.each do |dir|
+    log(:trace, "Mounting cargo registry dir: #{dir}")
+    FileUtils.mkdir_p(dir)
   end
+  dirs.map { |dir| "-v #{dir}:#{dir}" }.join(" ")
+end
+
+def mount_bundle_cache(options, extra_env)
+  dir = File.join(cache_dir, options.fetch(:platform), "bundle")
+  FileUtils.mkdir_p(dir)
+  log(:trace, "Mounting bundle cache: #{dir}")
+  extra_env << "BUNDLE_PATH=/tmp/bundle"
+  "-v #{dir}:/tmp/bundle"
+end
+
+def mount_target_dir(options, _extra_env)
+  tmp_target_dir = File.join(Dir.pwd, "tmp", "rb-sys-dock", options[:platform], "target")
+  FileUtils.mkdir_p(tmp_target_dir)
+  "-v #{tmp_target_dir}:#{File.join(Dir.pwd, "target")}"
+end
+
+def pretty_prompt(options, extra_env)
+  plat = options[:platform]
+  extra_env << "RUBY_PLATFORM=\"[#{plat}]\""
+  prompt = +'\[\033[01;32m\]'
+  prompt << plat
+  prompt << '\[\033[00m\] ➜ \[\033[01;34m\]\W\[\033[00m\] \$ '
+  "PS1=\"#{prompt}\" TERM=xterm-256color"
+end
+
+def rcd(input_args, options)
+  wrapper_command = []
+  wrapper_command << "sigfw" unless $stdin.tty?
+  wrapper_command << "runas"
+
+  extra_env = []
+  extra_env << pretty_prompt(options, extra_env)
+
+  docker_options = []
+  docker_options << "--tty" if $stdin.tty?
+
+  run_command = input_args.empty? ? "bash --norc" : input_args.join(" ")
+
+  cmd = <<~SH
+    #{docker_command} run \
+      -v #{Dir.pwd}:#{Dir.pwd} \
+      #{mount_target_dir(options, extra_env)} \
+      #{mount_cargo_registry} \
+      #{mount_bundle_cache(options, extra_env)} \
+      -e UID=1000 \
+      -e GID=1000 \
+      -e USER=_root \
+      -e GROUP=_staff \
+      -e GEM_PRIVATE_KEY_PASSPHRASE \
+      -e ftp_proxy \
+      -e http_proxy \
+      -e https_proxy \
+      -e RCD_HOST_RUBY_PLATFORM=#{RbConfig::CONFIG["arch"]} \
+      -e RCD_HOST_RUBY_VERSION=#{RUBY_VERSION} \
+      -e RCD_IMAGE \
+      -w #{Dir.pwd} \
+      --rm \
+      --interactive \
+      #{docker_options.join(" ")} \
+      #{ENV.fetch("RCD_IMAGE")} \
+      #{wrapper_command.join(" ")} \
+      env #{extra_env.join(" ")} \
+      #{run_command}
+  SH
+
+  log(:trace, "Running command: \n$ #{cmd}")
+
+  exec(cmd)
+end
+
+def docker_command
+  return @docker_command if defined?(@docker_command)
+
+  @docker_command = ENV.fetch("DOCKER", "docker")
 end
 
 def download_image(_options)
   image = ENV.fetch("RCD_IMAGE")
-  if `docker images -q #{image}`.strip.empty?
+
+  if `#{docker_command} images -q #{image}`.strip.empty?
     # Nicely formatted message that we are downloading the image which might take awhile
     log(:notice, "Downloading container #{image.inspect}, this might take awhile...")
-    system("docker pull #{image} --quiet > /dev/null")
+    system("#{docker_command} pull #{image} --quiet > /dev/null")
   end
 end
 
@@ -122,4 +216,4 @@ end
 set_env(options)
 download_image(options)
 log_some_useful_info(options)
-rcd(ARGV)
+rcd(ARGV, options)
