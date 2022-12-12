@@ -105,10 +105,18 @@ def cache_dir
 end
 
 def mount_cargo_registry
+  local_registry_dir = if ENV["CARGO_HOME"]
+    ENV["CARGO_HOME"]
+  elsif File.exist?(cargo_home = File.join(ENV["HOME"], ".cargo"))
+    cargo_home
+  else
+    File.join(cache_dir, "cargo")
+  end
+
   dirs = []
-  dirs << File.join(cache_dir, "cargo", "registry", "index")
-  dirs << File.join(cache_dir, "cargo", "registry", "cache")
-  dirs << File.join(cache_dir, "cargo", "registry", "git", "db")
+  dirs << File.join(local_registry_dir, "registry", "index")
+  dirs << File.join(local_registry_dir, "registry", "cache")
+  dirs << File.join(local_registry_dir, "registry", "git", "db")
 
   dirs.each do |dir|
     log(:trace, "Mounting cargo registry dir: #{dir}")
@@ -121,7 +129,7 @@ def mount_bundle_cache(options, extra_env)
   dir = File.join(cache_dir, options.fetch(:platform), "bundle")
   FileUtils.mkdir_p(dir)
   log(:trace, "Mounting bundle cache: #{dir}")
-  extra_env << "BUNDLE_PATH=/tmp/bundle"
+  extra_env << "BUNDLE_PATH=\"/tmp/bundle\""
   "-v #{dir}:/tmp/bundle"
 end
 
