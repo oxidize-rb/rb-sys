@@ -29,3 +29,6 @@ RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc
 
 COPY setup/rubybashrc.sh /
 RUN /rubybashrc.sh
+
+COPY setup/rb-sys-dock.sh /
+RUN /rb-sys-dock.sh

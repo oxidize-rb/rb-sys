@@ -105,10 +105,18 @@ def cache_dir
 end
 
 def mount_cargo_registry
+  local_registry_dir = if ENV["CARGO_HOME"]
+    ENV["CARGO_HOME"]
+  elsif File.exist?(cargo_home = File.join(ENV["HOME"], ".cargo"))
+    cargo_home
+  else
+    File.join(cache_dir, "cargo")
+  end
+
   dirs = []
-  dirs << File.join(cache_dir, "cargo", "registry", "index")
-  dirs << File.join(cache_dir, "cargo", "registry", "cache")
-  dirs << File.join(cache_dir, "cargo", "registry", "git", "db")
+  dirs << File.join(local_registry_dir, "registry", "index")
+  dirs << File.join(local_registry_dir, "registry", "cache")
+  dirs << File.join(local_registry_dir, "registry", "git", "db")
 
   dirs.each do |dir|
     log(:trace, "Mounting cargo registry dir: #{dir}")
@@ -121,7 +129,7 @@ def mount_bundle_cache(options, extra_env)
   dir = File.join(cache_dir, options.fetch(:platform), "bundle")
   FileUtils.mkdir_p(dir)
   log(:trace, "Mounting bundle cache: #{dir}")
-  extra_env << "BUNDLE_PATH=/tmp/bundle"
+  extra_env << "BUNDLE_PATH=\"/tmp/bundle\""
   "-v #{dir}:/tmp/bundle"
 end
 
@@ -131,13 +139,11 @@ def mount_target_dir(options, _extra_env)
   "-v #{tmp_target_dir}:#{File.join(Dir.pwd, "target")}"
 end
 
-def pretty_prompt(options, extra_env)
-  plat = options[:platform]
-  extra_env << "RUBY_PLATFORM=\"[#{plat}]\""
-  prompt = +'\[\033[01;32m\]'
-  prompt << plat
-  prompt << '\[\033[00m\] ➜ \[\033[01;34m\]\W\[\033[00m\] \$ '
-  "PS1=\"#{prompt}\" TERM=xterm-256color"
+def mount_command_history(options)
+  return unless $stdin.tty?
+
+  history_dir = File.join(cache_dir, options.fetch(:platform), "commandhistory")
+  "-v #{history_dir}:/tmp/commandhistory"
 end
 
 def rcd(input_args, options)
@@ -146,12 +152,10 @@ def rcd(input_args, options)
   wrapper_command << "runas"
 
   extra_env = []
-  extra_env << pretty_prompt(options, extra_env)
 
   docker_options = []
   docker_options << "--tty" if $stdin.tty?
-
-  run_command = input_args.empty? ? "bash --norc" : input_args.join(" ")
+  run_command = input_args.empty? ? "bash" : input_args.join(" ")
 
   cmd = <<~SH
     #{docker_command} run \
@@ -159,9 +163,10 @@ def rcd(input_args, options)
       #{mount_target_dir(options, extra_env)} \
       #{mount_cargo_registry} \
       #{mount_bundle_cache(options, extra_env)} \
-      -e UID=1000 \
-      -e GID=1000 \
-      -e USER=_root \
+      #{mount_command_history(options)} \
+      -e UID=#{ENV.fetch("RB_SYS_DOCK_UID", "1000")} \
+      -e GID=#{ENV.fetch("RB_SYS_DOCK_GID", "1000")} \
+      -e USER=rb-sys-dock \
       -e GROUP=_staff \
       -e GEM_PRIVATE_KEY_PASSPHRASE \
       -e ftp_proxy \
@@ -170,13 +175,13 @@ def rcd(input_args, options)
       -e RCD_HOST_RUBY_PLATFORM=#{RbConfig::CONFIG["arch"]} \
       -e RCD_HOST_RUBY_VERSION=#{RUBY_VERSION} \
       -e RCD_IMAGE \
+      -e TERM \
       -w #{Dir.pwd} \
       --rm \
       --interactive \
       #{docker_options.join(" ")} \
       #{ENV.fetch("RCD_IMAGE")} \
       #{wrapper_command.join(" ")} \
-      env #{extra_env.join(" ")} \
       #{run_command}
   SH
 
