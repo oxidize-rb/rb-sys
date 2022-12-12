@@ -275,12 +275,21 @@ up to support this use-case. <code>rb-sys</code> integrates seamlessly with
 <a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
 <a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others,
 cross-compilation for Ruby gems is as simple and reliable as it would be for a C extension.</p>
-<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<h2 id="using-the-rb-sys-dock-helper"><a class="header" href="#using-the-rb-sys-dock-helper">Using the <code>rb-sys-dock</code> helper</a></h2>
+<p>The [<code>rb-sys-dock</code>] executable allows you to easily enter the Docker container used to cross compile your gem. You can
+use you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
+<pre><code class="language-bash">$ rb-sys-dock -p aarch64-linux
+🐳 Entering shell in Docker container &quot;rbsys/aarch64-linux:0.9.48&quot;
+#...
+$ bundle install
+# ...
+$ bundle exec rake native:$RUBY_TARGET # builds the gem
+#...
+</code></pre>
+<h2 id="github-actions"><a class="header" href="#github-actions">Github Actions</a></h2>
 <p>The [<code>oxi-test</code>] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's a
 walkthrough of the important files to reference:</p>
 <ol>
-<li>Make sure that <code>rake-compiler-dock</code> is listed in the
-<a href="https://github.com/oxidize-rb/oxi-test/blob/main/Gemfile"><code>Gemfile</code></a>.</li>
 <li>Setup the <code>Rake::ExtensionTask</code> in the <a href="https://github.com/oxidize-rb/oxi-test/blob/main/Rakefile"><code>Rakefile</code></a></li>
 <li>Setup a <a href="https://github.com/oxidize-rb/oxi-test/blob/main/.github/workflows/cross-gem.yml"><code>cross-gem.yml</code></a> GitHub
 action to build the gem for multiple platforms.</li>
@@ -296,7 +305,7 @@ action and test them out.</li>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
 <ul>
 <li><a href="https://github.com/oxidize-rb/cross-gem-action">Cross Gem Action</a> to easily cross compile with GitHub actions</li>
-<li><a href="https://index.docker.io/u/rbsys">Docker images compatible with <code>rake-compiler-dock</code></a></li>
+<li><a href="https://index.docker.io/u/rbsys">Docker images</a></li>
 </ul>
 
                     </main>
