@@ -37,6 +37,13 @@ building your own gem.
 - This [PR for the `yrb` gem][yrb] shows how to integrate `rb-sys` and [`magnus`][magnus] into an existing gem.
 - A [guide for setting debug breakpoints in VSCode][debugging-guide] is available.
 
+## Supported Toolchains
+
+- Ruby: <!--toolchains .policy.minimum-supported-ruby-version -->2.4<!--/toolchains-->+ (for full compatibility with
+  Rubygems)
+- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.51<!--/toolchains-->+ (for old versions of rust
+  toolchains ubuntu)
+
 ## Supported Platforms
 
 We support cross compilation to the following platforms (this information is also available in the [`./data`](./data)
