@@ -18,6 +18,10 @@ module RbSys
         @all ||= DATA.keys.map { |k| new(k) }
       end
 
+      def supported
+        @supported ||= all.select(&:supported?)
+      end
+
       def local
         @current ||= new(RbConfig::CONFIG["arch"])
       end
