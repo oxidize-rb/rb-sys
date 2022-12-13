@@ -21,7 +21,6 @@ main() {
   # Need rustfmt for bindgen doc parsing
   ./rustup-init --no-modify-path --default-toolchain "$RUSTUP_DEFAULT_TOOLCHAIN" --profile minimal --component rustfmt -y
   rustup target add "$RUST_TARGET"
-  chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
   # Use git CLI to fetch crates (avoid memory issues in QEMU environments)
   printf "[net]\ngit-fetch-with-cli = true" >> "$CARGO_HOME/config.toml"
@@ -29,6 +28,7 @@ main() {
   # Pre-fetch the registry index
   cargo init --name tmp .
   cargo fetch
+  chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
   builtin popd
   rm -rf "${td}"

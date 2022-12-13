@@ -3,7 +3,8 @@
 main() {
   rb_sys_dock_bash="$(cat \
 <<'EOF'
-# Codespaces bash prompt theme
+export RB_SYS_DOCK_TMPDIR="/tmp/rb-sys-dock"
+
 __bash_prompt() {
     local ruby_platform='`export XIT=$? \
         && echo -n "\[\033[0;32m\]${RUBY_TARGET} " \
@@ -28,18 +29,29 @@ __bash_prompt() {
 rb-sys-env() {
     echo "RUBY_TARGET=$RUBY_TARGET"
     echo "RUST_TARGET=$RUST_TARGET"
-    echo "RUSTUP_DEFAULT_TOOLCHAIN="$RUSTUP_DEFAULT_TOOLCHAIN"
+    echo "RUSTUP_DEFAULT_TOOLCHAIN=$RUSTUP_DEFAULT_TOOLCHAIN"
     echo "RUSTUP_HOME=$RUSTUP_HOME"
     echo "CARGO_HOME=$CARGO_HOME"
     echo "RUSTFLAGS=$RUSTFLAGS"
     echo "RUBY_CC_VERSION=$RUBY_CC_VERSION"
+    echo "BUNDLE_PATH=$BUNDLE_PATH"
 }
 
 __set_command_history() {
-    if [ -d /tmp/commandhistory ]; then
-        export HISTFILE=/tmp/commandhistory/.bash_history
+    if [ -d "$RB_SYS_DOCK_TMPDIR/commandhistory" ]; then
+        export HISTFILE="$RB_SYS_DOCK_TMPDIR/commandhistory/.bash_history"
         export PROMPT_COMMAND='history -a'
     fi
+
+    unset -f __set_command_history
+}
+
+__set_bundle_path() {
+    if [ -d "$RB_SYS_DOCK_TMPDIR/bundle" ]; then
+        export BUNDLE_PATH="$RB_SYS_DOCK_TMPDIR/bundle"
+    fi
+
+    unset -f __set_bundle_path
 }
 
 __first_notice() {
@@ -48,7 +60,8 @@ __first_notice() {
 
     echo "${lightblue}Welcome to the rb-sys-dock container!${removecolor}"
     echo
-    echo "To see the environment variables that are set, run:\n  $ rb-sys-env"
+    echo "To see the environment variables that are set, run:"
+    echo "  $ rb-sys-env"
     echo
     echo "Here are some steps to help you get started:"
     [[ -f Gemfile ]] && echo "  0. Run 'bundle install' to install the gems in your Gemfile"
@@ -58,6 +71,7 @@ __first_notice() {
 
 if [ "$USER" = "rb-sys-dock" ]; then
     __set_command_history
+    __set_bundle_path
     __bash_prompt
     __first_notice
 fi
