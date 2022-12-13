@@ -12,6 +12,7 @@ ENV RUBY_TARGET="x86-mingw32" \
     CC_i686_pc_windows_gnu="i686-w64-mingw32-gcc" \
     CXX_i686_pc_windows_gnu="i686-w64-mingw32-g++" \
     AR_i686_pc_windows_gnu="i686-w64-mingw32-gcc-ar" \
+    PKG_CONFIG_PATH_i686_pc_windows_gnu="/usr/i686-w64-mingw32/pkgconfig" \
     CMAKE_i686_pc_windows_gnu="/opt/cmake/bin/cmake"
 
 COPY setup/lib.sh /lib.sh
