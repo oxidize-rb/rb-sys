@@ -213,7 +213,7 @@ def log_some_useful_info(_options)
 end
 
 def set_env(options)
-  ENV["RCD_IMAGE"] ||= "rbsys/#{options[:toolchain_info]}:#{options[:version]}"
+  ENV["RCD_IMAGE"] ||= "rbsys/#{options[:toolchain_info].platform}:#{options[:version]}"
 end
 
 set_env(options)
