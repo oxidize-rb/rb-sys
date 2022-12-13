@@ -69,6 +69,64 @@ __first_notice() {
     echo
 }
 
+rg() {
+  if [ ! -f /usr/local/bin/rg ]; then
+    if [ "$(uname -m)" != "x86_64" ]; then
+      echo "ripgrep is not installed"
+      exit 1
+    fi
+
+    echo "Installing ripgrep..."
+
+    # download from github releases, untar, and install to tmpdir
+    local rg_version="13.0.0"
+    local rg_sha256="4ef156371199b3ddac1bf584e0e52b1828279af82e4ea864b4d9c816adb5db40"
+    local rg_tmpdir="$(mktemp -d)"
+    local url="https://github.com/BurntSushi/ripgrep/releases/download/$rg_version/ripgrep-$rg_version-x86_64-unknown-linux-musl.tar.gz"
+    curl -sL "$url" | tar -xz -C "$rg_tmpdir" --strip-components=1
+    sha256sum "$rg_tmpdir/rg" | grep "$rg_sha256" > /dev/null
+
+    # move to /usr/local/bin
+    sudo mv "$rg_tmpdir/rg" /usr/local/bin
+    /usr/local/bin/rg "$@"
+
+  fi
+
+  unset -f rg
+}
+
+nvim() {
+
+  if [ ! -f /usr/local/bin/vim ]; then
+    if [ "$(uname -m)" != "x86_64" ]; then
+      echo "vim is not installed"
+      exit 1
+    fi
+
+    echo "Installing nvim..."
+
+    # download from github releases, untar, and install to tmpdir
+    local vim_version="v0.8.1"
+    local vim_sha256="2cabf3973936a0fd25d11b95e23bb4cae686bb916de7a0cb24cd16fe6764a0f4"
+    local vim_tmpdir="$(mktemp -d)"
+    local url="https://github.com/neovim/neovim/releases/download/$vim_version/nvim-linux64.tar.gz"
+
+    curl -sL "$url" | tar -xz -C "$vim_tmpdir" --strip-components=1
+    sha256sum "$vim_tmpdir/bin/nvim" | grep "$vim_sha256" > /dev/null
+
+    sudo mv "$vim_tmpdir" /usr/local/nvim
+    export PATH="/usr/local/nvim/bin:$PATH"
+    sudo ln -s /usr/local/nvim/bin/nvim /usr/local/bin/vim
+    unset -f vim
+    unset -f nvim
+    /usr/local/nvim/bin/nvim "$@"
+  fi
+}
+
+vim() {
+  nvim "$@"
+}
+
 if [ "$USER" = "rb-sys-dock" ]; then
     __set_command_history
     __set_bundle_path
