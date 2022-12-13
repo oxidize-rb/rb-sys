@@ -29,6 +29,14 @@ class TestRbSys < Minitest::Test
     assert_match(/export NO_LINK_RUTIE := true/, makefile.read)
   end
 
+  def test_doesnt_contain_blocked_link_args
+    makefile = create_makefile
+    lines = makefile.read.split("\n")
+    cargo_command = lines.find { |l| l.include? "rustc" }
+
+    assert !cargo_command.include?("compress-debug-sections")
+  end
+
   def test_uses_custom_profile
     makefile = create_makefile do |b|
       b.profile = :dev
