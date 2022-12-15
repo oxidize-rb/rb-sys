@@ -7,26 +7,38 @@ end
 
 def extra_args
   seperator_index = ARGV.index("--")
-  seperator_index && ARGV[(seperator_index + 1)..-1]
+  seperator_index && ARGV[(seperator_index + 1)..-1] || []
+end
+
+def cargo_test(*args)
+  ENV["RUST_TEST_THREADS"] = "1"
+  default_args = ENV["CI"] || extra_args.include?("--verbose") ? [] : ["--quiet"]
+  sh "cargo", "test", *default_args, *extra_args, *args
 end
 
 namespace :test do
-  desc "Run cargo test against current Ruby"
-  task :cargo do
-    ENV["RUST_TEST_THREADS"] = "1"
-
-    begin
-      cargo_args = extra_args || ["--workspace", "--lib"]
-      sh "cargo", "test", *cargo_args
-    rescue
-      if ENV["CI"]
-        ENV["RB_SYS_DEBUG_BUILD"] = "1"
-        sh "cargo", "test", *cargo_args
-      end
-
-      raise
-    end
+  desc "Run rb-sys tests"
+  task "rb-sys" do
+    cargo_test "-p", "rb-sys", "--features", "bindgen-layout-tests"
   end
+
+  desc "Run rb-sys-build tests"
+  task "rb-sys-build" do
+    cargo_test "-p", "rb-sys-build"
+  end
+
+  desc "Run rb-sys-tests tests"
+  task "rb-sys-tests" do
+    cargo_test "-p", "rb-sys-tests"
+  end
+
+  desc "Run rb-sys-tests tests"
+  task "rb-sys-env" do
+    cargo_test "-p", "rb-sys-env"
+  end
+
+  desc "Run cargo test against current Ruby"
+  task cargo: ["test:rb-sys", "test:rb-sys-build", "test:rb-sys-tests", "test:rb-sys-env"]
 
   desc "Test against all installed Rubies"
   task :rubies do

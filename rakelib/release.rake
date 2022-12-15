@@ -10,6 +10,7 @@ namespace :release do
     sh "fastmod", "--extensions=md", "--accept-all", old_version.to_s, new_version.to_s
     sh "fastmod", "--extensions=toml", "--accept-all", "^version = \"#{old_version}\"", "version = #{new_version.inspect}"
     sh "fastmod", "--extensions=toml", "--accept-all", "^rb-sys = \\{ version = \"#{old_version}\"", "rb-sys = { version = #{new_version.inspect}"
+    sh "fastmod", "--extensions=toml", "--accept-all", "^rb-sys-build = \\{ version = \"#{old_version}\"", "rb-sys = { version = #{new_version.inspect}"
     sh "fastmod", "--extensions=rb", "--accept-all", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
     sh "cargo check"
     Dir.chdir("examples/rust_reverse") { sh("cargo", "check") }

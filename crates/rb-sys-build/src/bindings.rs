@@ -115,11 +115,16 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
         .rustfmt_bindings(true)
-        .rustified_enum("*")
+        .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
+        .layout_tests(cfg!(feature = "bindgen-layout-tests"))
+        .blocklist_item("^__darwin_pthread.*")
+        .blocklist_item("^_opaque_pthread.*")
+        .blocklist_item("^pthread_.*")
+        .blocklist_item("^rb_native.*")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
 }
 

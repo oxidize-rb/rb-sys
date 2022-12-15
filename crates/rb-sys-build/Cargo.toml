@@ -14,9 +14,10 @@ doctest = false
 [dependencies]
 regex = "1"
 shell-words = "1.1"
-bindgen = { version = "0.61", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.62", default-features = false, features = ["runtime"] }
 
 [features]
 default = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []
+bindgen-layout-tests = []
