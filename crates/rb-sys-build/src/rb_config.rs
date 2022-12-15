@@ -245,7 +245,9 @@ impl RbConfig {
         }
 
         for link_arg in &self.link_args {
-            result.push(format!("cargo:rustc-link-arg={}", link_arg));
+            if !self.blocklist_link_arg.iter().any(|b| link_arg.contains(b)) {
+                result.push(format!("cargo:rustc-link-arg={}", link_arg));
+            }
         }
 
         result
@@ -299,7 +301,7 @@ impl RbConfig {
                 self.push_search_path((SearchPathKind::Framework, name));
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
                 self.push_library((LibraryKind::Framework, name));
-            } else if !self.blocklist_link_arg.iter().any(|b| arg.contains(b)) {
+            } else {
                 self.push_link_arg(arg);
             }
         }
@@ -761,5 +763,14 @@ mod tests {
             ],
             rb_config.cargo_args()
         );
+    }
+
+    #[test]
+    fn test_link_arg_blocklist() {
+        let mut rb_config = RbConfig::new();
+        rb_config.blocklist_link_arg("compress-debug-sections");
+        rb_config.push_dldflags("-lfoo -Wl,compress-debug-sections=zlib");
+
+        assert_eq!(vec!["cargo:rustc-link-lib=foo"], rb_config.cargo_args());
     }
 }
