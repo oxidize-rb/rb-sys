@@ -1,7 +1,7 @@
 [package]
 build = "build/main.rs"
 name = "rb-sys"
-version = "0.9.50"
+version = "0.9.51"
 edition = "2018"
 readme = "readme.md"
 categories = ["external-ffi-bindings"]
