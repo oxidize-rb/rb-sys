@@ -38,6 +38,42 @@ def log(level, message, emoji: true, io: $stderr)
   io.puts "#{shellcode}#{emoji_opt}#{escaped}\e[0m"
 end
 
+def default_docker_command
+  return @default_docker_command if defined?(@default_docker_command)
+
+  @default_docker_command = ENV.fetch("DOCKER", "docker")
+end
+
+def run_command!(cmd)
+  log(:trace, "Running command: $ #{cmd}")
+  stdout, stderr, status = Open3.capture3(cmd)
+
+  if status.success?
+    stdout
+  else
+    log(:error, "Error running command: $ #{cmd}")
+    warn(stderr)
+    exit(status.exitstatus)
+  end
+end
+
+def docker(cmd)
+  require "open3"
+
+  run_command!("#{default_docker_command} #{cmd}")
+rescue Errno::ENOENT
+  log(:trace, "Could not find docker command, trying podman")
+
+  begin
+    stdout = run_command!("podman #{cmd}")
+    @default_docker_command = "podman"
+    stdout
+  rescue Errno::ENOENT
+    log(:error, "Could not find docker or podman command, please install one of them")
+    exit(1)
+  end
+end
+
 OptionParser.new do |opts|
   opts.banner = "Usage: rb-sys-dock --platform PLATFORM [COMMAND]"
 
@@ -156,7 +192,7 @@ def rcd(input_args, options)
   run_command = input_args.empty? ? "bash" : input_args.join(" ")
 
   cmd = <<~SH
-    #{docker_command} run \
+    #{default_docker_command} run \
       -v #{Dir.pwd}:#{Dir.pwd} \
       #{mount_target_dir(options, extra_env)} \
       #{mount_cargo_registry} \
@@ -183,24 +219,18 @@ def rcd(input_args, options)
       #{run_command}
   SH
 
-  log(:trace, "Running command: \n$ #{cmd}")
+  log(:trace, "Running command: $ #{cmd}")
 
   exec(cmd)
-end
-
-def docker_command
-  return @docker_command if defined?(@docker_command)
-
-  @docker_command = ENV.fetch("DOCKER", "docker")
 end
 
 def download_image(_options)
   image = ENV.fetch("RCD_IMAGE")
 
-  if `#{docker_command} images -q #{image}`.strip.empty?
+  if docker("images -q #{image}").strip.empty?
     # Nicely formatted message that we are downloading the image which might take awhile
     log(:notice, "Downloading container #{image.inspect}, this might take awhile...")
-    system("#{docker_command} pull #{image} --quiet > /dev/null")
+    docker("pull #{image} --quiet > /dev/null")
   end
 end
 
