@@ -7,6 +7,14 @@ class TestLinkFlagConverter < Minitest::Test
     args = Shellwords.split(flags)
     args = args.flat_map { |arg| RbSys::CargoBuilder::LinkFlagConverter.convert(arg) }
 
-    assert_equal ["-L", "native=/opt/ruby/lib", "-C", "link_arg=-Wl,-undefined,dynamic_lookup"], args
+    assert_equal ["-L", "native=/opt/ruby/lib", "-C", "link-arg=-Wl,-undefined,dynamic_lookup"], args
+  end
+
+  def test_not_converting_static_libs
+    flags = "-lshlwapi -l:libssp.a"
+    args = Shellwords.split(flags)
+    args = args.flat_map { |arg| RbSys::CargoBuilder::LinkFlagConverter.convert(arg) }
+
+    assert_equal ["-l", "shlwapi", "-C", "link-arg=-l:libssp.a"], args
   end
 end
