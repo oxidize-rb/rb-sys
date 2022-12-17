@@ -275,7 +275,6 @@ impl RbConfig {
         let search_path_regex = Regex::new(r"^-L\s*(?P<name>.*)$").unwrap();
         let lib_regex_short = Regex::new(r"^-l\s*(?P<name>\w+\S+)$").unwrap();
         let lib_regex_long = Regex::new(r"^--library=(?P<name>\w+\S+)$").unwrap();
-        let static_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).a$").unwrap();
         let dynamic_lib_regex = Regex::new(r"^-l\s*:lib(?P<name>\S+).(so|dylib|dll)$").unwrap();
         let framework_regex_short = Regex::new(r"^-F\s*(?P<name>.*)$").unwrap();
         let framework_regex_long = Regex::new(r"^-framework\s*(?P<name>.*)$").unwrap();
@@ -293,8 +292,6 @@ impl RbConfig {
                 } else {
                     self.push_library(name);
                 }
-            } else if let Some(name) = capture_name(&static_lib_regex, &arg) {
-                self.push_library((LibraryKind::Static, name));
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
                 self.push_library((LibraryKind::Dylib, name));
             } else if let Some(name) = capture_name(&framework_regex_short, &arg) {
@@ -496,30 +493,6 @@ mod tests {
     }
 
     #[test]
-    fn test_libstatic_with_colon() {
-        let mut rb_config = RbConfig::new();
-        rb_config.push_dldflags("-l:libssp.a");
-
-        assert_eq!(rb_config.libs, ["static=ssp".into()]);
-    }
-
-    #[test]
-    fn test_libstatic_with_colon_space() {
-        let mut rb_config = RbConfig::new();
-        rb_config.push_dldflags("-l :libssp.a");
-
-        assert_eq!(rb_config.libs, ["static=ssp".into()]);
-    }
-
-    #[test]
-    fn test_unconventional_lib_with_colon() {
-        let mut rb_config = RbConfig::new();
-        rb_config.push_dldflags("-l:ssp.a");
-
-        assert_eq!(rb_config.link_args, vec!["-l:ssp.a"]);
-    }
-
-    #[test]
     fn test_dylib_with_colon_space() {
         let mut rb_config = RbConfig::new();
         rb_config.push_dldflags("-l :libssp.dylib");
@@ -641,14 +614,7 @@ mod tests {
         let mut rb_config = RbConfig::new();
         rb_config.push_dldflags("-F   /something -l:libssp.a -static-libgcc ");
 
-        assert_eq!(rb_config.link_args, vec!["-static-libgcc"]);
-        assert_eq!(
-            rb_config.libs,
-            vec![Library {
-                kind: LibraryKind::Static,
-                name: "ssp".to_string(),
-            }]
-        );
+        assert_eq!(rb_config.link_args, vec!["-l:libssp.a", "-static-libgcc"]);
         assert_eq!(
             rb_config.search_paths,
             vec![SearchPath {
@@ -763,6 +729,14 @@ mod tests {
             ],
             rb_config.cargo_args()
         );
+    }
+
+    #[test]
+    fn test_libstatic() {
+        let mut rb_config = RbConfig::new();
+        rb_config.push_dldflags("-l:libssp.a");
+
+        assert_eq!(rb_config.link_args, ["-l:libssp.a".to_string()]);
     }
 
     #[test]
