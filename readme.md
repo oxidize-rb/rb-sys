@@ -51,13 +51,13 @@ directory for automation purposes):
 
 | Platform          | Supported | Docker Image                                   |
 | ----------------- | --------- | ---------------------------------------------- |
-| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.51`][docker-hub]      |
-| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.51`][docker-hub] |
-| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.51`][docker-hub]     |
-| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.51`][docker-hub]         |
-| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.51`][docker-hub]      |
-| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.51`][docker-hub]       |
-| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.51`][docker-hub]    |
+| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.52`][docker-hub]      |
+| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.52`][docker-hub] |
+| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.52`][docker-hub]     |
+| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.52`][docker-hub]         |
+| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.52`][docker-hub]      |
+| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.52`][docker-hub]       |
+| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.52`][docker-hub]    |
 | mswin             | ✅        | not available on Docker                        |
 
 ## Getting Help
