@@ -1,6 +1,6 @@
 rb_sys::ruby_abi_version!();
 
-#[cfg(all(ruby_gte_3_2, unix))]
+#[cfg(all(ruby_has_ruby_abi_version, unix))]
 #[test]
 fn test_ruby_abi_version() {
     assert!(ruby_abi_version() >= 1)

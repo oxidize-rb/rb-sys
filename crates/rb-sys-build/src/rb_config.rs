@@ -315,8 +315,11 @@ impl RbConfig {
     pub fn has_ruby_dln_check_abi(&self) -> bool {
         let major = self.get("MAJOR").parse::<i32>().unwrap();
         let minor = self.get("MINOR").parse::<i32>().unwrap();
+        let patchlevel = self.get("PATCHLEVEL").parse::<i32>().unwrap();
 
-        major >= 3 && minor >= 2 && !cfg!(target_family = "windows")
+        // Ruby has ABI version on verion 3.2 and later only on development
+        // versions
+        major >= 3 && minor >= 2 && patchlevel == -1 && !cfg!(target_family = "windows")
     }
 
     // Examines the string from shell variables and expands them with values in the value_map
