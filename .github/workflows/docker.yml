@@ -32,8 +32,8 @@ jobs:
       # Test the container
       - uses: actions/checkout@v3
         with:
-          repository: "oxidize-rb/cross-gem-action"
-          path: "tmp/cross-gem-action"
+          repository: "oxidize-rb/oxi-test"
+          path: "tmp/oxi-test"
 
       - name: Print env info
         run: |
@@ -77,10 +77,10 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      # - uses: "oxidize-rb/cross-gem-action@main"
-      #   with:
-      #     platform: ${{ matrix.platform.ruby_target }}
-      #     directory: tmp/cross-gem-action/__tests__/fixtures/test-gem
+      - uses: "oxidize-rb/cross-gem-action@main"
+        with:
+          platform: ${{ matrix.platform.ruby_target }}
+          directory: tmp/oxi-test
 
       - name: Push images
         if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
