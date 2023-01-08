@@ -98,7 +98,7 @@ RUN bash -c " \
     done "
 
 # Build xruby versions with ruby2_keywords in parallel using ruby-3.x
-ENV XRUBIES "3.1.0:3.0.0:2.7.0"
+ENV XRUBIES "3.2.0:3.1.0:3.0.0:2.7.0"
 # Build xruby versions in parallel
 # Then cleanup all build artifacts
 RUN bash -c " \
