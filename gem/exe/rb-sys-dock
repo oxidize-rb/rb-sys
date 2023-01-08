@@ -189,7 +189,7 @@ def rcd(input_args, options)
 
   docker_options = []
   docker_options << "--tty" if $stdin.tty?
-  run_command = input_args.empty? ? "bash" : input_args.join(" ")
+  cmd = input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
 
   cmd = <<~SH
     #{default_docker_command} run \
@@ -216,7 +216,7 @@ def rcd(input_args, options)
       #{docker_options.join(" ")} \
       #{ENV.fetch("RCD_IMAGE")} \
       #{wrapper_command.join(" ")} \
-      #{run_command}
+      #{cmd}
   SH
 
   log(:trace, "Running command: $ #{cmd}")
