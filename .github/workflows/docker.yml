@@ -77,10 +77,14 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+
       - name: Run tests
         run: |
-          gem install rb_sys
           cd tmp/oxi-test
+          bundle install
           rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --latest -- \
             "bash -c 'bundle install && bundle exec rake native:${{ matrix.platform.ruby_target }} gem'"
 
