@@ -9,6 +9,7 @@ FROM messense/rust-musl-cross:x86_64-musl
 RUN apt-get -y update && \
     apt-get install -y \
     build-essential \
+    autoconf \
     cmake \
     curl \
     dirmngr \
@@ -25,7 +26,10 @@ RUN apt-get -y update && \
     unzip \
     wget \
     xz-utils \
+    libsqlite0-dev \
+    libyaml-dev \
     zlib1g-dev \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Add "rvm" as system group, to avoid conflicts with host GIDs typically starting with 1000
@@ -134,7 +138,7 @@ RUN echo "source /etc/profile.d/rcd-env.sh" >> /etc/rubybashrc
 # Install sudoers configuration
 COPY setup/musl/sudoers /etc/sudoers.d/rake-compiler-dock
 
-ENV RUBY_CC_VERSION 3.1.0:3.0.0:2.7.0
+ENV RUBY_CC_VERSION 3.2.0:3.1.0:3.0.0:2.7.0
 
 CMD bash
 

@@ -1,4 +1,4 @@
-FROM larskanis/rake-compiler-dock-mri-arm64-darwin:1.2.2
+FROM ghcr.io/rake-compiler/rake-compiler-dock-snapshot:arm64-darwin
 
 ENV RUBY_TARGET="arm64-darwin" \
     RUST_TARGET="aarch64-apple-darwin" \

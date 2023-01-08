@@ -7,12 +7,7 @@ set -euo pipefail
 source /lib.sh
 
 main() {
-  local version
-  version="3.3.22"
-  gem update --system "${version}" --no-document
-  set +u
-  rvm rubygems "${version}"
-  set -u
+  gem update --system --no-document
 }
 
 main "${@}"

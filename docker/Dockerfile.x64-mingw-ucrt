@@ -1,4 +1,4 @@
-FROM larskanis/rake-compiler-dock-mri-x64-mingw-ucrt:1.2.2
+FROM ghcr.io/rake-compiler/rake-compiler-dock-snapshot:x64-mingw-ucrt
 
 ENV RUBY_TARGET="x64-mingw-ucrt" \
     RUST_TARGET="x86_64-pc-windows-gnu" \

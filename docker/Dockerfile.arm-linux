@@ -1,4 +1,4 @@
-FROM larskanis/rake-compiler-dock-mri-arm-linux:1.2.2
+FROM ghcr.io/rake-compiler/rake-compiler-dock-snapshot:arm-linux
 
 ENV RUBY_TARGET="arm-linux" \
     RUST_TARGET="arm-unknown-linux-gnueabihf" \
