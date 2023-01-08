@@ -86,6 +86,10 @@ jobs:
           sudo chmod 777 tmp/oxi-test
           cd tmp/oxi-test
           gem install rb_sys
+
+          export RB_SYS_DOCK_UID=$(id -u)
+          export RB_SYS_DOCK_GID=$(id -g)
+
           rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --latest -- \
             "bash -c 'bundle install && bundle exec rake native:${{ matrix.platform.ruby_target }} gem'"
 
