@@ -83,8 +83,8 @@ jobs:
 
       - name: Run tests
         run: |
+          sudo chown -R $USER:$USER tmp/oxi-test
           cd tmp/oxi-test
-          bundle install
           rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --latest -- \
             "bash -c 'bundle install && bundle exec rake native:${{ matrix.platform.ruby_target }} gem'"
 
