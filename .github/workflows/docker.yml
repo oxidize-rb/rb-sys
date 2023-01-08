@@ -83,7 +83,7 @@ jobs:
 
       - name: Run tests
         run: |
-          sudo chown -R $USER:$USER tmp/oxi-test
+          sudo chmod 777 tmp/oxi-test
           cd tmp/oxi-test
           gem install rb_sys
           rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --latest -- \
