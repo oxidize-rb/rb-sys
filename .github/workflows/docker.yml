@@ -77,10 +77,12 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - uses: "oxidize-rb/cross-gem-action@main"
-        with:
-          platform: ${{ matrix.platform.ruby_target }}
-          directory: tmp/oxi-test
+      - name: Run tests
+        run: |
+          gem install rb_sys
+          cd tmp/oxi-test
+          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --latest -- \
+            "bash -c 'bundle install && bundle exec rake native:${{ matrix.platform.ruby_target }} gem'"
 
       - name: Push images
         if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
