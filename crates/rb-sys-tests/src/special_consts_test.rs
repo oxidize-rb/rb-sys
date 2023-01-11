@@ -1,9 +1,6 @@
-#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::special_consts::*;
-#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::*;
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_fixnum_p() {
     unsafe {
@@ -15,7 +12,6 @@ fn test_fixnum_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_static_sym_p() {
     unsafe {
@@ -27,7 +23,6 @@ fn test_static_sym_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_flonum_p() {
     unsafe {

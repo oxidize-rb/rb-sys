@@ -1,9 +1,6 @@
-#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::value_type::*;
-#[cfg(not(windows_broken_vm_init_3_1))]
 use rb_sys::*;
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_builtin_type_p() {
     unsafe {
@@ -13,7 +10,6 @@ fn test_builtin_type_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rb_integer_type_p() {
     unsafe {
@@ -26,7 +22,6 @@ fn test_rb_integer_type_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rb_dynamic_sym_p() {
     unsafe {
@@ -39,7 +34,6 @@ fn test_rb_dynamic_sym_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rb_symbol_p() {
     unsafe {
@@ -52,7 +46,6 @@ fn test_rb_symbol_p() {
     }
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rb_type_p() {
     unsafe {
