@@ -7,6 +7,10 @@ on:
       - main
   pull_request: {}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
   DEBUG_OUTPUT_DIR: /tmp/debug
