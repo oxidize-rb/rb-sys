@@ -14,13 +14,12 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 
 [build-dependencies]
 rb-sys-build = { version = "0.9.54", path = "../rb-sys-build" }
-cc = { version = "1.0", optional = true }
 
 [features]
 default = []
 link-ruby = []
 no-link-ruby = []
-ruby-macros = ["cc"]
+ruby-macros = ["rb-sys-build/cc"]
 ruby-static = []
 global-allocator = []
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]

@@ -97,7 +97,7 @@ impl RubyVersion {
 impl From<u8> for RubyVersion {
     fn from(major: u8) -> Self {
         Self {
-            major: major as u8,
+            major,
             minor: 0,
             teeny: 0,
         }
@@ -107,8 +107,8 @@ impl From<u8> for RubyVersion {
 impl From<(u8, u8)> for RubyVersion {
     fn from((major, minor): (u8, u8)) -> Self {
         Self {
-            major: major as u8,
-            minor: minor as u8,
+            major,
+            minor,
             teeny: 0,
         }
     }
@@ -117,9 +117,9 @@ impl From<(u8, u8)> for RubyVersion {
 impl From<(u8, u8, u8)> for RubyVersion {
     fn from((major, minor, teeny): (u8, u8, u8)) -> Self {
         Self {
-            major: major as u8,
-            minor: minor as u8,
-            teeny: teeny as u8,
+            major,
+            minor,
+            teeny,
         }
     }
 }
