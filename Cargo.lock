@@ -162,7 +162,6 @@ dependencies = [
 name = "rb-sys"
 version = "0.9.54"
 dependencies = [
- "cc",
  "rb-sys-build",
 ]
 
@@ -171,6 +170,7 @@ name = "rb-sys-build"
 version = "0.9.54"
 dependencies = [
  "bindgen",
+ "cc",
  "regex",
  "shell-words",
 ]
