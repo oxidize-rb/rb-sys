@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::path::PathBuf;
+use std::process::Command;
 
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
@@ -67,9 +68,10 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
 // Ruby's DEFINES macros. We could potentially use syn to parse them, but this
 // is simpler for now. Open to PRs!
 fn ensure_rustfmt_available() {
-    let err_msg = "rustfmt is required to generate bindings";
+    let err_msg =
+        "rustfmt is required to generate bindings. To install, run `rustup component add rustfmt`";
 
-    let output = std::process::Command::new("rustfmt")
+    let output = Command::new("rustfmt")
         .arg("--version")
         .output()
         .expect(err_msg);
@@ -178,7 +180,7 @@ where
 // Add things like `#[cfg(ruby_use_transient_heap = "true")]` to the bindings config
 fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
     let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
-    let lines = read_lines(&path)?;
+    let lines = read_lines(path)?;
 
     fn is_have_cfg(line: &str) -> bool {
         line.starts_with("pub const HAVE_RUBY")

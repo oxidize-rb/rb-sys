@@ -17,10 +17,9 @@ rb-sys-build = { version = "0.9.54", path = "../rb-sys-build" }
 
 [features]
 default = []
-cc = ["rb-sys-build/cc"]
 link-ruby = []
 no-link-ruby = []
-ruby-macros = ["cc"]
+ruby-macros = ["rb-sys-build/cc"]
 ruby-static = []
 global-allocator = []
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]

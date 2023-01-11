@@ -13,7 +13,10 @@ use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::utils::{is_msvc, is_mswin_or_mingw, shellsplit};
+use crate::{
+    memoize,
+    utils::{is_msvc, is_mswin_or_mingw, shellsplit},
+};
 
 use self::flags::Flags;
 
@@ -39,7 +42,7 @@ impl Default for RbConfig {
 
 impl RbConfig {
     /// Creates a new, blank `RbConfig`. You likely want to use `RbConfig::current()` instead.
-    pub fn new() -> RbConfig {
+    pub(crate) fn new() -> RbConfig {
         RbConfig {
             blocklist_lib: vec![],
             blocklist_link_arg: vec![],
@@ -62,17 +65,19 @@ impl RbConfig {
         println!("cargo:rerun-if-env-changed=RUBY");
 
         let mut rbconfig = RbConfig::new();
-        let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
 
-        let config = Command::new(ruby)
-            .arg("--disable-gems")
-            .arg("-rrbconfig")
-            .arg("-e")
-            .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
-            .output()
-            .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+        let output = memoize!(String: {
+            let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
 
-        let output = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
+            let config = Command::new(ruby)
+                .arg("--disable-gems")
+                .arg("-rrbconfig")
+                .arg("-e")
+                .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
+                .output()
+                .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+            String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+        });
 
         let mut parsed = HashMap::new();
         for line in output.split('\x1E') {

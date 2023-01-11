@@ -26,3 +26,17 @@ pub fn shellsplit(s: &str) -> Vec<String> {
         }
     }
 }
+
+#[macro_export]
+macro_rules! memoize {
+    ($type:ty: $val:expr) => {{
+        static INIT: std::sync::Once = std::sync::Once::new();
+        static mut VALUE: Option<$type> = None;
+        unsafe {
+            INIT.call_once(|| {
+                VALUE = Some($val);
+            });
+            VALUE.as_ref().unwrap()
+        }
+    }};
+}
