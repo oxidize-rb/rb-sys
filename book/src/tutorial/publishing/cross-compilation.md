@@ -17,7 +17,7 @@ use you tool to build your gem, and then exit the container. The gem will be ava
 
 ```bash
 $ rb-sys-dock -p aarch64-linux
-🐳 Entering shell in Docker container "rbsys/aarch64-linux:0.9.55"
+🐳 Entering shell in Docker container "rbsys/aarch64-linux:0.9.56"
 #...
 $ bundle install
 # ...
