@@ -159,6 +159,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "rb-src"
+version = "0.9.54"
+
+[[package]]
 name = "rb-sys"
 version = "0.9.54"
 dependencies = [

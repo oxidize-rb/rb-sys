@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryFrom, num::ParseIntError, str::FromStr};
 
 const COMPARABLE_RUBY_MAJORS: [u8; 4] = [1, 2, 3, 4];
 

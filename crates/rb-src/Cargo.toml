@@ -1,0 +1,17 @@
+[package]
+name = "rb-src"
+version = "0.9.54"
+edition = "2018"
+readme = "readme.md"
+categories = ["external-ffi-bindings"]
+description = "Builds libruby-static.a for use with rb-sys"
+documentation = "https://docs.rs/rb-src"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
+rust-version = "1.51"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
