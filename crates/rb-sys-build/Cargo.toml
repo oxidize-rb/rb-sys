@@ -19,7 +19,7 @@ bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
 cc-impl = { version = "1.0", optional = true, package = "cc" }
 
 [features]
-default = ["cc"]
+default = []
 cc = ["cc-impl"]
 bindgen-rbimpls = []
 bindgen-deprecated-types = []

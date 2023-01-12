@@ -27,7 +27,6 @@ namespace :release do
     ["crates/rb-sys-build", "crates/rb-sys"].each do |dir|
       Dir.chdir(dir) do
         sh "cargo publish || true"
-        sleep 30
       end
     end
 
