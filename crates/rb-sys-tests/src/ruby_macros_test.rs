@@ -2,7 +2,6 @@ use rb_sys::macros::*;
 use rb_sys::*;
 use std::{slice, str};
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rstring_len() {
     let rstr = rstring!("foo");
@@ -10,7 +9,6 @@ fn test_rstring_len() {
     assert_eq!(unsafe { RSTRING_LEN(rstr) }, 3);
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rarray_len() {
     let rstr: VALUE = rstring!("foo");
@@ -20,7 +18,6 @@ fn test_rarray_len() {
     assert_eq!(unsafe { RARRAY_LEN(rarray) }, 1);
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rstring_ptr() {
     let rstr = rstring!("foo");
@@ -35,7 +32,6 @@ fn test_rstring_ptr() {
     assert_eq!(rust_str.unwrap(), "foo");
 }
 
-#[cfg(not(windows_broken_vm_init_3_1))]
 #[test]
 fn test_rarray_ptr() {
     let ary = unsafe { rb_ary_new() };

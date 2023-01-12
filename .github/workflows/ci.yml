@@ -7,6 +7,10 @@ on:
       - main
   pull_request: {}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DEBUG: ${{ secrets.ACTIONS_STEP_DEBUG }}
   DEBUG_OUTPUT_DIR: /tmp/debug
@@ -30,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         # Test against all versions supported by rubygems
-        ruby_version: ["2.4", "2.5", "2.6", "2.7", "3.0", "3.1", "head"]
+        ruby_version: ["2.4", "2.5", "2.6", "2.7", "3.0", "3.1", "3.2", "head"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
@@ -53,13 +57,13 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
         with:
           ruby-version: ${{ matrix.ruby_version }}
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true
-          cargo-cache: "sccache"
+          cargo-cache: true
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
@@ -139,7 +143,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@main
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}

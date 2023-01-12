@@ -11,6 +11,7 @@ homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 links = "rb"
 repository = "https://github.com/oxidize-rb/rb-sys"
+rust-version = "1.51"
 
 [build-dependencies]
 rb-sys-build = { version = "0.9.54", path = "../rb-sys-build" }
