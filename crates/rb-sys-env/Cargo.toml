@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys-env"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 description = "Integrates rb-sys into high level frameworks"
 homepage = "https://github.com/oxidize-rb/rb-sys"

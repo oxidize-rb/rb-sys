@@ -140,7 +140,6 @@ pub use ruby_version::RubyVersion;
 pub fn activate() -> Result<RbEnv, Box<dyn Error>> {
     let env = RbEnv::default();
 
-    env.print_cargo_rerun_if_changed();
     env.print_cargo_rustc_cfg();
     env.print_encoded_cargo_args();
 
