@@ -7,7 +7,7 @@ set -euo pipefail
 source /lib.sh
 
 main() {
-  rubygems_version="3.4.1"
+  rubygems_version="3.4.4"
   bundler_version="2.4.4"
 
   gem update --no-document --system $rubygems_version
