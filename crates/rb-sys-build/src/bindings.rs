@@ -12,10 +12,16 @@ use std::process::Command;
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     ensure_rustfmt_available();
 
+    let extension_flag = if cfg!(target_os = "openbsd") {
+        "-fdeclspec"
+    } else {
+        "-fms-extensions"
+    };
+
     let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
-        "-fms-extensions".to_string(),
+        extension_flag.to_string(),
     ];
 
     clang_args.extend(rbconfig.cflags.clone());
