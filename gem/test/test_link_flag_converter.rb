@@ -17,4 +17,12 @@ class TestLinkFlagConverter < Minitest::Test
 
     assert_equal ["-l", "shlwapi", "-C", "link-arg=-l:libssp.a"], args
   end
+
+  def test_filtering_out_flags
+    flags = "-Wl,--compress-debug-sections=zlib -s -lfoo -somethingtokeep"
+    args = Shellwords.split(flags)
+    args = args.flat_map { |arg| RbSys::CargoBuilder::LinkFlagConverter.convert(arg) }
+
+    assert_equal ["-l", "foo", "-C", "link-arg=-somethingtokeep"], args
+  end
 end

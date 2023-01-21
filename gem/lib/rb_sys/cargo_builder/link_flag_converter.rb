@@ -7,7 +7,8 @@ module RbSys
     # Converts Ruby link flags into something cargo understands
     class LinkFlagConverter
       FILTERED_PATTERNS = [
-        /compress-debug-sections/ # Not supported by all linkers, and not required for Rust
+        /compress-debug-sections/, # Not supported by all linkers, and not required for Rust
+        /^\s*-s\s*$/
       ]
 
       def self.convert(args)

@@ -54,7 +54,8 @@ fn main() {
 }
 
 fn add_unsupported_link_args_to_blocklist(rbconfig: &mut RbConfig) {
-    rbconfig.blocklist_link_arg("compress-debug-sections");
+    rbconfig.blocklist_link_arg("-Wl,--compress-debug-sections=zlib");
+    rbconfig.blocklist_link_arg("-s");
 }
 
 fn add_libruby_to_blocklist(rbconfig: &mut RbConfig) {
