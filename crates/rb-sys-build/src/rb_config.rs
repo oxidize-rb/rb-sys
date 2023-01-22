@@ -250,7 +250,7 @@ impl RbConfig {
         }
 
         for link_arg in &self.link_args {
-            if !self.blocklist_link_arg.iter().any(|b| link_arg.contains(b)) {
+            if !self.blocklist_link_arg.iter().any(|b| link_arg == b) {
                 result.push(format!("cargo:rustc-link-arg={}", link_arg));
             }
         }
@@ -750,9 +750,18 @@ mod tests {
     #[test]
     fn test_link_arg_blocklist() {
         let mut rb_config = RbConfig::new();
-        rb_config.blocklist_link_arg("compress-debug-sections");
-        rb_config.push_dldflags("-lfoo -Wl,compress-debug-sections=zlib");
+        rb_config.blocklist_link_arg("-Wl,--compress-debug-sections=zlib");
+        rb_config.blocklist_link_arg("-s");
+        rb_config.push_dldflags(
+            "-lfoo -Wl,--compress-debug-sections=zlib -s -somethingthatshouldnotbeblocked",
+        );
 
-        assert_eq!(vec!["cargo:rustc-link-lib=foo"], rb_config.cargo_args());
+        assert_eq!(
+            vec![
+                "cargo:rustc-link-lib=foo",
+                "cargo:rustc-link-arg=-somethingthatshouldnotbeblocked"
+            ],
+            rb_config.cargo_args()
+        );
     }
 }
