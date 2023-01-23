@@ -8,9 +8,13 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 
+const WRAPPER_H_CONTENT: &str = include_str!("bindings/wrapper.h");
+
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     ensure_rustfmt_available();
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let extension_flag = if cfg!(target_os = "openbsd") {
         "-fdeclspec"
@@ -29,11 +33,10 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 
-    let mut src_wrapper_h = File::open("wrapper.h").unwrap();
-    let mut wrapper_h =
-        File::create(PathBuf::from(env::var("OUT_DIR").unwrap()).join("wrapper.h")).unwrap();
+    let wrapper_h_path = out_dir.join("wrapper.h");
+    let mut wrapper_h = File::create(&wrapper_h_path).unwrap();
 
-    std::io::copy(&mut src_wrapper_h, &mut wrapper_h).expect("to copy wrapper.h");
+    write!(wrapper_h, "{}", WRAPPER_H_CONTENT).unwrap();
 
     if !is_msvc() {
         writeln!(wrapper_h, "#ifdef HAVE_RUBY_ATOMIC_H").unwrap();
@@ -42,7 +45,7 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     }
 
     let bindings = default_bindgen(clang_args)
-        .header("wrapper.h")
+        .header(wrapper_h_path.to_string_lossy())
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
@@ -139,10 +142,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
 fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbconfig: &RbConfig) {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    let mut code = builder
-        .generate()
-        .unwrap_or_else(|_| panic!("Unable to generate bindings for {}", path))
-        .to_string();
+    let mut code = builder.generate().unwrap().to_string();
 
     if is_msvc() {
         code = qualify_symbols_for_msvc(&code, static_ruby, rbconfig);

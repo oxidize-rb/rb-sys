@@ -24,7 +24,6 @@ fn main() {
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-env-changed=RUBY");
-    println!("cargo:rerun-if-changed=wrapper.h");
 
     for file in fs::read_dir("build").unwrap() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
