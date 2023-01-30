@@ -16,7 +16,7 @@ class TestRbSys < Minitest::Test
   def test_invokes_cargo_rustc
     makefile = create_makefile
 
-    assert_match(/\$\(CARGO\) rustc --target-dir/, makefile.read)
+    assert_match(/\$\(CARGO\) rustc --crate-type cdylib --target-dir/, makefile.read)
   end
 
   def test_invokes_custom_env

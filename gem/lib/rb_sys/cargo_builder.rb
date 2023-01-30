@@ -59,6 +59,7 @@ module RbSys
 
       cmd = []
       cmd += [cargo, "rustc"]
+      cmd += ["--crate-type", "cdylib"]
       cmd += ["--target", target] if target
       cmd += ["--target-dir", dest_path]
       cmd += ["--features", features.join(",")] unless features.empty?
