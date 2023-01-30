@@ -59,7 +59,6 @@ module RbSys
 
       cmd = []
       cmd += [cargo, "rustc"]
-      cmd += ["--crate-type=cdylib"]
       cmd += ["--target", target] if target
       cmd += ["--target-dir", dest_path]
       cmd += ["--features", features.join(",")] unless features.empty?
@@ -69,6 +68,7 @@ module RbSys
       cmd += Gem::Command.build_args
       cmd += args
       cmd += ["--"]
+      cmd += ["--crate-type", "cdylib"]
       cmd += [*cargo_rustc_args(dest_path)]
       cmd += extra_rustc_args
       cmd

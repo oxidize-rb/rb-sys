@@ -7,5 +7,8 @@ edition = "2018"
 [dependencies]
 rb-sys = { version = "0.9.58", path = "./../../../../crates/rb-sys", features = ["global-allocator"] }
 
+[lib]
+crate-type = ["cdylib"]
+
 [features]
 test-feature = []
