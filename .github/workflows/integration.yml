@@ -1,0 +1,66 @@
+---
+name: Integration
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.repo.slug }} (ruby=${{ matrix.ruby }}, os=${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        repo:
+          - name: "oxidize-rb/oxi-test"
+            slug: oxi-test
+            ref: main
+            run: rake
+          - name: "matsadler/magnus"
+            slug: magnus
+            ref: main
+            run: cargo test
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        rust: ["stable"]
+        ruby: ["2.7", "3.2"]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Log matrix
+        shell: bash
+        env:
+          INPUTS: ${{ toJSON(matrix) }}
+        run: |
+          echo "$INPUTS" | jq
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.repo.name }}
+          ref: ${{ matrix.repo.ref }}
+          path: repo
+      - uses: actions/checkout@v3
+        with:
+          path: rb-sys
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        id: setup
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          rustup-toolchain: ${{ matrix.rust }}
+      - name: ✏️ Replace rb-sys
+        shell: bash
+        run: |
+          cd ./repo
+          mkdir -p .cargo
+          echo >> .cargo/config.toml
+          echo "[patch.crates-io]" >> .cargo/config.toml
+          echo "rb-sys = { path = \"../rb-sys/crates/rb-sys\" }" >> .cargo/config.toml
+          cargo update -p rb-sys
+          echo "RUBYOPT=-I${{ github.workspace }}/rb-sys/gem/lib" >> $GITHUB_ENV
+          ruby -e "File.write('Gemfile', File.read('Gemfile').gsub(/gem .rb_sys.*$/, 'gem \"rb_sys\", path: \"../rb-sys/gem\"'))" || true
+          bundle install -j3 --retry 3 || true
+      - name: 🧪 Run tests for ${{ matrix.repo.slug }}
+        shell: bash
+        run: |
+          cd ./repo
+          ${{ matrix.repo.run }}
