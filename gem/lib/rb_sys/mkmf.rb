@@ -68,6 +68,7 @@ module RbSys
         #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
         #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
+        #{conditional_assign("RB_SYS_EXTRA_CARGO_ARGS", builder.extra_cargo_args.join(" "))}
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "dev")}
@@ -163,7 +164,11 @@ module RbSys
       args = ARGV.dup
       args.shift if args.first == "--"
       cargo_cmd = builder.cargo_command(dest_path, args)
-      Shellwords.join(cargo_cmd).gsub("\\=", "=").gsub(/\Acargo/, "$(CARGO)").gsub(/-v=\d/, "")
+      cmd = Shellwords.join(cargo_cmd)
+      cmd.gsub!("\\=", "=")
+      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS)")
+      cmd.gsub!(/-v=\d/, "")
+      cmd
     end
 
     def env_vars(builder)

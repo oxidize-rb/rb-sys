@@ -16,7 +16,7 @@ class TestRbSys < Minitest::Test
   def test_invokes_cargo_rustc
     makefile = create_makefile
 
-    assert_match(/\$\(CARGO\) rustc --target-dir/, makefile.read)
+    assert_match(/\$\(CARGO\) rustc/, makefile.read)
   end
 
   def test_invokes_custom_env
@@ -61,6 +61,15 @@ class TestRbSys < Minitest::Test
     end
 
     assert_match(/-C debuginfo=42$/, makefile.read)
+  end
+
+  def test_uses_extra_cargo_args
+    makefile = create_makefile do |b|
+      b.extra_cargo_args = ["--crate-type", "cdylib"]
+    end
+
+    assert_match(/--crate-type cdylib/, makefile.read)
+    assert_includes(makefile.read, "rustc $(RB_SYS_EXTRA_CARGO_ARGS)")
   end
 
   def test_uses_extra_rustflags
