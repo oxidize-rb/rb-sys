@@ -1,9 +1,12 @@
+require "rubygems/ext"
+require "rubygems/ext/builder"
 require_relative "cargo_builder/link_flag_converter"
 
 module RbSys
   # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
   class CargoBuilder < Gem::Ext::Builder
-    attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags
+    attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags,
+      :extra_cargo_args
     attr_writer :profile
 
     def initialize(spec)
@@ -17,6 +20,7 @@ module RbSys
       @features = []
       @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
       @extra_rustc_args = []
+      @extra_cargo_args = []
       @dry_run = true
       @ext_dir = nil
       @extra_rustflags = []
@@ -68,7 +72,7 @@ module RbSys
       cmd += Gem::Command.build_args
       cmd += args
       cmd += ["--"]
-      cmd += [*cargo_rustc_args(dest_path)]
+      cmd += [*rustc_args(dest_path)]
       cmd += extra_rustc_args
       cmd
     end
@@ -105,7 +109,7 @@ module RbSys
       result
     end
 
-    def cargo_rustc_args(dest_dir)
+    def rustc_args(dest_dir)
       [
         *linker_args,
         *mkmf_libpath,

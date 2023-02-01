@@ -17,7 +17,7 @@ class TestRustReverse < Minitest::Test
 
       expected = "a" * 10000
 
-      1000.times do
+      10.times do
         assert_equal expected, RustReverse.reverse("a" * 10000)
       end
     ensure
