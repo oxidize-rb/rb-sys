@@ -52,7 +52,8 @@ jobs:
         run: |
           cd ./repo
           mkdir -p .cargo
-          echo "\n[patch.crates-io]" >> .cargo/config.toml
+          echo >> .cargo/config.toml
+          echo "[patch.crates-io]" >> .cargo/config.toml
           echo "rb-sys = { path = \"${{ github.workspace }}/rb-sys/crates/rb-sys\" }" >> .cargo/config.toml
           cargo update -p rb-sys
           echo "RUBYOPT=-I${{ github.workspace }}/rb-sys/gem/lib" >> $GITHUB_ENV
