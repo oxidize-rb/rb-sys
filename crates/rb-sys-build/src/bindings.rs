@@ -136,6 +136,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
+        .impl_debug(cfg!(feature = "bindgen-impl-debug"))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
 }
 
