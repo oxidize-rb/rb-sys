@@ -4,6 +4,7 @@ require "optparse"
 require "rb_sys/version"
 require "rb_sys/toolchain_info"
 require "fileutils"
+require "tmpdir"
 
 options = {
   version: RbSys::VERSION
@@ -185,10 +186,16 @@ def mount_bundle_cache(options)
   "#{volume(dir, bundle_path)} -v #{bundle_dir}:#{File.join(Dir.pwd, ".bundle")}"
 end
 
+def tmp_target_dir(options)
+  return @tmp_target_dir if defined?(@tmp_target_dir)
+
+  dir = File.join(Dir.pwd, "tmp", "rb-sys-dock", options.fetch(:toolchain_info).platform, "target")
+  FileUtils.mkdir_p(dir)
+  @tmp_target_dir = dir
+end
+
 def mount_target_dir(options)
-  tmp_target_dir = File.join(Dir.pwd, "tmp", "rb-sys-dock", options.fetch(:toolchain_info).platform, "target")
-  FileUtils.mkdir_p(tmp_target_dir)
-  "-v #{tmp_target_dir}:#{File.join(Dir.pwd, "target")}"
+  "-v #{tmp_target_dir(options)}:#{File.join(Dir.pwd, "target")}"
 end
 
 def mount_command_history(options)
@@ -208,19 +215,23 @@ def default_command_to_run(input_args, options)
 
     log(:notice, "Running default build command:")
     log(:notice, "    $ rake native:#{options[:toolchain_info].platform} gem")
-    "bash -c '(#{with_bundle}) || (#{without_bundle})'"
+    cargo_env = "export RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir(options)}"
+    "bash -c '#{cargo_env}; (#{with_bundle}) || (#{without_bundle})'"
   else
     input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
   end
 end
 
-def user_mapping
-  uid, gid = if /darwin/.match?(RbConfig::CONFIG["host_os"])
+def uid_gid
+  if /darwin/.match?(RbConfig::CONFIG["host_os"])
     ["1000", "1000"]
   else
     [Process.uid, Process.gid]
   end
+end
 
+def user_mapping
+  uid, gid = uid_gid
   "-e UID=#{uid} -e GID=#{gid} -e GROUP=_staff -e USER=rb-sys-dock"
 end
 
@@ -229,7 +240,6 @@ def interactive?(input_args)
 end
 
 def gen_bundle_config_file(path)
-  require "tmpdir"
   dir = Dir.mktmpdir("rb-sys-dock")
   file = File.join(dir, "config")
   File.write(file, <<~YAML)
@@ -240,6 +250,10 @@ def gen_bundle_config_file(path)
   YAML
 
   file
+end
+
+def mount_tmp_dir(options)
+  "--mount type=bind,source=#{Dir.mktmpdir},destination=#{Dir.pwd}/tmp/#{options.fetch(:toolchain_info).platform},readonly=false"
 end
 
 def rcd(input_args, options)
@@ -253,6 +267,7 @@ def rcd(input_args, options)
   cmd = <<~SH
     #{default_docker_command} run \
       -v #{Dir.pwd}:#{Dir.pwd} \
+      #{mount_tmp_dir(options)} \
       #{mount_target_dir(options)} \
       #{mount_cargo_registry} \
       #{mount_bundle_cache(options)} \
