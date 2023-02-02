@@ -101,6 +101,7 @@ OptionParser.new do |opts|
   opts.on("--latest", "Use the latest version of the Docker image") do
     log(:notice, "Using latest version of the Docker image", emoji: "🆕")
     options[:version] = "latest"
+    options[:no_cache] = true
   end
 
   opts.on("--list-platforms", "--list", "List all supported platforms") do
@@ -122,6 +123,10 @@ OptionParser.new do |opts|
     ENV["LOG_LEVEL"] = "trace"
     ENV["VERBOSE"] = "1"
     options[:verbose] = true
+  end
+
+  opts.on("--build", "Build the Docker image") do
+    options[:build] = true
   end
 end.parse!
 
@@ -160,15 +165,28 @@ def mount_cargo_registry
   "--mount type=bind,source=#{File.join(local_registry_dir, dir)},target=#{File.join("/usr/local/cargo", dir)},readonly=false"
 end
 
-def mount_bundle_cache(options, extra_env)
-  dir = File.join(cache_dir, options.fetch(:platform), "bundle")
-  FileUtils.mkdir_p(dir)
-  log(:trace, "Mounting bundle cache: #{dir}")
-  "-v #{dir}:#{File.join(docker_tmp, "bundle")}"
+def volume(src, dest, mode: "rw")
+  "--volume #{src}:#{dest}:rw"
 end
 
-def mount_target_dir(options, _extra_env)
-  tmp_target_dir = File.join(Dir.pwd, "tmp", "rb-sys-dock", options[:platform], "target")
+def mount_bundle_cache(options)
+  unless File.exist?(File.join(Dir.pwd, "Gemfile"))
+    log(:trace, "Ignoring bundler config")
+    return
+  end
+
+  dir = File.join(cache_dir, options.fetch(:toolchain_info).platform, "bundle")
+  bundle_path = File.join(docker_tmp, "bundle")
+  FileUtils.mkdir_p(dir)
+  log(:trace, "Mounting bundle cache: #{dir}")
+  bundle_config = gen_bundle_config_file(bundle_path)
+  bundle_dir = File.dirname(bundle_config)
+
+  "#{volume(dir, bundle_path)} -v #{bundle_dir}:#{File.join(Dir.pwd, ".bundle")}"
+end
+
+def mount_target_dir(options)
+  tmp_target_dir = File.join(Dir.pwd, "tmp", "rb-sys-dock", options.fetch(:toolchain_info).platform, "target")
   FileUtils.mkdir_p(tmp_target_dir)
   "-v #{tmp_target_dir}:#{File.join(Dir.pwd, "target")}"
 end
@@ -177,31 +195,69 @@ def mount_command_history(options)
   return unless $stdin.tty?
 
   history_dir = File.join(cache_dir, options.fetch(:platform), "commandhistory")
+  FileUtils.mkdir_p(history_dir)
   "-v #{history_dir}:#{File.join(docker_tmp, "commandhistory")}"
+end
+
+def default_command_to_run(input_args, options)
+  input_cmd = input_args.empty? ? "true" : input_args.join(" ")
+
+  if options[:build]
+    with_bundle = "test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
+    without_bundle = "#{input_cmd} && rake native:$RUBY_TARGET gem"
+
+    log(:notice, "Running default build command:")
+    log(:notice, "    $ rake native:#{options[:toolchain_info].platform} gem")
+    "bash -c '(#{with_bundle}) || (#{without_bundle})'"
+  else
+    input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
+  end
+end
+
+def user_mapping
+  uid, gid = if /darwin/.match?(RbConfig::CONFIG["host_os"])
+    ["1000", "1000"]
+  else
+    [Process.uid, Process.gid]
+  end
+
+  "-e UID=#{uid} -e GID=#{gid} -e GROUP=_staff -e USER=rb-sys-dock"
+end
+
+def interactive?(input_args)
+  $stdin.tty?
+end
+
+def gen_bundle_config_file(path)
+  require "tmpdir"
+  dir = Dir.mktmpdir("rb-sys-dock")
+  file = File.join(dir, "config")
+  File.write(file, <<~YAML)
+    ---
+    BUNDLE_JOBS: "4"
+    BUNDLE_RETRY: "4"
+    BUNDLE_PATH: #{path.inspect}
+  YAML
+
+  file
 end
 
 def rcd(input_args, options)
   wrapper_command = []
-  wrapper_command << "sigfw" unless $stdin.tty?
+  wrapper_command << "sigfw" unless interactive?(input_args)
   wrapper_command << "runas"
 
-  extra_env = []
-
   docker_options = []
-  docker_options << "--tty" if $stdin.tty?
-  cmd = input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
+  docker_options << "--tty" if interactive?(input_args)
 
   cmd = <<~SH
     #{default_docker_command} run \
       -v #{Dir.pwd}:#{Dir.pwd} \
-      #{mount_target_dir(options, extra_env)} \
+      #{mount_target_dir(options)} \
       #{mount_cargo_registry} \
-      #{mount_bundle_cache(options, extra_env)} \
+      #{mount_bundle_cache(options)} \
       #{mount_command_history(options)} \
-      -e UID=#{ENV.fetch("RB_SYS_DOCK_UID", "1000")} \
-      -e GID=#{ENV.fetch("RB_SYS_DOCK_GID", "1000")} \
-      -e USER=rb-sys-dock \
-      -e GROUP=_staff \
+      #{user_mapping} \
       -e GEM_PRIVATE_KEY_PASSPHRASE \
       -e ftp_proxy \
       -e http_proxy \
@@ -216,7 +272,7 @@ def rcd(input_args, options)
       #{docker_options.join(" ")} \
       #{ENV.fetch("RCD_IMAGE")} \
       #{wrapper_command.join(" ")} \
-      #{cmd}
+      #{default_command_to_run(input_args, options)}
   SH
 
   log(:trace, "Running command: $ #{cmd}")
@@ -224,10 +280,10 @@ def rcd(input_args, options)
   exec(cmd)
 end
 
-def download_image(_options)
+def download_image(options)
   image = ENV.fetch("RCD_IMAGE")
 
-  if docker("images -q #{image}").strip.empty?
+  if docker("images -q #{image}").strip.empty? || options[:no_cache]
     # Nicely formatted message that we are downloading the image which might take awhile
     log(:notice, "Downloading container #{image.inspect}, this might take awhile...")
     docker("pull #{image} --quiet > /dev/null")

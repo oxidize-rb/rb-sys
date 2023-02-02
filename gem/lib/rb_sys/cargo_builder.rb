@@ -59,10 +59,9 @@ module RbSys
 
     def cargo_command(dest_path, args = [])
       manifest = File.join(ext_dir, "Cargo.toml")
-      cargo = ENV.fetch("CARGO", "cargo")
 
       cmd = []
-      cmd += [cargo, "rustc"]
+      cmd += ["cargo", "rustc"]
       cmd += ["--target", target] if target
       cmd += ["--target-dir", dest_path]
       cmd += ["--features", features.join(",")] unless features.empty?
