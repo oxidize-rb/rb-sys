@@ -27,5 +27,8 @@ create_rust_makefile("rust_reverse/rust_reverse") do |r|
   r.force_install_rust_toolchain = false
 
   # Extra args to pass to the `cargo rustc` command (optional)
-  r.extra_cargo_args << "--frozen"
+  r.extra_cargo_args << "--quiet"
+
+  # Extra args to pass to the `rustc` command (optional)
+  r.extra_rustc_args = []
 end

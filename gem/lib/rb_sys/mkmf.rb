@@ -100,6 +100,7 @@ module RbSys
         DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
         RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
+        TIMESTAMP_DIR = .
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def
@@ -123,6 +124,10 @@ module RbSys
 
         #{optional_rust_toolchain(builder)}
 
+        #{timestamp_file("sitearchdir")}:
+        \t$(Q) $(MAKEDIRS) $(@D) $(RUBYARCHDIR)
+        \t$(Q) $(TOUCH) $@
+
         $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t#{full_cargo_command}
@@ -130,7 +135,7 @@ module RbSys
         $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
 
-        install-so: $(DLLIB)
+        install-so: $(DLLIB) #{timestamp_file("sitearchdir")}
         \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
