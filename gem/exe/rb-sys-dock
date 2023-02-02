@@ -115,6 +115,18 @@ OptionParser.new do |opts|
     exit(0)
   end
 
+  opts.on("--ruby-versions LIST", "List all supported Ruby versions") do |arg|
+    log(:notice, "Requested Ruby versions: #{arg}")
+
+    vers = arg.split(/[^0-9.]/).map do |v|
+      parts = v.split(".")
+      parts[2] = "0" if parts[2].nil?
+      parts.join(".")
+    end
+
+    ENV["RUBY_CC_VERSION"] = vers.join(":")
+  end
+
   opts.on("-h", "--help", "Prints this help") do
     puts opts
     exit
@@ -171,19 +183,12 @@ def volume(src, dest, mode: "rw")
 end
 
 def mount_bundle_cache(options)
-  unless File.exist?(File.join(Dir.pwd, "Gemfile"))
-    log(:trace, "Ignoring bundler config")
-    return
-  end
-
   dir = File.join(cache_dir, options.fetch(:toolchain_info).platform, "bundle")
   bundle_path = File.join(docker_tmp, "bundle")
   FileUtils.mkdir_p(dir)
   log(:trace, "Mounting bundle cache: #{dir}")
-  bundle_config = gen_bundle_config_file(bundle_path)
-  bundle_dir = File.dirname(bundle_config)
 
-  "#{volume(dir, bundle_path)} -v #{bundle_dir}:#{File.join(Dir.pwd, ".bundle")}"
+  "#{volume(dir, bundle_path)} -e BUNDLE_PATH=#{bundle_path.inspect}"
 end
 
 def tmp_target_dir(options)
@@ -210,13 +215,11 @@ def default_command_to_run(input_args, options)
   input_cmd = input_args.empty? ? "true" : input_args.join(" ")
 
   if options[:build]
-    with_bundle = "test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
+    with_bundle = +"test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
     without_bundle = "#{input_cmd} && rake native:$RUBY_TARGET gem"
-
     log(:notice, "Running default build command:")
     log(:notice, "    $ rake native:#{options[:toolchain_info].platform} gem")
-    cargo_env = "export RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir(options)}"
-    "bash -c '#{cargo_env}; (#{with_bundle}) || (#{without_bundle})'"
+    "bash -c '(#{with_bundle}) || (#{without_bundle})'"
   else
     input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
   end
@@ -237,19 +240,6 @@ end
 
 def interactive?(input_args)
   $stdin.tty?
-end
-
-def gen_bundle_config_file(path)
-  dir = Dir.mktmpdir("rb-sys-dock")
-  file = File.join(dir, "config")
-  File.write(file, <<~YAML)
-    ---
-    BUNDLE_JOBS: "4"
-    BUNDLE_RETRY: "4"
-    BUNDLE_PATH: #{path.inspect}
-  YAML
-
-  file
 end
 
 def mount_tmp_dir(options)
@@ -280,7 +270,12 @@ def rcd(input_args, options)
       -e RCD_HOST_RUBY_PLATFORM=#{RbConfig::CONFIG["arch"]} \
       -e RCD_HOST_RUBY_VERSION=#{RUBY_VERSION} \
       -e RCD_IMAGE \
+      -e RB_SYS_DOCK_TMPDIR="/tmp/rb-sys-dock" \
+      -e RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir(options).inspect} \
+      #{ENV["RUBY_CC_VERSION"] ? "-e RUBY_CC_VERSION=#{ENV["RUBY_CC_VERSION"]}" : ""} \
+      -e RAKEOPT \
       -e TERM \
+      -e LC_ALL=#{ENV.fetch("LC_ALL", "en_US.UTF-8")} \
       -w #{Dir.pwd} \
       --rm \
       --interactive \

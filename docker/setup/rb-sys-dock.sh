@@ -1,13 +1,19 @@
 #!/bin/sh
 
+set -e
+
+setup_sudoers() {
+  echo "Defaults        env_keep += \"BUNDLE_PATH RB_SYS_CARGO_TARGET_DIR RAKEOPT\"" >> /etc/sudoers.d/rb-sys-dock
+}
+
 main() {
+  setup_sudoers
+
   rb_sys_dock_bash="$(cat \
 <<'EOF'
-export RB_SYS_DOCK_TMPDIR="/tmp/rb-sys-dock"
-
 __bash_prompt() {
-    local ruby_platform='`export XIT=$? \
-        && echo -n "\[\033[0;32m\]${RUBY_TARGET} " \
+    local userpart='`export XIT=$? \
+        && [ ! -z "${RUBY_TARGET}" ] && echo -n "\[\033[0;32m\]${RUBY_TARGET} " || echo -n "\[\033[0;32m\]\u " \
         && [ "$XIT" -ne "0" ] && echo -n "\[\033[1;31m\]➜" || echo -n "\[\033[0m\]➜"`'
     local gitbranch='`\
         export BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null); \
@@ -20,9 +26,7 @@ __bash_prompt() {
         fi`'
     local lightblue='\[\033[1;34m\]'
     local removecolor='\[\033[0m\]'
-    PS1="${ruby_platform} ${lightblue}\W ${gitbranch}${removecolor}\$ "
-
-
+    PS1="${userpart} ${lightblue}\W ${gitbranch}${removecolor}\$ "
     unset -f __bash_prompt
 }
 
@@ -46,26 +50,15 @@ __set_command_history() {
     unset -f __set_command_history
 }
 
-__set_bundle_path() {
-    if [ -d "$RB_SYS_DOCK_TMPDIR/bundle" ]; then
-        export BUNDLE_PATH="$RB_SYS_DOCK_TMPDIR/bundle"
-    fi
-
-    unset -f __set_bundle_path
-}
-
 __first_notice() {
-    local lightblue="\033[0;34m"
-    local removecolor="\033[0m"
-
-    echo "${lightblue}Welcome to the rb-sys-dock container!${removecolor}"
+    echo "Welcome to the rb-sys-dock container!"
     echo
     echo "To see the environment variables that are set, run:"
     echo "  $ rb-sys-env"
     echo
     echo "Here are some steps to help you get started:"
-    [[ -f Gemfile ]] && echo "  0. Run 'bundle install' to install the gems in your Gemfile"
-    echo "  1. Run 'rake native:$RUBY_TARGET' to build the native extension"
+    [[ -f Gemfile ]] && echo "  - Run 'bundle install' to install the gems in your Gemfile"
+    echo "  - Run 'rake native:$RUBY_TARGET gem' to build the native gem"
     echo
 }
 
@@ -96,7 +89,6 @@ rg() {
 }
 
 nvim() {
-
   if [ ! -f /usr/local/bin/vim ]; then
     if [ "$(uname -m)" != "x86_64" ]; then
       echo "vim is not installed"
@@ -129,7 +121,6 @@ vim() {
 
 if [ "$USER" = "rb-sys-dock" ]; then
     __set_command_history
-    __set_bundle_path
     __bash_prompt
     __first_notice
 fi
