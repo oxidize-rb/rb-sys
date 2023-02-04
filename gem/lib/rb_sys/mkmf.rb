@@ -48,7 +48,7 @@ module RbSys
 
       yield builder if blk
 
-      srcprefix = File.join("$(srcdir)", builder.ext_dir.gsub(/\A\.\/?/, "")).gsub(/\/\z/, "")
+      srcprefix = File.join("$(srcdir)", builder.ext_dir.gsub(/\A\.\/?/, "")).chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
 
       full_cargo_command = cargo_command(srcdir, builder)

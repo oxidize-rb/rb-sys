@@ -12,9 +12,3 @@ crate-type = ["cdylib"]
 
 [features]
 test-feature = []
-
-[profile.dist]
-inherits = "release"
-split-debuginfo = "packed"
-debug = true
-lto = "thin"
