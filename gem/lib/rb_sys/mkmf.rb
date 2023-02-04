@@ -172,7 +172,7 @@ module RbSys
       cargo_cmd = builder.cargo_command(dest_path, args)
       cmd = Shellwords.join(cargo_cmd)
       cmd.gsub!("\\=", "=")
-      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml $(RB_SYS_EXTRA_CARGO_ARGS)")
+      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS) --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml")
       cmd.gsub!(/-v=\d/, "")
       cmd
     end

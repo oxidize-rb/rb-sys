@@ -22,7 +22,7 @@ module RbSys
       @extra_rustc_args = []
       @extra_cargo_args = []
       @dry_run = true
-      @ext_dir = nil
+      @ext_dir = ""
       @extra_rustflags = []
     end
 
