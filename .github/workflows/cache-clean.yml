@@ -21,43 +21,85 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            let currentPage = 1
-            let totalDeleted = 0
-            let ref = context.ref
-            let inputs = context.payload.inputs
+            let totalDeleted = 0;
+            let totalBytes = 0;
+            let inputs = context.payload.inputs;
+            let allBranches = [context.ref];
 
             if (inputs && inputs["all-branches"] == "true") {
-              console.log("Deleting caches for *all* branches")
-              ref = undefined
-            }
+              console.warn("Deleting caches for *all* branches");
+              let currentPage = 1;
+              allBranches = [];
 
-            while (true) {
-              const caches = await github.rest.actions.getActionsCacheList({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-                page: currentPage,
-                ref: ref,
-                page: currentPage,
-              })
-
-              for (const cache of caches.data.actions_caches) {
-                const deleted = await github.rest.actions.deleteActionsCacheById({
+              while (true) {
+                let branches = await octokit.rest.repos.listBranches({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  cache_id: cache.id,
-                })
+                  per_page: 100,
+                  page: currentPage,
+                });
 
-                console.log(`Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`)
-                totalDeleted++
+                allBranches = allBranches.concat(
+                  branches.data.map((branch) => branch.name)
+                );
+
+                if (branches.data.length < 100) {
+                  break;
+                }
+
+                currentPage++;
               }
-
-              if (caches.data.total_count <= currentPage * 100) {
-                console.log(`No more caches to delete on page ${currentPage}, total count: ${caches.data.total_count}`)
-                break
-              }
-
-              currentPage++
             }
 
-            console.log(`Clear completed, deleted ${totalDeleted} caches`)
+            async function deleteCachesForRef(ref) {
+              let currentPage = 1;
+
+              while (true) {
+                const caches = await github.rest.actions.getActionsCacheList({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  per_page: 100,
+                  page: currentPage,
+                  ref: ref,
+                  page: currentPage,
+                });
+
+                let promises = [];
+
+                for (const cache of caches.data.actions_caches) {
+                  const deleted = github.rest.actions.deleteActionsCacheById({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    cache_id: cache.id,
+                  });
+
+                  deleted.then(() => {
+                    console.log(
+                      `Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`
+                    );
+                    totalDeleted++;
+                    totalBytes += size_in_bytes;
+                  });
+
+                  promises.push(deleted);
+                }
+
+                await Promise.all(promises);
+
+                if (caches.data.total_count <= currentPage * 100) {
+                  console.log(`Deleted ${caches.data.total_count} caches for ${ref}`);
+                  break;
+                }
+
+                currentPage++;
+              }
+            }
+
+            for (const ref of allBranches) {
+              console.log(`Deleting caches for ${ref}`);
+              await deleteCachesForRef(ref);
+              console.log(`Deleted all caches for ${ref}`);
+            }
+
+            let totalMb = totalBytes / 1024 / 1024;
+            console.log(`Clear completed, deleted ${totalDeleted} caches (${totalMb} MB)`);
