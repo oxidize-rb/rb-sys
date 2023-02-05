@@ -45,7 +45,10 @@ jobs:
                   page: currentPage,
                 });
 
+                let totalCount = caches.data.total_count;
                 let promises = [];
+
+                console.log(`Found ${totalCount} caches for ${ref}`);
 
                 for (const cache of caches.data.actions_caches) {
                   const deleted = github.rest.actions.deleteActionsCacheById({
@@ -68,7 +71,7 @@ jobs:
 
                 await Promise.all(promises);
 
-                if (caches.data.total_count <= currentPage * pageSize) {
+                if (totalCount <= currentPage * pageSize) {
                   console.log(`Deleted ${caches.data.total_count} caches for ${ref}`);
                   break;
                 }
