@@ -5,6 +5,7 @@ require "shellwords"
 module RbSys
   class CargoBuilder < Gem::Ext::Builder
     # Converts Ruby link flags into something cargo understands
+    # @api private
     class LinkFlagConverter
       FILTERED_PATTERNS = [
         /compress-debug-sections/, # Not supported by all linkers, and not required for Rust

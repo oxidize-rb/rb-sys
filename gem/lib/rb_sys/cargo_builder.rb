@@ -4,6 +4,7 @@ require_relative "cargo_builder/link_flag_converter"
 
 module RbSys
   # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
+  # @api private
   class CargoBuilder < Gem::Ext::Builder
     attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags,
       :extra_cargo_args

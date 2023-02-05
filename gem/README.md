@@ -1,7 +1,28 @@
 # The `rb_sys` gem
 
+![Gem](https://img.shields.io/gem/v/rb_sys)
+[![Documentation](https://img.shields.io/badge/docs-rdoc.info-blue.svg)](https://www.rubydoc.info/gems/rb_sys/frames)
+[![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)
+
 The `rb_sys` gem is a Ruby gem makes it easy to build native Ruby extensions in Rust. It interops with the existing Ruby
 native extension toolchains (i.e. `rake-compiler`) to make testing, building, and cross compilation of gems easy.
+
+## `RbSys::ExtensionTask`
+
+This gem provides a `RbSys::ExtensionTask` class that can be used to build a Ruby extension in Rust. It's a thin wrapper
+around `Rake::ExtensionTask` that provides sane defaults for building Rust extensions.
+
+```ruby
+# Rakefile
+
+require "rb_sys/extensiontask"
+
+GEMSPEC = Gem::Specification.load("my_gem.gemspec")
+
+RbSys::ExtensionTask.new("my-crate-name", GEMSPEC) do |ext|
+  ext.lib_dir = "lib/my_gem"
+end
+```
 
 ## `create_rust_makefile`
 
@@ -52,9 +73,6 @@ end
 - You can pass Cargo arguments to `rake-compiler` like so: `rake compile -- --verbose`
 
 - It's possible to force an installation of a Rust toolchain by setting the `RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN`
-  environment variable. This will install [`rustup`][rustup] and [`cargo`][cargo] in the build directory, so the end
-  user does not have to have Rust pre-installed. Ideally, this should be a last resort, as it's better to already have
-  the toolchain installed on your system.
-
-[rustup]: https://rustup.rs/
-[cargo]: https://crates.io/
+  environment variable. This will install [rustup](https://rustup.rs/) and [cargo](https://crates.io/) in the build
+  directory, so the end user does not have to have Rust pre-installed. Ideally, this should be a last resort, as it's
+  better to already have the toolchain installed on your system.

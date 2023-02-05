@@ -107,6 +107,7 @@ namespace :data do
 
       module RbSys
         class ToolchainInfo
+          # @private
           DATA = #{toolchain_data.inspect}
         end
       end

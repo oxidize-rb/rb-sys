@@ -5,6 +5,7 @@ require "psych"
 
 module RbSys
   module Cargo
+    # Extracts metadata from a Cargo project using `cargo metadata`.
     class Metadata
       attr_reader :name
 
@@ -14,12 +15,14 @@ module RbSys
         @name = name
       end
 
+      # @api private
       def self.delegates_to_cargo_metadata(*methods)
         methods.each do |method|
           define_method(method) { cargo_metadata.fetch(method.to_s) }
         end
       end
 
+      # @api private
       def self.delegates_to_package_metadata(*methods)
         methods.each do |method|
           define_method(method) { package_metadata.fetch(method.to_s) }
@@ -30,6 +33,9 @@ module RbSys
 
       delegates_to_package_metadata :manifest_path, :version, :id, :edition, :targets, :features, :metadata
 
+      # Returns the path where the Cargo project's Cargo.toml is located.
+      #
+      # @return [String]
       def manifest_directory
         @manifest_directory ||= File.dirname(manifest_path)
       end
