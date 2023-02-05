@@ -42,7 +42,6 @@ jobs:
 
             async function deleteCachesForRef(ref) {
               let currentPage = 1;
-
               let currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
               let totalCount = currentCaches.data.total_count;
 
@@ -72,7 +71,8 @@ jobs:
 
                 await Promise.all(promises);
 
-                if (totalCount <= pageSize * currentPage) {
+                if (totalDeleted >= totalCount) {
+                  console.log(`Break at page ${currentPage} (total: ${totalCount}, pageSize: ${pageSize})`);
                   break;
                 } else {
                   currentPage++;
