@@ -100,10 +100,10 @@ module RbSys
       file extconf => "rb_sys:env:default"
 
       desc 'Compile the native Rust extension with the "dev" profile'
-      task "compile:dev" => "rb_sys:env:dev"
+      task "compile:dev" => ["rb_sys:env:dev", "compile"]
 
       desc 'Compile the native Rust extension with the "release" profile'
-      task "compile:release" => "rb_sys:env:release"
+      task "compile:release" => ["rb_sys:env:release", "compile"]
     end
   end
 end
