@@ -32,7 +32,7 @@ jobs:
               allBranches = [];
 
               while (true) {
-                let branches = await octokit.rest.repos.listBranches({
+                let branches = await github.rest.repos.listBranches({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   per_page: 100,
