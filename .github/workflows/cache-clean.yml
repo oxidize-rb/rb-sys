@@ -37,6 +37,8 @@ jobs:
             }
 
             async function fetchCaches(params) {
+              console.log(`Fetching caches for ref ${params.ref} (page ${params.page} of ${params.per_page})``)
+
               return github.rest.actions.getActionsCacheList({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
