@@ -55,7 +55,7 @@ jobs:
                   break;
                 } else {
                   currentPage++;
-                  currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ...params });
+                  currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
                   allCaches = allCaches.concat(currentCaches.data.actions_caches);
                 }
               }
