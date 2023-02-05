@@ -24,6 +24,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 per_page: 100,
+                page: currentPage,
                 ref: context.ref,
                 page: currentPage,
               })
