@@ -37,12 +37,12 @@ jobs:
                   cache_id: cache.id,
                 })
 
-                console.log(`Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage)`)
+                console.log(`Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`)
                 totalDeleted++
               }
 
               if (caches.data.total_count <= currentPage * 100) {
-                console.log(`No more caches to delete on page ${currentPage}, total count: ${caches.data.total_count}``)
+                console.log(`No more caches to delete on page ${currentPage}, total count: ${caches.data.total_count}`)
                 break
               }
 
