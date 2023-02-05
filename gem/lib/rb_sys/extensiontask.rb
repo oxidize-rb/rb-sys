@@ -83,6 +83,7 @@ module RbSys
     def define_env_tasks
       task "rb_sys:env:default" do
         ENV["RB_SYS_CARGO_TARGET_DIR"] ||= target_directory
+        ENV["RB_SYS_CARGO_MANIFEST_DIR"] ||= cargo_metadata.manifest_directory
         ENV["RB_SYS_CARGO_PROFILE"] ||= "release"
       end
 
