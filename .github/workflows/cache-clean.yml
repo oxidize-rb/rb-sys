@@ -1,6 +1,7 @@
 name: Cache Clean
 
 on:
+  workflow_dispatch:
   pull_request:
     types:
       - closed
@@ -16,21 +17,32 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const caches = await github.rest.actions.getActionsCacheList({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100,
-              key: context.ref,
-            })
+            let currentPage = 1
 
-            for (const cache of caches.data.actions_caches) {
-              console.log(`Deleting cache ${cache.id}`)
-
-              github.rest.actions.deleteActionsCacheById({
+            while (true) {
+              const caches = await github.rest.actions.getActionsCacheList({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                cache_id: cache.id,
+                per_page: 100,
+                ref: context.ref,
+                page: currentPage,
               })
+
+              for (const cache of caches.data.actions_caches) {
+                const deleted = await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id,
+                })
+
+                console.log(`Deleted cache ${cache.id}`)
+              }
+
+              if (caches.data.total_count <= currentPage * 100) {
+                break
+              }
+
+              currentPage++
             }
 
             console.log("Clear completed")
