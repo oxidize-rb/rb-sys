@@ -25,7 +25,9 @@ jobs:
             let totalDeleted = 0
             let ref = context.ref
 
-            if (context.inputs && context.inputs["all-branches"]) {
+            console.log(JSON.stringify(context, null, 2)
+
+            if (inputs && inputs["all-branches"]) {
               console.log("Deleting caches for *all* branches", context.inputs["all-branches"])
               ref = undefined
             }
