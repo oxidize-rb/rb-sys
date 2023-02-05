@@ -2,6 +2,10 @@ name: Cache Clean
 
 on:
   workflow_dispatch:
+    inputs:
+      all-branches:
+        type: boolean
+        description: "Delete caches for all branches (nuclear option)"
   pull_request:
     types:
       - closed
@@ -20,13 +24,15 @@ jobs:
             let currentPage = 1
             let totalDeleted = 0
 
+            const ref = core.getBooleanInput('all-branches') ? undefined : context.ref
+
             while (true) {
               const caches = await github.rest.actions.getActionsCacheList({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 per_page: 100,
                 page: currentPage,
-                ref: context.ref,
+                ref: ref,
                 page: currentPage,
               })
 
