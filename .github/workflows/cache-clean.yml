@@ -55,8 +55,9 @@ jobs:
                   });
 
                   deleted.then(() => {
+                    let mb = cache.size_in_bytes / 1024 / 1024;
                     console.log(
-                      `Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`
+                      `Deleted cache ${cache.id} (size: ${mb}MB, ref: ${ref}, page: ${currentPage})`
                     );
                     totalDeleted++;
                     totalBytes += cache.size_in_bytes;
