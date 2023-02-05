@@ -94,18 +94,6 @@ class TestRbSys < Minitest::Test
     assert_match(/--target \$\(CARGO_BUILD_TARGET\)/, makefile.read)
   end
 
-  def test_generates_deffile
-    makefile = create_makefile.read
-
-    assert makefile.include?("DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def")
-
-    if win_target?
-      assert makefile.include?("$(DEFFILE):")
-    else
-      assert !makefile.include?("$(DEFFILE):")
-    end
-  end
-
   private
 
   def create_makefile(&blk)

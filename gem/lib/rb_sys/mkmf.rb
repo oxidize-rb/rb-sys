@@ -48,7 +48,7 @@ module RbSys
 
       yield builder if blk
 
-      srcprefix = "$(srcdir)/#{builder.ext_dir}".chomp("/")
+      srcprefix = File.join("$(srcdir)", builder.ext_dir.gsub(/\A\.\/?/, "")).chomp("/")
       RbConfig.expand(srcdir = srcprefix.dup)
 
       full_cargo_command = cargo_command(srcdir, builder)
@@ -69,6 +69,7 @@ module RbSys
         #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_CARGO_ARGS", builder.extra_cargo_args.join(" "))}
+        #{conditional_assign("RB_SYS_CARGO_MANIFEST_DIR", builder.manifest_dir)}
 
         # Set dirname for the profile, since the profiles do not directly map to target dir (i.e. dev -> debug)
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "dev")}
@@ -103,8 +104,7 @@ module RbSys
         TIMESTAMP_DIR = .
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def
-        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+        CLEANLIBS = $(DLLIB) $(RUSTLIB)
         RUBYGEMS_CLEAN_DIRS = $(CLEANOBJS) $(CLEANFILES) #{builder.rubygems_clean_dirs.join(" ")}
 
         #{base_makefile(srcdir)}
@@ -120,15 +120,13 @@ module RbSys
 
         FORCE: ;
 
-        #{deffile_definition}
-
         #{optional_rust_toolchain(builder)}
 
         #{timestamp_file("sitearchdir")}:
         \t$(Q) $(MAKEDIRS) $(@D) $(RUBYARCHDIR)
         \t$(Q) $(TOUCH) $@
 
-        $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
+        $(RUSTLIB): FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t#{full_cargo_command}
 
@@ -171,7 +169,7 @@ module RbSys
       cargo_cmd = builder.cargo_command(dest_path, args)
       cmd = Shellwords.join(cargo_cmd)
       cmd.gsub!("\\=", "=")
-      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS)")
+      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS) --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml")
       cmd.gsub!(/-v=\d/, "")
       cmd
     end
@@ -203,21 +201,6 @@ module RbSys
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
       cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(RB_SYS_CARGO_TARGET_DIR) ")
       cargo_command
-    end
-
-    def deffile_definition
-      warn("EXPORT_PREFIX is not defined, please require \"mkmf\" before requiring \"rb_sys/mkmf\"") unless defined?(EXPORT_PREFIX)
-
-      return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
-
-      @deffile_definition ||= <<~MAKE
-        $(DEFFILE):
-        \t$(ECHO) creating target directory \\($(RUSTLIBDIR)\\)
-        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
-        \t$(ECHO) generating $(@)
-        \t$(ECHO) EXPORTS > $@
-        \t$(ECHO) $(TARGET_ENTRY) >> $@
-      MAKE
     end
 
     def rust_toolchain_env(builder)

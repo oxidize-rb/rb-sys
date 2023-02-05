@@ -1,5 +1,5 @@
 [package]
-name = "rust-reverse"
+name = "rust_reverse"
 version = "0.9.60"
 autotests = true # set true if you want to use "cargo test"
 edition = "2018"
