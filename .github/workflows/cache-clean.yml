@@ -32,19 +32,23 @@ jobs:
               ref = undefined;
             }
 
+            async function fetchCaches(params) {
+              return github.rest.actions.getActionsCacheList({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ...params
+              });
+            }
+
             async function deleteCachesForRef(ref) {
               let currentPage = 1;
 
-              while (true) {
-                const caches = await github.rest.actions.getActionsCacheList({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  per_page: pageSize,
-                  page: currentPage,
-                  ref: ref,
-                  page: currentPage,
-                });
+              let currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
+              let totalCount = currentCaches.data.total_count;
 
+              console.log(`Found ${totalCount} caches for ref ${ref}`);
+
+              while (true) {
                 let promises = [];
 
                 for (const cache of caches.data.actions_caches) {
@@ -68,11 +72,12 @@ jobs:
 
                 await Promise.all(promises);
 
-                if (promises.length < pageSize) {
+                if (totalCount <= pageSize * currentPage) {
                   break;
+                } else {
+                  currentPage++;
+                  currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
                 }
-
-                currentPage++;
               }
             }
 
