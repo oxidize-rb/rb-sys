@@ -23,7 +23,7 @@ jobs:
           script: |
             let totalDeleted = 0;
             let totalBytes = 0;
-            let pageSize = 10;
+            let pageSize = 100;
             let inputs = context.payload.inputs;
             let ref = context.ref;
 
@@ -37,8 +37,6 @@ jobs:
             }
 
             async function fetchCaches(params) {
-              console.log(`Fetching caches for ref ${params.ref} (page ${params.page} of ${params.per_page})`);
-
               return github.rest.actions.getActionsCacheList({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -52,8 +50,10 @@ jobs:
               let totalCount = currentCaches.data.total_count;
               let allCaches = currentCaches.data.actions_caches;
 
+              console.log(`Found ${totalCount} caches for ref ${ref} (page ${currentPage} of ${Math.ceil(totalCount / pageSize)})`);
+
               while (true) {
-                if (allCaches.length >= totalCount) {
+                if (allCaches.length >= totalCount || currentPage > 100) {
                   break;
                 } else {
                   currentPage++;
