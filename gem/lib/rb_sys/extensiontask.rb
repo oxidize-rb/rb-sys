@@ -8,6 +8,17 @@ rescue LoadError
 end
 
 module RbSys
+  # ExtensionTask is a Rake::ExtensionTask subclass that is used to tailored for
+  # Rust extensions. It has the same options a `Rake::ExtensionTask`.
+  #
+  # @example
+  #   RbSys::ExtensionTask.new("my-crate", my_gemspec) do |ext|
+  #     ext.lib_dir = "lib/my-crate"
+  #   end
+  #
+  # @param name [String] the crate name to build
+  # @param gem_spec [Gem::Specification] the gem specification to build (needed for cross-compiling)
+  # @return [Rake::ExtensionTask]
   class ExtensionTask < Rake::ExtensionTask
     def init(name = nil, gem_spec = nil)
       super
