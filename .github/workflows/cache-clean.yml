@@ -71,7 +71,7 @@ jobs:
                 totalDeleted++;
                 totalBytes += cache.size_in_bytes;
 
-                await github.rest.actions.deleteActionsCache({
+                await github.rest.actions.deleteActionsCacheById({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   cache_id: cache.id
