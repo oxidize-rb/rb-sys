@@ -18,6 +18,7 @@ jobs:
         with:
           script: |
             let currentPage = 1
+            let totalDeleted = 0
 
             while (true) {
               const caches = await github.rest.actions.getActionsCacheList({
@@ -36,14 +37,16 @@ jobs:
                   cache_id: cache.id,
                 })
 
-                console.log(`Deleted cache ${cache.id}`)
+                console.log(`Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage)`)
+                totalDeleted++
               }
 
               if (caches.data.total_count <= currentPage * 100) {
+                console.log(`No more caches to delete on page ${currentPage}, total count: ${caches.data.total_count}``)
                 break
               }
 
               currentPage++
             }
 
-            console.log("Clear completed")
+            console.log(`Clear completed, deleted ${totalDeleted} caches`)
