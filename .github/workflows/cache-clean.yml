@@ -23,32 +23,13 @@ jobs:
           script: |
             let totalDeleted = 0;
             let totalBytes = 0;
+            let pageSize = 10;
             let inputs = context.payload.inputs;
-            let allBranches = [context.ref];
+            let ref = context.ref;
 
             if (inputs && inputs["all-branches"] == "true") {
-              console.warn("Deleting caches for *all* branches");
-              let currentPage = 1;
-              allBranches = [];
-
-              while (true) {
-                let branches = await github.rest.repos.listBranches({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  per_page: 100,
-                  page: currentPage,
-                });
-
-                allBranches = allBranches.concat(
-                  branches.data.map((branch) => branch.name)
-                );
-
-                if (branches.data.length < 100) {
-                  break;
-                }
-
-                currentPage++;
-              }
+              console.warn("Deleting caches for all branches");
+              ref = undefined;
             }
 
             async function deleteCachesForRef(branch) {
@@ -59,7 +40,7 @@ jobs:
                 const caches = await github.rest.actions.getActionsCacheList({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  per_page: 100,
+                  per_page: pageSize,
                   page: currentPage,
                   ref: ref,
                   page: currentPage,
@@ -87,7 +68,7 @@ jobs:
 
                 await Promise.all(promises);
 
-                if (caches.data.total_count <= currentPage * 100) {
+                if (caches.data.total_count <= currentPage * pageSize) {
                   console.log(`Deleted ${caches.data.total_count} caches for ${ref}`);
                   break;
                 }
@@ -96,11 +77,6 @@ jobs:
               }
             }
 
-            for (const ref of allBranches) {
-              console.log(`Deleting caches for ${ref}`);
-              await deleteCachesForRef(ref);
-              console.log(`Deleted all caches for ${ref}`);
-            }
-
+            await deleteCachesForRef(ref);
             let totalMb = totalBytes / 1024 / 1024;
             console.log(`Clear completed, deleted ${totalDeleted} caches (${totalMb} MB)`);
