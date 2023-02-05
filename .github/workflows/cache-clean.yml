@@ -32,8 +32,7 @@ jobs:
               ref = undefined;
             }
 
-            async function deleteCachesForRef(branch) {
-              let ref = `refs/heads/${branch}`;
+            async function deleteCachesForRef(ref) {
               let currentPage = 1;
 
               while (true) {
