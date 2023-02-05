@@ -104,8 +104,7 @@ module RbSys
         TIMESTAMP_DIR = .
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
-        DEFFILE = $(RB_SYS_CARGO_TARGET_DIR)/$(TARGET)-$(arch).def
-        CLEANLIBS = $(DLLIB) $(RUSTLIB) $(DEFFILE)
+        CLEANLIBS = $(DLLIB) $(RUSTLIB)
         RUBYGEMS_CLEAN_DIRS = $(CLEANOBJS) $(CLEANFILES) #{builder.rubygems_clean_dirs.join(" ")}
 
         #{base_makefile(srcdir)}
@@ -121,15 +120,13 @@ module RbSys
 
         FORCE: ;
 
-        #{deffile_definition}
-
         #{optional_rust_toolchain(builder)}
 
         #{timestamp_file("sitearchdir")}:
         \t$(Q) $(MAKEDIRS) $(@D) $(RUBYARCHDIR)
         \t$(Q) $(TOUCH) $@
 
-        $(RUSTLIB): #{deffile_definition ? "$(DEFFILE) " : nil}FORCE
+        $(RUSTLIB): FORCE
         \t$(ECHO) generating $(@) \\("$(RB_SYS_CARGO_PROFILE)"\\)
         \t#{full_cargo_command}
 
@@ -204,21 +201,6 @@ module RbSys
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
       cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(RB_SYS_CARGO_TARGET_DIR) ")
       cargo_command
-    end
-
-    def deffile_definition
-      warn("EXPORT_PREFIX is not defined, please require \"mkmf\" before requiring \"rb_sys/mkmf\"") unless defined?(EXPORT_PREFIX)
-
-      return unless defined?(EXPORT_PREFIX) && EXPORT_PREFIX
-
-      @deffile_definition ||= <<~MAKE
-        $(DEFFILE):
-        \t$(ECHO) creating target directory \\($(RUSTLIBDIR)\\)
-        \t$(Q) $(MAKEDIRS) $(RUSTLIBDIR)
-        \t$(ECHO) generating $(@)
-        \t$(ECHO) EXPORTS > $@
-        \t$(ECHO) $(TARGET_ENTRY) >> $@
-      MAKE
     end
 
     def rust_toolchain_env(builder)

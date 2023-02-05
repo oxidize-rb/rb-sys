@@ -651,33 +651,6 @@ mod tests {
     }
 
     #[test]
-    fn test_variable_subst() {
-        let mut rb_config = RbConfig::new();
-        rb_config.set_value_for_key("DEFFILE", "some.def".into());
-
-        rb_config.push_dldflags("--enable-auto-import $(DEFFILE) foo");
-        let result = rb_config.cargo_args();
-
-        assert_eq!(
-            vec!["cargo:rustc-link-arg=--enable-auto-import some.def foo"],
-            result
-        );
-    }
-
-    #[test]
-    fn test_variable_subst_unknown_var() {
-        let mut rb_config = RbConfig::new();
-
-        rb_config.push_dldflags("--enable-auto-import $(DEFFILE) foo");
-        let result = rb_config.cargo_args();
-
-        assert_eq!(
-            vec!["cargo:rustc-link-arg=--enable-auto-import foo"],
-            result
-        );
-    }
-
-    #[test]
     fn test_use_rpath() {
         let mut rb_config = RbConfig::new();
         rb_config.push_dldflags("-lfoo");
