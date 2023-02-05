@@ -23,8 +23,12 @@ jobs:
           script: |
             let currentPage = 1
             let totalDeleted = 0
+            let ref = context.ref
 
-            const ref = core.getBooleanInput('all-branches') ? undefined : context.ref
+            if (github.event.inputs && github.event.inputs["all-branches"]) {
+              console.log("Deleting caches for *all* branches")
+              ref = undefined
+            }
 
             while (true) {
               const caches = await github.rest.actions.getActionsCacheList({
