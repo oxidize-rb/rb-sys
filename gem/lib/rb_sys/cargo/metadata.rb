@@ -2,7 +2,6 @@
 
 require "open3"
 require "psych"
-require "rubygems/safe_yaml"
 
 module RbSys
   module Cargo
@@ -48,6 +47,7 @@ module RbSys
       def cargo_metadata
         return @cargo_metadata if @cargo_metadata
 
+        ::Gem.load_yaml
         cargo = ENV["CARGO"] || "cargo"
         args = ["metadata", "--no-deps", "--format-version", "1"]
         out, stderr, _status = Open3.capture3(cargo, *args)
