@@ -51,7 +51,8 @@ jobs:
               }
             }
 
-            async function deleteCachesForRef(ref) {
+            async function deleteCachesForRef(branch) {
+              let ref = `refs/heads/${branch}`;
               let currentPage = 1;
 
               while (true) {
