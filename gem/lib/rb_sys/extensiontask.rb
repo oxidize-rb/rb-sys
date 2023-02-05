@@ -89,7 +89,7 @@ module RbSys
 
       desc "Use the debug profile for building native Rust extensions"
       task "rb_sys:env:dev" do
-        ENV["RB_SYS_CARGO_PROFILE"] = "debug"
+        ENV["RB_SYS_CARGO_PROFILE"] = "dev"
       end
 
       desc "Use the release profile for building native Rust extensions"
