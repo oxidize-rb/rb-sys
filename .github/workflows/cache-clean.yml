@@ -2,6 +2,10 @@ name: Cache Clean
 
 on:
   workflow_dispatch:
+    inputs:
+      all-branches:
+        type: boolean
+        description: "Delete caches for all branches (nuclear option)"
   pull_request:
     types:
       - closed
@@ -17,36 +21,66 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            let currentPage = 1
-            let totalDeleted = 0
+            let totalDeleted = 0;
+            let totalBytes = 0;
+            let pageSize = 100;
+            let inputs = context.payload.inputs;
+            let ref = context.ref;
 
-            while (true) {
-              const caches = await github.rest.actions.getActionsCacheList({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                per_page: 100,
-                page: currentPage,
-                ref: context.ref,
-                page: currentPage,
-              })
-
-              for (const cache of caches.data.actions_caches) {
-                const deleted = await github.rest.actions.deleteActionsCacheById({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  cache_id: cache.id,
-                })
-
-                console.log(`Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`)
-                totalDeleted++
-              }
-
-              if (caches.data.total_count <= currentPage * 100) {
-                console.log(`No more caches to delete on page ${currentPage}, total count: ${caches.data.total_count}`)
-                break
-              }
-
-              currentPage++
+            if (inputs && inputs["all-branches"] == "true") {
+              console.warn("Deleting caches for all branches");
+              ref = undefined;
             }
 
-            console.log(`Clear completed, deleted ${totalDeleted} caches`)
+            function sizeInMb(size) {
+              return (size / 1024 / 1024).toFixed(2);
+            }
+
+            async function fetchCaches(params) {
+              return github.rest.actions.getActionsCacheList({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ...params
+              });
+            }
+
+            async function fetchAllCaches(ref) {
+              let currentPage = 1;
+              let currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
+              let totalCount = currentCaches.data.total_count;
+              let allCaches = currentCaches.data.actions_caches;
+
+              console.log(`Found ${totalCount} caches for ref ${ref} (page ${currentPage} of ${Math.ceil(totalCount / pageSize)})`);
+
+              while (true) {
+                if (allCaches.length >= totalCount || currentPage > 100) {
+                  break;
+                } else {
+                  currentPage++;
+                  currentCaches = await fetchCaches({ per_page: pageSize, page: currentPage, ref: ref });
+                  allCaches = allCaches.concat(currentCaches.data.actions_caches);
+                }
+              }
+
+              return allCaches;
+            }
+
+            async function deleteCachesForRef(ref) {
+              let caches = await fetchAllCaches(ref);
+              for (let cache of caches) {
+                totalDeleted++;
+                totalBytes += cache.size_in_bytes;
+
+                await github.rest.actions.deleteActionsCacheById({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  cache_id: cache.id
+                });
+
+                console.log(`Deleted cache ${cache.id} (${sizeInMb(cache.size_in_bytes)} MB) for ref ${cache.ref}`);
+              }
+            }
+
+            await deleteCachesForRef(ref);
+            let totalMb = sizeInMb(totalBytes);
+            console.log(`Clear completed, deleted ${totalDeleted} caches (${totalMb} MB)`);
