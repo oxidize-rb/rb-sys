@@ -79,7 +79,7 @@ jobs:
                       `Deleted cache ${cache.key} (id: ${cache.id}) on page ${currentPage})`
                     );
                     totalDeleted++;
-                    totalBytes += size_in_bytes;
+                    totalBytes += cache.size_in_bytes;
                   });
 
                   promises.push(deleted);
