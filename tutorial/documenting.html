@@ -3,33 +3,33 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Getting Started - Ruby on Rust</title>
+        <title>Documenting - Ruby on Rust</title>
         <!-- Custom HTML head -->
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="The definitive guide for using Rust in Ruby">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="highlight.css">
-        <link rel="stylesheet" href="tomorrow-night.css">
-        <link rel="stylesheet" href="ayu-highlight.css">
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
     </head>
     <body>
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
-            var path_to_root = "";
+            var path_to_root = "../";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="getting-started.html" class="active">Getting Started</a></li><li class="chapter-item expanded affix "><a href="background-and-concepts.html">Background and Concepts</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="tutorial.html"><strong aria-hidden="true">1.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/testing/debugging.html"><strong aria-hidden="true">1.1.</strong> Debugging</a></li><li class="chapter-item expanded "><a href="tutorial/publishing/cross-compilation.html"><strong aria-hidden="true">1.2.</strong> Cross-Compilation</a></li><li class="chapter-item expanded "><a href="tutorial/documenting.html"><strong aria-hidden="true">1.3.</strong> Documenting</a></li></ol></li><li class="chapter-item expanded "><a href="api-documentation.html"><strong aria-hidden="true">2.</strong> API Documentation</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../introduction.html">Introduction</a></li><li class="chapter-item expanded affix "><a href="../getting-started.html">Getting Started</a></li><li class="chapter-item expanded affix "><a href="../background-and-concepts.html">Background and Concepts</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../tutorial.html"><strong aria-hidden="true">1.</strong> Tutorial</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../tutorial/testing/debugging.html"><strong aria-hidden="true">1.1.</strong> Debugging</a></li><li class="chapter-item expanded "><a href="../tutorial/publishing/cross-compilation.html"><strong aria-hidden="true">1.2.</strong> Cross-Compilation</a></li><li class="chapter-item expanded "><a href="../tutorial/documenting.html" class="active"><strong aria-hidden="true">1.3.</strong> Documenting</a></li></ol></li><li class="chapter-item expanded "><a href="../api-documentation.html"><strong aria-hidden="true">2.</strong> API Documentation</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -107,7 +107,7 @@
                     <h1 class="menu-title">Ruby on Rust</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                     </div>
@@ -134,53 +134,16 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
-<h2 id="creating-a-new-gem"><a class="header" href="#creating-a-new-gem">Creating a new gem</a></h2>
-<p>The easiest way to create a new gem is to use the <code>bundle gem</code> command. This will scaffold a new Rust gem using <code>rb-sys</code>
-and <code>magnus</code>.</p>
-<ol>
-<li>
-<p>Install a Rust toolchain (if needed)</p>
-<pre><code class="language-bash">$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-</code></pre>
-</li>
-<li>
-<p>Upgrade RubyGems and Bundler</p>
-<pre><code class="language-bash">$ gem update --system
-</code></pre>
-</li>
-<li>
-<p>Scaffold a new gem with a Rust extension</p>
-<pre><code class="language-bash">$ bundle gem --ext=rust my_gem_name
-</code></pre>
-</li>
-</ol>
-<p>This will create a new gem in the <code>my_gem_name</code> directory. Firstly, open up <code>my_gem_name.gemspec</code> in your text editor
-and make sure you update all fields that contain <code>TODO</code>. Inside the directly, you should now have a fully working Rust
-gem.</p>
-<blockquote>
-<p><strong>💡 Tip:</strong> <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">Join the Slack channel</a> to ask questions and get help from the community!</p>
-</blockquote>
-<h2 id="building-the-gem-and-running-tests"><a class="header" href="#building-the-gem-and-running-tests">Building the gem and running tests</a></h2>
-<p>The default Rake task is configured to compile the Rust code and run tests. Simply run:</p>
-<pre><code>$ bundle exec rake
-</code></pre>
-<p>At this point you should start reading the docs for <a href="https://github.com/matsadler/magnus"><code>magnus</code></a> to get familiar with the API. It is design to be
-a safe and idiomatic wrapper around the Ruby C API.</p>
-<h2 id="next-steps"><a class="header" href="#next-steps">Next steps</a></h2>
-<ul>
-<li><a href="./tutorial/testing/debugging.html">Learn how to debug Rust code using LLDB</a></li>
-<li><a href="./tutorial/publishing/cross-compilation.html">Learn how to publish cross-compiled gems</a></li>
-</ul>
+                        <h1 id="documenting"><a class="header" href="#documenting">Documenting</a></h1>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../tutorial/publishing/cross-compilation.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
-                            <a rel="next" href="background-and-concepts.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next" href="../api-documentation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -189,10 +152,10 @@ a safe and idiomatic wrapper around the Ruby C API.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../tutorial/publishing/cross-compilation.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
-                    <a rel="next" href="background-and-concepts.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next" href="../api-documentation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -202,12 +165,12 @@ a safe and idiomatic wrapper around the Ruby C API.</p>
         <script type="text/javascript">
             window.playground_copyable = true;
         </script>
-        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
-        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
     </body>
