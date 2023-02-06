@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="../../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../background-and-concepts.html"><strong aria-hidden="true">2.</strong> Background and Concepts</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../../tutorial/setup.html"><strong aria-hidden="true">3.</strong> Setup</a></li><li class="chapter-item expanded "><a href="../../tutorial/hello-world.html"><strong aria-hidden="true">4.</strong> Hello World!</a></li><li class="chapter-item expanded "><a href="../../tutorial/testing.html"><strong aria-hidden="true">5.</strong> Testing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../tutorial/testing/debugging.html"><strong aria-hidden="true">5.1.</strong> Debugging</a></li></ol></li><li class="chapter-item expanded "><a href="../../tutorial/publishing.html"><strong aria-hidden="true">6.</strong> Publishing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../../tutorial/publishing/cross-compilation.html" class="active"><strong aria-hidden="true">6.1.</strong> Cross-Compilation</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../../background-and-concepts.html"><strong aria-hidden="true">2.</strong> Background and Concepts</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="../../getting-started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="../../tutorial/testing/debugging.html"><strong aria-hidden="true">4.</strong> Debugging</a></li><li class="chapter-item expanded "><a href="../../tutorial/publishing/cross-compilation.html" class="active"><strong aria-hidden="true">5.</strong> Cross-Compilation</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -139,24 +139,21 @@
 <code>Compiling native extensions. This could take a while...</code> message when they install a gem. An in Rust, we all know that
 compiling can take a while...</p>
 <p>It's important to make sure that your gem is as fast as possible to install, that why <code>rb-sys</code> is built from the ground
-up to support this use-case. <code>rb-sys</code> integrates seamlessly with
-<a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
-<a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others,
-cross-compilation for Ruby gems is as simple and reliable as it would be for a C extension.</p>
+up to support this use-case. <code>rb-sys</code> integrates seamlessly with <a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
+<a href="https://github.com/rake-compiler/rake-compiler-dock"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others, cross-compilation for Ruby gems is as simple and
+reliable as it would be for a C extension.</p>
+<blockquote>
+<p><strong>💡 Tip:</strong> <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">Join the Slack channel</a> to ask questions and get help from the community!</p>
+</blockquote>
 <h2 id="using-the-rb-sys-dock-helper"><a class="header" href="#using-the-rb-sys-dock-helper">Using the <code>rb-sys-dock</code> helper</a></h2>
-<p>The [<code>rb-sys-dock</code>] executable allows you to easily enter the Docker container used to cross compile your gem. You can
-use you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
-<pre><code class="language-bash">$ rb-sys-dock -p aarch64-linux
-🐳 Entering shell in Docker container &quot;rbsys/aarch64-linux:0.9.61&quot;
-#...
-$ bundle install
-# ...
-$ bundle exec rake native:$RUBY_TARGET # builds the gem
-#...
+<p>The <code>rb-sys-dock</code> executable allows you to easily enter the Docker container used to cross compile your gem. You can use
+you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
+<pre><code class="language-bash">$ bundle exec rb-sys-dock -p aarch64-linux --build
+$ ls pkg # =&gt; my_gem_name-0.1.0-aarch64-linux.gem
 </code></pre>
 <h2 id="github-actions"><a class="header" href="#github-actions">Github Actions</a></h2>
-<p>The [<code>oxi-test</code>] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's a
-walkthrough of the important files to reference:</p>
+<p>The [<code>oxi-test</code>][oxi-text] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
+a walkthrough of the important files to reference:</p>
 <ol>
 <li>Setup the <code>Rake::ExtensionTask</code> in the <a href="https://github.com/oxidize-rb/oxi-test/blob/main/Rakefile"><code>Rakefile</code></a></li>
 <li>Setup a <a href="https://github.com/oxidize-rb/oxi-test/blob/main/.github/workflows/cross-gem.yml"><code>cross-gem.yml</code></a> GitHub
@@ -170,6 +167,9 @@ action and test them out.</li>
 <li><a href="https://github.com/y-crdt/yrb"><code>yrb</code></a></li>
 <li><a href="https://github.com/gjtorikian/commonmarker"><code>commonmarker</code></a></li>
 </ul>
+<blockquote>
+<p><strong>💡 Tip:</strong> Add your gem to this list by opening a PR!</p>
+</blockquote>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
 <ul>
 <li><a href="https://github.com/oxidize-rb/cross-gem-action">Cross Gem Action</a> to easily cross compile with GitHub actions</li>
@@ -180,7 +180,7 @@ action and test them out.</li>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../tutorial/publishing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../tutorial/testing/debugging.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         <div style="clear: both"></div>
@@ -189,7 +189,7 @@ action and test them out.</li>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../tutorial/publishing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../tutorial/testing/debugging.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
             </nav>

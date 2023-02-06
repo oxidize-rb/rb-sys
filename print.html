@@ -76,7 +76,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="background-and-concepts.html"><strong aria-hidden="true">2.</strong> Background and Concepts</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="tutorial/setup.html"><strong aria-hidden="true">3.</strong> Setup</a></li><li class="chapter-item expanded "><a href="tutorial/hello-world.html"><strong aria-hidden="true">4.</strong> Hello World!</a></li><li class="chapter-item expanded "><a href="tutorial/testing.html"><strong aria-hidden="true">5.</strong> Testing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/testing/debugging.html"><strong aria-hidden="true">5.1.</strong> Debugging</a></li></ol></li><li class="chapter-item expanded "><a href="tutorial/publishing.html"><strong aria-hidden="true">6.</strong> Publishing</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="tutorial/publishing/cross-compilation.html"><strong aria-hidden="true">6.1.</strong> Cross-Compilation</a></li></ol></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="background-and-concepts.html"><strong aria-hidden="true">2.</strong> Background and Concepts</a></li><li class="chapter-item expanded affix "><li class="part-title">Tutorial</li><li class="chapter-item expanded "><a href="getting-started.html"><strong aria-hidden="true">3.</strong> Getting Started</a></li><li class="chapter-item expanded "><a href="tutorial/testing/debugging.html"><strong aria-hidden="true">4.</strong> Debugging</a></li><li class="chapter-item expanded "><a href="tutorial/publishing/cross-compilation.html"><strong aria-hidden="true">5.</strong> Cross-Compilation</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -141,13 +141,16 @@ new to Rust, and that's OK! You'll find that Rust has many of the things you lov
 code will usually fail at compile time rather than bringing down production.</p>
 <p>By the end of this book, you will be confident to build, test, and deploy a Rusty Ruby gem of your own! If you get stuck
 along the way or want to improve Ruby on Rust, <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">please join our Slack channel</a>!</p>
-<p>Let's get started by learning about <a href="./background-and-concepts.html">how native Ruby gems work</a>.</p>
 <blockquote>
-<p><strong>💡 Tip:</strong> You can search through this book by clicking on the 🔍 icon at the top of the page, or by pressing the <code>s</code>
-key.</p>
+<p><strong>💡 Tip:</strong> <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">Join the Slack channel</a> to ask questions and get help from the community!</p>
 </blockquote>
+<h2 id="whats-next"><a class="header" href="#whats-next">What's next?</a></h2>
+<ul>
+<li><a href="./background-and-concepts.html">Learn how native Ruby gems work</a></li>
+<li><a href="./getting-started.html">Get started by building a new Rust gem</a></li>
+</ul>
 <h2 id="contributing-to-this-book"><a class="header" href="#contributing-to-this-book">Contributing to this book</a></h2>
-<p>This book is open source! Find a typo? Did we overlook something? <a href="https://github.com/oxidize-rb/rb-sys"><strong>Send us a pull request!</strong></a></p>
+<p>This book is open source! Find a typo? Did we overlook something? <a href="https://github.com/oxidize-rb/rb-sys"><strong>Send us a pull request!</strong></a>. Help wanted!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="background-and-concepts"><a class="header" href="#background-and-concepts">Background and Concepts</a></h1>
 <h2 id="worlds-simplest-rust-extension"><a class="header" href="#worlds-simplest-rust-extension">World's Simplest Rust Extension</a></h2>
 <p>To illustrate how native extensions work, we are going to create the simplest possible native extension for Ruby. This
@@ -202,8 +205,7 @@ functions to be compatible with the C calling conventions, and align items in me
 also does not have a garbage collector, which makes integration signifcantly easier.</p>
 <p>When Ruby loads a gem extension written in Rust, it has no idea the gem is actually written in Rust. Due to Rust's
 robust C FFI, you can code anything in Rust that you could with C.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="setup"><a class="header" href="#setup">Setup</a></h1>
-<div style="break-before: page; page-break-before: always;"></div><div style="break-before: page; page-break-before: always;"></div><h1 id="testing"><a class="header" href="#testing">Testing</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="debugging"><a class="header" href="#debugging">Debugging</a></h1>
 <p>To debug Rust extensions, you can use either LLDB or GDB. First, you will need to compile with the <code>dev</code> Cargo profile,
 so debug symbols are available.</p>
@@ -217,6 +219,9 @@ task &quot;compile:debug&quot; do
   Rake::Task[&quot;compile&quot;].invoke
 end
 </code></pre>
+<blockquote>
+<p><strong>💡 Tip:</strong> <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">Join the Slack channel</a> to ask questions and get help from the community!</p>
+</blockquote>
 <h2 id="vscode--lldb"><a class="header" href="#vscode--lldb">VSCode + LLDB</a></h2>
 <p>The <a href="tutorial/testing/">code-lldb</a> extension for VSCode is a great way to debug Rust code. Here is an example configuration file:</p>
 <pre><code class="language-json">// .vscode/launch.json
@@ -265,30 +270,26 @@ with debug symbols, any calls into the Ruby C API become a black box. Luckily, i
 <p>Make sure your <code>.vscode/launch.json</code> file is configured to use <code>$RBENV_ROOT/versions/3.1.2/bin/ruby</code>.</p>
 </li>
 </ol>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="publishing"><a class="header" href="#publishing">Publishing</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="cross-compilation"><a class="header" href="#cross-compilation">Cross-Compilation</a></h1>
 <p>Publishing native gem binaries is incredibly important for Ruby on Rust gems. No one likes seeing the infamous
 <code>Compiling native extensions. This could take a while...</code> message when they install a gem. An in Rust, we all know that
 compiling can take a while...</p>
 <p>It's important to make sure that your gem is as fast as possible to install, that why <code>rb-sys</code> is built from the ground
-up to support this use-case. <code>rb-sys</code> integrates seamlessly with
-<a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
-<a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others,
-cross-compilation for Ruby gems is as simple and reliable as it would be for a C extension.</p>
+up to support this use-case. <code>rb-sys</code> integrates seamlessly with <a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
+<a href="https://github.com/rake-compiler/rake-compiler-dock"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others, cross-compilation for Ruby gems is as simple and
+reliable as it would be for a C extension.</p>
+<blockquote>
+<p><strong>💡 Tip:</strong> <a href="https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw">Join the Slack channel</a> to ask questions and get help from the community!</p>
+</blockquote>
 <h2 id="using-the-rb-sys-dock-helper"><a class="header" href="#using-the-rb-sys-dock-helper">Using the <code>rb-sys-dock</code> helper</a></h2>
-<p>The [<code>rb-sys-dock</code>] executable allows you to easily enter the Docker container used to cross compile your gem. You can
-use you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
-<pre><code class="language-bash">$ rb-sys-dock -p aarch64-linux
-🐳 Entering shell in Docker container &quot;rbsys/aarch64-linux:0.9.61&quot;
-#...
-$ bundle install
-# ...
-$ bundle exec rake native:$RUBY_TARGET # builds the gem
-#...
+<p>The <code>rb-sys-dock</code> executable allows you to easily enter the Docker container used to cross compile your gem. You can use
+you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
+<pre><code class="language-bash">$ bundle exec rb-sys-dock -p aarch64-linux --build
+$ ls pkg # =&gt; my_gem_name-0.1.0-aarch64-linux.gem
 </code></pre>
 <h2 id="github-actions"><a class="header" href="#github-actions">Github Actions</a></h2>
-<p>The [<code>oxi-test</code>] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's a
-walkthrough of the important files to reference:</p>
+<p>The [<code>oxi-test</code>][oxi-text] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
+a walkthrough of the important files to reference:</p>
 <ol>
 <li>Setup the <code>Rake::ExtensionTask</code> in the <a href="https://github.com/oxidize-rb/oxi-test/blob/main/Rakefile"><code>Rakefile</code></a></li>
 <li>Setup a <a href="https://github.com/oxidize-rb/oxi-test/blob/main/.github/workflows/cross-gem.yml"><code>cross-gem.yml</code></a> GitHub
@@ -302,6 +303,9 @@ action and test them out.</li>
 <li><a href="https://github.com/y-crdt/yrb"><code>yrb</code></a></li>
 <li><a href="https://github.com/gjtorikian/commonmarker"><code>commonmarker</code></a></li>
 </ul>
+<blockquote>
+<p><strong>💡 Tip:</strong> Add your gem to this list by opening a PR!</p>
+</blockquote>
 <h2 id="resources"><a class="header" href="#resources">Resources</a></h2>
 <ul>
 <li><a href="https://github.com/oxidize-rb/cross-gem-action">Cross Gem Action</a> to easily cross compile with GitHub actions</li>
