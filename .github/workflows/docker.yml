@@ -69,8 +69,9 @@ jobs:
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/rake-compiler-dock-mri-${{ matrix.platform.ruby_target }}
-          tags: |
+          flavor: |
             latest=true
+          tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
