@@ -33,5 +33,7 @@ namespace :release do
     require_relative "./../gem/lib/rb_sys/version"
 
     sh "gh", "release", "create", "v#{RbSys::VERSION}", "--generate-notes"
+
+    sh "open", "https://www.rubydoc.info/gems/rb_sys/#{RbSys::VERSION}"
   end
 end
