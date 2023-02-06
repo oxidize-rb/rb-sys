@@ -16,6 +16,8 @@ task "compile:debug" do
 end
 ```
 
+> **💡 Tip:** [Join the Slack channel][slack] to ask questions and get help from the community!
+
 ## VSCode + LLDB
 
 The [code-lldb]() extension for VSCode is a great way to debug Rust code. Here is an example configuration file:
@@ -68,3 +70,5 @@ with debug symbols, any calls into the Ruby C API become a black box. Luckily, i
    ```
 
 2. Make sure your `.vscode/launch.json` file is configured to use `$RBENV_ROOT/versions/3.1.2/bin/ruby`.
+
+[slack]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw
