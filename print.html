@@ -244,6 +244,10 @@ also does not have a garbage collector, which makes integration signifcantly eas
 <p>When Ruby loads a gem extension written in Rust, it has no idea the gem is actually written in Rust. Due to Rust's
 robust C FFI, you can code anything in Rust that you could with C.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
+<ul>
+<li><a href="./tutorial/testing/debugging.html">Debugging</a></li>
+<li><a href="./tutorial/publishing/cross-compilation.html">Cross-Compilation</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="debugging"><a class="header" href="#debugging">Debugging</a></h1>
 <p>To debug Rust extensions, you can use either LLDB or GDB. First, you will need to compile with the <code>dev</code> Cargo profile,
 so debug symbols are available.</p>
@@ -350,7 +354,17 @@ action and test them out.</li>
 <li><a href="https://index.docker.io/u/rbsys">Docker images</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="documenting"><a class="header" href="#documenting">Documenting</a></h1>
+<p>Generating documentation for your Ruby project is easy with
+<a href="https://yardoc.org/">YARD</a>. Unfortunately, YARD doesn't support documenting
+Rust code. But don't worry! The <a href="https://github.com/oxidize-rb/yard-rustdoc"><code>yard-rustdoc</code></a> gem can generate
+documentation for your Rust code and include it in your YARD documentation.</p>
+<p>Check out the <a href="https://github.com/oxidize-rb/yard-rustdoc#usage">getting started guide</a> to learn how to use
+<code>yard-rustdoc</code>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-documentation"><a class="header" href="#api-documentation">API Documentation</a></h1>
+<ul>
+<li><a href="https://www.rubydoc.info/gems/rb_sys">Ruby gem docs</a></li>
+<li><a href="https://docs.rs/rb-sys">Rust crate docs</a></li>
+</ul>
 
                     </main>
 
