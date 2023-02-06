@@ -301,7 +301,7 @@ def download_image(options)
 end
 
 def log_some_useful_info(_options)
-  if ARGV.empty?
+  if ARGV.empty? && !options[:build]
     log(:notice, "Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}")
   else
     log(:notice, "Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}")
