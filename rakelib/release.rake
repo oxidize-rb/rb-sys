@@ -20,14 +20,14 @@ namespace :release do
 
   desc "Publish the crates and gems"
   task :publish do
-    Dir.chdir("gem") do
-      sh "bundle exec rake release"
+    crates = ["rb-sys-build", "rb-sys"]
+
+    crates.each do |crate|
+      sh "cargo publish -p #{crate}"
     end
 
-    ["crates/rb-sys-build", "crates/rb-sys"].each do |dir|
-      Dir.chdir(dir) do
-        sh "cargo publish || true"
-      end
+    Dir.chdir("gem") do
+      sh "bundle exec rake release"
     end
 
     require_relative "./../gem/lib/rb_sys/version"

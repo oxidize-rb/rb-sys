@@ -2,8 +2,8 @@
 
 ## Creating a new gem
 
-The easiest way to create a new gem is to use the `bundle gem` command. This
-will scaffold a new Rust gem using `rb-sys` and `magnus`.
+The easiest way to create a new gem is to use the `bundle gem` command. This will scaffold a new Rust gem using `rb-sys`
+and `magnus`.
 
 1. Install a Rust toolchain (if needed)
 
@@ -23,26 +23,22 @@ will scaffold a new Rust gem using `rb-sys` and `magnus`.
    $ bundle gem --ext=rust my_gem_name
    ```
 
-This will create a new gem in the `my_gem_name` directory. Firstly, open up
-`my_gem_name.gemspec` in your text editor and make sure you update all fields
-that contain `TODO`. Inside the directly, you should now have a fully working
-Rust gem.
+This will create a new gem in the `my_gem_name` directory. Firstly, open up `my_gem_name.gemspec` in your text editor
+and make sure you update all fields that contain `TODO`. Inside the directly, you should now have a fully working Rust
+gem.
 
-> **💡 Tip:** [Join the Slack channel][slack] to ask questions and get help from
-> the community!
+> **💡 Tip:** [Join the Slack channel][slack] to ask questions and get help from the community!
 
 ## Building the gem and running tests
 
-The default Rake task is configured to compile the Rust code and run tests.
-Simply run:
+The default Rake task is configured to compile the Rust code and run tests. Simply run:
 
 ```
 $ bundle exec rake
 ```
 
-At this point you should start reading the docs
-for [`magnus`][magnus] to get familiar with the API. It is design to be a safe
-and idiomatic wrapper around the Ruby C API.
+At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is design to be
+a safe and idiomatic wrapper around the Ruby C API.
 
 ## Next steps
 
