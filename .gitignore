@@ -1,3 +1,5 @@
 target/
 Gemfile.lock
 tmp/
+gem/docs
+.yardoc/

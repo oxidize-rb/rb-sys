@@ -11,6 +11,8 @@ module RbSys
   # ExtensionTask is a Rake::ExtensionTask subclass that is used to tailored for
   # Rust extensions. It has the same options a `Rake::ExtensionTask`.
   #
+  # @see https://www.rubydoc.info/gems/rake-compiler/Rake/ExtensionTask
+  #
   # @example
   #   RbSys::ExtensionTask.new("my-crate", my_gemspec) do |ext|
   #     ext.lib_dir = "lib/my-crate"

@@ -4,7 +4,7 @@ module RbSys
   # Error is the base class for all errors raised by rb_sys.
   class Error < StandardError; end
 
-  # PackageNotFoundError is raised when a package is not found from the Cargo metadata.
+  # Raised when a package is not found from the Cargo metadata.
   class PackageNotFoundError < Error
     def initialize(name)
       msg = <<~MSG.chomp.tr("\n", " ")
@@ -17,6 +17,7 @@ module RbSys
     end
   end
 
+  # Raised when Cargo metadata cannot be parsed.
   class CargoMetadataError < Error
     def initialize(err, stderr, manifest_path)
       msg = <<~MSG.chomp.tr("\n", " ")
