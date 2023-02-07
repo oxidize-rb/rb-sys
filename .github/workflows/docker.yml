@@ -70,7 +70,6 @@ jobs:
         with:
           images: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}
-            ${{ secrets.DOCKER_HUB_USERNAME }}/rake-compiler-dock-mri-${{ matrix.platform.ruby_target }}
           flavor: |
             latest=auto
           tags: |
@@ -78,7 +77,6 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=sha,format=long
-            type=raw,value=head,enable={{is_default_branch}}
           labels:
             org.opencontainers.image.description=Image for building native Rust extensions for Ruby on ${{ matrix.platform.ruby_target }}
             org.opencontainers.image.vendor=oxidize-rb
@@ -126,5 +124,5 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          repository: peterevans/dockerhub-description
+          repository: rbsys/${{ matrix.platform.ruby_target }}
           readme-filepath: ./readme.md
