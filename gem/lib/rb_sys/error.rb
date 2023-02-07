@@ -19,17 +19,23 @@ module RbSys
 
   # Raised when Cargo metadata cannot be parsed.
   class CargoMetadataError < Error
-    def initialize(err, stderr, manifest_path)
+    def initialize(err, stderr)
       msg = <<~MSG.chomp.tr("\n", " ")
-        Could not parse Cargo metadata. Please check that your Cargo.toml
-        is valid. The error was: #{err}
+        Could not infer Rust crate information using `cargo metadata`.
 
-        Looking for this Cargo.toml: #{manifest_path.inspect}
+        Original error was:
+          #{err.class}: #{err.message}
 
-        Stderr
-        ------
-        #{stderr}
+        Things to check:
+          - Check that your ext/*/Cargo.toml at is valid
+          - If you are using a workspace, make sure you are the root Cargo.toml exists
+          - Make sure `cargo` is installed and in your PATH
       MSG
+
+      if !stderr.empty?
+        indented_stderr = stderr.lines.map { |line| "  #{line}" }.join
+        msg << "Stderr from `cargo metadata` was:\n#{indented_stderr}"
+      end
 
       super(msg)
     end

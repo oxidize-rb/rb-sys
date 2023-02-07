@@ -56,10 +56,13 @@ module RbSys
         ::Gem.load_yaml
         cargo = ENV["CARGO"] || "cargo"
         args = ["metadata", "--no-deps", "--format-version", "1"]
-        out, stderr, _status = Open3.capture3(cargo, *args)
-        @cargo_metadata = Gem::SafeYAML.safe_load(out)
+        out, stderr, status = Open3.capture3(cargo, *args)
+        raise "exited with non-zero status (#{status})" unless status.success?
+        data = Gem::SafeYAML.safe_load(out)
+        raise "metadata must be a Hash" unless data.is_a?(Hash)
+        @cargo_metadata = data
       rescue => err
-        raise CargoMetadataError.new(err, stderr, manifest_path)
+        raise CargoMetadataError.new(err, stderr)
       end
     end
   end
