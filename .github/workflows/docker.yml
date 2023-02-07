@@ -95,8 +95,8 @@ jobs:
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: gchr.io/oxidize-rb/rb-sys-${{ matrix.platform.ruby_target }}:cache
-          cache-to: gchr.io/oxidize-rb/rb-sys-${{ matrix.platform.ruby_target }}:cache
+          cache-from: gchr.io/oxidize-rb/rb-sys:cache-${{ matrix.platform.ruby_target }}
+          cache-to: gchr.io/oxidize-rb/rb-sys:cache-${{ matrix.platform.ruby_target }}
 
       - name: Run tests
         run: |
@@ -120,8 +120,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: gchr.io/oxidize-rb/rb-sys-${{ matrix.platform.ruby_target }}:cache
-          cache-to: gchr.io/oxidize-rb/rb-sys-${{ matrix.platform.ruby_target }}:cache
+          cache-from: gchr.io/oxidize-rb/rb-sys:cache-${{ matrix.platform.ruby_target }}
+          cache-to: gchr.io/oxidize-rb/rb-sys:cache-${{ matrix.platform.ruby_target }}
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
