@@ -76,3 +76,23 @@ end
   environment variable. This will install [rustup](https://rustup.rs/) and [cargo](https://crates.io/) in the build
   directory, so the end user does not have to have Rust pre-installed. Ideally, this should be a last resort, as it's
   better to already have the toolchain installed on your system.
+
+## Troubleshooting
+
+### Libclang issues
+
+If you see an error like this:
+
+```
+thread 'main' panicked at 'Unable to find libclang: "couldn't find any valid shared libraries matching: \['libclang.so', 'libclang-*.so', 'libclang.so.*', 'libclang-*.so.*'\], set the `LIBCLANG_PATH` environment variable to a path where one of these files can be found (invalid: \[\])"'
+```
+
+This means that bindgen is having issues finding a usable version of libclang. An easy way to fix this is to install the
+[`libclang` gem](https://github.com/oxidize-rb/libclang-rb), which will install a pre-built version of libclang for you.
+`rb_sys` will automatically detect this gem and use it.
+
+```ruby
+# Gemfile
+
+gem "libclang", "~> 14.0.6"
+```
