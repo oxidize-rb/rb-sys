@@ -59,6 +59,7 @@ module RbSys
         #{conditional_assign("CARGO", "cargo")}
         #{conditional_assign("CARGO_BUILD_TARGET", builder.target)}
         #{conditional_assign("SOEXT", builder.so_ext)}
+        #{try_load_bundled_libclang(builder)}
 
         # Determine the prefix Cargo uses for the lib.
         #{if_neq_stmt("$(SOEXT)", "dll")}
@@ -314,6 +315,26 @@ module RbSys
         "!if [set #{k}=#{v}]\n!endif"
       else
         "export #{k} := #{v}"
+      end
+    end
+
+    def try_load_bundled_libclang(_builder)
+      require "libclang"
+      assert_libclang_version_valid!
+      export_env("LIBCLANG_PATH", Libclang.libdir)
+    rescue LoadError
+      # If we can't load the bundled libclang, just continue
+    end
+
+    def assert_libclang_version_valid!
+      libclang_version = Libclang.version
+
+      if libclang_version < Gem::Version.new("5.0.0")
+        raise "libclang version 5.0.0 or greater is required (current #{libclang_version})"
+      end
+
+      if libclang_version >= Gem::Version.new("15.0.0")
+        raise "libclang version > 14.0.0 or greater is required (current #{libclang_version})"
       end
     end
 
