@@ -9,35 +9,83 @@ module RbSys
     class Metadata
       attr_reader :name
 
+      # Initializes a new Cargo::Metadata instance.
+      #
+      # @param name [String] the name of the Cargo project
       def initialize(name)
         raise ArgumentError, "name must be a String" unless name.is_a?(String)
 
         @name = name
       end
 
-      # @api private
-      def self.delegates_to_cargo_metadata(*methods)
-        methods.each do |method|
-          define_method(method) { cargo_metadata.fetch(method.to_s) }
-        end
-      end
-
-      # @api private
-      def self.delegates_to_package_metadata(*methods)
-        methods.each do |method|
-          define_method(method) { package_metadata.fetch(method.to_s) }
-        end
-      end
-
-      delegates_to_cargo_metadata :target_directory, :workspace_root, :packages
-
-      delegates_to_package_metadata :manifest_path, :version, :id, :edition, :targets, :features, :metadata
-
       # Returns the path where the Cargo project's Cargo.toml is located.
       #
       # @return [String]
       def manifest_directory
         @manifest_directory ||= File.dirname(manifest_path)
+      end
+
+      # Returns the target directory for the Cargo project.
+      #
+      # @return [String]
+      def target_directory
+        cargo_metadata.fetch("target_directory")
+      end
+
+      # Returns the workspace root for the Cargo project.
+      #
+      # @return [String]
+      def workspace_root
+        cargo_metadata.fetch("workspace_root")
+      end
+
+      # Returns the workspace members for the Cargo project.
+      #
+      # @return [Array<Hash>]
+      def packages
+        cargo_metadata.fetch("packages")
+      end
+
+      # Returns the path to the package's Cargo.toml.
+      #
+      # @return [String]
+      def manifest_path
+        package_metadata.fetch("manifest_path")
+      end
+
+      # Returns the package's version.
+      #
+      # @return [String]
+      def version
+        package_metadata.fetch("version")
+      end
+
+      # Returns the package's id.
+      #
+      # @return [String]
+      def id
+        package_metadata.fetch("id")
+      end
+
+      # Returns the package's Rust edition.
+      #
+      # @return [String]
+      def edition
+        package_metadata.fetch("edition")
+      end
+
+      # Returns the package's features.
+      #
+      # @return [Array<String>]
+      def features
+        package_metadata.fetch("features")
+      end
+
+      # Returns the package's custom metadata.
+      #
+      # @return [Hash]
+      def metadata
+        package_metadata.fetch("metadata")
       end
 
       private
