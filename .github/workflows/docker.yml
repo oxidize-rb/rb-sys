@@ -58,6 +58,7 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Docker meta
@@ -81,6 +82,7 @@ jobs:
       - name: Docker build
         uses: docker/build-push-action@v4
         with:
+          builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
           file: ./docker/Dockerfile.${{ matrix.platform.ruby_target }}
           platforms: linux/amd64
@@ -94,18 +96,18 @@ jobs:
         run: |
           sudo chmod 777 tmp/oxi-test
           cd tmp/oxi-test
-          gem install rb_sys
 
+          gem install rb_sys
           export RB_SYS_DOCK_UID=$(id -u)
           export RB_SYS_DOCK_GID=$(id -g)
           export RCD_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-${{ github.sha }}
 
-          # Soft fail for now
           rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build
 
       - name: Docker push
         uses: docker/build-push-action@v4
         with:
+          builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
           file: ./docker/Dockerfile.${{ matrix.platform.ruby_target }}
           platforms: linux/amd64
