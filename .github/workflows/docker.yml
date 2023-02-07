@@ -87,7 +87,8 @@ jobs:
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:main
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
 
       - name: Run tests
         run: |
@@ -111,7 +112,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:main
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
