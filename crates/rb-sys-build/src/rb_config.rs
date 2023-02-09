@@ -78,7 +78,8 @@ impl RbConfig {
                 .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
                 .output()
                 .unwrap_or_else(|e| panic!("ruby not found: {}", e));
-            String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+            let output = String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!");
+            output.trim_start_matches("\u{feff}").to_string()
         });
 
         let mut parsed = HashMap::new();
@@ -183,14 +184,8 @@ impl RbConfig {
     pub fn get(&self, key: &str) -> String {
         println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
 
-        match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => val,
-            _ => self
-                .value_map
-                .get(key)
-                .unwrap_or_else(|| panic!("Key not found: {}", key))
-                .to_owned(),
-        }
+        self.get_optional(key)
+            .expect(&format!("RbConfig key not found: {}", key))
     }
 
     pub fn is_cross_compiling(&self) -> bool {
@@ -207,7 +202,7 @@ impl RbConfig {
         println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
 
         match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => Some(val),
+            Ok(val) => Some(val.trim_start_matches("\u{feff}").to_string()),
             _ => self.value_map.get(key).map(|val| val.to_owned()),
         }
     }
@@ -361,7 +356,9 @@ impl RbConfig {
                         if let Some(val) = self.get_optional(key) {
                             result.push_str(&val);
                         } else if let Some(val) = env::var_os(key) {
-                            result.push_str(&val.to_string_lossy());
+                            let val = val.to_string_lossy();
+                            let val = val.trim_start_matches("\u{feff}");
+                            result.push_str(val);
                         } else {
                             // Consume whitespace
                             chars.next();
@@ -428,7 +425,7 @@ fn append_ld_library_path(search_paths: Vec<&str>) {
 
     let new_path = match std::env::var_os(env_var_name) {
         Some(val) => {
-            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+            format!("{}:{}", val.to_str().unwrap().trim_start_matches("\u{feff}"), search_paths.join(":"))
         }
         None => search_paths.join(":"),
     };
