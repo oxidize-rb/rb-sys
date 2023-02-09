@@ -7,7 +7,8 @@ require "fileutils"
 require "tmpdir"
 
 options = {
-  version: RbSys::VERSION
+  version: RbSys::VERSION,
+  docker_platform: "linux/amd64"
 }
 
 def log(level, message, emoji: true, io: $stderr)
@@ -296,7 +297,7 @@ def download_image(options)
   if docker("images -q #{image}").strip.empty? || options[:no_cache]
     # Nicely formatted message that we are downloading the image which might take awhile
     log(:notice, "Downloading container #{image.inspect}, this might take awhile...")
-    docker("pull #{image} --quiet > /dev/null")
+    docker("pull #{image} --quiet --platform #{options[:docker_platform]} > /dev/null")
   end
 end
 
