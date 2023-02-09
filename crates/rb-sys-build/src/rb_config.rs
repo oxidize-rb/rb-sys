@@ -72,6 +72,8 @@ impl RbConfig {
             let config = Command::new(ruby)
                 .arg("--disable-gems")
                 .arg("-rrbconfig")
+                .arg("-E")
+                .arg("UTF-8")
                 .arg("-e")
                 .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
                 .output()
