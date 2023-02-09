@@ -3,17 +3,21 @@ mod sanitizer;
 use crate::utils::is_msvc;
 use crate::RbConfig;
 use quote::ToTokens;
-use std::env;
-use std::fmt::Write;
 use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
+use std::{env, error::Error};
 use syn::{Expr, ExprLit, ItemConst, Lit};
 
 const WRAPPER_H_CONTENT: &str = include_str!("bindings/wrapper.h");
 
 /// Generate bindings for the Ruby using bindgen.
-pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+pub fn generate(
+    rbconfig: &RbConfig,
+    static_ruby: bool,
+    cfg_out: &mut File,
+) -> Result<PathBuf, Box<dyn Error>> {
+    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
     let extension_flag = if cfg!(target_os = "openbsd") {
         "-fdeclspec"
@@ -35,9 +39,9 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
 
     if !is_msvc() {
-        writeln!(wrapper_h, "#ifdef HAVE_RUBY_ATOMIC_H").unwrap();
-        writeln!(wrapper_h, "#include \"ruby/atomic.h\"").unwrap();
-        writeln!(wrapper_h, "#endif").unwrap();
+        wrapper_h.push_str("#ifdef HAVE_RUBY_ATOMIC_H\n");
+        wrapper_h.push_str("#include \"ruby/atomic.h\"\n");
+        wrapper_h.push_str("#endif\n");
     }
 
     let bindings = default_bindgen(clang_args)
@@ -65,9 +69,13 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     };
 
     let mut tokens = {
-        let code_string = bindings.generate().unwrap().to_string();
-        syn::parse_file(&code_string).unwrap()
+        let code_string = bindings.generate()?.to_string();
+        syn::parse_file(&code_string)?
     };
+
+    let ruby_version = rbconfig.ruby_version();
+    let ruby_platform = rbconfig.arch();
+    let out_path = out_dir.join(format!("bindings-{}-{}.rs", ruby_version, ruby_platform));
 
     let code = {
         clean_docs(rbconfig, &mut tokens);
@@ -75,14 +83,15 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
         if is_msvc() {
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
-        push_cargo_cfg_from_bindings(&tokens);
+        push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
         tokens.into_token_stream().to_string()
     };
 
-    let out_path = out_dir.join("bindings.rs");
     let mut out_file = File::create(&out_path).unwrap();
     std::io::Write::write_all(&mut out_file, code.as_bytes()).unwrap();
     run_rustfmt(&out_path);
+
+    Ok(out_path)
 }
 
 fn run_rustfmt(path: &PathBuf) {
@@ -145,7 +154,10 @@ fn qualify_symbols_for_msvc(tokens: &mut syn::File, is_static: bool, rbconfig: &
 }
 
 // Add things like `#[cfg(ruby_use_transient_heap = "true")]` to the bindings config
-fn push_cargo_cfg_from_bindings(syntax: &syn::File) {
+fn push_cargo_cfg_from_bindings(
+    syntax: &syn::File,
+    cfg_out: &mut File,
+) -> Result<(), Box<dyn Error>> {
     fn is_defines(line: &str) -> bool {
         line.starts_with("HAVE_RUBY")
             || line.starts_with("HAVE_RB")
@@ -164,6 +176,7 @@ fn push_cargo_cfg_from_bindings(syntax: &syn::File) {
                 let val = conf.value_bool().to_string();
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
                 println!("cargo:defines_{}={}", name, val);
+                writeln!(cfg_out, "cargo:defines_{}=\"{}\"", name, val)?;
             }
 
             if conf_name.starts_with("RUBY_ABI_VERSION") {
@@ -171,6 +184,8 @@ fn push_cargo_cfg_from_bindings(syntax: &syn::File) {
             }
         }
     }
+
+    Ok(())
 }
 
 /// An autoconf constant in the bindings

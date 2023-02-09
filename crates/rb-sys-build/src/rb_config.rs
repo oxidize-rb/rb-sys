@@ -149,6 +149,11 @@ impl RbConfig {
         self.get("RUBY_SO_NAME")
     }
 
+    /// Get the arch for the current ruby.
+    pub fn arch(&self) -> String {
+        self.get("arch")
+    }
+
     /// Filter the libs, removing the ones that are not needed.
     pub fn blocklist_lib(&mut self, name: &str) -> &mut RbConfig {
         self.blocklist_lib.push(name.to_string());
