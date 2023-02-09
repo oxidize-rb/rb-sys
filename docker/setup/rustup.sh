@@ -18,8 +18,7 @@ main() {
   sed -i 's:\*target/x86_64-unknown-linux-gnu/release/::' rustup-init.sha256
   sha256sum -c rustup-init.sha256
   chmod +x rustup-init
-  # Need rustfmt for bindgen doc parsing
-  ./rustup-init --no-modify-path --default-toolchain "$RUSTUP_DEFAULT_TOOLCHAIN" --profile minimal --component rustfmt -y
+  ./rustup-init --no-modify-path --default-toolchain "$RUSTUP_DEFAULT_TOOLCHAIN" --profile minimal -y
   rustup target add "$RUST_TARGET"
 
   # Use git CLI to fetch crates (avoid memory issues in QEMU environments)
