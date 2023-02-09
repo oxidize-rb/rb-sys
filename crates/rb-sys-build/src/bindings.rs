@@ -189,11 +189,11 @@ impl<'a> ConfValue<'a> {
 
     pub fn value_string(&self) -> String {
         match &*self.item.expr {
-            Expr::Lit(ExprLit {
-                lit: Lit::Str(ref lit),
-                ..
-            }) => lit.value(),
-            v => panic!("Could not convert HAVE_* constant to string: {:#?}", v),
+            Expr::Lit(ExprLit { lit, .. }) => lit.to_token_stream().to_string(),
+            _ => panic!(
+                "Could not convert HAVE_* constant to string: {:#?}",
+                self.item
+            ),
         }
     }
 
@@ -207,7 +207,10 @@ impl<'a> ConfValue<'a> {
                 lit: Lit::Bool(ref lit),
                 ..
             }) => lit.value,
-            v => panic!("Could not convert HAVE_* constant to bool: {:#?}", v),
+            _ => panic!(
+                "Could not convert HAVE_* constant to bool: {:#?}",
+                self.item
+            ),
         }
     }
 }
