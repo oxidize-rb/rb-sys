@@ -16,6 +16,8 @@ module RbSys
         raise ArgumentError, "name must be a String" unless name.is_a?(String)
 
         @name = name
+        @cargo_metadata = nil
+        @package_metadata = nil
       end
 
       # Returns the path where the Cargo project's Cargo.toml is located.

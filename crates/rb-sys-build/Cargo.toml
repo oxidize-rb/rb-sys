@@ -17,6 +17,9 @@ regex = "1"
 shell-words = "1.1"
 bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
 cc-impl = { version = "1.0", optional = true, package = "cc" }
+syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
+quote = "1.0.23"
+lazy_static = "1.4.0"
 
 [features]
 default = []

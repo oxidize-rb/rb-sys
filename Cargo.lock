@@ -171,8 +171,11 @@ version = "0.9.64"
 dependencies = [
  "bindgen",
  "cc",
+ "lazy_static",
+ "quote",
  "regex",
  "shell-words",
+ "syn",
 ]
 
 [[package]]

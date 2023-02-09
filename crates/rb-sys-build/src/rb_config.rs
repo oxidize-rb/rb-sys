@@ -191,6 +191,14 @@ impl RbConfig {
         }
     }
 
+    pub fn is_cross_compiling(&self) -> bool {
+        if let Some(cross) = self.get_optional("CROSS_COMPILING") {
+            cross == "yes" || cross == "1"
+        } else {
+            false
+        }
+    }
+
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get_optional(&self, key: &str) -> Option<String> {

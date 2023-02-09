@@ -1,19 +1,18 @@
+mod sanitizer;
+
 use crate::utils::is_msvc;
 use crate::RbConfig;
-use std::borrow::Cow;
+use quote::ToTokens;
 use std::env;
+use std::fmt::Write;
 use std::fs::File;
-use std::io::{self, BufRead, Write};
-use std::path::Path;
 use std::path::PathBuf;
-use std::process::Command;
+use syn::{Expr, ExprLit, ItemConst, Lit};
 
 const WRAPPER_H_CONTENT: &str = include_str!("bindings/wrapper.h");
 
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
-    ensure_rustfmt_available();
-
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let extension_flag = if cfg!(target_os = "openbsd") {
@@ -33,10 +32,7 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 
-    let wrapper_h_path = out_dir.join("wrapper.h");
-    let mut wrapper_h = File::create(&wrapper_h_path).unwrap();
-
-    write!(wrapper_h, "{}", WRAPPER_H_CONTENT).unwrap();
+    let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
 
     if !is_msvc() {
         writeln!(wrapper_h, "#ifdef HAVE_RUBY_ATOMIC_H").unwrap();
@@ -45,7 +41,7 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
     }
 
     let bindings = default_bindgen(clang_args)
-        .header(wrapper_h_path.to_string_lossy())
+        .header_contents("wrapper.h", &wrapper_h)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
@@ -68,64 +64,55 @@ pub fn generate(rbconfig: &RbConfig, static_ruby: bool) {
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
-    write_bindings(bindings, "bindings-raw.rs", static_ruby, rbconfig);
-    clean_docs(rbconfig);
-    let _ = push_cargo_cfg_from_bindings();
+    let mut tokens = {
+        let code_string = bindings.generate().unwrap().to_string();
+        syn::parse_file(&code_string).unwrap()
+    };
+
+    let code = {
+        clean_docs(rbconfig, &mut tokens);
+
+        if is_msvc() {
+            qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
+        }
+        push_cargo_cfg_from_bindings(&tokens);
+        tokens.into_token_stream().to_string()
+    };
+
+    let out_path = out_dir.join("bindings.rs");
+    let mut out_file = File::create(&out_path).unwrap();
+    std::io::Write::write_all(&mut out_file, code.as_bytes()).unwrap();
+    run_rustfmt(&out_path);
 }
 
-// We require rustfmt in order to properly parse the generated bindings for
-// Ruby's DEFINES macros. We could potentially use syn to parse them, but this
-// is simpler for now. Open to PRs!
-fn ensure_rustfmt_available() {
-    let err_msg =
-        "rustfmt is required to generate bindings. To install, run `rustup component add rustfmt`";
+fn run_rustfmt(path: &PathBuf) {
+    let mut cmd = std::process::Command::new("rustfmt");
+    cmd.stderr(std::process::Stdio::inherit());
+    cmd.stdout(std::process::Stdio::inherit());
 
-    let output = Command::new("rustfmt")
-        .arg("--version")
-        .output()
-        .expect(err_msg);
+    cmd.arg(path);
 
-    if !output.status.success() {
-        panic!("{}", err_msg);
+    if let Err(e) = cmd.status() {
+        eprintln!("Failed to run rustfmt: {}", e);
     }
 }
 
-fn clean_docs(rbconfig: &RbConfig) {
-    let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
-    let outpath = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
-
-    if rbconfig.get_optional("CROSS_COMPILING").is_some() {
-        std::fs::copy(path, outpath).expect("to copy bindings-raw.rs to bindings.rs");
+fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
+    if rbconfig.is_cross_compiling() {
         return;
     }
 
-    let mut outfile = File::create(outpath).unwrap();
-    let lines = read_lines(&path).unwrap();
+    let ver = rbconfig.ruby_version();
 
-    for line in lines {
-        let line = line.unwrap();
-
-        if line.contains("@deprecated") {
-            outfile.write_all(b"#[deprecated]\n").unwrap();
-        }
-
-        if !line.contains("#[doc") {
-            outfile.write_all(line.as_bytes()).unwrap();
-        } else {
-            let url_regex = regex::Regex::new(r#"https?://[^\s'"]+"#).unwrap();
-            let outline = url_regex.replace_all(&line, "<${0}>");
-
-            outfile.write_all(outline.as_bytes()).unwrap();
-        }
-
-        outfile.write_all("\n".as_bytes()).unwrap();
-    }
+    sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
+        eprintln!("Failed to clean up docs, skipping: {}", e);
+    })
 }
 
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
-        .rustfmt_bindings(true)
+        .rustfmt_bindings(false) // We use syn so this is pointless
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
@@ -140,23 +127,10 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
 }
 
-fn write_bindings(builder: bindgen::Builder, path: &str, static_ruby: bool, rbconfig: &RbConfig) {
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    let mut code = builder.generate().unwrap().to_string();
-
-    if is_msvc() {
-        code = qualify_symbols_for_msvc(&code, static_ruby, rbconfig);
-    }
-
-    let mut outfile = File::create(out_path.join(path)).expect("Couldn't create bindings file");
-    write!(outfile, "{}", code).unwrap_or_else(|_| panic!("Couldn't write bindings for {}", path))
-}
-
 // This is needed because bindgen doesn't support the `__declspec(dllimport)` on
 // global variables. Without it, symbols are not found.
 // See https://stackoverflow.com/a/66182704/2057700
-fn qualify_symbols_for_msvc(code: &str, is_static: bool, rbconfig: &RbConfig) -> String {
+fn qualify_symbols_for_msvc(tokens: &mut syn::File, is_static: bool, rbconfig: &RbConfig) {
     let kind = if is_static { "static" } else { "dylib" };
 
     let name = if is_static {
@@ -165,91 +139,78 @@ fn qualify_symbols_for_msvc(code: &str, is_static: bool, rbconfig: &RbConfig) ->
         rbconfig.libruby_so_name()
     };
 
-    code.replace(
-        "extern \"C\" {",
-        &format!(
-            "#[link(name = \"{}\", kind = \"{}\")]\nextern \"C\" {{",
-            name, kind
-        ),
-    )
-}
-
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+    sanitizer::add_link_ruby_directives(tokens, &name, kind).unwrap_or_else(|e| {
+        eprintln!("Failed to add link directives: {}", e);
+    });
 }
 
 // Add things like `#[cfg(ruby_use_transient_heap = "true")]` to the bindings config
-fn push_cargo_cfg_from_bindings() -> Result<(), Box<dyn std::error::Error>> {
-    let path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings-raw.rs");
-    let lines = read_lines(path)?;
-
-    fn is_have_cfg(line: &str) -> bool {
-        line.starts_with("pub const HAVE_RUBY")
-            || line.starts_with("pub const HAVE_RB")
-            || line.starts_with("pub const USE")
+fn push_cargo_cfg_from_bindings(syntax: &syn::File) {
+    fn is_defines(line: &str) -> bool {
+        line.starts_with("HAVE_RUBY")
+            || line.starts_with("HAVE_RB")
+            || line.starts_with("USE")
+            || line.starts_with("RUBY_DEBUG")
+            || line.starts_with("RUBY_NDEBUG")
     }
 
-    for line in lines {
-        let line = line?;
+    for item in syntax.items.iter() {
+        if let syn::Item::Const(item) = item {
+            let conf = ConfValue::new(item);
+            let conf_name = conf.name();
 
-        if is_have_cfg(&line) {
-            if let Some(val) = ConfValue::new(&line) {
-                let name = val.name().to_lowercase();
-                let val = val.as_bool();
+            if is_defines(&conf_name) {
+                let name = conf_name.to_lowercase();
+                let val = conf.value_bool().to_string();
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
                 println!("cargo:defines_{}={}", name, val);
             }
-        }
 
-        if line.starts_with("pub const RUBY_ABI_VERSION") {
-            if let Some(val) = ConfValue::new(&line) {
-                println!("cargo:ruby_abi_version=\"{}\"", val.value());
+            if conf_name.starts_with("RUBY_ABI_VERSION") {
+                println!("cargo:ruby_abi_version=\"{}\"", conf.value_string());
             }
         }
     }
-
-    Ok(())
 }
 
 /// An autoconf constant in the bindings
 struct ConfValue<'a> {
-    raw: Cow<'a, str>,
+    item: &'a syn::ItemConst,
 }
 
 impl<'a> ConfValue<'a> {
-    pub fn new(raw: &'a str) -> Option<Self> {
-        let prefix = "pub const ";
+    pub fn new(item: &'a ItemConst) -> Self {
+        Self { item }
+    }
 
-        if raw.starts_with(prefix) {
-            let raw = raw.trim_start_matches(prefix).trim_end_matches(';').into();
-            Some(Self { raw })
-        } else {
-            None
+    pub fn name(&self) -> String {
+        self.item.ident.to_string()
+    }
+
+    pub fn value_string(&self) -> String {
+        match &*self.item.expr {
+            Expr::Lit(ExprLit { lit, .. }) => lit.to_token_stream().to_string(),
+            _ => panic!(
+                "Could not convert HAVE_* constant to string: {:#?}",
+                self.item
+            ),
         }
     }
 
-    pub fn name(&self) -> &str {
-        self.raw_parts().0.split(':').next().unwrap()
-    }
-
-    pub fn value(&self) -> &str {
-        self.raw_parts().1
-    }
-
-    pub fn as_bool(&self) -> bool {
-        self.value() == "1"
-    }
-
-    fn raw_parts(&self) -> (&str, &str) {
-        let mut parts = self.raw.split(" = ");
-        let name = parts.next().unwrap();
-        let value = parts.next().unwrap();
-        (name, value)
+    pub fn value_bool(&self) -> bool {
+        match &*self.item.expr {
+            Expr::Lit(ExprLit {
+                lit: Lit::Int(ref lit),
+                ..
+            }) => lit.base10_parse::<u8>().unwrap() != 0,
+            Expr::Lit(ExprLit {
+                lit: Lit::Bool(ref lit),
+                ..
+            }) => lit.value,
+            _ => panic!(
+                "Could not convert HAVE_* constant to bool: {:#?}",
+                self.item
+            ),
+        }
     }
 }

@@ -246,7 +246,6 @@ module RbSys
         \t$(Q) curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
         \t$(Q) rustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
         \t$(Q) rustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
-        \t$(Q) rustup component add rustfmt
 
         $(RUSTLIB): $(CARGO)
         #{endif_stmt}
