@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Root module
 module RbSys
   # Helper class for creating Rust Makefiles

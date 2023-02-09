@@ -151,7 +151,7 @@ module RbSys
 
       gsub_cargo_command!(make_install, builder: builder)
 
-      File.write("Makefile", make_install)
+      File.write("Makefile", make_install, encoding: Encoding::UTF_8)
     end
 
     private
