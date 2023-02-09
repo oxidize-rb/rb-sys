@@ -184,18 +184,11 @@ impl RbConfig {
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get(&self, key: &str) -> String {
-        println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
-
-        match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => val,
-            _ => self
-                .value_map
-                .get(key)
-                .unwrap_or_else(|| panic!("Key not found: {}", key))
-                .to_owned(),
-        }
+        self.get_optional(key)
+            .unwrap_or_else(|| panic!("Key not found: {}", key))
     }
 
+    /// Returns true if the current Ruby is cross compiling.
     pub fn is_cross_compiling(&self) -> bool {
         if let Some(cross) = self.get_optional("CROSS_COMPILING") {
             cross == "yes" || cross == "1"
@@ -210,8 +203,11 @@ impl RbConfig {
         println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
 
         match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => Some(val),
-            _ => self.value_map.get(key).map(|val| val.to_owned()),
+            Ok(val) => Some(val.trim_matches('\n').to_string()),
+            _ => self
+                .value_map
+                .get(key)
+                .map(|val| val.trim_matches('\n').to_owned()),
         }
     }
 

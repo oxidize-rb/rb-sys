@@ -188,7 +188,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     cfg_capture!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
     for key in rbconfig.all_keys() {
-        cfg_capture!(cap, "cargo:rbconfig_{}=\"{}\"", key, rbconfig.get(key));
+        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, rbconfig.get(key));
     }
 
     if is_ruby_static_enabled(rbconfig) {
