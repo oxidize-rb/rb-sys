@@ -257,6 +257,7 @@ def rcd(input_args, options)
 
   cmd = <<~SH
     #{default_docker_command} run \
+      --platform #{options.fetch(:docker_platform)} \
       -v #{Dir.pwd}:#{Dir.pwd} \
       #{mount_tmp_dir(options)} \
       #{mount_target_dir(options)} \
