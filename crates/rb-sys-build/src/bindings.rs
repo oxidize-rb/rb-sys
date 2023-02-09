@@ -188,17 +188,17 @@ impl<'a> ConfValue<'a> {
     }
 
     pub fn value_string(&self) -> String {
-        match *self.item.expr {
+        match &*self.item.expr {
             Expr::Lit(ExprLit {
                 lit: Lit::Str(ref lit),
                 ..
             }) => lit.value(),
-            _ => panic!("Unexpected expression for HAVE_* constant"),
+            v => panic!("Could not convert HAVE_* constant to string: {:#?}", v),
         }
     }
 
     pub fn value_bool(&self) -> bool {
-        match *self.item.expr {
+        match &*self.item.expr {
             Expr::Lit(ExprLit {
                 lit: Lit::Int(ref lit),
                 ..
@@ -207,7 +207,7 @@ impl<'a> ConfValue<'a> {
                 lit: Lit::Bool(ref lit),
                 ..
             }) => lit.value,
-            _ => panic!("Unexpected expression for HAVE_* constant"),
+            v => panic!("Could not convert HAVE_* constant to bool: {:#?}", v),
         }
     }
 }
