@@ -176,11 +176,12 @@ fn push_cargo_cfg_from_bindings(
                 let val = conf.value_bool().to_string();
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
                 println!("cargo:defines_{}={}", name, val);
-                writeln!(cfg_out, "cargo:defines_{}=\"{}\"", name, val)?;
+                writeln!(cfg_out, "cargo:defines_{}={}", name, val)?;
             }
 
             if conf_name.starts_with("RUBY_ABI_VERSION") {
-                println!("cargo:ruby_abi_version=\"{}\"", conf.value_string());
+                println!("cargo:ruby_abi_version={}", conf.value_string());
+                writeln!(cfg_out, "cargo:ruby_abi_version={}", conf.value_string())?;
             }
         }
     }
