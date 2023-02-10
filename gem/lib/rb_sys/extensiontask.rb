@@ -47,6 +47,8 @@ module RbSys
     def define
       super
       define_env_tasks
+
+      CLEAN.include(target_directory) if defined?(CLEAN)
     end
 
     def cargo_metadata

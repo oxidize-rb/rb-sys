@@ -10,4 +10,4 @@
 #![warn(unknown_lints)]
 #![allow(unaligned_references)]
 #![allow(clippy::all)]
-include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+include!(env!("RB_SYS_BINDINGS_PATH"));

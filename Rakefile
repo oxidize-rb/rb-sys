@@ -172,3 +172,5 @@ desc "Clean up"
 task :clean do
   CLEAN.each { |f| rm_rf(f) }
 end
+
+task default: :test

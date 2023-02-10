@@ -4,7 +4,12 @@ mod version;
 
 use features::*;
 use rb_sys_build::{bindings, RbConfig};
-use std::fs;
+use std::io::Write;
+use std::{
+    env,
+    fs::{self, File},
+    path::PathBuf,
+};
 use version::Version;
 
 const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
@@ -20,6 +25,12 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 8] = [
 
 fn main() {
     let mut rbconfig = RbConfig::current();
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    let ruby_version = rbconfig.ruby_version();
+    let ruby_platform = rbconfig.arch();
+    let cfg_capture_path = out_dir.join(format!("cfg-capture-{}-{}", ruby_version, ruby_platform));
+    let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -29,8 +40,17 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    bindings::generate(&rbconfig, is_ruby_static_enabled(&rbconfig));
-    export_cargo_cfg(&mut rbconfig);
+    let bindings_path = bindings::generate(
+        &rbconfig,
+        is_ruby_static_enabled(&rbconfig),
+        &mut cfg_capture_file,
+    )
+    .expect("generate bindings");
+    println!(
+        "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
+        bindings_path.display()
+    );
+    export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     if is_ruby_macros_enabled() {
         ruby_macros::compile(&mut rbconfig);
@@ -43,13 +63,20 @@ fn main() {
         enable_dynamic_lookup(&mut rbconfig);
     }
 
-    expose_cargo_features();
+    expose_cargo_features(&mut cfg_capture_file);
     add_unsupported_link_args_to_blocklist(&mut rbconfig);
     rbconfig.print_cargo_args();
 
     if is_debug_build_enabled() {
         debug_and_exit(&mut rbconfig);
     }
+}
+
+macro_rules! cfg_capture {
+    ($file:expr, $fmt:expr, $($arg:tt)*) => {
+        println!($fmt, $($arg)*);
+        writeln!($file, $fmt, $($arg)*).unwrap();
+    };
 }
 
 fn add_unsupported_link_args_to_blocklist(rbconfig: &mut RbConfig) {
@@ -81,7 +108,7 @@ fn link_libruby(rbconfig: &mut RbConfig) {
     }
 }
 
-fn export_cargo_cfg(rbconfig: &mut RbConfig) {
+fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_major", "MAJOR");
     rustc_cfg(rbconfig, "ruby_minor", "MINOR");
     rustc_cfg(rbconfig, "ruby_teeny", "TEENY");
@@ -107,61 +134,71 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig) {
 
         if &version < v {
             println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
-            println!(r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version <= v {
             println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
-            println!(r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:version_lte_{}_{}=false"#, v.major(), v.minor());
+            cfg_capture!(
+                cap,
+                r#"cargo:version_lte_{}_{}=false"#,
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version == v {
             println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
-            println!(r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
         if &version >= v {
             println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
-            println!(r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:version_gte_{}_{}=false"#, v.major(), v.minor());
+            cfg_capture!(
+                cap,
+                r#"cargo:version_gte_{}_{}=false"#,
+                v.major(),
+                v.minor()
+            );
         }
 
         if &version > v {
             println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
-            println!(r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {
-            println!(r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());
+            cfg_capture!(cap, r#"cargo:version_gt_{}_{}=false"#, v.major(), v.minor());
         }
     }
 
-    println!("cargo:root={}", rbconfig.get("prefix"));
-    println!("cargo:include={}", rbconfig.get("includedir"));
-    println!("cargo:archinclude={}", rbconfig.get("archincludedir"));
-    println!("cargo:version={}", rbconfig.get("ruby_version"));
-    println!("cargo:major={}", rbconfig.get("MAJOR"));
-    println!("cargo:minor={}", rbconfig.get("MINOR"));
-    println!("cargo:teeny={}", rbconfig.get("TEENY"));
-    println!("cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
+    cfg_capture!(cap, "cargo:root={}", rbconfig.get("prefix"));
+    cfg_capture!(cap, "cargo:include={}", rbconfig.get("includedir"));
+    cfg_capture!(cap, "cargo:archinclude={}", rbconfig.get("archincludedir"));
+    cfg_capture!(cap, "cargo:version={}", rbconfig.get("ruby_version"));
+    cfg_capture!(cap, "cargo:major={}", rbconfig.get("MAJOR"));
+    cfg_capture!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
+    cfg_capture!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
+    cfg_capture!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
     for key in rbconfig.all_keys() {
-        println!("cargo:rbconfig_{}=\"{}\"", key, rbconfig.get(key));
+        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, rbconfig.get(key));
     }
 
     if is_ruby_static_enabled(rbconfig) {
-        println!("cargo:lib={}", rbconfig.libruby_static_name());
-        println!("cargo:ruby_static=true");
+        cfg_capture!(cap, "cargo:lib={}", rbconfig.libruby_static_name());
+        cfg_capture!(cap, "cargo:ruby_static={}", "true");
     } else {
-        println!("cargo:lib={}", rbconfig.libruby_so_name());
+        cfg_capture!(cap, "cargo:lib={}", rbconfig.libruby_so_name());
     }
 
-    println!("cargo:libdir={}", rbconfig.get("libdir"));
+    cfg_capture!(cap, "cargo:libdir={}", rbconfig.get("libdir"));
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
@@ -177,12 +214,12 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     }
 }
 
-fn expose_cargo_features() {
+fn expose_cargo_features(cap: &mut File) {
     for (key, val) in std::env::vars() {
         if !key.starts_with("CARGO_FEATURE_") {
             continue;
         }
 
-        println!("cargo:{}={}", key.to_lowercase(), val);
+        cfg_capture!(cap, "cargo:{}={}", key.to_lowercase(), val);
     }
 }
