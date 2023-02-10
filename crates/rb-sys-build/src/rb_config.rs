@@ -425,7 +425,11 @@ fn append_ld_library_path(search_paths: Vec<&str>) {
 
     let new_path = match std::env::var_os(env_var_name) {
         Some(val) => {
-            format!("{}:{}", val.to_str().unwrap().trim_start_matches("\u{feff}"), search_paths.join(":"))
+            format!(
+                "{}:{}",
+                val.to_str().unwrap().trim_start_matches("\u{feff}"),
+                search_paths.join(":")
+            )
         }
         None => search_paths.join(":"),
     };
