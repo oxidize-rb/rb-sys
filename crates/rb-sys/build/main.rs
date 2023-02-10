@@ -28,8 +28,12 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     let ruby_version = rbconfig.ruby_version();
-    let ruby_platform = rbconfig.arch();
-    let cfg_capture_path = out_dir.join(format!("cfg-capture-{}-{}", ruby_version, ruby_platform));
+    let ruby_platform = rbconfig.platform();
+    let crate_version = env!("CARGO_PKG_VERSION");
+    let cfg_capture_path = out_dir.join(format!(
+        "cfg-capture-{}-{}-{}",
+        crate_version, ruby_platform, ruby_version
+    ));
     let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");

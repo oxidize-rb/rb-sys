@@ -149,9 +149,10 @@ impl RbConfig {
         self.get("RUBY_SO_NAME")
     }
 
-    /// Get the arch for the current ruby.
-    pub fn arch(&self) -> String {
-        self.get("arch")
+    /// Get the platform for the current ruby.
+    pub fn platform(&self) -> String {
+        self.get_optional("platform")
+            .unwrap_or_else(|| self.get("arch"))
     }
 
     /// Filter the libs, removing the ones that are not needed.

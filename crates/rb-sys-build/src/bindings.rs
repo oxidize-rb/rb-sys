@@ -74,8 +74,12 @@ pub fn generate(
     };
 
     let ruby_version = rbconfig.ruby_version();
-    let ruby_platform = rbconfig.arch();
-    let out_path = out_dir.join(format!("bindings-{}-{}.rs", ruby_version, ruby_platform));
+    let ruby_platform = rbconfig.platform();
+    let crate_version = env!("CARGO_PKG_VERSION");
+    let out_path = out_dir.join(format!(
+        "bindings-{}-{}-{}.rs",
+        crate_version, ruby_platform, ruby_version
+    ));
 
     let code = {
         clean_docs(rbconfig, &mut tokens);
