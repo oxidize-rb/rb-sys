@@ -6,6 +6,7 @@ require "optparse"
 require "open3"
 require "rb_sys/version"
 require "rb_sys/toolchain_info"
+require "rb_sys/cargo/metadata"
 require "rb_sys/util/logger"
 require "fileutils"
 require "tmpdir"
@@ -15,6 +16,10 @@ OPTIONS = {
   version: RbSys::VERSION,
   directory: Dir.pwd
 }
+
+def cargo_metadata
+  @cargo_metadata ||= RbSys::Cargo::Metadata.new("rb-sys-dock", deps: true)
+end
 
 def logger
   return @logger if @logger
@@ -396,7 +401,17 @@ def set_env
   ENV["RCD_IMAGE"] ||= "rbsys/#{ruby_platform}:#{OPTIONS[:version]}"
 end
 
+def lint_rb_sys
+  cargo_version = cargo_metadata.rb_sys_version
+  return if cargo_version == RbSys::VERSION
+  logger.warn("Cargo rb-sys version (#{cargo_version}) does not match Ruby gem version (#{RbSys::VERSION})")
+rescue => e
+  logger.warn("Could not determine Cargo rb-sys version")
+  logger.trace("Error was: #{e.inspect}")
+end
+
 set_env
+lint_rb_sys
 download_image
 log_some_useful_info
 rcd(ARGV)

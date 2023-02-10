@@ -12,12 +12,13 @@ module RbSys
       # Initializes a new Cargo::Metadata instance.
       #
       # @param name [String] the name of the Cargo project
-      def initialize(name)
+      def initialize(name, deps: false)
         raise ArgumentError, "name must be a String" unless name.is_a?(String)
 
         @name = name
         @cargo_metadata = nil
         @package_metadata = nil
+        @deps = deps
       end
 
       # Returns the path where the Cargo project's Cargo.toml is located.
@@ -90,6 +91,13 @@ module RbSys
         package_metadata.fetch("metadata")
       end
 
+      # Returns the rb-sys version, if any.
+      def rb_sys_version
+        pkg = packages.find { |p| p.fetch("name") == "rb-sys" }
+        return unless pkg
+        pkg["version"]
+      end
+
       private
 
       def package_metadata
@@ -105,7 +113,8 @@ module RbSys
 
         ::Gem.load_yaml
         cargo = ENV["CARGO"] || "cargo"
-        args = ["metadata", "--no-deps", "--format-version", "1"]
+        args = ["metadata", "--format-version", "1"]
+        args << "--no-deps" unless @deps
         out, stderr, status = Open3.capture3(cargo, *args)
         raise "exited with non-zero status (#{status})" unless status.success?
         data = Gem::SafeYAML.safe_load(out)
