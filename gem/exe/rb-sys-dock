@@ -86,19 +86,19 @@ OptionParser.new do |opts|
 
     OPTIONS[:ruby_versions] = vers
 
-    logger.notice("Building for Ruby requested versions: #{vers}")
+    logger.info("Building for Ruby requested versions: #{vers}")
 
     ENV["RUBY_CC_VERSION"] = vers.join(":")
   end
 
   opts.on("--tag TAG", "Use a specific version of the Docker image") do |tag|
-    logger.notice("Using version #{tag} of the Docker image")
+    logger.info("Using version #{tag} of the Docker image")
     OPTIONS[:version] = tag
     OPTIONS[:no_cache] = tag == "latest"
   end
 
   opts.on("--list-platforms", "--list", "List all supported platforms") do
-    logger.notice("Supported platforms listed below:")
+    logger.info("Supported platforms listed below:")
     list_platforms
     exit(0)
   end
@@ -128,7 +128,7 @@ def list_platforms
   RbSys::ToolchainInfo.supported.each do |p|
     old = logger.io
     logger.io = $stdout
-    logger.info("- #{p.platform}", emoji: false)
+    puts "- #{p.platform}"
   ensure
     logger.io = old
   end
@@ -213,7 +213,7 @@ def mount_rustup_toolchains
     logger.fatal("Could not find Rustup home directory, please set RUSTUP_HOME")
   end
 
-  logger.notice("Mounting rustup toolchains from #{local_rustup_dir}")
+  logger.info("Mounting rustup toolchains from #{local_rustup_dir}")
 
   target_triple = OPTIONS[:toolchain_info].rust_target
   dkr_triple = "x86_64-unknown-linux-gnu"
@@ -223,14 +223,14 @@ def mount_rustup_toolchains
   has_host_toolchain = installed_toolchains.any? { |t| t.end_with?(dkr_toolchain) }
 
   if !has_host_toolchain
-    logger.notice("Installing default toolchain for docker image (#{dkr_toolchain})")
+    logger.info("Installing default toolchain for docker image (#{dkr_toolchain})")
     run_command!("rustup", "toolchain", "add", dkr_toolchain, "--force-non-host")
   end
 
   has_target = run_command!("rustup target list --installed --toolchain #{dkr_toolchain}").include?(target_triple)
 
   if !has_target
-    logger.notice("Installing target for docker image (#{target_triple})")
+    logger.info("Installing target for docker image (#{target_triple})")
     run_command!("rustup", "target", "add", target_triple, "--toolchain", dkr_toolchain)
   end
 
@@ -280,7 +280,7 @@ def default_command_to_run(input_args)
   if OPTIONS[:build]
     with_bundle = +"test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
     without_bundle = "#{input_cmd} && rake native:$RUBY_TARGET gem"
-    logger.notice("Running default build command (rake native:#{ruby_platform} gem)")
+    logger.info("Running default build command (rake native:#{ruby_platform} gem)")
     "bash -c '(#{with_bundle}) || (#{without_bundle})'"
   else
     input_args.empty? ? "bash" : "bash -c '#{input_args.join(" ")}'"
@@ -377,7 +377,7 @@ def download_image
 
   if docker("images -q #{image}").strip.empty? || OPTIONS[:no_cache]
     # Nicely formatted message that we are downloading the image which might take awhile
-    logger.notice("Downloading container #{image.inspect}, this might take awhile...")
+    logger.info("Downloading container #{image.inspect}, this might take awhile...")
     docker("pull #{image} --platform #{OPTIONS[:docker_platform]} --quiet > /dev/null")
   end
 end
@@ -386,9 +386,9 @@ def log_some_useful_info
   return if OPTIONS[:build]
 
   if ARGV.empty?
-    logger.notice("Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}")
+    logger.info("Entering shell in Docker container #{ENV["RCD_IMAGE"].inspect}")
   else
-    logger.notice("Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}")
+    logger.info("Running command #{ARGV.inspect} in Docker container #{ENV["RCD_IMAGE"].inspect}")
   end
 end
 

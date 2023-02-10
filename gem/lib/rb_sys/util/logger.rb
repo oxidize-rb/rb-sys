@@ -42,8 +42,8 @@ module RbSys
       LEVEL_STYLES = {
         warn: ["⚠️", "\e[1;33m"],
         error: ["❌", "\e[1;31m"],
-        info: ["ℹ️", "\e[1;37m"],
-        notice: ["🐳", "\e[1;34m"],
+        notice: ["👋", "\e[1;37m"],
+        info: ["🐳", "\e[1;34m"],
         trace: ["🔍", "\e[1;2m"]
       }
 
