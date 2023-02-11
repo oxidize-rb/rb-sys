@@ -1,4 +1,4 @@
-use crate::rb_config;
+use crate::rb_config::RbConfig;
 
 pub struct Build;
 
@@ -8,7 +8,7 @@ pub struct Build;
 impl Build {
     #[allow(clippy::new_ret_no_self)]
     pub fn new() -> cc_impl::Build {
-        let rb = rb_config();
+        let rb = RbConfig::current();
         let mut build = cc_impl::Build::new();
         let cc_args = rb.get("CC");
         let mut cc_args = cc_args.split_whitespace().collect::<Vec<_>>();
@@ -21,13 +21,14 @@ impl Build {
             build.flag(arg);
         }
 
-        build.include(rb.get("rubyhdrdir"));
+        let rubyhdrdir = rb.get("rubyhdrdir");
+        build.include(&rubyhdrdir);
+        build.include(format!("{}/include/internal", &rubyhdrdir));
+        build.include(format!("{}/include/impl", &rubyhdrdir));
         build.include(rb.get("rubyarchhdrdir"));
-        build.include(format!("{}/include/internal", rb.get("rubyhdrdir")));
-        build.include(format!("{}/include/impl", rb.get("rubyhdrdir")));
 
-        for flag in &rb.cflags {
-            build.flag(flag);
+        for flag in &rb.cflags() {
+            build.flag_if_supported(flag);
         }
 
         build

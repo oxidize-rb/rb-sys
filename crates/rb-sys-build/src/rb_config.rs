@@ -1,5 +1,6 @@
 use std::{
-    collections::{hash_map::Keys, HashMap},
+    cell::RefCell,
+    collections::{hash_map::Keys, HashMap, HashSet},
     env,
     process::Command,
 };
@@ -9,14 +10,11 @@ mod flags;
 mod library;
 mod search_path;
 
-use library::*;
+pub use library::*;
 use search_path::*;
 use std::ffi::OsString;
 
-use crate::{
-    memoize,
-    utils::{is_msvc, is_mswin_or_mingw, shellsplit},
-};
+use crate::{memoize, utils::shellsplit};
 
 use self::flags::Flags;
 
@@ -32,6 +30,8 @@ pub struct RbConfig {
     pub blocklist_link_arg: Vec<String>,
     use_rpath: bool,
     value_map: HashMap<String, String>,
+    rustc_env: HashMap<String, String>,
+    rerun_if_env_changed: RefCell<HashSet<String>>,
 }
 
 impl Default for RbConfig {
@@ -52,6 +52,8 @@ impl RbConfig {
             cflags: Vec::new(),
             value_map: HashMap::new(),
             use_rpath: false,
+            rustc_env: HashMap::new(),
+            rerun_if_env_changed: Default::default(),
         }
     }
 
@@ -62,8 +64,6 @@ impl RbConfig {
 
     /// Instantiates a new `RbConfig` for the current Ruby.
     pub fn current() -> RbConfig {
-        println!("cargo:rerun-if-env-changed=RUBY");
-
         let mut rbconfig = RbConfig::new();
 
         let output = memoize!(String: {
@@ -107,7 +107,7 @@ impl RbConfig {
             self.get("LIBRUBYARG_SHARED")
         };
 
-        if is_msvc() {
+        if self.is_msvc() {
             for lib in librubyarg.split_whitespace() {
                 self.push_library(lib);
             }
@@ -149,6 +149,14 @@ impl RbConfig {
         self.get("RUBY_SO_NAME")
     }
 
+    pub fn libruby(&self, is_static: bool) -> Library {
+        if is_static {
+            Library::Static(self.libruby_static_name().into())
+        } else {
+            Library::Dylib(self.libruby_so_name().into())
+        }
+    }
+
     /// Get the platform for the current ruby.
     pub fn platform(&self) -> String {
         self.get_optional("platform")
@@ -170,6 +178,10 @@ impl RbConfig {
     /// Returns the current ruby version.
     pub fn ruby_version(&self) -> String {
         self.get("ruby_version")
+    }
+
+    pub fn cflags(&self) -> Vec<String> {
+        self.cflags.clone()
     }
 
     /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
@@ -198,10 +210,14 @@ impl RbConfig {
         }
     }
 
+    fn rerun_if_env_changed<T: Into<String>>(&self, key: T) {
+        self.rerun_if_env_changed.borrow_mut().insert(key.into());
+    }
+
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get_optional(&self, key: &str) -> Option<String> {
-        println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
+        self.rerun_if_env_changed("RBCONFIG_".to_string() + key);
 
         match env::var(format!("RBCONFIG_{}", key)) {
             Ok(val) => Some(val.trim_matches('\n').to_string()),
@@ -247,15 +263,29 @@ impl RbConfig {
             search_paths.push(search_path.name.as_str());
         }
 
-        append_ld_library_path(search_paths);
+        let ld_env = self.ld_library_path_env(search_paths);
+        result.push(format!("cargo:rustc-env={}={}", ld_env.0, ld_env.1));
+
+        for (key, value) in &self.rustc_env {
+            result.push(format!("cargo:rustc-env={}={}", key, value));
+        }
+
+        for key in self.rerun_if_env_changed.borrow().iter() {
+            if let Ok(value) = env::var(key) {
+                result.push(format!("cargo:rerun-if-env-changed={}={}", key, value));
+            }
+        }
 
         for lib in &self.libs {
-            if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
-                result.push(format!("cargo:rustc-link-lib={}", lib));
+            if !self.blocklist_lib.iter().any(|b| lib.name().contains(b)) {
+                result.push(format!(
+                    "cargo:rustc-link-lib={}",
+                    &lib.to_cargo_directive()
+                ));
             }
 
             if self.use_rpath && !lib.is_static() {
-                result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib));
+                result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib.name()));
             }
         }
 
@@ -303,16 +333,16 @@ impl RbConfig {
                 self.push_library(name);
             } else if let Some(name) = capture_name(&lib_regex_short, &arg) {
                 if name.contains("ruby") && name.contains("-static") {
-                    self.push_library((LibraryKind::Static, name));
+                    self.push_library(Library::Static(name.into()));
                 } else {
                     self.push_library(name);
                 }
             } else if let Some(name) = capture_name(&dynamic_lib_regex, &arg) {
-                self.push_library((LibraryKind::Dylib, name));
+                self.push_library(Library::Dylib(name.into()));
             } else if let Some(name) = capture_name(&framework_regex_short, &arg) {
                 self.push_search_path((SearchPathKind::Framework, name));
             } else if let Some(name) = capture_name(&framework_regex_long, &arg) {
-                self.push_library((LibraryKind::Framework, name));
+                self.push_library(Library::Framework(name.into()));
             } else {
                 self.push_link_arg(arg);
             }
@@ -322,8 +352,8 @@ impl RbConfig {
     }
 
     /// Sets a value for a key
-    pub fn set_value_for_key(&mut self, key: &str, value: String) {
-        self.value_map.insert(key.to_owned(), value);
+    pub fn set_value_for_key<T: Into<String>>(&mut self, key: T, value: T) {
+        self.value_map.insert(key.into(), value.into());
     }
 
     // Check if has ABI version
@@ -407,33 +437,41 @@ impl RbConfig {
 
         self
     }
+
+    pub fn is_msvc(&self) -> bool {
+        self.platform().contains("mswin")
+    }
+
+    pub fn is_mswin_or_mingw(&self) -> bool {
+        self.is_msvc() || self.platform().contains("mingw")
+    }
+
+    // Needed because Rust 1.51 does not support link-arg, and thus rpath
+    // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
+    fn ld_library_path_env(&self, search_paths: Vec<&str>) -> (String, String) {
+        let env_var_name = if self.is_mswin_or_mingw() {
+            "PATH"
+        } else if cfg!(target_os = "macos") {
+            "DYLD_FALLBACK_LIBRARY_PATH"
+        } else {
+            "LD_LIBRARY_PATH"
+        };
+
+        let new_path = match std::env::var_os(env_var_name) {
+            Some(val) => {
+                format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
+            }
+            None => search_paths.join(":"),
+        };
+
+        (env_var_name.to_string(), new_path)
+    }
 }
 
 fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
     regex
         .captures(arg)
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
-}
-
-// Needed because Rust 1.51 does not support link-arg, and thus rpath
-// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
-fn append_ld_library_path(search_paths: Vec<&str>) {
-    let env_var_name = if is_mswin_or_mingw() {
-        "PATH"
-    } else if cfg!(target_os = "macos") {
-        "DYLD_FALLBACK_LIBRARY_PATH"
-    } else {
-        "LD_LIBRARY_PATH"
-    };
-
-    let new_path = match std::env::var_os(env_var_name) {
-        Some(val) => {
-            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
-        }
-        None => search_paths.join(":"),
-    };
-
-    println!("cargo:rustc-env={}={}", env_var_name, new_path);
 }
 
 #[cfg(test)]
@@ -563,30 +601,32 @@ mod tests {
 
         assert_eq!(
             rb_config.libs,
-            [Library {
-                kind: LibraryKind::Framework,
-                name: "CoreFoundation".into(),
-            }]
+            [Library::Framework("CoreFoundation".into())]
         );
     }
 
     #[test]
     fn test_libruby_static() {
         let mut rb_config = RbConfig::new();
+
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lruby.3.1-static");
 
-        assert_eq!(
-            rb_config.cargo_args(),
-            ["cargo:rustc-link-lib=static=ruby.3.1-static"]
-        );
+        let result = rb_config.cargo_args();
+
+        assert!(result.contains(&"cargo:rustc-link-lib=static=ruby.3.1-static".to_string()));
     }
 
     #[test]
     fn test_libruby_dynamic() {
         let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lruby.3.1");
 
-        assert_eq!(rb_config.cargo_args(), ["cargo:rustc-link-lib=ruby.3.1"]);
+        assert!(rb_config
+            .cargo_args()
+            .iter()
+            .any(|v| v.as_str() == "cargo:rustc-link-lib=ruby.3.1"));
     }
 
     #[test]
@@ -645,81 +685,67 @@ mod tests {
     #[test]
     fn test_printing_cargo_args() {
         let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-L/Users/ianks/.asdf/installs/ruby/3.1.1/lib");
         rb_config.push_dldflags("-lfoo");
         rb_config.push_dldflags("-static-libgcc");
         let result = rb_config.cargo_args();
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-search=native=/Users/ianks/.asdf/installs/ruby/3.1.1/lib",
-                "cargo:rustc-link-lib=foo",
-                "cargo:rustc-link-arg=-static-libgcc"
-            ],
-            result
-        );
+        assert!(result.contains(
+            &"cargo:rustc-link-search=native=/Users/ianks/.asdf/installs/ruby/3.1.1/lib"
+                .to_string()
+        ));
+        assert!(result.contains(&"cargo:rustc-link-lib=foo".to_string()));
+        assert!(result.contains(&"cargo:rustc-link-arg=-static-libgcc".to_string()));
     }
 
     #[test]
     fn test_use_rpath() {
         let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lfoo");
 
-        assert_eq!(vec!["cargo:rustc-link-lib=foo"], rb_config.cargo_args());
+        assert!(rb_config
+            .cargo_args()
+            .contains(&"cargo:rustc-link-lib=foo".to_string()));
 
         rb_config.use_rpath();
+        let result = rb_config.cargo_args();
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-lib=foo",
-                "cargo:rustc-link-arg=-Wl,-rpath,foo"
-            ],
-            rb_config.cargo_args()
-        );
+        assert!(result.contains(&"cargo:rustc-link-lib=foo".to_string()));
+        assert!(result.contains(&"cargo:rustc-link-arg=-Wl,-rpath,foo".to_string()));
     }
 
     #[test]
     fn test_link_mswin() {
-        let old_var = env::var("TARGET").ok();
-        env::set_var("TARGET", "x86_64-pc-windows-msvc");
-
         let mut rb_config = RbConfig::new();
+
+        rb_config.set_value_for_key("arch", "x64-mswin64_140");
         rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib".into());
         rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
         rb_config.set_value_for_key("LIBS", "user32.lib".into());
         rb_config.link_ruby(false);
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-search=native=D:/ruby-mswin/lib",
-                "cargo:rustc-link-lib=x64-vcruntime140-ruby320",
-                "cargo:rustc-link-lib=user32",
-            ],
-            rb_config.cargo_args()
-        );
+        let result = rb_config.cargo_args();
 
-        if let Some(old_var) = old_var {
-            env::set_var("TARGET", old_var);
-        } else {
-            env::remove_var("TARGET");
-        }
+        assert!(result.contains(&"cargo:rustc-link-search=native=D:/ruby-mswin/lib".to_string()));
+        assert!(result.contains(&"cargo:rustc-link-lib=x64-vcruntime140-ruby320".to_string()));
+        assert!(result.contains(&"cargo:rustc-link-lib=user32".to_string()));
     }
 
     #[test]
     fn test_link_static() {
         let mut rb_config = RbConfig::new();
+
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static".into());
         rb_config.set_value_for_key("libdir", "/opt/ruby".into());
-
         rb_config.link_ruby(true);
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-search=native=/opt/ruby",
-                "cargo:rustc-link-lib=static=ruby-static",
-            ],
-            rb_config.cargo_args()
-        );
+        let result = rb_config.cargo_args();
+
+        assert!(result.contains(&"cargo:rustc-link-search=native=/opt/ruby".to_string()));
+        assert!(result.contains(&"cargo:rustc-link-lib=static=ruby-static".to_string()));
     }
 
     #[test]
@@ -733,18 +759,16 @@ mod tests {
     #[test]
     fn test_link_arg_blocklist() {
         let mut rb_config = RbConfig::new();
+        rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.blocklist_link_arg("-Wl,--compress-debug-sections=zlib");
         rb_config.blocklist_link_arg("-s");
         rb_config.push_dldflags(
             "-lfoo -Wl,--compress-debug-sections=zlib -s -somethingthatshouldnotbeblocked",
         );
+        let cargo_args = rb_config.cargo_args();
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-lib=foo",
-                "cargo:rustc-link-arg=-somethingthatshouldnotbeblocked"
-            ],
-            rb_config.cargo_args()
-        );
+        assert!(cargo_args.contains(&"cargo:rustc-link-lib=foo".to_string()));
+        assert!(cargo_args
+            .contains(&"cargo:rustc-link-arg=-somethingthatshouldnotbeblocked".to_string()));
     }
 }

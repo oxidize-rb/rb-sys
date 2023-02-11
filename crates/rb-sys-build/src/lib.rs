@@ -1,14 +1,8 @@
-pub mod bindings;
-pub mod utils;
-
-#[cfg(feature = "cc")]
-pub mod cc;
-
 mod rb_config;
 
-pub use rb_config::*;
+pub mod bindings;
+#[cfg(feature = "cc")]
+pub mod cc;
+pub mod utils;
 
-/// The current RbConfig.
-pub fn rb_config() -> RbConfig {
-    RbConfig::current()
-}
+pub use rb_config::RbConfig;

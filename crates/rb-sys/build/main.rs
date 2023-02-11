@@ -1,10 +1,13 @@
+mod bindings;
 mod features;
 mod ruby_macros;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, RbConfig};
+use rb_sys_build::RbConfig;
+use std::cell::{RefCell, RefMut};
 use std::io::Write;
+use std::rc::Rc;
 use std::{
     env,
     fs::{self, File},
@@ -27,15 +30,12 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
 fn main() {
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
     let ruby_version = rbconfig.ruby_version();
-    let ruby_platform = rbconfig.platform();
+    let target = env::var("TARGET").unwrap();
     let crate_version = env!("CARGO_PKG_VERSION");
-    let cfg_capture_path = out_dir.join(format!(
-        "cfg-capture-{}-{}-{}",
-        crate_version, ruby_platform, ruby_version
-    ));
-    let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
+    let cfg_capture_path = format!("cfg-capture-{}-{}-{}", crate_version, target, ruby_version);
+    let cfg_capture_path = out_dir.join(cfg_capture_path);
+    let cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -45,30 +45,32 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
+    let cfg_capture_file = Rc::new(RefCell::new(cfg_capture_file));
+
     let bindings_path = bindings::generate(
         &rbconfig,
         is_ruby_static_enabled(&rbconfig),
-        &mut cfg_capture_file,
+        cfg_capture_file.clone(),
     )
     .expect("generate bindings");
     println!(
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
         bindings_path.display()
     );
-    export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
+    export_cargo_cfg(&mut rbconfig, cfg_capture_file.borrow_mut());
 
-    if is_ruby_macros_enabled() {
+    if is_ruby_macros_enabled(&rbconfig) {
         ruby_macros::compile(&mut rbconfig);
     }
 
-    if is_link_ruby_enabled() {
+    if is_link_ruby_enabled(&rbconfig) {
         link_libruby(&mut rbconfig);
     } else {
         add_libruby_to_blocklist(&mut rbconfig);
         enable_dynamic_lookup(&mut rbconfig);
     }
 
-    expose_cargo_features(&mut cfg_capture_file);
+    expose_cargo_features(cfg_capture_file.borrow_mut());
     add_unsupported_link_args_to_blocklist(&mut rbconfig);
     rbconfig.print_cargo_args();
 
@@ -108,12 +110,12 @@ fn debug_and_exit(rbconfig: &mut RbConfig) {
 }
 
 fn link_libruby(rbconfig: &mut RbConfig) {
-    if is_link_ruby_enabled() {
+    if is_link_ruby_enabled(rbconfig) {
         rbconfig.link_ruby(is_ruby_static_enabled(rbconfig));
     }
 }
 
-fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
+fn export_cargo_cfg(rbconfig: &mut RbConfig, mut cap: RefMut<File>) {
     rustc_cfg(rbconfig, "ruby_major", "MAJOR");
     rustc_cfg(rbconfig, "ruby_minor", "MINOR");
     rustc_cfg(rbconfig, "ruby_teeny", "TEENY");
@@ -219,7 +221,7 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     }
 }
 
-fn expose_cargo_features(cap: &mut File) {
+fn expose_cargo_features(mut cap: RefMut<File>) {
     for (key, val) in std::env::vars() {
         if !key.starts_with("CARGO_FEATURE_") {
             continue;

@@ -1,4 +1,4 @@
-use rb_sys_build::{utils::is_mswin_or_mingw, RbConfig};
+use rb_sys_build::RbConfig;
 
 use crate::version::Version;
 
@@ -18,8 +18,8 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
     }
 }
 
-pub fn is_ruby_macros_enabled() -> bool {
-    if is_mswin_or_mingw() {
+pub fn is_ruby_macros_enabled(rb: &RbConfig) -> bool {
+    if rb.is_mswin_or_mingw() {
         return false;
     }
 
@@ -56,14 +56,14 @@ pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
     }
 }
 
-pub fn is_link_ruby_enabled() -> bool {
+pub fn is_link_ruby_enabled(rb: &RbConfig) -> bool {
     if is_linting() {
         return false;
     }
 
     if is_no_link_ruby_enabled() {
         false
-    } else if is_mswin_or_mingw() {
+    } else if rb.is_mswin_or_mingw() {
         true
     } else if is_gem_enabled() {
         if is_env_variable_defined("CARGO_FEATURE_LINK_RUBY") {

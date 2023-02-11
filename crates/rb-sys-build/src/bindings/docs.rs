@@ -1,69 +1,43 @@
 use quote::__private::{Literal, TokenTree};
-use regex::Regex;
-use std::{borrow::Cow, error::Error};
-use syn::{Attribute, Item, __private::ToTokens};
-
-lazy_static::lazy_static! {
-    static ref URL_REGEX: Regex = Regex::new(r#"https?://[^\s'"]+"#).unwrap();
-    static ref DOC_SECTION_REGEX: Regex = Regex::new(r"^@(warning|internal|private|note)\s*").unwrap();
-    static ref PARAM_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\[(\S+)\]\s+(.*)$").unwrap();
-    static ref OTHER_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\s+(.*)$").unwrap();
-    static ref BARE_CODE_REF_REGEX: Regex = Regex::new(r"(\b)(rb_(\w|_)+)(\(|\))*").unwrap();
-}
-
-/// Append a link directive to each foreign module to the given syntax tree.
-pub fn add_link_ruby_directives(
-    syntax: &mut syn::File,
-    link_name: &str,
-    kind: &str,
-) -> Result<(), Box<dyn Error>> {
-    for item in syntax.items.iter_mut() {
-        if let Item::ForeignMod(fmod) = item {
-            fmod.attrs.push(syn::parse_quote! {
-                #[link(name = #link_name, kind = #kind)]
-            });
-        }
-    }
-
-    Ok(())
-}
+use std::borrow::Cow;
+use std::error::Error;
+use syn::Item;
+use syn::{Attribute, __private::ToTokens};
 
 /// Turn the cruby comments into rustdoc comments.
-pub fn cleanup_docs(syntax: &mut syn::File, ruby_version: &str) -> Result<(), Box<dyn Error>> {
-    let footer = doc_footer(ruby_version);
-
+pub fn tidy(syntax: &mut syn::File) -> Result<(), Box<dyn Error>> {
     for item in syntax.items.iter_mut() {
         match item {
             Item::ForeignMod(fmod) => {
                 for item in fmod.items.iter_mut() {
                     match item {
-                        syn::ForeignItem::Fn(f) => clean_doc_attrs(&mut f.attrs, &footer),
-                        syn::ForeignItem::Static(s) => clean_doc_attrs(&mut s.attrs, &footer),
-                        syn::ForeignItem::Type(s) => clean_doc_attrs(&mut s.attrs, &footer),
+                        syn::ForeignItem::Fn(f) => clean_doc_attrs(&mut f.attrs),
+                        syn::ForeignItem::Static(s) => clean_doc_attrs(&mut s.attrs),
+                        syn::ForeignItem::Type(s) => clean_doc_attrs(&mut s.attrs),
                         _ => {}
                     }
                 }
             }
-            Item::Type(t) => clean_doc_attrs(&mut t.attrs, &footer),
+            Item::Type(t) => clean_doc_attrs(&mut t.attrs),
             Item::Struct(s) => {
-                clean_doc_attrs(&mut s.attrs, &footer);
+                clean_doc_attrs(&mut s.attrs);
 
                 for f in s.fields.iter_mut() {
-                    clean_doc_attrs(&mut f.attrs, &footer);
+                    clean_doc_attrs(&mut f.attrs);
                 }
             }
             Item::Enum(e) => {
-                clean_doc_attrs(&mut e.attrs, &footer);
+                clean_doc_attrs(&mut e.attrs);
 
                 for v in e.variants.iter_mut() {
-                    clean_doc_attrs(&mut v.attrs, &footer);
+                    clean_doc_attrs(&mut v.attrs);
                 }
             }
             Item::Union(u) => {
-                clean_doc_attrs(&mut u.attrs, &footer);
+                clean_doc_attrs(&mut u.attrs);
 
                 for u in u.fields.named.iter_mut() {
-                    clean_doc_attrs(&mut u.attrs, &footer);
+                    clean_doc_attrs(&mut u.attrs);
                 }
             }
             _ => {}
@@ -73,7 +47,17 @@ pub fn cleanup_docs(syntax: &mut syn::File, ruby_version: &str) -> Result<(), Bo
     Ok(())
 }
 
-fn clean_doc_line(attr: &mut Attribute) -> bool {
+fn tidy_line(attr: &mut Attribute) -> bool {
+    use regex::Regex;
+
+    lazy_static::lazy_static! {
+        static ref URL_REGEX: Regex = Regex::new(r#"https?://[^\s'"]+"#).unwrap();
+        static ref DOC_SECTION_REGEX: Regex = Regex::new(r"^@(warning|internal|private|note)\s*").unwrap();
+        static ref PARAM_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\[(\S+)\]\s+(.*)$").unwrap();
+        static ref OTHER_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\s+(.*)$").unwrap();
+        static ref BARE_CODE_REF_REGEX: Regex = Regex::new(r"(\b)(rb_(\w|_)+)(\(|\))*").unwrap();
+    }
+
     if !attr.path.is_ident("doc") {
         return false;
     }
@@ -120,32 +104,20 @@ fn clean_doc_line(attr: &mut Attribute) -> bool {
     deprecated
 }
 
-fn clean_doc_attrs(attrs: &mut Vec<Attribute>, footer: &str) {
+fn clean_doc_attrs(attrs: &mut Vec<Attribute>) {
     let mut deprecated: bool = false;
 
     for attr in attrs.iter_mut() {
-        if clean_doc_line(attr) {
+        if tidy_line(attr) {
             deprecated = true;
         };
     }
-
-    attrs.push(syn::parse_quote! {
-        #[doc = #footer]
-    });
 
     if deprecated {
         attrs.push(syn::parse_quote! {
             #[deprecated]
         })
     }
-}
-
-fn doc_footer(ruby_version: &str) -> String {
-    format!(
-        "\n---\n\nGenerated by [rb-sys]({}) for Ruby {}",
-        env!("CARGO_PKG_REPOSITORY"),
-        ruby_version
-    )
 }
 
 fn capitalize(input: &str) -> Cow<'_, str> {

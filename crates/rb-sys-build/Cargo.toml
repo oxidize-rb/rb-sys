@@ -13,17 +13,19 @@ bench = false
 doctest = false
 
 [dependencies]
-regex = "1"
+regex = { version = "1" }
 shell-words = "1.1"
 bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
 cc-impl = { version = "1.0", optional = true, package = "cc" }
-syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
-quote = "1.0.23"
+syn = { version = "1.0", features = ["parsing", "full"] }
+quote = { version = "1.0" }
 lazy_static = "1.4.0"
 
 [features]
-default = []
+default = ["rustfmt"]
 cc = ["cc-impl"]
+docs = []
+rustfmt = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []
 bindgen-layout-tests = []
