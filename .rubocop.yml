@@ -1,7 +1,7 @@
 require: standard
 
 inherit_gem:
-  standard: config/ruby-2.3.yml
+  standard: config/ruby-2.6.yml
 
 AllCops:
   Exclude:

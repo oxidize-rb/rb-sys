@@ -48,6 +48,7 @@ main() {
   set_target_env_for_key_matching "^CARGO_TARGET_.*_LINKER" true
 
   # shellcheck disable=SC2129
+  echo "export RUBY_CC_VERSION=\"3.2.0:3.1.0:3.0.0:2.7.0:2.6.0\"" >> "$OUTFILE"
   echo "export PATH=\"/usr/local/cargo/bin:\$PATH\"" >> "$OUTFILE"
   echo "export RUSTUP_HOME=\"$RUSTUP_HOME\"" >> "$OUTFILE"
   echo "export CARGO_HOME=\"$CARGO_HOME\"" >> "$OUTFILE"

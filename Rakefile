@@ -7,7 +7,7 @@ end
 
 def extra_args
   seperator_index = ARGV.index("--")
-  seperator_index && ARGV[(seperator_index + 1)..-1] || []
+  seperator_index && ARGV[(seperator_index + 1)..] || []
 end
 
 def cargo_test_task(name, *args)
@@ -113,8 +113,6 @@ namespace :data do
       end
     RUBY
 
-    sh "bundle exec standardrb --fix #{toolchain_info_data_path}"
-
     ruby_to_rust = {}
 
     toolchains["toolchains"].each do |t|
@@ -130,6 +128,8 @@ namespace :data do
 
     gen.call("ruby-to-rust.json", ruby_to_rust)
     gen.call("github-actions-matrix.json", {include: github_actions_matrix})
+    Rake::Task[:readme].invoke
+    Rake::Task[:fmt].invoke
   end
 end
 

@@ -15,7 +15,7 @@ it's not easy, it's a bug.
 ## Features
 
 - Battle-tested Rust bindings for [the Ruby C API][ruby-c-api]
-- Support for Ruby 2.4+
+- Support for Ruby <!--toolchains .policy.minimum-supported-ruby-version -->2.6<!--/toolchains-->+
 - Supports all major platforms (Linux, macOS, Windows)
 - Cross compilation of gems
 - Integration with [`rake-compiler`][rake-compiler]
@@ -39,9 +39,9 @@ building your own gem.
 
 ## Supported Toolchains
 
-- Ruby: <!--toolchains .policy.minimum-supported-ruby-version -->2.4<!--/toolchains-->+ (for full compatibility with
+- Ruby: <!--toolchains .policy.minimum-supported-ruby-version -->2.6<!--/toolchains-->+ (for full compatibility with
   Rubygems)
-- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.51<!--/toolchains-->+ (for old versions of rust
+- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.60<!--/toolchains-->+ (for old versions of rust
   toolchains ubuntu)
 
 ## Supported Platforms

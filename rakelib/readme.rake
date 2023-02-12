@@ -3,7 +3,7 @@ namespace :readme do
     contents = File.read("readme.md")
     toolchains = JSON.parse(File.read("data/toolchains.json"))
 
-    new_contents = contents.gsub(/<!--toolchains ([^>]+) --><!--\/toolchains -->/) do
+    new_contents = contents.gsub(/<!--\s*toolchains (\S+)\s*-->[^<]*<!--\s*\/toolchains\s*-->/) do
       path = $1
       parts = path.split(".").compact.reject(&:empty?)
       value = toolchains.dig(*parts) || raise("No value for path: #{parts}")

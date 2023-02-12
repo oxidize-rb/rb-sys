@@ -11,19 +11,17 @@ DOCKERFILE_PLATFORMS = DOCKERFILE_PLATFORM_PAIRS.map(&:last)
 DOCKER = ENV.fetch("RBSYS_DOCKER", "docker")
 
 def run_gh_workflow(file_name)
-  begin
-    require "json"
-    require "yaml"
+  require "json"
+  require "yaml"
 
-    workflow = YAML.safe_load(File.read(file_name))
+  workflow = YAML.safe_load(File.read(file_name))
 
-    sh "gh workflow run \"#{workflow["name"]}\" && sleep 3"
-    id = JSON.parse(`gh run list --workflow=#{File.basename(file_name)} --limit=1 --json="databaseId"`).first["databaseId"]
-    system "gh run watch #{id}"
-    sh "osascript -e 'display notification \"#{workflow["name"]} workflow finished (#{id})\" with title \"GitHub Workflow\"'"
-  rescue Interrupt
-    sh "gh run cancel #{id}"
-  end
+  sh "gh workflow run \"#{workflow["name"]}\" && sleep 3"
+  id = JSON.parse(`gh run list --workflow=#{File.basename(file_name)} --limit=1 --json="databaseId"`).first["databaseId"]
+  system "gh run watch #{id}"
+  sh "osascript -e 'display notification \"#{workflow["name"]} workflow finished (#{id})\" with title \"GitHub Workflow\"'"
+rescue Interrupt
+  sh "gh run cancel #{id}"
 end
 
 desc "Build the docker images on github"
