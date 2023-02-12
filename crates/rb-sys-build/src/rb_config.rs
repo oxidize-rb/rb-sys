@@ -1,72 +1,90 @@
-use std::{
-    cell::RefCell,
-    collections::{hash_map::Keys, HashMap, HashSet},
-    env,
-    process::Command,
-};
-
-use regex::Regex;
 mod flags;
 mod library;
 mod search_path;
 
-pub use library::*;
-use search_path::*;
-use std::ffi::OsString;
-
-use crate::{memoize, utils::shellsplit};
-
 use self::flags::Flags;
+use crate::{memoize, utils::shellsplit};
+use regex::Regex;
+use search_path::*;
+use std::{
+    collections::{hash_map::Iter, HashMap, HashSet},
+    env,
+    ffi::OsString,
+    process::Command,
+};
+
+pub use library::*;
+
+const RBCONFIG_PREFIX: &str = "RBCONFIG_";
 
 /// Extracts structured information from raw compiler/linker flags to make
 /// compiling Ruby gems easier.
 #[derive(Debug, PartialEq, Eq)]
 pub struct RbConfig {
-    pub search_paths: Vec<SearchPath>,
-    pub libs: Vec<Library>,
-    pub link_args: Vec<String>,
-    pub cflags: Vec<String>,
-    pub blocklist_lib: Vec<String>,
-    pub blocklist_link_arg: Vec<String>,
+    search_paths: Vec<SearchPath>,
+    libs: Vec<Library>,
+    link_args: Vec<String>,
+    cflags: Vec<String>,
+    blocklist_lib: Vec<String>,
+    blocklist_link_arg: Vec<String>,
     use_rpath: bool,
     value_map: HashMap<String, String>,
-    rustc_env: HashMap<String, String>,
-    rerun_if_env_changed: RefCell<HashSet<String>>,
+    rerun_if_env_changed: HashSet<String>,
 }
 
 impl Default for RbConfig {
     fn default() -> Self {
-        Self::new()
+        Self::new(Default::default(), Default::default())
     }
 }
 
 impl RbConfig {
     /// Creates a new, blank `RbConfig`. You likely want to use `RbConfig::current()` instead.
-    pub(crate) fn new() -> RbConfig {
+    pub(crate) fn new(
+        value_map: HashMap<String, String>,
+        rerun_if_env_changed: HashSet<String>,
+    ) -> RbConfig {
         RbConfig {
+            value_map,
             blocklist_lib: vec![],
             blocklist_link_arg: vec![],
             search_paths: Vec::new(),
             libs: Vec::new(),
             link_args: Vec::new(),
             cflags: Vec::new(),
-            value_map: HashMap::new(),
             use_rpath: false,
-            rustc_env: HashMap::new(),
-            rerun_if_env_changed: Default::default(),
+            rerun_if_env_changed,
         }
     }
 
     /// All keys in the `RbConfig`'s value map.
-    pub fn all_keys(&self) -> Keys<'_, String, String> {
-        self.value_map.keys()
+    pub fn all_pairs(&self) -> Iter<String, String> {
+        self.value_map.iter()
     }
 
-    /// Instantiates a new `RbConfig` for the current Ruby.
-    pub fn current() -> RbConfig {
-        let mut rbconfig = RbConfig::new();
+    /// Tries to build a new `RbConfig` from environment variables (prefixed
+    /// with "RBCONFIG_").
+    pub fn load_from_env() -> Option<Self> {
+        let mut args: Option<(HashMap<String, String>, HashSet<String>)> = None;
 
-        let output = memoize!(String: {
+        for (env_key, value) in env::vars() {
+            if env_key.starts_with(RBCONFIG_PREFIX) {
+                let trimmed_key = env_key.trim_start_matches(RBCONFIG_PREFIX);
+                let (ref mut map, ref mut reruns) =
+                    args.get_or_insert_with(|| (HashMap::new(), HashSet::new()));
+
+                map.insert(trimmed_key.to_owned(), value);
+                reruns.insert(env_key);
+            }
+        }
+
+        args.map(|(map, reruns)| Self::new(map, reruns))
+    }
+
+    /// Tries to build a new `RbConfig` from the current Ruby's `RbConfig` by
+    /// shelling out to Ruby interpreter.
+    pub fn load_from_current_ruby() -> Self {
+        let output = {
             let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
 
             let config = Command::new(ruby)
@@ -77,22 +95,25 @@ impl RbConfig {
                 .output()
                 .unwrap_or_else(|e| panic!("ruby not found: {}", e));
             String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
-        });
+        };
 
-        let mut parsed = HashMap::new();
+        let mut rbconfig = Self::default();
+
         for line in output.split('\x1E') {
             let mut parts = line.splitn(2, '\x1F');
             if let (Some(key), Some(val)) = (parts.next(), parts.next()) {
-                parsed.insert(key.to_owned(), val.to_owned());
+                rbconfig.set_value_for_key(key.to_owned(), val.to_owned());
             }
         }
 
-        parsed.get("cflags").map(|f| rbconfig.push_cflags(f));
-        parsed.get("DLDFLAGS").map(|f| rbconfig.push_dldflags(f));
-
-        rbconfig.value_map = parsed;
-
         rbconfig
+    }
+
+    /// Instantiates a new `RbConfig` for the current Ruby.
+    pub fn current<'a>() -> &'a mut RbConfig {
+        memoize!(RbConfig: {
+            Self::load_from_env().unwrap_or_else(Self::load_from_current_ruby)
+        })
     }
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
@@ -201,31 +222,12 @@ impl RbConfig {
             .unwrap_or_else(|| panic!("Key not found: {}", key))
     }
 
-    /// Returns true if the current Ruby is cross compiling.
-    pub fn is_cross_compiling(&self) -> bool {
-        if let Some(cross) = self.get_optional("CROSS_COMPILING") {
-            cross == "yes" || cross == "1"
-        } else {
-            false
-        }
-    }
-
-    fn rerun_if_env_changed<T: Into<String>>(&self, key: T) {
-        self.rerun_if_env_changed.borrow_mut().insert(key.into());
-    }
-
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get_optional(&self, key: &str) -> Option<String> {
-        self.rerun_if_env_changed("RBCONFIG_".to_string() + key);
-
-        match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => Some(val.trim_matches('\n').to_string()),
-            _ => self
-                .value_map
-                .get(key)
-                .map(|val| val.trim_matches('\n').to_owned()),
-        }
+        self.value_map
+            .get(key)
+            .map(|val| val.trim_matches('\n').to_owned())
     }
 
     /// Enables the use of rpath for linking.
@@ -252,11 +254,24 @@ impl RbConfig {
         (major, minor)
     }
 
+    /// Returns true if the current Ruby is cross compiling.
+    pub fn is_cross_compiling(&self) -> bool {
+        if let Some(cross) = self.get_optional("CROSS_COMPILING") {
+            cross == "yes" || cross == "1"
+        } else {
+            false
+        }
+    }
+
     /// Get the rb_config output for cargo
     pub fn cargo_args(&self) -> Vec<String> {
         let mut result = vec![];
 
         let mut search_paths = vec![];
+
+        for key in self.rerun_if_env_changed.iter() {
+            result.push(format!("cargo:rerun-if-env-changed={}", key));
+        }
 
         for search_path in &self.search_paths {
             result.push(format!("cargo:rustc-link-search={}", search_path));
@@ -265,16 +280,6 @@ impl RbConfig {
 
         let ld_env = self.ld_library_path_env(search_paths);
         result.push(format!("cargo:rustc-env={}={}", ld_env.0, ld_env.1));
-
-        for (key, value) in &self.rustc_env {
-            result.push(format!("cargo:rustc-env={}={}", key, value));
-        }
-
-        for key in self.rerun_if_env_changed.borrow().iter() {
-            if let Ok(value) = env::var(key) {
-                result.push(format!("cargo:rerun-if-env-changed={}={}", key, value));
-            }
-        }
 
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name().contains(b)) {
@@ -353,7 +358,10 @@ impl RbConfig {
 
     /// Sets a value for a key
     pub fn set_value_for_key<T: Into<String>>(&mut self, key: T, value: T) {
-        self.value_map.insert(key.into(), value.into());
+        let key = key.into();
+        let env_key = format!("{}{}", RBCONFIG_PREFIX, key);
+        self.rerun_if_env_changed.insert(env_key);
+        self.value_map.insert(key, value.into());
     }
 
     // Check if has ABI version
@@ -481,7 +489,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_extract_lib_search_paths() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-L/usr/local/lib -L/usr/lib");
         assert_eq!(
             rb_config.search_paths,
@@ -491,7 +499,7 @@ mod tests {
 
     #[test]
     fn test_search_path_basic() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-L/usr/local/lib");
 
         assert_eq!(rb_config.search_paths, vec!["native=/usr/local/lib".into()]);
@@ -499,7 +507,7 @@ mod tests {
 
     #[test]
     fn test_search_path_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-L /usr/local/lib");
 
         assert_eq!(rb_config.search_paths, vec!["/usr/local/lib".into()]);
@@ -507,7 +515,7 @@ mod tests {
 
     #[test]
     fn test_search_path_space_in_path() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-L/usr/local/my lib");
 
         assert_eq!(
@@ -518,7 +526,7 @@ mod tests {
 
     #[test]
     fn test_simple_lib() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-lfoo");
 
         assert_eq!(rb_config.libs, ["foo".into()]);
@@ -526,7 +534,7 @@ mod tests {
 
     #[test]
     fn test_lib_with_nonascii() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-lws2_32");
 
         assert_eq!(rb_config.libs, ["ws2_32".into()]);
@@ -534,7 +542,7 @@ mod tests {
 
     #[test]
     fn test_simple_lib_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-l foo");
 
         assert_eq!(rb_config.libs, ["foo".into()]);
@@ -542,7 +550,7 @@ mod tests {
 
     #[test]
     fn test_verbose_lib_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("--library=foo");
 
         assert_eq!(rb_config.libs, ["foo".into()]);
@@ -550,7 +558,7 @@ mod tests {
 
     #[test]
     fn test_dylib_with_colon_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-l :libssp.dylib");
 
         assert_eq!(rb_config.libs, ["dylib=ssp".into()]);
@@ -558,7 +566,7 @@ mod tests {
 
     #[test]
     fn test_so_with_colon_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-l :libssp.so");
 
         assert_eq!(rb_config.libs, ["dylib=ssp".into()]);
@@ -566,7 +574,7 @@ mod tests {
 
     #[test]
     fn test_dll_with_colon_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-l :libssp.dll");
 
         assert_eq!(rb_config.libs, ["dylib=ssp".into()]);
@@ -574,7 +582,7 @@ mod tests {
 
     #[test]
     fn test_framework() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-F/some/path");
 
         assert_eq!(rb_config.search_paths, ["framework=/some/path".into()]);
@@ -582,7 +590,7 @@ mod tests {
 
     #[test]
     fn test_framework_space() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-F /some/path");
 
         assert_eq!(
@@ -596,7 +604,7 @@ mod tests {
 
     #[test]
     fn test_framework_arg_real() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-framework CoreFoundation");
 
         assert_eq!(
@@ -607,7 +615,7 @@ mod tests {
 
     #[test]
     fn test_libruby_static() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
 
         rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lruby.3.1-static");
@@ -619,7 +627,7 @@ mod tests {
 
     #[test]
     fn test_libruby_dynamic() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lruby.3.1");
 
@@ -631,7 +639,7 @@ mod tests {
 
     #[test]
     fn test_non_lib_dash_l() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("test_rubygems_20220413-976-lemgf9/prefix");
 
         assert_eq!(
@@ -642,7 +650,7 @@ mod tests {
 
     #[test]
     fn test_real_dldflags() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-L/Users/ianks/.asdf/installs/ruby/3.1.1/lib -L/opt/homebrew/opt/openssl@1.1/lib -Wl,-undefined,dynamic_lookup -Wl,-multiply_defined,suppress");
 
         assert_eq!(
@@ -669,7 +677,7 @@ mod tests {
 
     #[test]
     fn test_crazy_cases() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-F   /something -l:libssp.a -static-libgcc ");
 
         assert_eq!(rb_config.link_args, vec!["-l:libssp.a", "-static-libgcc"]);
@@ -684,7 +692,7 @@ mod tests {
 
     #[test]
     fn test_printing_cargo_args() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-L/Users/ianks/.asdf/installs/ruby/3.1.1/lib");
         rb_config.push_dldflags("-lfoo");
@@ -701,7 +709,7 @@ mod tests {
 
     #[test]
     fn test_use_rpath() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.push_dldflags("-lfoo");
 
@@ -718,12 +726,12 @@ mod tests {
 
     #[test]
     fn test_link_mswin() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
 
         rb_config.set_value_for_key("arch", "x64-mswin64_140");
-        rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib".into());
-        rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
-        rb_config.set_value_for_key("LIBS", "user32.lib".into());
+        rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib");
+        rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib");
+        rb_config.set_value_for_key("LIBS", "user32.lib");
         rb_config.link_ruby(false);
 
         let result = rb_config.cargo_args();
@@ -735,11 +743,11 @@ mod tests {
 
     #[test]
     fn test_link_static() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
 
         rb_config.set_value_for_key("arch", "x86_64-linux");
-        rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static".into());
-        rb_config.set_value_for_key("libdir", "/opt/ruby".into());
+        rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static");
+        rb_config.set_value_for_key("libdir", "/opt/ruby");
         rb_config.link_ruby(true);
 
         let result = rb_config.cargo_args();
@@ -750,7 +758,7 @@ mod tests {
 
     #[test]
     fn test_libstatic() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.push_dldflags("-l:libssp.a");
 
         assert_eq!(rb_config.link_args, ["-l:libssp.a".to_string()]);
@@ -758,7 +766,7 @@ mod tests {
 
     #[test]
     fn test_link_arg_blocklist() {
-        let mut rb_config = RbConfig::new();
+        let mut rb_config = RbConfig::default();
         rb_config.set_value_for_key("arch", "x86_64-linux");
         rb_config.blocklist_link_arg("-Wl,--compress-debug-sections=zlib");
         rb_config.blocklist_link_arg("-s");

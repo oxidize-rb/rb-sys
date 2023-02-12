@@ -19,7 +19,7 @@ macro_rules! memoize {
             INIT.call_once(|| {
                 VALUE = Some($val);
             });
-            VALUE.as_ref().unwrap()
+            VALUE.as_mut().unwrap()
         }
     }};
 }

@@ -31,6 +31,8 @@ impl Build {
             build.flag_if_supported(flag);
         }
 
+        build.flag_if_supported("-Wno-unused-parameter");
+
         build
     }
 }

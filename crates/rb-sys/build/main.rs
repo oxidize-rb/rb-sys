@@ -28,7 +28,7 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
 ];
 
 fn main() {
-    let mut rbconfig = RbConfig::current();
+    let rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let ruby_version = rbconfig.ruby_version();
     let target = env::var("TARGET").unwrap();
@@ -48,8 +48,8 @@ fn main() {
     let cfg_capture_file = Rc::new(RefCell::new(cfg_capture_file));
 
     let bindings_path = bindings::generate(
-        &rbconfig,
-        is_ruby_static_enabled(&rbconfig),
+        rbconfig,
+        is_ruby_static_enabled(rbconfig),
         cfg_capture_file.clone(),
     )
     .expect("generate bindings");
@@ -57,25 +57,25 @@ fn main() {
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
         bindings_path.display()
     );
-    export_cargo_cfg(&mut rbconfig, cfg_capture_file.borrow_mut());
+    export_cargo_cfg(rbconfig, cfg_capture_file.borrow_mut());
 
-    if is_ruby_macros_enabled(&rbconfig) {
-        ruby_macros::compile(&mut rbconfig);
+    if is_ruby_macros_enabled(rbconfig) {
+        ruby_macros::compile(rbconfig);
     }
 
-    if is_link_ruby_enabled(&rbconfig) {
-        link_libruby(&mut rbconfig);
+    if is_link_ruby_enabled(rbconfig) {
+        link_libruby(rbconfig);
     } else {
-        add_libruby_to_blocklist(&mut rbconfig);
-        enable_dynamic_lookup(&mut rbconfig);
+        add_libruby_to_blocklist(rbconfig);
+        enable_dynamic_lookup(rbconfig);
     }
 
     expose_cargo_features(cfg_capture_file.borrow_mut());
-    add_unsupported_link_args_to_blocklist(&mut rbconfig);
+    add_unsupported_link_args_to_blocklist(rbconfig);
     rbconfig.print_cargo_args();
 
     if is_debug_build_enabled() {
-        debug_and_exit(&mut rbconfig);
+        debug_and_exit(rbconfig);
     }
 }
 
@@ -194,8 +194,8 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, mut cap: RefMut<File>) {
     cfg_capture!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
     cfg_capture!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
-    for key in rbconfig.all_keys() {
-        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, rbconfig.get(key));
+    for (key, val) in rbconfig.all_pairs() {
+        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, val);
     }
 
     if is_ruby_static_enabled(rbconfig) {
