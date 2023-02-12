@@ -278,9 +278,6 @@ impl RbConfig {
             search_paths.push(search_path.name.as_str());
         }
 
-        let ld_env = self.ld_library_path_env(search_paths);
-        result.push(format!("cargo:rustc-env={}={}", ld_env.0, ld_env.1));
-
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name().contains(b)) {
                 result.push(format!(
@@ -452,27 +449,6 @@ impl RbConfig {
 
     pub fn is_mswin_or_mingw(&self) -> bool {
         self.is_msvc() || self.platform().contains("mingw")
-    }
-
-    // Needed because Rust 1.51 does not support link-arg, and thus rpath
-    // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
-    fn ld_library_path_env(&self, search_paths: Vec<&str>) -> (String, String) {
-        let env_var_name = if self.is_mswin_or_mingw() {
-            "PATH"
-        } else if cfg!(target_os = "macos") {
-            "DYLD_FALLBACK_LIBRARY_PATH"
-        } else {
-            "LD_LIBRARY_PATH"
-        };
-
-        let new_path = match std::env::var_os(env_var_name) {
-            Some(val) => {
-                format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
-            }
-            None => search_paths.join(":"),
-        };
-
-        (env_var_name.to_string(), new_path)
     }
 }
 
