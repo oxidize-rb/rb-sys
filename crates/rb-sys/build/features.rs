@@ -57,10 +57,6 @@ pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
 }
 
 pub fn is_link_ruby_enabled() -> bool {
-    if is_linting() {
-        return false;
-    }
-
     if is_no_link_ruby_enabled() {
         false
     } else if is_mswin_or_mingw() {
