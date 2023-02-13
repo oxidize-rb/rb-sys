@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys-build"
-version = "0.9.64"
+version = "0.9.65"
 edition = "2018"
 description = "Build system for rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
