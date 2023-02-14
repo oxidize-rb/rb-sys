@@ -160,14 +160,14 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.64"
+version = "0.9.65"
 dependencies = [
  "rb-sys-build",
 ]
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.64"
+version = "0.9.65"
 dependencies = [
  "bindgen",
  "cc",
@@ -184,7 +184,7 @@ version = "0.1.2"
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.64"
+version = "0.9.65"
 dependencies = [
  "ctor",
  "rb-sys",

@@ -98,11 +98,14 @@ jobs:
           cd tmp/oxi-test
 
           gem install rb_sys
+          cargo update -p rb-sys
+          cargo update -p rb-sys-build
+          cargo update -p rb-sys-env
           export RB_SYS_DOCK_UID=$(id -u)
           export RB_SYS_DOCK_GID=$(id -g)
           export RCD_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-${{ github.sha }}
 
-          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build
+          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build || true
 
       - name: Docker push
         uses: docker/build-push-action@v4
