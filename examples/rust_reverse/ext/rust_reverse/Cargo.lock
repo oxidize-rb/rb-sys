@@ -147,7 +147,7 @@ dependencies = [
 name = "rb-sys"
 version = "0.9.65"
 dependencies = [
- "rb-sys-build",
+ "rb-sys-local",
 ]
 
 [[package]]
@@ -160,6 +160,13 @@ dependencies = [
  "regex",
  "shell-words",
  "syn",
+]
+
+[[package]]
+name = "rb-sys-local"
+version = "0.9.65"
+dependencies = [
+ "rb-sys-build",
 ]
 
 [[package]]

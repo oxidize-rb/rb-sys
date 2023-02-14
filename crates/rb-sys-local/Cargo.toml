@@ -1,0 +1,31 @@
+[package]
+name = "rb-sys-local"
+version = "0.9.65"
+edition = "2018"
+readme = "readme.md"
+categories = ["external-ffi-bindings"]
+description = "Generate libruby bindings for the currently active Ruby installation"
+documentation = "https://docs.rs/rb-sys"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
+rust-version = "1.60"
+
+[dependencies]
+rb-sys-build = { version = "0.9.65", path = "../rb-sys-build" }
+
+[features]
+default = ["docs"]
+link-ruby = []
+no-link-ruby = []
+ruby-macros = ["rb-sys-build/cc"]
+ruby-static = []
+global-allocator = []
+docs = ["rb-sys-build/docs"]
+bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
+bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
+bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]
+bindgen-impl-debug = ["rb-sys-build/bindgen-impl-debug"]
+
+[lib]
+doctest = false

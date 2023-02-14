@@ -163,7 +163,7 @@ dependencies = [
 name = "rb-sys"
 version = "0.9.65"
 dependencies = [
- "rb-sys-build",
+ "rb-sys-local",
 ]
 
 [[package]]
@@ -182,6 +182,13 @@ dependencies = [
 [[package]]
 name = "rb-sys-env"
 version = "0.1.2"
+
+[[package]]
+name = "rb-sys-local"
+version = "0.9.65"
+dependencies = [
+ "rb-sys-build",
+]
 
 [[package]]
 name = "rb-sys-tests"

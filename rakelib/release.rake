@@ -20,7 +20,7 @@ namespace :release do
 
   desc "Publish the crates and gems"
   task :publish do
-    crates = ["rb-sys-build", "rb-sys"]
+    crates = ["rb-sys-build", "rb-sys-local", "rb-sys"]
 
     crates.each do |crate|
       sh "cargo publish -p #{crate}"
