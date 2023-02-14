@@ -270,11 +270,11 @@ impl RbConfig {
         let mut search_paths = vec![];
 
         for key in self.rerun_if_env_changed.iter() {
-            result.push(format!("cargo:rerun-if-env-changed={}", key));
+            result.push(format!("cargo:rerun-if-env-changed={key}"));
         }
 
         for search_path in &self.search_paths {
-            result.push(format!("cargo:rustc-link-search={}", search_path));
+            result.push(format!("cargo:rustc-link-search={search_path}"));
             search_paths.push(search_path.name.as_str());
         }
 
@@ -293,7 +293,7 @@ impl RbConfig {
 
         for link_arg in &self.link_args {
             if !self.blocklist_link_arg.iter().any(|b| link_arg == b) {
-                result.push(format!("cargo:rustc-link-arg={}", link_arg));
+                result.push(format!("cargo:rustc-link-arg={link_arg}"));
             }
         }
 
@@ -305,13 +305,13 @@ impl RbConfig {
         let cargo_args = self.cargo_args();
 
         for arg in &cargo_args {
-            println!("{}", arg);
+            println!("{arg}");
         }
 
         let encoded_cargo_args = cargo_args.join("\x1E");
         let encoded_cargo_args = encoded_cargo_args.replace('\n', "\x1F");
 
-        println!("cargo:encoded_cargo_args={}", encoded_cargo_args);
+        println!("cargo:encoded_cargo_args={encoded_cargo_args}");
     }
 
     /// Adds items to the rb_config based on a string from LDFLAGS/DLDFLAGS
@@ -356,7 +356,7 @@ impl RbConfig {
     /// Sets a value for a key
     pub fn set_value_for_key<T: Into<String>>(&mut self, key: T, value: T) {
         let key = key.into();
-        let env_key = format!("{}{}", RBCONFIG_PREFIX, key);
+        let env_key = format!("{RBCONFIG_PREFIX}{key}");
         self.rerun_if_env_changed.insert(env_key);
         self.value_map.insert(key, value.into());
     }

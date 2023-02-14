@@ -37,9 +37,9 @@ impl Library {
 
     pub fn to_cargo_directive(&self) -> String {
         match self {
-            Library::Framework(name) => format!("framework={}", name),
-            Library::Dylib(name) => format!("dylib={}", name),
-            Library::Static(name) => format!("static={}", name),
+            Library::Framework(name) => format!("framework={name}"),
+            Library::Dylib(name) => format!("dylib={name}"),
+            Library::Static(name) => format!("static={name}"),
             Library::Unknown(name) => name.to_string(),
         }
     }

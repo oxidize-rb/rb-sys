@@ -14,7 +14,7 @@ impl Defines {
     /// Determines the given key is true.
     pub fn is_value_true(&self, key: &str) -> bool {
         self.raw_environment
-            .get(format!("DEFINES_{}", key).as_str())
+            .get(format!("DEFINES_{key}").as_str())
             .map(|v| v == "1" || v == "true")
             .unwrap_or(false)
     }
@@ -22,7 +22,7 @@ impl Defines {
     /// Fetches the raw value for the given key.
     pub fn get_raw_value(&self, key: &str) -> Option<&str> {
         self.raw_environment
-            .get(format!("DEFINES_{}", key).as_str())
+            .get(format!("DEFINES_{key}").as_str())
             .map(|v| v.as_str())
     }
 

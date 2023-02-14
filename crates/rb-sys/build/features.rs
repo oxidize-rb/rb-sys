@@ -83,7 +83,7 @@ pub fn is_link_ruby_enabled(rb: &RbConfig) -> bool {
             .collect::<Vec<_>>()
             .join("\n");
 
-            eprintln!("ERROR: {}", msg);
+            eprintln!("ERROR: {msg}");
             std::process::exit(1);
         } else {
             false

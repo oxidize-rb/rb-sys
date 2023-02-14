@@ -33,7 +33,7 @@ fn main() {
     let ruby_version = rbconfig.ruby_version();
     let target = env::var("TARGET").unwrap();
     let crate_version = env!("CARGO_PKG_VERSION");
-    let cfg_capture_path = format!("cfg-capture-{}-{}-{}", crate_version, target, ruby_version);
+    let cfg_capture_path = format!("cfg-capture-{crate_version}-{target}-{ruby_version}");
     let cfg_capture_path = out_dir.join(cfg_capture_path);
     let cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
@@ -210,7 +210,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, mut cap: RefMut<File>) {
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     if let Some(k) = rbconfig.get_optional(key) {
-        println!("cargo:rustc-cfg={}=\"{}\"", name, k);
+        println!("cargo:rustc-cfg={name}=\"{k}\"");
     }
 }
 

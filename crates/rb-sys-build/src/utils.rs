@@ -3,7 +3,7 @@ pub fn shellsplit(s: &str) -> Vec<String> {
     match shell_words::split(s) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("shellsplit failed: {}", e);
+            eprintln!("shellsplit failed: {e}");
             s.split_whitespace().map(|s| s.to_string()).collect()
         }
     }

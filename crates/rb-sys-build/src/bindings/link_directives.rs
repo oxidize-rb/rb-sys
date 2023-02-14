@@ -1,19 +1,28 @@
-use std::error::Error;
-use syn::Item;
+use syn::{visit_mut::VisitMut, ItemForeignMod};
 
-/// Append a link directive to each foreign module to the given syntax tree.
-pub fn add_link_ruby_directives(
-    syntax: &mut syn::File,
-    link_name: &str,
-    kind: &str,
-) -> Result<(), Box<dyn Error>> {
-    for item in syntax.items.iter_mut() {
-        if let Item::ForeignMod(fmod) = item {
-            fmod.attrs.push(syn::parse_quote! {
-                #[link(name = #link_name, kind = #kind)]
-            });
+/// Add Ruby link attributes to the foreign exetern "C" modules.
+#[derive(Debug)]
+pub(crate) struct AddRubyLinkDirectives {
+    pub link_name: String,
+    pub kind: String,
+}
+
+impl AddRubyLinkDirectives {
+    pub fn new(link_name: &str, kind: &str) -> Self {
+        Self {
+            link_name: link_name.to_string(),
+            kind: kind.to_string(),
         }
     }
+}
 
-    Ok(())
+impl VisitMut for AddRubyLinkDirectives {
+    fn visit_item_foreign_mod_mut(&mut self, item: &mut ItemForeignMod) {
+        let name = &self.link_name;
+        let kind = &self.kind;
+
+        item.attrs.push(syn::parse_quote! {
+            #[link(name = #name, kind = #kind)]
+        });
+    }
 }

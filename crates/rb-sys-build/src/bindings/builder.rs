@@ -1,6 +1,11 @@
 use crate::{bindings::cfg::extract, rb_config::Library};
 
-use super::{cfg::Item, docs, link_directives, ruby_headers::RubyHeaders};
+use super::{
+    cfg::Item,
+    docs::{DeprecationWarnings, DocCallbacks},
+    link_directives::AddRubyLinkDirectives,
+    ruby_headers::RubyHeaders,
+};
 use bindgen::CargoCallbacks;
 use quote::ToTokens;
 use std::{
@@ -12,17 +17,13 @@ use std::{
     process::Stdio,
 };
 
-type AstTransform = Box<dyn FnOnce(&mut syn::File) -> Result<(), Box<dyn Error>>>;
-type BoxedAstCallback = Box<dyn FnOnce(&syn::File) -> Result<(), Box<dyn Error>>>;
-
 /// A builder for generating bindings.
 pub struct Builder {
     bindgen: bindgen::Builder,
     ruby_headers: RubyHeaders,
     blocklist_groups: HashSet<BindgenGroups>,
-    ast_transforms: HashMap<&'static str, AstTransform>,
+    ast_transforms: HashMap<&'static str, Box<dyn syn::visit_mut::VisitMut>>,
     rustfmt: bool,
-    ast_callbacks: Vec<BoxedAstCallback>,
 }
 
 impl Default for Builder {
@@ -43,19 +44,20 @@ impl Builder {
             ]),
             ruby_headers: RubyHeaders::default(),
             ast_transforms: Default::default(),
-            ast_callbacks: Default::default(),
         }
     }
 
     /// Generate documentation for the bindings.
     pub fn docs(mut self, doit: bool) -> Self {
         if doit {
-            self.ast_transforms.insert("docs", Box::new(docs::tidy));
+            self.ast_transforms
+                .insert("docs", Box::new(DeprecationWarnings));
         } else {
             self.ast_transforms.remove("docs");
         }
 
         self.bindgen = self.bindgen.generate_comments(doit);
+        self.bindgen = self.bindgen.parse_callbacks(Box::new(DocCallbacks));
         self
     }
 
@@ -103,7 +105,7 @@ impl Builder {
 
         self.ast_transforms.insert(
             "linkage",
-            Box::new(move |syntax| link_directives::add_link_ruby_directives(syntax, &name, &kind)),
+            Box::new(AddRubyLinkDirectives::new(&name, &kind)),
         );
 
         self
@@ -163,12 +165,8 @@ impl Builder {
 
         let mut syntax = syn::parse_file(&bindings)?;
 
-        for (_, transform) in self.ast_transforms {
-            transform(&mut syntax)?;
-        }
-
-        for cb in self.ast_callbacks {
-            cb(&mut syntax)?;
+        for (_, mut transform) in self.ast_transforms {
+            transform.visit_file_mut(&mut syntax);
         }
 
         let cfg = extract(&syntax)?;
@@ -190,18 +188,13 @@ impl Builder {
         self
     }
 
-    /// Register a callback to be called on the AST before it is written to output.
-    pub fn register_ast_callback<F>(mut self, cb: F) -> Self
-    where
-        F: FnOnce(&syn::File) -> Result<(), Box<dyn std::error::Error>> + 'static,
-    {
-        self.ast_callbacks.push(Box::new(cb));
-        self
-    }
-
     /// Transform the AST before it is written to output.
-    pub fn register_ast_transform(mut self, name: &'static str, transform: AstTransform) -> Self {
-        self.ast_transforms.insert(name, transform);
+    pub fn register_ast_transform(
+        mut self,
+        name: &'static str,
+        transform: impl syn::visit_mut::VisitMut + 'static,
+    ) -> Self {
+        self.ast_transforms.insert(name, Box::new(transform));
         self
     }
 }
@@ -216,6 +209,8 @@ fn default_bindgen() -> bindgen::Builder {
         .derive_eq(true)
         .derive_debug(true)
         .layout_tests(false)
+        .size_t_is_usize(false)
+        .merge_extern_blocks(true)
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")

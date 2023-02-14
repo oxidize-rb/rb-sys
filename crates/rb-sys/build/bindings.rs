@@ -17,7 +17,7 @@ pub fn generate(
     let ruby_version = rb.ruby_version();
     let target = env::var("TARGET")?;
     let crate_version = env!("CARGO_PKG_VERSION");
-    let out_path = format!("bindings-{}-{}-{}.rs", crate_version, target, ruby_version);
+    let out_path = format!("bindings-{crate_version}-{target}-{ruby_version}.rs");
     let out_path = out_dir.join(out_path);
 
     builder = builder

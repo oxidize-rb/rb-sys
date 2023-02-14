@@ -62,8 +62,7 @@ impl ToString for RubyHeaders {
             let have_macro = have_macro.replace('/', "_");
 
             dot_h.push_str(&format!(
-                "#ifdef {}\n#include \"{}\"\n#endif\n",
-                have_macro, header
+                "#ifdef {have_macro}\n#include \"{header}\"\n#endif\n"
             ));
         }
 

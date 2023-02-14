@@ -26,7 +26,7 @@ impl RbEnv {
     /// Get a value from the current Ruby's `RbConfig::CONFIG`.
     pub fn get_rbconfig_value(&self, key: &str) -> Option<&str> {
         self.vars
-            .get(&format!("{}{}", RBCONFIG_PREFIX, key))
+            .get(&format!("{RBCONFIG_PREFIX}{key}"))
             .map(|v| v.as_str())
     }
 
@@ -44,8 +44,8 @@ impl RbEnv {
         let libdir = self.vars.get("LIBDIR").expect("DEP_RB_LIBDIR is not set");
         let lib = self.vars.get("LIB").expect("DEP_RB_LIB is not set");
 
-        println!("cargo:rustc-link-search=native={}", libdir);
-        println!("cargo:rustc-link-lib={}", lib);
+        println!("cargo:rustc-link-search=native={libdir}");
+        println!("cargo:rustc-link-lib={lib}");
 
         self
     }
@@ -78,14 +78,14 @@ impl RbEnv {
     /// Prints directives for rustc (i.e. `cargo:rustc-link-lib=...`).
     pub fn print_encoded_cargo_args(&self) {
         for line in self.encoded_cargo_args() {
-            println!("{}", line);
+            println!("{line}");
         }
     }
 
     /// Prints directives for re-runs (i.e. `cargo:rerun-if-env-changed=...`)
     pub fn print_cargo_rerun_if_changed(&self) {
         for key in self.vars.keys() {
-            println!("cargo:rerun-if-env-changed={}{}", ENV_PREFIX, key);
+            println!("cargo:rerun-if-env-changed={ENV_PREFIX}{key}");
         }
 
         println!("cargo:rerun-if-changed=build.rs");
