@@ -5,9 +5,9 @@ use std::borrow::Cow;
 
 lazy_static::lazy_static! {
     static ref URL_REGEX: Regex = Regex::new(r#"https?://[^\s'"]+"#).unwrap();
-    static ref DOC_SECTION_REGEX: Regex = Regex::new(r"^@(warning|internal|private|note)\s*").unwrap();
-    static ref PARAM_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\[(\S+)\]\s+(.*)$").unwrap();
-    static ref OTHER_DIRECTIVE_REGEX: Regex = Regex::new(r"^(@\w+)\s+(.*)$").unwrap();
+    static ref DOC_SECTION_REGEX: Regex = Regex::new(r"\s*@(warning|internal|private|note)\s*").unwrap();
+    static ref PARAM_DIRECTIVE_REGEX: Regex = Regex::new(r"\s*(@\w+)\[(\S+)\]\s+([^\n]+)").unwrap();
+    static ref OTHER_DIRECTIVE_REGEX: Regex = Regex::new(r"\s*(@\w+)\s+([^\n]+)").unwrap();
     static ref BARE_CODE_REF_REGEX: Regex = Regex::new(r"(\b)(rb_(\w|_)+)(\(|\))*").unwrap();
     static ref NO_NEWLINES_AND_SINGLE_SPACE_REGEX: Regex = Regex::new(r"\s+").unwrap();
 }
@@ -56,22 +56,27 @@ pub(crate) struct DocCallbacks;
 
 impl ParseCallbacks for DocCallbacks {
     fn process_comment(&self, comment: &str) -> Option<String> {
+        let cleaned = comment.trim_matches('"').trim();
+
         if comment.is_empty() {
             return Some("\n".into());
         }
 
-        let cleaned = comment.to_string();
-        let cleaned = cleaned.trim_matches('"').trim();
+        if cleaned.contains("@deprecated") {
+            return Some(cleaned.to_string());
+        }
+
         let cleaned = URL_REGEX.replace_all(cleaned, "<${0}>");
+
         let cleaned = DOC_SECTION_REGEX.replace_all(&cleaned, |captures: &regex::Captures| {
             if let Some(header) = captures.get(1) {
-                format!("---\n ### {}\n", capitalize(header.as_str())).into()
+                format!("\n---\n ### {}\n", capitalize(header.as_str())).into()
             } else {
                 Cow::Borrowed("")
             }
         });
-        let cleaned = PARAM_DIRECTIVE_REGEX.replace(&cleaned, "- **$1** `$2` $3");
-        let cleaned = OTHER_DIRECTIVE_REGEX.replace(&cleaned, "- **$1** $2");
+        let cleaned = PARAM_DIRECTIVE_REGEX.replace_all(&cleaned, "\n- **$1** `$2` $3");
+        let cleaned = OTHER_DIRECTIVE_REGEX.replace_all(&cleaned, "\n- **$1** $2");
         let cleaned = BARE_CODE_REF_REGEX.replace_all(&cleaned, "${1}[`${2}`]");
 
         Some(cleaned.to_string())

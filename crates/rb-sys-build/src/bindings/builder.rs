@@ -6,7 +6,7 @@ use super::{
     link_directives::AddRubyLinkDirectives,
     ruby_headers::RubyHeaders,
 };
-use bindgen::CargoCallbacks;
+use bindgen::{callbacks::ParseCallbacks, CargoCallbacks};
 use quote::ToTokens;
 use std::{
     collections::{HashMap, HashSet},
@@ -16,14 +16,16 @@ use std::{
     path::PathBuf,
     process::Stdio,
 };
+use syn::visit_mut::VisitMut;
 
 /// A builder for generating bindings.
 pub struct Builder {
     bindgen: bindgen::Builder,
     ruby_headers: RubyHeaders,
     blocklist_groups: HashSet<BindgenGroups>,
-    ast_transforms: HashMap<&'static str, Box<dyn syn::visit_mut::VisitMut>>,
+    ast_transforms: HashMap<&'static str, Box<dyn VisitMut>>,
     rustfmt: bool,
+    parse_callbacks: HashMap<&'static str, Box<dyn ParseCallbacks>>,
 }
 
 impl Default for Builder {
@@ -35,7 +37,12 @@ impl Default for Builder {
 impl Builder {
     /// Create a new builder.
     pub fn new() -> Self {
+        let mut ast_transforms: HashMap<&'static str, Box<dyn VisitMut>> = HashMap::new();
+
+        ast_transforms.insert("deprecation_warnings", Box::new(DeprecationWarnings));
+
         Self {
+            parse_callbacks: Default::default(),
             bindgen: default_bindgen(),
             rustfmt: true,
             blocklist_groups: HashSet::from([
@@ -43,27 +50,25 @@ impl Builder {
                 BindgenGroups::DeprecatedTypes,
             ]),
             ruby_headers: RubyHeaders::default(),
-            ast_transforms: Default::default(),
+            ast_transforms,
         }
-    }
-
-    /// Generate documentation for the bindings.
-    pub fn docs(mut self, doit: bool) -> Self {
-        if doit {
-            self.ast_transforms
-                .insert("docs", Box::new(DeprecationWarnings));
-        } else {
-            self.ast_transforms.remove("docs");
-        }
-
-        self.bindgen = self.bindgen.generate_comments(doit);
-        self.bindgen = self.bindgen.parse_callbacks(Box::new(DocCallbacks));
-        self
     }
 
     /// Enable layout tests in the bindings.
     pub fn layout_tests(mut self, doit: bool) -> Self {
         self.bindgen = self.bindgen.layout_tests(doit);
+        self
+    }
+
+    /// Generate documentation for the bindings.
+    pub fn docs(mut self, doit: bool) -> Self {
+        if doit {
+            self.parse_callbacks.insert("docs", Box::new(DocCallbacks));
+        } else {
+            self.parse_callbacks.remove("docs");
+        }
+        self.bindgen = self.bindgen.generate_comments(doit);
+
         self
     }
 
@@ -151,21 +156,29 @@ impl Builder {
 
     /// Run bindgen with the given configuration, and return a result containing
     /// to Rust code and parsed configuration as a hash map.
-    pub fn generate(self) -> Result<Bindings, Box<dyn std::error::Error>> {
+    pub fn generate(mut self) -> Result<Bindings, Box<dyn std::error::Error>> {
+        let ruby_headers = self.ruby_headers.to_string();
         let mut bindgen = self.bindgen;
 
-        for group in self.blocklist_groups {
+        for (_name, callback) in self.parse_callbacks.drain() {
+            bindgen = bindgen.parse_callbacks(callback);
+        }
+
+        for group in self.blocklist_groups.drain() {
             bindgen = group.apply_to_bindgen(bindgen);
         }
 
-        bindgen = bindgen.header_contents("wrapper.h", &self.ruby_headers.to_string());
-        dbg!(&bindgen);
+        bindgen = bindgen.header_contents("wrapper.h", &ruby_headers);
+
+        if std::env::var_os("RB_SYS_DEBUG_BUILD").is_some() {
+            dbg!("Bindgen config:", &bindgen);
+        }
 
         let bindings = bindgen.generate()?.to_string();
 
         let mut syntax = syn::parse_file(&bindings)?;
 
-        for (_, mut transform) in self.ast_transforms {
+        for (_, mut transform) in self.ast_transforms.drain() {
             transform.visit_file_mut(&mut syntax);
         }
 
@@ -183,8 +196,12 @@ impl Builder {
     /// Print cargo directives for the Ruby library (i.e. `cargo:rerun-if-changed`).
     pub fn print_cargo_directives(mut self, doit: bool) -> Self {
         if doit {
-            self.bindgen = self.bindgen.parse_callbacks(Box::new(CargoCallbacks));
+            self.parse_callbacks
+                .insert("cargo", Box::new(CargoCallbacks));
+        } else {
+            self.parse_callbacks.remove("cargo");
         }
+
         self
     }
 
@@ -192,7 +209,7 @@ impl Builder {
     pub fn register_ast_transform(
         mut self,
         name: &'static str,
-        transform: impl syn::visit_mut::VisitMut + 'static,
+        transform: impl VisitMut + 'static,
     ) -> Self {
         self.ast_transforms.insert(name, Box::new(transform));
         self
@@ -215,12 +232,12 @@ fn default_bindgen() -> bindgen::Builder {
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
-        .generate_comments(true)
-        .impl_debug(false)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
+        .generate_comments(false)
+        .impl_debug(false)
 }
 
 /// The result of a binding generation, containing the generated code and parsed

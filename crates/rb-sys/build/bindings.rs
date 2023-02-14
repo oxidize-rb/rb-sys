@@ -12,7 +12,6 @@ pub fn generate(
     static_ruby: bool,
     cfg_out: Rc<RefCell<File>>,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    let mut builder = Builder::new();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let ruby_version = rb.ruby_version();
     let target = env::var("TARGET")?;
@@ -20,9 +19,14 @@ pub fn generate(
     let out_path = format!("bindings-{crate_version}-{target}-{ruby_version}.rs");
     let out_path = out_dir.join(out_path);
 
-    builder = builder
+    let mut builder = Builder::new()
         .doc_comment(doc_header(rb))
         .print_cargo_directives(true)
+        .docs(is_enabled("docs"))
+        .deprecated_types(is_enabled("bindgen-deprecated-types"))
+        .rbimpls(is_enabled("bindgen-rbimpls"))
+        .impl_debug(is_enabled("bindgen-impl-debug"))
+        .layout_tests(is_enabled("bindgen-layout-tests"))
         .include(rb.get("rubyhdrdir"))
         .include(rb.get("rubyarchhdrdir"))
         .append_cflags(&rb.cflags())
@@ -37,26 +41,6 @@ pub fn generate(
         builder = builder.exclude_ruby_header("ruby/atomic.h"); // Not supported on mswin
     }
 
-    if env::var_os("CARGO_FEATURE_BINDGEN_DEPRECATED_TYPES").is_some() {
-        builder = builder.deprecated_types(true);
-    }
-
-    if env::var_os("CARGO_FEATURE_BINDGEN_RBIMPLS").is_some() {
-        builder = builder.rbimpls(true);
-    }
-
-    if env::var_os("CARGO_FEATURE_BINDGEN_LAYOUT_TESTS").is_some() {
-        builder = builder.layout_tests(true);
-    }
-
-    if env::var_os("CARGO_FEATURE_BINDGEN_IMPL_DEBUG").is_some() {
-        builder = builder.impl_debug(true);
-    }
-
-    if env::var_os("CARGO_FEATURE_DOCS").is_some() {
-        builder = builder.docs(true);
-    }
-
     let bindings = builder.generate()?;
 
     bindings.write_code_to_file(&out_path)?;
@@ -64,6 +48,11 @@ pub fn generate(
     bindings.write_rustc_cfg_to(&mut std::io::stdout())?;
 
     Ok(out_path)
+}
+
+fn is_enabled(name: &str) -> bool {
+    let name = name.replace('-', "_");
+    env::var_os(format!("CARGO_FEATURE_{}", name.to_uppercase())).is_some()
 }
 
 fn doc_header(rb_config: &RbConfig) -> String {
