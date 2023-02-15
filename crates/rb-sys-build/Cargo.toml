@@ -22,11 +22,5 @@ quote = { version = "1.0" }
 lazy_static = "1.4.0"
 
 [features]
-default = ["rustfmt"]
+default = []
 cc = ["cc-impl"]
-docs = []
-rustfmt = []
-bindgen-rbimpls = []
-bindgen-deprecated-types = []
-bindgen-layout-tests = []
-bindgen-impl-debug = []

@@ -10,6 +10,9 @@ lazy_static::lazy_static! {
     static ref OTHER_DIRECTIVE_REGEX: Regex = Regex::new(r"\s*(@\w+)\s+([^\n]+)").unwrap();
     static ref BARE_CODE_REF_REGEX: Regex = Regex::new(r"(\b)(rb_(\w|_)+)(\(|\))*").unwrap();
     static ref NO_NEWLINES_AND_SINGLE_SPACE_REGEX: Regex = Regex::new(r"\s+").unwrap();
+    static ref UNESCAPE_REGEX: Regex = Regex::new(r"\\n").unwrap();
+    static ref TWO_SPACES_REGEX: Regex = Regex::new(r"([a-z])  ([a-z])").unwrap();
+    static ref EXTRANEOUS_NEWLINE_REGEX: Regex = Regex::new(r"([a-z])\n ([a-z])").unwrap();
 }
 
 /// Add deprecation warnings to the generated bindings.
@@ -25,12 +28,19 @@ impl syn::visit_mut::VisitMut for DeprecationWarnings {
             for s in tokens.to_token_stream() {
                 if let TokenTree::Literal(lit) = s {
                     let doc = lit.to_string();
+                    let doc = doc.trim_matches('"').trim();
 
-                    if doc.contains("@deprecated") {
-                        let doc = doc.trim_matches('"').trim();
-                        let doc = doc.replace("\\n", "\n");
+                    if let Some(deprecated_idx) = doc.find("@deprecated") {
+                        let doc = UNESCAPE_REGEX.replace_all(doc, "\n");
                         let msg = NO_NEWLINES_AND_SINGLE_SPACE_REGEX.replace_all(&doc, " ");
-                        let msg = msg.replace("@deprecated ", "");
+
+                        let msg: Cow<str> = if deprecated_idx == 0 {
+                            msg.trim_start_matches("@deprecated").into()
+                        } else {
+                            msg.replace("@deprecated", "").into()
+                        };
+
+                        let msg = msg.trim();
 
                         if msg.is_empty() {
                             *attr = syn::parse_quote! {
@@ -78,6 +88,8 @@ impl ParseCallbacks for DocCallbacks {
         let cleaned = PARAM_DIRECTIVE_REGEX.replace_all(&cleaned, "\n- **$1** `$2` $3");
         let cleaned = OTHER_DIRECTIVE_REGEX.replace_all(&cleaned, "\n- **$1** $2");
         let cleaned = BARE_CODE_REF_REGEX.replace_all(&cleaned, "${1}[`${2}`]");
+        let cleaned = TWO_SPACES_REGEX.replace_all(&cleaned, "${1} ${2}");
+        let cleaned = EXTRANEOUS_NEWLINE_REGEX.replace_all(&cleaned, "${1} ${2}");
 
         Some(cleaned.to_string())
     }

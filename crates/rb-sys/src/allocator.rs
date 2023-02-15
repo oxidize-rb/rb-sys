@@ -6,11 +6,7 @@
 
 use crate::rb_gc_adjust_memory_usage;
 
-#[cfg(target_pointer_width = "32")]
-type DiffSize = i32;
-
-#[cfg(not(target_pointer_width = "32"))]
-type DiffSize = i64;
+type DiffSize = isize;
 
 use std::alloc::{GlobalAlloc, Layout, System};
 

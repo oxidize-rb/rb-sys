@@ -17,7 +17,7 @@ rust-version = "1.60"
 rb-sys-local = { version = "0.9.65", path = "../rb-sys-local", optional = true }
 
 [features]
-default = ["local"]
+default = ["docs", "local"]
 local = ["rb-sys-local"]
 link-ruby = ["rb-sys-local?/link-ruby"]
 no-link-ruby = ["rb-sys-local?/no-link-ruby"]
@@ -32,3 +32,6 @@ bindgen-impl-debug = ["rb-sys-local?/bindgen-impl-debug"]
 
 [lib]
 doctest = false
+
+[dependencies]
+libc = "0.2.139"

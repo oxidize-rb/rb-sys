@@ -10,4 +10,10 @@
 #![warn(unknown_lints)]
 #![allow(unaligned_references)]
 #![allow(clippy::all)]
+
+use crate::os::raw::*;
+
+pub type VALUE = ::core::ffi::c_ulong;
+pub type ID = ::core::ffi::c_ulong;
+
 include!(env!("RB_SYS_BINDINGS_PATH"));

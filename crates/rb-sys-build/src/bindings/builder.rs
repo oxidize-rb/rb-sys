@@ -3,7 +3,9 @@ use crate::{bindings::cfg::extract, rb_config::Library};
 use super::{
     cfg::Item,
     docs::{DeprecationWarnings, DocCallbacks},
+    filter::RemoveDefinesFilter,
     link_directives::AddRubyLinkDirectives,
+    native_types::RemapNativeTypes,
     ruby_headers::RubyHeaders,
 };
 use bindgen::{callbacks::ParseCallbacks, CargoCallbacks};
@@ -11,6 +13,7 @@ use quote::ToTokens;
 use std::{
     collections::{HashMap, HashSet},
     error::Error,
+    fmt::Debug,
     fs::File,
     io::Write,
     path::PathBuf,
@@ -40,6 +43,8 @@ impl Builder {
         let mut ast_transforms: HashMap<&'static str, Box<dyn VisitMut>> = HashMap::new();
 
         ast_transforms.insert("deprecation_warnings", Box::new(DeprecationWarnings));
+        ast_transforms.insert("remove_defines", Box::new(RemoveDefinesFilter));
+        ast_transforms.insert("remap_native_types", Box::new(RemapNativeTypes));
 
         Self {
             parse_callbacks: Default::default(),
@@ -156,16 +161,27 @@ impl Builder {
 
     /// Run bindgen with the given configuration, and return a result containing
     /// to Rust code and parsed configuration as a hash map.
-    pub fn generate(mut self) -> Result<Bindings, Box<dyn std::error::Error>> {
+    pub fn generate(self) -> Result<Bindings, Box<dyn std::error::Error>> {
         let ruby_headers = self.ruby_headers.to_string();
         let mut bindgen = self.bindgen;
 
-        for (_name, callback) in self.parse_callbacks.drain() {
-            bindgen = bindgen.parse_callbacks(callback);
+        for group in self.blocklist_groups {
+            bindgen = group.apply_to_bindgen(bindgen);
         }
 
-        for group in self.blocklist_groups.drain() {
-            bindgen = group.apply_to_bindgen(bindgen);
+        let mut sorted_callbacks: Vec<_> = self
+            .parse_callbacks
+            .iter()
+            .map(|(k, v)| (*k, v))
+            .collect::<Vec<_>>();
+
+        sorted_callbacks.sort_by_key(|(k1, _)| match *k1 {
+            "docs" => 1,
+            _ => 0,
+        });
+
+        for (_name, callback) in self.parse_callbacks {
+            bindgen = bindgen.parse_callbacks(callback);
         }
 
         bindgen = bindgen.header_contents("wrapper.h", &ruby_headers);
@@ -175,14 +191,26 @@ impl Builder {
         }
 
         let bindings = bindgen.generate()?.to_string();
-
         let mut syntax = syn::parse_file(&bindings)?;
+        let cfg = extract(&syntax)?;
 
-        for (_, mut transform) in self.ast_transforms.drain() {
+        let mut sorted_transforms: Vec<_> = self
+            .ast_transforms
+            .iter()
+            .map(|(k, v)| (*k, v))
+            .collect::<Vec<_>>();
+
+        sorted_transforms.sort_by_key(|(k1, _)| match *k1 {
+            "remove_defines" => 0,
+            "remap_native_types" => 0,
+            "deprecation_warnings" => 1,
+            "linkage" => 2,
+            _ => 1,
+        });
+
+        for (_, mut transform) in self.ast_transforms {
             transform.visit_file_mut(&mut syntax);
         }
-
-        let cfg = extract(&syntax)?;
 
         let mut code = syntax.to_token_stream().to_string();
 
@@ -216,18 +244,34 @@ impl Builder {
     }
 }
 
+impl Debug for Builder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Builder")
+            .field("bindgen", &self.bindgen)
+            .field("ruby_headers", &self.ruby_headers)
+            .field("blocklist_groups", &self.blocklist_groups)
+            .field("ast_transforms", &"HashMap<...>")
+            .field("rustfmt", &self.rustfmt)
+            .field("parse_callbacks", &self.parse_callbacks)
+            .finish()
+    }
+}
+
 fn default_bindgen() -> bindgen::Builder {
     bindgen::Builder::default()
         .use_core()
         .clang_args(default_cflags())
         .rustfmt_bindings(false) // We use syn so this is pointless
         .rustified_enum(".*")
+        .sort_semantically(true)
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .layout_tests(false)
         .size_t_is_usize(false)
         .merge_extern_blocks(true)
+        .blocklist_type("VALUE") // Do this manually
+        .blocklist_type("ID") // Do this manually
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
@@ -236,6 +280,22 @@ fn default_bindgen() -> bindgen::Builder {
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
+        .blocklist_type("stat")
+        .blocklist_function("rb_clear_constant_cache")
+        .blocklist_function("rb_unexpected_type")
+        .blocklist_function("rb_unexpected_type")
+        .blocklist_function("rb_ruby_verbose_ptr")
+        .blocklist_function("rb_ruby_debug_ptr")
+        .blocklist_function("rb_io_extract_encoding_option")
+        .blocklist_function("rb_check_type")
+        .blocklist_function("rb_debug_rstring_null_ptr")
+        .blocklist_function("rb_scan_args_bad_format")
+        .blocklist_function("rb_scan_args_length_mismatch")
+        .blocklist_type(
+            "(time|mode|pid|off|suseconds|blkcnt|blksize|dev|uid|gid|nlink|ssize|size)_t",
+        )
+        .blocklist_type("^__darwin_.*_t$")
+        .blocklist_type("__u?int\\d\\d_t")
         .generate_comments(false)
         .impl_debug(false)
 }
@@ -249,20 +309,32 @@ pub struct Bindings {
 }
 
 impl Bindings {
+    /// Get the generated Rust code.
     pub fn code(&self) -> &str {
         &self.code
     }
 
+    /// Get the cargo configuration directives.
     pub fn cfg(&self) -> &[Item] {
         &self.cfg
     }
 
+    /// Write the generated Rust code to a file.
     pub fn write_code_to_file(
         &self,
         path: impl AsRef<std::path::Path>,
     ) -> Result<(), Box<dyn Error>> {
         let mut file = File::create(path)?;
         file.write_all(self.code.as_bytes())?;
+        Ok(())
+    }
+
+    /// Write the generated Rust code to a file.
+    pub fn write_code_to<T>(&self, io: &mut T) -> Result<(), Box<dyn Error>>
+    where
+        T: Write,
+    {
+        io.write_all(self.code.as_bytes())?;
         Ok(())
     }
 

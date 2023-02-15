@@ -1,6 +1,7 @@
 pub mod bindings;
 #[cfg(feature = "ruby-macros")]
 pub mod macros;
+pub mod os;
 pub mod special_consts;
 pub mod value_type;
 
