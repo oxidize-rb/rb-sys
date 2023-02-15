@@ -11,7 +11,7 @@
 #![allow(unaligned_references)]
 #![allow(clippy::all)]
 
-use crate::os::raw::*;
+use crate::ffi::*;
 
 /// Type that represents a Ruby object.  It is an unsigned integer of some kind,
 /// depending on platforms.

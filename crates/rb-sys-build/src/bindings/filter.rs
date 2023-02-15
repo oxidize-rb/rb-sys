@@ -1,5 +1,5 @@
 use std::fmt::Write;
-use syn::Lit;
+use syn::{visit_mut::VisitMut, Lit};
 
 fn is_junk_key(name: &str) -> bool {
     name.starts_with("HAVE_")
@@ -30,7 +30,7 @@ fn is_junk_value(value: &Lit) -> bool {
 #[derive(Debug)]
 pub struct RemoveDefinesFilter;
 
-impl syn::visit_mut::VisitMut for RemoveDefinesFilter {
+impl VisitMut for RemoveDefinesFilter {
     fn visit_file_mut(&mut self, file: &mut syn::File) {
         let mut shared_buf = String::with_capacity(64);
 
