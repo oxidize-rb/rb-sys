@@ -5,7 +5,7 @@ use std::os::raw::c_long;
 // NOTICE: This is a low level library. If you are looking to write a gem in
 // Rust, you should probably use https://github.com/matsadler/magnus instead.
 
-unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> RubyValue {
+unsafe extern "C" fn pub_reverse(_klass: VALUE, mut input: VALUE) -> VALUE {
     if rb_sys::NIL_P(input) {
         // Just here to test out linking globals on msvc
         rb_raise(rb_eTypeError, "cannot be nil\0".as_ptr() as *const i8);
@@ -30,8 +30,8 @@ extern "C" fn Init_rust_reverse() {
     unsafe {
         let klass = rb_define_module(name.as_ptr());
         let callback = std::mem::transmute::<
-            unsafe extern "C" fn(RubyValue, RubyValue) -> RubyValue,
-            unsafe extern "C" fn() -> RubyValue,
+            unsafe extern "C" fn(VALUE, VALUE) -> VALUE,
+            unsafe extern "C" fn() -> VALUE,
         >(pub_reverse);
         rb_define_module_function(klass, function_name.as_ptr(), Some(callback), 1)
     }
