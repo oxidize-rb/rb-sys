@@ -28,6 +28,16 @@ def logger
   @logger ||= RbSys::Util::Logger.new(io: io)
 end
 
+def list_platforms
+  RbSys::ToolchainInfo.supported.each do |p|
+    old = logger.io
+    logger.io = $stdout
+    puts "- #{p.platform}"
+  ensure
+    logger.io = old
+  end
+end
+
 OptionParser.new do |opts|
   opts.banner = <<~MSG
     Usage: rb-sys-dock [OPTIONS] [COMMAND]
@@ -128,16 +138,6 @@ OptionParser.new do |opts|
     OPTIONS[:directory] = File.expand_path(val)
   end
 end.parse!
-
-def list_platforms
-  RbSys::ToolchainInfo.supported.each do |p|
-    old = logger.io
-    logger.io = $stdout
-    puts "- #{p.platform}"
-  ensure
-    logger.io = old
-  end
-end
 
 def default_docker_command
   return @default_docker_command if defined?(@default_docker_command)
