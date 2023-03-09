@@ -37,6 +37,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set rb-sys version variable
+        id: vars
+        run: |
+          version="$(ruby -r $PWD/gem/lib/rb_sys/version.rb -e 'puts RbSys::VERSION')"
+          echo "rb-sys-version=$version" >> $GITHUB_OUTPUT
+
       # Test the container
       - uses: actions/checkout@v3
         with:
@@ -89,8 +95,8 @@ jobs:
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
-          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Run tests
         run: |
@@ -117,8 +123,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
-          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3
