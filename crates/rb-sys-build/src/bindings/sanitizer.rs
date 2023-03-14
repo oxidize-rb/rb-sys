@@ -1,7 +1,8 @@
-use quote::__private::{Literal, TokenTree};
+use proc_macro2::{Literal, TokenTree};
+use quote::ToTokens;
 use regex::Regex;
 use std::{borrow::Cow, error::Error};
-use syn::{Attribute, Item, __private::ToTokens};
+use syn::{Attribute, Item};
 
 lazy_static::lazy_static! {
     static ref URL_REGEX: Regex = Regex::new(r#"https?://[^\s'"]+"#).unwrap();
