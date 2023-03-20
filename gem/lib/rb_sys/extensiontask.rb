@@ -22,7 +22,11 @@ module RbSys
   # @param gem_spec [Gem::Specification] the gem specification to build (needed for cross-compiling)
   # @return [Rake::ExtensionTask]
   class ExtensionTask < Rake::ExtensionTask
-    def init(name = nil, gem_spec = :undefined)
+    def initialize(name = nil, gem_spec = :undefined)
+      super
+    end
+
+    def init(name = nil, gem_spec = nil)
       super(name, lint_gem_spec(name, gem_spec))
 
       @orginal_ext_dir = @ext_dir
