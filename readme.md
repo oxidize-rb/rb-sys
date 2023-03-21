@@ -90,7 +90,7 @@ defined in the Apache-2.0 license, shall be dual licensed as above, without any 
 [yrb]: https://github.com/y-crdt/yrb/pull/32/files
 [rust-talk]: https://github.com/ianks/2022-09-09-ruby-on-rust-intro
 [oxi-test]: https://github.com/oxidize-rb/oxi-test
-[cross-gem-action]: https://github.com/oxidize-rb/cross-gem-action
+[cross-gem-action]: https://github.com/oxidize-rb/actions/blob/main/cross-gem/readme.md
 [rake-compiler]: https://github.com/rake-compiler/rake-compiler
 [setup-action]: https://github.com/oxidize-rb/actions/tree/main/setup-ruby-and-rust
 [ruby-c-api]: https://docs.ruby-lang.org/en/master/doc/extension_rdoc.html
