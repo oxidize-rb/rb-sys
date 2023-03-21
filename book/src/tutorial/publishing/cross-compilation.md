@@ -42,7 +42,7 @@ a walkthrough of the important files to reference:
 
 ## Resources
 
-- [Cross Gem Action](https://github.com/oxidize-rb/cross-gem-action) to easily cross compile with GitHub actions
+- [Cross Gem Action](https://github.com/oxidize-rb/actions/blob/main/cross-gem/readme.md) to easily cross compile with GitHub actions
 - [Docker images](https://index.docker.io/u/rbsys)
 
 [rake-compiler]: https://github.com/rake-compiler/rake-compiler
