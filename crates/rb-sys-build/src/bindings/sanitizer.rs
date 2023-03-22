@@ -1,8 +1,9 @@
-use proc_macro2::{Literal, TokenTree};
-use quote::ToTokens;
 use regex::Regex;
-use std::{borrow::Cow, error::Error};
-use syn::{Attribute, Item};
+use std::{
+    borrow::{Borrow, Cow},
+    error::Error,
+};
+use syn::{Attribute, Expr, Item, Lit, LitStr, Meta};
 
 lazy_static::lazy_static! {
     static ref URL_REGEX: Regex = Regex::new(r#"https?://[^\s'"]+"#).unwrap();
@@ -75,19 +76,16 @@ pub fn cleanup_docs(syntax: &mut syn::File, ruby_version: &str) -> Result<(), Bo
 }
 
 fn clean_doc_line(attr: &mut Attribute) -> bool {
-    if !attr.path.is_ident("doc") {
+    if !attr.path().is_ident("doc") {
         return false;
     }
 
     let mut deprecated: bool = false;
 
-    let new_tokens = attr
-        .tokens
-        .to_token_stream()
-        .into_iter()
-        .map(|token| {
-            if let TokenTree::Literal(l) = token {
-                let cleaned = l.to_string();
+    if let Meta::NameValue(name_value) = &mut attr.meta {
+        if let Expr::Lit(expr_lit) = &mut name_value.value {
+            if let Lit::Str(lit_str) = &mut expr_lit.lit {
+                let cleaned = lit_str.value();
                 let cleaned = cleaned.trim_matches('"').trim();
                 let cleaned = URL_REGEX.replace_all(cleaned, "<${0}>");
                 let cleaned =
@@ -100,24 +98,21 @@ fn clean_doc_line(attr: &mut Attribute) -> bool {
                     });
                 let cleaned = PARAM_DIRECTIVE_REGEX.replace(&cleaned, "- **$1** `$2` $3");
                 let cleaned = OTHER_DIRECTIVE_REGEX.replace(&cleaned, "- **$1** $2");
-                let cleaned = BARE_CODE_REF_REGEX.replace_all(&cleaned, "${1}[`${2}`]");
+                let mut cleaned = BARE_CODE_REF_REGEX.replace_all(&cleaned, "${1}[`${2}`]");
 
                 if cleaned.is_empty() {
-                    return TokenTree::Literal(Literal::string("\n"));
+                    cleaned = "\n".into();
                 }
 
                 if cleaned.contains("@deprecated") {
                     deprecated = true;
                 }
 
-                Literal::string(&cleaned).into()
-            } else {
-                token
+                *lit_str = LitStr::new(cleaned.borrow(), lit_str.span());
             }
-        })
-        .collect();
+        }
+    }
 
-    attr.tokens = new_tokens;
     deprecated
 }
 
