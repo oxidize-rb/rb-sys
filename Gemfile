@@ -10,7 +10,5 @@ gem "minitest", "5.15.0"
 gem "rake-compiler", "~> 1.2.0"
 gem "yard"
 
-if RUBY_VERSION >= "2.6.0"
-  gem "ruby-lsp", require: false
-  gem "standard", "~> 1.12.1"
-end
+gem "ruby-lsp", require: false
+gem "standard", "~> 1.12.1"
