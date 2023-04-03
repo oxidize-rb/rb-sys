@@ -20,7 +20,7 @@ cc-impl = { version = "1.0", optional = true, package = "cc" }
 syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
 quote = "1.0.23"
 lazy_static = "1.4.0"
-proc-macro2 = "1.0.54"
+proc-macro2 = "1.0.56"
 
 [features]
 default = []
