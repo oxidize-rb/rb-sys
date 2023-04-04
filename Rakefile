@@ -7,7 +7,7 @@ end
 
 def extra_args
   seperator_index = ARGV.index("--")
-  seperator_index && ARGV[(seperator_index + 1)..-1] || []
+  seperator_index && ARGV[(seperator_index + 1)..] || []
 end
 
 def cargo_test_task(name, *args)
