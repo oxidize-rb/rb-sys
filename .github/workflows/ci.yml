@@ -57,6 +57,13 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
+      - name: Configure bindgen
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=$((gcm clang).source -replace "bin\clang.exe","include")" >> $env:GITHUB_ENV
+
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1.1.2
         if: matrix.ruby_version != 'skip'
         with:
