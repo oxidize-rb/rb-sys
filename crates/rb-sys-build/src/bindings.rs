@@ -35,12 +35,12 @@ pub fn generate(
     clang_args.extend(rbconfig.cppflags());
 
     // see https://github.com/oxidize-rb/actions/issues/20
-    if let Ok(devkit_home) = env::var("RI_DEVKIT") {
-        let path = PathBuf::from(devkit_home);
-        let include_dir = path.join("include").to_string_lossy().to_string();
-        let normalized = include_dir.replace('\\', "/");
-        clang_args.push(normalized);
-        clang_args.push("c:/mingw64/include".to_string());
+    if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
+        clang_args.push("-I/mingw64/include".to_string());
+        clang_args.push("-IC:\\mingw64\\include".to_string());
+
+        clang_args.push("-I/msys64/include".to_string());
+        clang_args.push("-IC:\\msys64\\include".to_string());
     }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
