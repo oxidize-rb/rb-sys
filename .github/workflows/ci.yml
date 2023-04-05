@@ -72,8 +72,17 @@ jobs:
         run: bundle install -j3
 
       - run: |
+          echo "::group::mingw64"
           ls -lar /mingw64/include || true
+          echo "::endgroup::"
+
+          echo "::group::msys64"
           ls -lar /msys64/include || true
+          echo "::endgroup::"
+
+          echo "::group::ucrt64"
+          ls -lar /ucrt64/include || true
+          echo "::endgroup::"
         shell: bash
 
       - name: Debug makefile

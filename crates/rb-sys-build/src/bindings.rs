@@ -40,6 +40,10 @@ pub fn generate(
         clang_args.push("-IC:/mingw64/include".to_string());
         clang_args.push("-IC:\\mingw64\\include".to_string());
 
+        clang_args.push("-I/ucrt64/include".to_string());
+        clang_args.push("-IC:/ucrt64/include".to_string());
+        clang_args.push("-IC:\\ucrt64\\include".to_string());
+
         clang_args.push("-I/msys64/include".to_string());
         clang_args.push("-IC:/msys64/include".to_string());
         clang_args.push("-IC:\\msys64\\include".to_string());
