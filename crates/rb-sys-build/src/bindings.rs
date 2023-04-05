@@ -36,8 +36,8 @@ pub fn generate(
 
     // see https://github.com/oxidize-rb/actions/issues/20
     if is_mingw() {
-        clang_args.push("-I/mingw64/include".to_string());
-        clang_args.push("-I/ucrt64/include".to_string());
+        clang_args.push("-IC:/mingw64/include".to_string());
+        clang_args.push("-IC:/ucrt64/include".to_string());
     }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
