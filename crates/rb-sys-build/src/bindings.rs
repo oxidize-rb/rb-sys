@@ -31,9 +31,6 @@ pub fn generate(
         extension_flag.to_string(),
     ];
 
-    clang_args.extend(rbconfig.cflags.clone());
-    clang_args.extend(rbconfig.cppflags());
-
     // see https://github.com/oxidize-rb/actions/issues/20
     if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
         clang_args.push("-I/mingw64/include".to_string());
@@ -48,6 +45,9 @@ pub fn generate(
         clang_args.push("-IC:/msys64/include".to_string());
         clang_args.push("-IC:\\msys64\\include".to_string());
     }
+
+    clang_args.extend(rbconfig.cflags.clone());
+    clang_args.extend(rbconfig.cppflags());
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 
@@ -66,6 +66,12 @@ pub fn generate(
         .blocklist_function("^__.*")
         .blocklist_item("RData")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+    let bindings = if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
+        bindings.detect_include_paths(false)
+    } else {
+        bindings
+    };
 
     let bindings = if cfg!(feature = "bindgen-rbimpls") {
         bindings
