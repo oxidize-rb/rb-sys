@@ -1,6 +1,6 @@
 mod sanitizer;
 
-use crate::utils::{is_mingw, is_msvc};
+use crate::utils::is_msvc;
 use crate::RbConfig;
 use quote::ToTokens;
 use std::fs::File;
@@ -38,8 +38,9 @@ pub fn generate(
     if let Ok(devkit_home) = env::var("RI_DEVKIT") {
         let path = PathBuf::from(devkit_home);
         let include_dir = path.join("include").to_string_lossy().to_string();
-        let normalized = include_dir.replace("\\", "/");
+        let normalized = include_dir.replace('\\', "/");
         clang_args.push(normalized);
+        clang_args.push("c:/mingw64/include".to_string());
     }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
