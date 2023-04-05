@@ -35,9 +35,9 @@ pub fn generate(
     clang_args.extend(rbconfig.cppflags());
 
     // see https://github.com/oxidize-rb/actions/issues/20
-    if is_mingw() {
-        clang_args.push("-IC:/mingw64/include".to_string());
-        clang_args.push("-IC:/ucrt64/include".to_string());
+    if let Ok(devkit_home) = env::var("RI_DEVKIT") {
+        let path = PathBuf::from(devkit_home);
+        clang_args.push(path.join("include").to_string_lossy().to_string());
     }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
