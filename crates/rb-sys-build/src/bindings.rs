@@ -31,11 +31,11 @@ pub fn generate(
         extension_flag.to_string(),
     ];
 
-    // see https://github.com/oxidize-rb/actions/issues/20
-    if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
-        clang_args.push("-IC:/msys64/mingw64/include".to_string());
-        clang_args.push("-IC:/msys64/ucrt64/include".to_string());
-    }
+    // // see https://github.com/oxidize-rb/actions/issues/20
+    // if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
+    //     clang_args.push("-IC:/msys64/mingw64/include".to_string());
+    //     clang_args.push("-IC:/msys64/ucrt64/include".to_string());
+    // }
 
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
