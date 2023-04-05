@@ -37,7 +37,9 @@ pub fn generate(
     // see https://github.com/oxidize-rb/actions/issues/20
     if let Ok(devkit_home) = env::var("RI_DEVKIT") {
         let path = PathBuf::from(devkit_home);
-        clang_args.push(path.join("include").to_string_lossy().to_string());
+        let include_dir = path.join("include").to_string_lossy().to_string();
+        let normalized = include_dir.replace("\\", "/");
+        clang_args.push(normalized);
     }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
