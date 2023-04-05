@@ -41,7 +41,7 @@ pub fn generate(
                     clang_args.push(format!("--sysroot={}", sysroot.display()));
                 }
 
-                clang_args.push(format!("--target={target}"));
+                clang_args.push(format!("--target={}", target));
             }
         }
     }
