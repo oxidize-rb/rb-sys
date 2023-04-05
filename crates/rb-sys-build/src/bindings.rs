@@ -1,6 +1,6 @@
 mod sanitizer;
 
-use crate::utils::is_msvc;
+use crate::utils::{is_mingw, is_msvc};
 use crate::RbConfig;
 use quote::ToTokens;
 use std::fs::File;
@@ -33,6 +33,12 @@ pub fn generate(
 
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
+
+    // see https://github.com/oxidize-rb/actions/issues/20
+    if is_mingw() {
+        clang_args.push("-I/mingw64/include".to_string());
+        clang_args.push("-I/ucrt64/include".to_string());
+    }
 
     eprintln!("Using bindgen with clang args: {:?}", clang_args);
 

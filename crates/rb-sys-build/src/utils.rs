@@ -9,8 +9,13 @@ pub fn is_msvc() -> bool {
 
 /// Check if current platform is mswin or mingw.
 pub fn is_mswin_or_mingw() -> bool {
+    is_mingw() || is_msvc()
+}
+
+/// Check if current platform is mingw.
+pub fn is_mingw() -> bool {
     if let Ok(target) = std::env::var("TARGET") {
-        target.contains("msvc") || target.contains("pc-windows-gnu")
+        target.contains("pc-windows-gnu")
     } else {
         false
     }
