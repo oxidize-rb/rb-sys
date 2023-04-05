@@ -37,9 +37,11 @@ pub fn generate(
     // see https://github.com/oxidize-rb/actions/issues/20
     if let Ok(_devkit_home) = env::var("RI_DEVKIT") {
         clang_args.push("-I/mingw64/include".to_string());
+        clang_args.push("-IC:/mingw64/include".to_string());
         clang_args.push("-IC:\\mingw64\\include".to_string());
 
         clang_args.push("-I/msys64/include".to_string());
+        clang_args.push("-IC:/msys64/include".to_string());
         clang_args.push("-IC:\\msys64\\include".to_string());
     }
 

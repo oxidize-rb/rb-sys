@@ -71,6 +71,11 @@ jobs:
         shell: bash
         run: bundle install -j3
 
+      - run: |
+          ls -lar /mingw64/include || true
+          ls -lar /msys64/include || true
+        shell: bash
+
       - name: Debug makefile
         if: env.ACTIONS_STEP_DEBUG == 'true'
         shell: bash
