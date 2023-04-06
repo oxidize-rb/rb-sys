@@ -61,7 +61,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          echo "BINDGEN_EXTRA_CLANG_ARGS=$($(where.exe clang).replace('bin\clang.exe','include'))" >> $env:GITHUB_ENV
+          echo BINDGEN_EXTRA_CLANG_ARGS="-I$($(where.exe clang).replace('bin\clang.exe','include'))" >> $env:GITHUB_ENV
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1.1.2
         if: matrix.ruby_version != 'skip'
