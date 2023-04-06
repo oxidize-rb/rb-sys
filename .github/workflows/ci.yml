@@ -61,13 +61,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          echo LIBCLANG_PATH="c:/msys64/mingw64/opt/llvm-15/bin" >> $env:GITHUB_ENV
-
-      - name: cygpath
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          echo "MSYS2_ROOT=$(cygpath -u /)" >> $GITHUB_ENV || true
+          echo LIBCLANG_PATH="c:/msys64/mingw64/opt/llvm-15/bin" >> $GITHUB_ENV
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1.1.2
         if: matrix.ruby_version != 'skip'
