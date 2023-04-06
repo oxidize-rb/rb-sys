@@ -32,21 +32,21 @@ pub fn generate(
     ];
 
     // see https://github.com/oxidize-rb/actions/issues/20
-    if let Ok(devkit_home) = env::var("RI_DEVKIT") {
-        if let Ok(target) = env::var("TARGET") {
-            if target.contains("pc-windows-gnu") {
-                if let Ok(msystem_prefix) = env::var("MSYSTEM_PREFIX") {
-                    let msystem_prefix = msystem_prefix.trim_start_matches('/');
-                    let sysroot = PathBuf::from(devkit_home).join(msystem_prefix);
-                    clang_args.push(format!("--sysroot={}", sysroot.display()));
-                    clang_args
-                        .push("-I/mingw64/lib/gcc/x86_64-w64-mingw32/12.2.0/include".to_string())
-                }
+    // if let Ok(devkit_home) = env::var("RI_DEVKIT") {
+    //     if let Ok(target) = env::var("TARGET") {
+    //         if target.contains("pc-windows-gnu") {
+    //             if let Ok(msystem_prefix) = env::var("MSYSTEM_PREFIX") {
+    //                 let msystem_prefix = msystem_prefix.trim_start_matches('/');
+    //                 let sysroot = PathBuf::from(devkit_home).join(msystem_prefix);
+    //                 clang_args.push(format!("--sysroot={}", sysroot.display()));
+    //                 clang_args
+    //                     .push("-I/mingw64/lib/gcc/x86_64-w64-mingw32/12.2.0/include".to_string())
+    //             }
 
-                clang_args.push(format!("--target={}", target));
-            }
-        }
-    }
+    //             clang_args.push(format!("--target={}", target));
+    //         }
+    //     }
+    // }
 
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());

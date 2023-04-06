@@ -59,9 +59,15 @@ jobs:
 
       - name: Configure bindgen
         if: runner.os == 'Windows'
-        shell: pwsh
+        shell: bash
         run: |
-          echo BINDGEN_EXTRA_CLANG_ARGS="-I$($(where.exe clang).replace('bin\clang.exe','include'))" >> $env:GITHUB_ENV
+          if [ -d "/mingw64/opt/llvm-15/lib" ]; then
+            echo LIBCLANG_PATH="/mingw64/opt/llvm-15/lib" >> $env:GITHUB_ENV
+          fi
+
+          if [ -d "/ucrt64/opt/llvm-15/lib" ]; then
+            echo LIBCLANG_PATH="/ucrt64/llvm-15/lib" >> $env:GITHUB_ENV
+          fi
 
       - name: cygpath
         if: runner.os == 'Windows'
