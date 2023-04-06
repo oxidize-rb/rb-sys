@@ -36,9 +36,11 @@ pub fn generate(
         if let Ok(target) = env::var("TARGET") {
             if target.contains("pc-windows-gnu") {
                 if let Ok(msystem_prefix) = env::var("MSYSTEM_PREFIX") {
-                    let msystem_prefix = msystem_prefix.trim_start_matches("/");
+                    let msystem_prefix = msystem_prefix.trim_start_matches('/');
                     let sysroot = PathBuf::from(devkit_home).join(msystem_prefix);
                     clang_args.push(format!("--sysroot={}", sysroot.display()));
+                    clang_args
+                        .push("-I/mingw64/lib/gcc/x86_64-w64-mingw32/12.2.0/include".to_string())
                 }
 
                 clang_args.push(format!("--target={}", target));
