@@ -63,6 +63,12 @@ jobs:
         run: |
           echo BINDGEN_EXTRA_CLANG_ARGS="-I$($(where.exe clang).replace('bin\clang.exe','include'))" >> $env:GITHUB_ENV
 
+      - name: cygpath
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "MSYS2_ROOT=$(cygpath -u /)" >> $GITHUB_ENV || true
+
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1.1.2
         if: matrix.ruby_version != 'skip'
         with:
@@ -78,15 +84,15 @@ jobs:
         run: bundle install -j3
 
       - run: |
-          ls -lar /mingw64/include || true
+          find /mingw64 -name mm_malloc.h || true
         shell: bash
 
       - run: |
-          ls -lar /msys64/include || true
+          find /msys64 -name mm_malloc.h || true
         shell: bash
 
       - run: |
-          ls -lar /ucrt64/include || true
+          find /ucrt64 -name mm_malloc.h || true
         shell: bash
 
       - name: Debug makefile
