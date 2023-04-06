@@ -62,6 +62,7 @@ jobs:
         shell: bash
         run: |
           echo LIBCLANG_PATH="c:/msys64/mingw64/opt/llvm-15/bin" >> $GITHUB_ENV
+          echo BINDGEN_EXTRA_CLANG_ARGS="--target=x86_64-pc-windows-gnu --sysroot=c:/msys64/mingw64" >> $GITHUB_ENV
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1.1.2
         if: matrix.ruby_version != 'skip'
