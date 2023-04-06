@@ -61,13 +61,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          if [ -d "/mingw64/opt/llvm-15/lib" ]; then
-            echo LIBCLANG_PATH="/mingw64/opt/llvm-15/lib" >> $env:GITHUB_ENV
-          fi
-
-          if [ -d "/ucrt64/opt/llvm-15/lib" ]; then
-            echo LIBCLANG_PATH="/ucrt64/llvm-15/lib" >> $env:GITHUB_ENV
-          fi
+          echo LIBCLANG_PATH="c:/msys64/mingw64/opt/llvm-15/bin" >> $env:GITHUB_ENV
 
       - name: cygpath
         if: runner.os == 'Windows'
@@ -90,15 +84,15 @@ jobs:
         run: bundle install -j3
 
       - run: |
-          find /mingw64 -name mm_malloc.h || true
+          find /mingw64 -name '*clang*' -type f || true
         shell: bash
 
       - run: |
-          find /msys64 -name mm_malloc.h || true
+          find /msys64 -name '*clang*' -type f || true
         shell: bash
 
       - run: |
-          find /ucrt64 -name mm_malloc.h || true
+          find /ucrt64 -name '*clang*' -type f || true
         shell: bash
 
       - name: Debug makefile
