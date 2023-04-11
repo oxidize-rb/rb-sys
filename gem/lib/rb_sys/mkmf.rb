@@ -326,7 +326,7 @@ module RbSys
     end
 
     def assert_libclang_version_valid!
-      libclang_version = Libclang.version
+      libclang_version = Gem::Version.new(Libclang.version)
 
       if libclang_version < Gem::Version.new("5.0.0")
         raise "libclang version 5.0.0 or greater is required (current #{libclang_version})"
