@@ -7,7 +7,7 @@
 //! ```toml
 //! [dev-dependencies]
 //! rb-sys = { version = "0.9", features = ["link-ruby"] }
-//! rb-sys-env = { version = "0.1", features = ["test-helpers"] }
+//! rb-sys-test-helpers = { version = "0.1" }
 //! ```
 //!
 //! In your `tests/*.rs`:

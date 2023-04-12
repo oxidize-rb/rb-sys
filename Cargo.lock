@@ -288,10 +288,15 @@ dependencies = [
 [[package]]
 name = "rb-sys-env"
 version = "0.1.2"
+
+[[package]]
+name = "rb-sys-test-helpers"
+version = "0.1.0"
 dependencies = [
  "async-executor",
  "futures-lite",
  "rb-sys",
+ "rb-sys-env",
 ]
 
 [[package]]
@@ -300,6 +305,7 @@ version = "0.9.71"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
+ "rb-sys-test-helpers",
 ]
 
 [[package]]

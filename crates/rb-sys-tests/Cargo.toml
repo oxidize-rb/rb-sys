@@ -17,7 +17,8 @@ ruby-macros = ["rb-sys/ruby-macros"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
-rb-sys-env = { path = "../rb-sys-env", features = ["test-helpers"] }
+rb-sys-env = { path = "../rb-sys-env" }
+rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }

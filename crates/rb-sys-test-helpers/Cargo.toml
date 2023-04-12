@@ -1,0 +1,22 @@
+[package]
+name = "rb-sys-test-helpers"
+version = "0.1.0"
+edition = "2018"
+description = "Helpers for testing Ruby extensions from Rust"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
+readme = "readme.md"
+rust-version = "1.51"
+
+[lib]
+bench = false
+doctest = true
+
+[dependencies]
+async-executor = { version = "1.5.1" }
+futures-lite = { version = "1.13.0" }
+rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
+
+[build-dependencies]
+rb-sys-env = { path = "../rb-sys-env" }

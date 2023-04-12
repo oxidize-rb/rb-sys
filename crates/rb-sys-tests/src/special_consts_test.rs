@@ -1,6 +1,6 @@
 use rb_sys::special_consts::*;
 use rb_sys::*;
-use rb_sys_env::test_helpers::with_ruby_vm;
+use rb_sys_test_helpers::with_ruby_vm;
 
 #[test]
 fn test_fixnum_p() {
