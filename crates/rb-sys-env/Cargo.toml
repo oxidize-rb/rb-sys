@@ -2,7 +2,7 @@
 name = "rb-sys-env"
 version = "0.1.2"
 edition = "2018"
-description = "Integrates rb-sys into high level frameworks"
+description = "Integrate rb-sys into your Cargo project"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
@@ -11,4 +11,16 @@ rust-version = "1.51"
 
 [lib]
 bench = false
-doctest = false
+doctest = true
+
+[dependencies]
+async-executor = { version = "1.5.1", optional = true }
+futures-lite = { version = "1.13.0", optional = true }
+rb-sys = { path = "../rb-sys", optional = true, features = ["link-ruby"] }
+
+[dev-dependencies]
+rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
+
+[features]
+default = ["test-helpers"]
+test-helpers = ["dep:async-executor", "dep:futures-lite", "dep:rb-sys"]

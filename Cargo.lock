@@ -122,16 +122,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctor"
-version = "0.1.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d2301688392eb071b0bf1a37be05c469d3cc4dbbd95df672fe28ab021e6a096"
-dependencies = [
- "quote",
- "syn",
-]
-
-[[package]]
 name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,12 +229,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "once_cell"
-version = "1.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
-
-[[package]]
 name = "parking"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,15 +288,16 @@ dependencies = [
 [[package]]
 name = "rb-sys-env"
 version = "0.1.2"
+dependencies = [
+ "async-executor",
+ "futures-lite",
+ "rb-sys",
+]
 
 [[package]]
 name = "rb-sys-tests"
 version = "0.9.71"
 dependencies = [
- "async-executor",
- "ctor",
- "futures-lite",
- "once_cell",
  "rb-sys",
  "rb-sys-env",
 ]

@@ -1,11 +1,10 @@
 use rb_sys::special_consts::*;
 use rb_sys::*;
-
-use crate::ruby_test;
+use rb_sys_env::test_helpers::with_ruby_vm;
 
 #[test]
 fn test_fixnum_p() {
-    ruby_test(|| unsafe {
+    with_ruby_vm(|| unsafe {
         let int = rb_num2fix(1);
         let big = rb_int2big(9999999);
 
@@ -16,7 +15,7 @@ fn test_fixnum_p() {
 
 #[test]
 fn test_static_sym_p() {
-    ruby_test(|| unsafe {
+    with_ruby_vm(|| unsafe {
         let id = rb_intern_str(rstring!("foo"));
         let sym = rb_id2sym(id);
 
@@ -27,7 +26,7 @@ fn test_static_sym_p() {
 
 #[test]
 fn test_flonum_p() {
-    ruby_test(|| unsafe {
+    with_ruby_vm(|| unsafe {
         let flonum = rb_float_new(0.0);
 
         #[cfg(ruby_use_flonum)]

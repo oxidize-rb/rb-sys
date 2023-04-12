@@ -1,10 +1,9 @@
 use rb_sys::*;
-
-use crate::ruby_test;
+use rb_sys_env::test_helpers::with_ruby_vm;
 
 #[test]
 fn basic_smoke_test() {
-    ruby_test(|| {
+    with_ruby_vm(|| {
         let cstr = std::ffi::CString::new("hello").unwrap();
         let str = cstr.into_raw();
 

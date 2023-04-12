@@ -2,65 +2,6 @@
 
 extern crate rb_sys;
 
-use async_executor::LocalExecutor;
-use ctor::ctor;
-
-use futures_lite::future;
-use once_cell::sync::Lazy;
-use std::sync::atomic::{AtomicBool, Ordering};
-
-static INITED: AtomicBool = AtomicBool::new(false);
-
-#[ctor]
-fn vm_init() {
-    if INITED
-        .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-        .is_ok()
-    {
-        unsafe {
-            let var_in_stack_frame = std::mem::zeroed();
-            let argv: [*mut std::os::raw::c_char; 0] = [];
-            let argv = argv.as_ptr();
-            let mut argc = 0;
-
-            rb_sys::ruby_init_stack(var_in_stack_frame);
-            rb_sys::ruby_sysinit(&mut argc, argv as _);
-            rb_sys::ruby_init();
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct RubyTestExecutor {
-    executor: LocalExecutor<'static>,
-}
-
-impl RubyTestExecutor {
-    pub fn run_test<T>(&self, f: impl FnOnce() -> T) -> T {
-        let local_ex = &self.executor;
-
-        future::block_on(local_ex.run(async { f() }))
-    }
-}
-
-impl Default for RubyTestExecutor {
-    fn default() -> Self {
-        Self {
-            executor: LocalExecutor::new(),
-        }
-    }
-}
-
-unsafe impl Sync for RubyTestExecutor {}
-unsafe impl Send for RubyTestExecutor {}
-
-/// Ensures all tests are run by the same thread and that the Ruby VM is initialized from.
-pub fn ruby_test<T>(f: impl FnOnce() -> T) -> T {
-    static EXECUTOR: Lazy<RubyTestExecutor> = Lazy::new(RubyTestExecutor::default);
-
-    EXECUTOR.run_test(f)
-}
-
 #[macro_use]
 mod helpers;
 

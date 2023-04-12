@@ -17,10 +17,7 @@ ruby-macros = ["rb-sys/ruby-macros"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
-ctor = "0.1"
-async-executor = "1.5.1"
-once_cell = "1.17.1"
-futures-lite = "1.13.0"
+rb-sys-env = { path = "../rb-sys-env", features = ["test-helpers"] }
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }

@@ -7,6 +7,7 @@ Helpers to integrate `rb-sys` into your high-level Ruby bindings library.
 - Provides the neccesary Cargo configuration to ensure that Rust crates compile properly across all platforms
 - Sets useful rustc-cfg flags that you can use from your crate
 - Exposes all `RbConfig::CONFIG` values from rb-sys
+- Provides a `test_helpers::with_ruby_vm` function that you can use to run tests that require a Ruby VM
 
 ## Usage
 
@@ -24,6 +25,33 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _rb_env = rb_sys_env::activate()?;
 
     Ok(())
+}
+```
+
+### Test helpers
+
+This crate also provides a `test_helpers` module that you can use to run tests that require a Ruby VM.
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dev-dependencies]
+rb-sys-env = { version = "0.1", features = ["test-helpers"] }
+```
+
+Then, use the `with_ruby_vm` function in your tests:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use rb_sys_env::test_helpers::with_ruby_vm;
+
+    #[test]
+    fn test_something() {
+        with_ruby_vm(|| {
+            // Your test code here (hint: this works with the `magnus` crate, too!)
+        });
+    }
 }
 ```
 
