@@ -93,3 +93,5 @@ impl Default for RubyTestExecutor {
 
 unsafe impl Sync for RubyTestExecutor {}
 unsafe impl Send for RubyTestExecutor {}
+
+pub use rb_sys_test_helpers_macros::*;

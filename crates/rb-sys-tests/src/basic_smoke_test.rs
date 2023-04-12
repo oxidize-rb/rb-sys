@@ -1,23 +1,21 @@
 use rb_sys::*;
-use rb_sys_test_helpers::with_ruby_vm;
+use rb_sys_test_helpers::ruby_test;
 
-#[test]
+#[ruby_test]
 fn basic_smoke_test() {
-    with_ruby_vm(|| {
-        let cstr = std::ffi::CString::new("hello").unwrap();
-        let str = cstr.into_raw();
+    let cstr = std::ffi::CString::new("hello").unwrap();
+    let str = cstr.into_raw();
 
-        let cworld = std::ffi::CString::new(" world").unwrap();
-        let world = cworld.into_raw();
+    let cworld = std::ffi::CString::new(" world").unwrap();
+    let world = cworld.into_raw();
 
-        unsafe {
-            let rb_string_one = rb_utf8_str_new_cstr(str);
-            let mut rb_string_two = rb_str_cat(rb_string_one, world, 6);
-            let result = rstring_to_string!(rb_string_two);
+    unsafe {
+        let rb_string_one = rb_utf8_str_new_cstr(str);
+        let mut rb_string_two = rb_str_cat(rb_string_one, world, 6);
+        let result = rstring_to_string!(rb_string_two);
 
-            assert_eq!(result, "hello world");
-        }
-    });
+        assert_eq!(result, "hello world");
+    }
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use rb_sys::macros::*;
 use rb_sys::*;
-use rb_sys_test_helpers::with_ruby_vm;
+use rb_sys_test_helpers::{ruby_test, with_ruby_vm};
 use std::{slice, str};
 
 #[test]
@@ -25,38 +25,34 @@ fn test_rarray_len() {
 
 #[test]
 fn test_rstring_ptr() {
-    with_ruby_vm(|| {
-        let rstr = rstring!("foo");
+    let rstr = rstring!("foo");
 
-        let rust_str = unsafe {
-            let ptr = RSTRING_PTR(rstr);
-            let len = RSTRING_LEN(rstr);
+    let rust_str = unsafe {
+        let ptr = RSTRING_PTR(rstr);
+        let len = RSTRING_LEN(rstr);
 
-            str::from_utf8(slice::from_raw_parts(ptr as _, len as _))
-        };
+        str::from_utf8(slice::from_raw_parts(ptr as _, len as _))
+    };
 
-        assert_eq!(rust_str.unwrap(), "foo");
-    })
+    assert_eq!(rust_str.unwrap(), "foo");
 }
 
-#[test]
+#[ruby_test]
 fn test_rarray_ptr() {
-    with_ruby_vm(|| {
-        let ary = unsafe { rb_ary_new() };
-        let foo = rstring!("foo");
+    let ary = unsafe { rb_ary_new() };
+    let foo = rstring!("foo");
 
-        unsafe { rb_ary_push(ary, Qtrue as _) };
-        unsafe { rb_ary_push(ary, Qnil as _) };
-        unsafe { rb_ary_push(ary, Qfalse as _) };
-        unsafe { rb_ary_push(ary, foo) };
+    unsafe { rb_ary_push(ary, Qtrue as _) };
+    unsafe { rb_ary_push(ary, Qnil as _) };
+    unsafe { rb_ary_push(ary, Qfalse as _) };
+    unsafe { rb_ary_push(ary, foo) };
 
-        let slice = unsafe {
-            let ptr = RARRAY_PTR(ary);
-            let len = RARRAY_LEN(ary);
+    let slice = unsafe {
+        let ptr = RARRAY_PTR(ary);
+        let len = RARRAY_LEN(ary);
 
-            slice::from_raw_parts(ptr as _, len as _)
-        };
+        slice::from_raw_parts(ptr as _, len as _)
+    };
 
-        assert_eq!(slice, [Qtrue as _, Qnil as _, Qfalse as _, foo]);
-    })
+    assert_eq!(slice, [Qtrue as _, Qnil as _, Qfalse as _, foo]);
 }

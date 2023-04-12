@@ -1,0 +1,24 @@
+[package]
+name = "rb-sys-test-helpers-macros"
+version = "0.1.0"
+edition = "2018"
+description = "Macros for the rb-sys-test-helpers crate"
+homepage = "https://github.com/oxidize-rb/rb-sys"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxidize-rb/rb-sys"
+readme = "readme.md"
+rust-version = "1.51"
+
+[lib]
+proc-macro = true
+bench = false
+doctest = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
+
+[dev-dependencies]
+rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
+rb-sys = { path = "../rb-sys" }
