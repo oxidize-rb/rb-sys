@@ -23,4 +23,4 @@ rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
 
 [features]
 default = ["test-helpers"]
-test-helpers = ["dep:async-executor", "dep:futures-lite", "dep:rb-sys"]
+test-helpers = ["async-executor", "futures-lite", "rb-sys"]
