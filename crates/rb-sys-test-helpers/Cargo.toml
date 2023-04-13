@@ -14,10 +14,9 @@ bench = false
 doctest = true
 
 [dependencies]
-async-executor = { version = "1.5.1" }
-futures-lite = { version = "1.13.0" }
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
 rb-sys-test-helpers-macros = { path = "../rb-sys-test-helpers-macros" }
+tokio = { version = "1.27.0", features = ["rt-multi-thread"] }
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }

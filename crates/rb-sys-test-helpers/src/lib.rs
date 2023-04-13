@@ -25,9 +25,6 @@
 
 use std::{panic::UnwindSafe, sync::Mutex};
 
-use async_executor::LocalExecutor;
-use futures_lite::future;
-
 /// Initializes a Ruby VM, and ensures all tests are run by the same thread and
 /// that the Ruby VM is initialized from.
 ///
@@ -131,7 +128,7 @@ pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
 
 #[derive(Debug)]
 struct RubyTestExecutor {
-    executor: Mutex<LocalExecutor<'static>>,
+    executor: Mutex<tokio::runtime::Runtime>,
 }
 
 impl RubyTestExecutor {
@@ -141,16 +138,19 @@ impl RubyTestExecutor {
     {
         // Make sure we don't panic while holding the lock.
         let result = {
-            let local_ex = &self
-                .executor
-                .lock()
-                .expect("failed to lock Ruby test executor");
+            let local_ex = &self.executor.lock().expect("failed to lock Ruby executor");
 
-            std::panic::catch_unwind(|| future::block_on(local_ex.run(async { f() })))
+            std::panic::catch_unwind(|| {
+                local_ex.block_on(async move {
+                    let result = std::panic::catch_unwind(f);
+                    result
+                })
+            })
         };
 
         match result {
-            Ok(result) => result,
+            Ok(Ok(result)) => result,
+            Ok(Err(err)) => std::panic::resume_unwind(err),
             Err(err) => std::panic::resume_unwind(err),
         }
     }
@@ -159,7 +159,13 @@ impl RubyTestExecutor {
 impl Default for RubyTestExecutor {
     fn default() -> Self {
         Self {
-            executor: Mutex::new(LocalExecutor::new()),
+            executor: Mutex::new(
+                tokio::runtime::Builder::new_multi_thread()
+                    .max_blocking_threads(1)
+                    .worker_threads(1)
+                    .build()
+                    .unwrap(),
+            ),
         }
     }
 }
