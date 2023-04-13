@@ -23,7 +23,7 @@
 //! }
 //! ```
 
-use std::{mem::MaybeUninit, panic::UnwindSafe, sync::Mutex};
+use std::{panic::UnwindSafe, sync::Mutex};
 
 use async_executor::LocalExecutor;
 use futures_lite::future;
@@ -50,16 +50,16 @@ where
     F: FnOnce() -> T + UnwindSafe,
 {
     static INIT: std::sync::Once = std::sync::Once::new();
-    static mut EXECUTOR: MaybeUninit<RubyTestExecutor> = MaybeUninit::uninit();
+    static mut EXECUTOR: Option<RubyTestExecutor> = None;
 
     unsafe {
         INIT.call_once(|| {
             ruby_setup_ceremony();
-            EXECUTOR.write(RubyTestExecutor::default());
+            EXECUTOR = Some(RubyTestExecutor::default());
         });
     }
 
-    let executor = unsafe { EXECUTOR.assume_init_ref() };
+    let executor = unsafe { EXECUTOR.as_ref().unwrap() };
     executor.run_test(f)
 }
 
