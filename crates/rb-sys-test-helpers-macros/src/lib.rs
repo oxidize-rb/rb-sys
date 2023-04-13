@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn};
+use syn::ItemFn;
 
 /// A proc-macro which generates a `#[test]` function has access to a valid Ruby VM.
 ///
@@ -13,8 +13,12 @@ use syn::{parse_macro_input, ItemFn};
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn ruby_test(_attr: TokenStream, input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as ItemFn);
+pub fn ruby_test(_attrs: TokenStream, input: TokenStream) -> TokenStream {
+    let input: ItemFn = match syn::parse2(input.into()) {
+        Ok(input) => input,
+        Err(err) => return err.to_compile_error().into(),
+    };
+
     let block = input.block;
     let attrs = input.attrs;
     let vis = input.vis;

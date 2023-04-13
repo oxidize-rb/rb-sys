@@ -15,9 +15,9 @@ def cargo_test_task(name, *args)
 
   desc "Run cargo tests for #{name.inspect} against current Ruby"
   task task_name do
-    ENV["RUST_TEST_THREADS"] ||= "1"
     default_args = ENV["CI"] || extra_args.include?("--verbose") ? [] : ["--quiet"]
-    sh "cargo", "test", *default_args, *extra_args, *args
+    sh "cargo", "test", *default_args, *extra_args, *args, "-p", name
+    puts "=" * 80
   end
 
   task cargo: task_name
@@ -28,6 +28,7 @@ namespace :test do
   cargo_test_task "rb-sys-build"
   cargo_test_task "rb-sys-tests"
   cargo_test_task "rb-sys-env"
+  cargo_test_task "rb-sys-test-helpers"
 
   desc "Test against all installed Rubies"
   task :rubies do
