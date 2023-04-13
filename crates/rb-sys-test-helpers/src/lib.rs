@@ -23,7 +23,7 @@
 //! }
 //! ```
 
-use std::mem::MaybeUninit;
+use std::{mem::MaybeUninit, panic::UnwindSafe, sync::Mutex};
 
 use async_executor::LocalExecutor;
 use futures_lite::future;
@@ -45,7 +45,10 @@ use futures_lite::future;
 ///     assert_eq!(result, "hello world");
 /// });
 /// ```
-pub fn with_ruby_vm<T>(f: impl FnOnce() -> T) -> T {
+pub fn with_ruby_vm<F, T>(f: F) -> T
+where
+    F: FnOnce() -> T + UnwindSafe,
+{
     static INIT: std::sync::Once = std::sync::Once::new();
     static mut EXECUTOR: MaybeUninit<RubyTestExecutor> = MaybeUninit::uninit();
 
@@ -128,21 +131,35 @@ pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
 
 #[derive(Debug)]
 struct RubyTestExecutor {
-    executor: LocalExecutor<'static>,
+    executor: Mutex<LocalExecutor<'static>>,
 }
 
 impl RubyTestExecutor {
-    pub fn run_test<T>(&self, f: impl FnOnce() -> T) -> T {
-        let local_ex = &self.executor;
+    pub fn run_test<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce() -> T + UnwindSafe,
+    {
+        // Make sure we don't panic while holding the lock.
+        let result = {
+            let local_ex = &self
+                .executor
+                .lock()
+                .expect("failed to lock Ruby test executor");
 
-        future::block_on(local_ex.run(async { f() }))
+            std::panic::catch_unwind(|| future::block_on(local_ex.run(async { f() })))
+        };
+
+        match result {
+            Ok(result) => result,
+            Err(err) => std::panic::resume_unwind(err),
+        }
     }
 }
 
 impl Default for RubyTestExecutor {
     fn default() -> Self {
         Self {
-            executor: LocalExecutor::new(),
+            executor: Mutex::new(LocalExecutor::new()),
         }
     }
 }

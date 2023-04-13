@@ -22,9 +22,9 @@ fn test_rb_integer_type_p() {
 #[ruby_test]
 fn test_rb_dynamic_sym_p() {
     unsafe {
-        let id = rb_intern_str(rstring!("foo"));
+        let id = rb_intern_str(rstring!("foostatic"));
         let static_sym = rb_id2sym(id);
-        let sym = rb_to_symbol(rstring!("foobar"));
+        let sym = rb_to_symbol(rstring!("foobardynamic"));
 
         assert!(!RB_DYNAMIC_SYM_P(static_sym));
         assert!(RB_DYNAMIC_SYM_P(sym));

@@ -13,7 +13,7 @@ fn test_fixnum_p() {
 
 #[ruby_test]
 fn test_static_sym_p() {
-    let id = unsafe { rb_intern_str(rstring!("foo")) };
+    let id = unsafe { rb_intern_str(rstring!("teststaticsymp")) };
     let sym = unsafe { rb_id2sym(id) };
 
     assert!(STATIC_SYM_P(sym));
