@@ -12,11 +12,7 @@ use std::{
 };
 use version::Version;
 
-const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
-    Version::new(2, 3),
-    Version::new(2, 4),
-    Version::new(2, 5),
-    Version::new(2, 6),
+const SUPPORTED_RUBY_VERSIONS: [Version; 5] = [
     Version::new(2, 7),
     Version::new(3, 0),
     Version::new(3, 1),
@@ -120,7 +116,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if is_global_allocator_enabled(rbconfig) {
+    if is_global_allocator_enabled() {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
 

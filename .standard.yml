@@ -1,7 +1,7 @@
 # For available configuration options, see:
 #   https://github.com/testdouble/standard
 ---
-ruby_version: 2.3
+ruby_version: 2.7
 ignore:
   - "examples/rust_reverse/tmp/**/*"
   - "target/**/*"

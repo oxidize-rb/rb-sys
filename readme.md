@@ -15,7 +15,7 @@ it's not easy, it's a bug.
 ## Features
 
 - Battle-tested Rust bindings for [the Ruby C API][ruby-c-api]
-- Support for Ruby 2.4+
+- Support for Ruby 2.7+
 - Supports all major platforms (Linux, macOS, Windows)
 - Cross compilation of gems
 - Integration with [`rake-compiler`][rake-compiler]
