@@ -23,6 +23,8 @@
 //! }
 //! ```
 
+use std::mem::MaybeUninit;
+
 use async_executor::LocalExecutor;
 use futures_lite::future;
 
@@ -45,28 +47,82 @@ use futures_lite::future;
 /// ```
 pub fn with_ruby_vm<T>(f: impl FnOnce() -> T) -> T {
     static INIT: std::sync::Once = std::sync::Once::new();
-    static mut EXECUTOR: Option<RubyTestExecutor> = None;
+    static mut EXECUTOR: MaybeUninit<RubyTestExecutor> = MaybeUninit::uninit();
 
     unsafe {
         INIT.call_once(|| {
-            vm_init();
-            EXECUTOR = Some(RubyTestExecutor::default());
+            ruby_setup_ceremony();
+            EXECUTOR.write(RubyTestExecutor::default());
         });
     }
 
-    unsafe { EXECUTOR.as_ref() }.unwrap().run_test(f)
+    let executor = unsafe { EXECUTOR.assume_init_ref() };
+    executor.run_test(f)
 }
 
-fn vm_init() {
+fn ruby_setup_ceremony() {
     unsafe {
-        let var_in_stack_frame = std::mem::zeroed();
-        let argv: [*mut std::os::raw::c_char; 0] = [];
-        let argv = argv.as_ptr();
-        let mut argc = 0;
+        #[cfg(windows)]
+        {
+            let mut argc = 0;
+            let mut argv: [*mut std::os::raw::c_char; 0] = [];
+            let mut argv = argv.as_mut_ptr();
+            rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
+        }
 
-        rb_sys::ruby_init_stack(var_in_stack_frame);
-        rb_sys::ruby_sysinit(&mut argc, argv as _);
-        rb_sys::ruby_init();
+        match rb_sys::ruby_setup() {
+            0 => {}
+            code => panic!("Failed to setup Ruby (error code: {})", code),
+        };
+
+        let mut argv: [*mut i8; 3] = [
+            "ruby\0".as_ptr() as _,
+            "-e\0".as_ptr() as _,
+            "\0".as_ptr() as _,
+        ];
+
+        let node = rb_sys::ruby_process_options(argv.len() as i32, argv.as_mut_ptr());
+
+        match rb_sys::ruby_exec_node(node) {
+            0 => {}
+            code => panic!("Failed to execute Ruby (error code: {})", code),
+        };
+    }
+}
+
+/// Runs a test with GC stress enabled to help find GC bugs.
+///
+/// ### Example
+///
+/// ```
+/// use rb_sys_test_helpers::{with_gc_stress, with_ruby_vm};
+///
+/// with_ruby_vm(|| unsafe {
+///     let hello_world = with_gc_stress(|| unsafe {
+///         let mut rstring = rb_sys::rb_utf8_str_new_cstr("hello world\0".as_ptr() as _);
+///         let result = rb_sys::rb_string_value_cstr(&mut rstring);
+///         std::ffi::CStr::from_ptr(result).to_string_lossy().into_owned()
+///     });
+///
+///    assert_eq!(hello_world, "hello world");
+/// });
+/// ```
+pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
+    unsafe {
+        let stress_intern = rb_sys::rb_intern("stress\0".as_ptr() as _);
+        let stress_eq_intern = rb_sys::rb_intern("stress=\0".as_ptr() as _);
+        let gc_module =
+            rb_sys::rb_const_get(rb_sys::rb_cObject, rb_sys::rb_intern("GC\0".as_ptr() as _));
+
+        let old_gc_stress = rb_sys::rb_funcall(gc_module, stress_intern, 0);
+        rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, rb_sys::Qtrue);
+        let result = std::panic::catch_unwind(f);
+        rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, old_gc_stress);
+
+        match result {
+            Ok(result) => result,
+            Err(err) => std::panic::resume_unwind(err),
+        }
     }
 }
 

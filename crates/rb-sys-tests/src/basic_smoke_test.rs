@@ -18,7 +18,7 @@ fn basic_smoke_test() {
     }
 }
 
-#[test]
+#[ruby_test]
 fn test_global_variables_are_properly_linked() {
     unsafe { assert!(!rb_sys::rb_eArgError != 0) }
     unsafe { assert!(!rb_sys::rb_eTypeError != 0) }
