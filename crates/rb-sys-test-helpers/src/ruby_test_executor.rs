@@ -1,5 +1,5 @@
 use std::panic;
-use std::sync::mpsc::{self, Sender};
+use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
 
@@ -16,13 +16,13 @@ use crate::once_cell::OnceCell;
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
 
 pub struct RubyTestExecutor {
-    sender: Option<Sender<Box<dyn FnOnce() + Send>>>,
+    sender: Option<SyncSender<Box<dyn FnOnce() + Send>>>,
     handle: Option<JoinHandle<()>>,
 }
 
 impl RubyTestExecutor {
     pub fn start() -> Self {
-        let (sender, receiver) = mpsc::channel::<Box<dyn FnOnce() + Send>>();
+        let (sender, receiver) = mpsc::sync_channel::<Box<dyn FnOnce() + Send>>(1);
 
         // Spawn a new scoped thread
         let handle = thread::spawn(move || {
@@ -66,22 +66,23 @@ impl RubyTestExecutor {
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
     {
-        let (result_sender, result_receiver) = mpsc::channel();
+        let (result_sender, result_receiver) = mpsc::sync_channel(1);
 
         let closure = Box::new(move || {
             let result = panic::catch_unwind(panic::AssertUnwindSafe(f));
-            result_sender.send(result).unwrap();
+            result_sender
+                .send(result)
+                .expect("Failed to send Ruby test result to Rust test thread");
         });
 
         if let Some(sender) = &self.sender {
-            sender.send(closure).unwrap();
+            sender
+                .send(closure)
+                .expect("Failed to send closure to Ruby test thread");
         } else {
             panic!("RubyTestExecutor is not running");
         }
 
-        // This code is pretty sketchy for Apple silicon for Cargo < 1.57
-        // (without crossbeam). If you are running into issues, try upgrading
-        // Rust.
         match result_receiver
             .recv()
             .expect("Failed to receive test result")
@@ -103,6 +104,8 @@ pub fn global_executor() -> &'static RubyTestExecutor {
 }
 
 unsafe fn ruby_setup_ceremony() {
+    trick_the_linker();
+
     #[cfg(windows)]
     {
         let mut argc = 0;
@@ -139,15 +142,6 @@ unsafe fn ruby_setup_ceremony() {
         let mut msg = rb_inspect(err);
         let msg = rb_string_value_cstr(&mut msg);
 
-        // Force the compiler to not optimize out rb_ext_ractor_safe...
-        #[cfg(ruby_gte_3_0)]
-        {
-            #[allow(clippy::cmp_null)]
-            let ensure_ractor_safe =
-                rb_ext_ractor_safe as *const std::ffi::c_void != std::ptr::null();
-            assert!(ensure_ractor_safe);
-        }
-
         let msg = std::ffi::CStr::from_ptr(msg).to_string_lossy().into_owned();
         rb_set_errinfo(Qnil as _);
         panic!("Failed to process Ruby options: {}", msg);
@@ -157,6 +151,16 @@ unsafe fn ruby_setup_ceremony() {
         0 => {}
         code => panic!("Failed to execute Ruby (error code: {})", code),
     };
+}
+
+fn trick_the_linker() {
+    // Force the compiler to not optimize out rb_ext_ractor_safe...
+    #[cfg(ruby_gte_3_0)]
+    {
+        #[allow(clippy::cmp_null)]
+        let ensure_ractor_safe = rb_ext_ractor_safe as *const () != std::ptr::null();
+        assert!(ensure_ractor_safe);
+    }
 }
 
 #[cfg(test)]
