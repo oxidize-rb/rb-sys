@@ -128,7 +128,7 @@ where
         let mut outbuf = outbuf.take().unwrap();
 
         let result = func();
-        outbuf.write(result);
+        outbuf.as_mut_ptr().write(result);
 
         outbuf.as_ptr() as _
     }

@@ -25,7 +25,7 @@ macro_rules! rstring_to_string {
 macro_rules! rb_funcall_typed {
     ($v:expr, $m:expr, $args:expr, $t:expr) => {{
         {
-            let args: &mut [rb_sys::VALUE] = $args.as_mut_slice();
+            let args: &mut [rb_sys::VALUE] = &mut $args[..];
             let id = rb_sys::rb_intern(concat!($m, "\0").as_ptr() as _);
             let argv = $args.as_ptr();
             let result = rb_sys::rb_check_funcall($v, id, args.len() as _, argv);

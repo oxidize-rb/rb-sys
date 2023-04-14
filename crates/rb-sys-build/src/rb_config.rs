@@ -415,7 +415,7 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
 }
 
-// Needed because Rust 1.57 does not support link-arg, and thus rpath
+// Needed because Rust 1.54 does not support link-arg, and thus rpath
 // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
 fn append_ld_library_path(search_paths: Vec<&str>) {
     let env_var_name = if is_mswin_or_mingw() {
