@@ -44,7 +44,7 @@ pub use utils::*;
 ///
 /// ```
 /// use rb_sys_test_helpers::with_ruby_vm;
-/// use core::ffi::CStr;
+/// use std::ffi::CStr;
 ///
 /// with_ruby_vm(|| unsafe {
 ///     let mut hello = rb_sys::rb_utf8_str_new_cstr("hello \0".as_ptr() as _);
@@ -68,7 +68,7 @@ where
 ///
 /// ```
 /// use rb_sys_test_helpers::{with_gc_stress, with_ruby_vm};
-/// use core::ffi::CStr;
+/// use std::ffi::CStr;
 ///
 /// with_ruby_vm(|| unsafe {
 ///     let hello_world = with_gc_stress(|| unsafe {
@@ -143,7 +143,7 @@ where
 
         if state == 0 {
             if let Some(result) = outbuf_ptr.as_ref() {
-                Ok(result.assume_init_read())
+                Ok(result.as_ptr().read())
             } else {
                 panic!("rb_protect returned a null pointer")
             }

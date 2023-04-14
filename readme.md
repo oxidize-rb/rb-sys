@@ -42,7 +42,7 @@ building your own gem.
 
 - Ruby: <!--toolchains .policy.minimum-supported-ruby-version -->2.4<!--/toolchains-->+ (for full compatibility with
   Rubygems)
-- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.51<!--/toolchains-->+ (for old versions of rust
+- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.57<!--/toolchains-->+ (for old versions of rust
   toolchains ubuntu)
 
 ## Supported Platforms
