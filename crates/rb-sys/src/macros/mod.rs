@@ -9,9 +9,16 @@
 
 #[cfg(ruby_gte_3_0)]
 use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
-#[cfg(ruby_lt_3_0)]
+#[cfg(all(ruby_lt_3_0, ruby_gt_2_4))]
 use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
+#[cfg(ruby_lte_2_4)]
+use crate::RARRAY_EMBED_LEN_SHIFT;
+
+#[cfg(ruby_gt_2_4)]
 use crate::ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
+#[cfg(ruby_lte_2_4)]
+use crate::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
+
 use crate::{
     value_type, Qnil, FIXNUM_FLAG, FLONUM_FLAG, FLONUM_MASK, IMMEDIATE_MASK, RB_TYPE_P,
     SYMBOL_FLAG, VALUE,
