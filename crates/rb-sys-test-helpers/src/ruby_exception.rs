@@ -14,10 +14,12 @@ pub struct RubyException {
 }
 
 impl RubyException {
+    /// Creates a new Ruby exception from a Ruby value.
     pub fn new(value: VALUE) -> Self {
         Self { value }
     }
 
+    /// Get the message of the Ruby exception.
     pub fn message(self) -> Option<String> {
         unsafe {
             rb_funcall_typed!(self.value, "message", [], RUBY_T_STRING)
@@ -25,6 +27,7 @@ impl RubyException {
         }
     }
 
+    /// Get the full message of the Ruby exception.
     pub fn full_message(self) -> Option<String> {
         unsafe {
             if let Some(mut message) =
@@ -38,6 +41,7 @@ impl RubyException {
         }
     }
 
+    /// Get the backtrace string of the Ruby exception.
     pub fn backtrace(self) -> Option<String> {
         unsafe {
             if let Some(backtrace) = rb_funcall_typed!(self.value, "backtrace", [], RUBY_T_ARRAY) {
@@ -55,6 +59,7 @@ impl RubyException {
         }
     }
 
+    /// Get the inspect string of the Ruby exception.
     pub fn inspect(self) -> String {
         unsafe {
             if let Some(mut inspect) = rb_funcall_typed!(self.value, "inspect", [], RUBY_T_STRING) {
@@ -65,6 +70,7 @@ impl RubyException {
         }
     }
 
+    /// Get the class name of the Ruby exception.
     pub fn classname(self) -> String {
         unsafe {
             let classname = rb_class2name(rb_obj_class(self.value));
@@ -100,9 +106,6 @@ impl std::fmt::Debug for RubyException {
         Ok(())
     }
 }
-
-// unsafe {
-// };
 
 #[cfg(test)]
 mod tests {

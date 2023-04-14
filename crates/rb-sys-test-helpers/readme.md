@@ -14,7 +14,7 @@ rb-sys-test-helpers = { version = "0.1" }
 
 Then, in your crate's `build.rs`:
 
-```rust
+```rust,ignore
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = rb_sys_env::activate()?;
 
@@ -28,6 +28,7 @@ Then, you can use the `with_ruby_vm` function in your tests:
 #[cfg(test)]
 mod tests {
     use rb_sys_test_helpers::ruby_test;
+    use rb_sys::{rb_num2fix, rb_int2big, FIXNUM_P};
 
     #[ruby_test]
     fn test_something() {

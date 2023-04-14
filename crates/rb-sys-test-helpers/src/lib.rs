@@ -1,29 +1,5 @@
-//! Helpers for testing Ruby from Rust.
-//!
-//! ## Usage
-//!
-//! In your `Cargo.toml`:
-//!
-//! ```toml
-//! [dev-dependencies]
-//! rb-sys = { version = "0.9", features = ["link-ruby"] }
-//! rb-sys-test-helpers = { version = "0.1" }
-//! ```
-//!
-//! In your `tests/*.rs`:
-//!
-//! ```rust
-//! use rb_sys_test_helpers::with_ruby_vm;
-//!
-//! #[test]
-//! fn test_something() {
-//!     with_ruby_vm(|| {
-//!         // Your test code that needs Ruby goes here...
-//!     });
-//! }
-//! ```
-//!
-
+#![allow(rustdoc::bare_urls)]
+#![doc = include_str!("../readme.md")]
 mod once_cell;
 mod ruby_exception;
 mod ruby_test_executor;
@@ -37,8 +13,15 @@ pub use rb_sys_test_helpers_macros::*;
 pub use ruby_exception::RubyException;
 pub use utils::*;
 
-/// Initializes a Ruby VM, and ensures all tests are run by the same thread and
-/// that the Ruby VM is initialized from.
+/// Run a given function with inside of a Ruby VM.
+///
+/// Doing this properly it is not trivial, so this function abstracts away the
+/// details. Under the hood, it ensures:
+///
+/// 1. The Ruby VM is setup and initialized once and only once.
+/// 2. All code runs on the same OS thread.
+/// 3. Exceptions are properly handled and propagated as Rust `Result<T,
+///    RubyException>` values.
 ///
 /// ### Example
 ///

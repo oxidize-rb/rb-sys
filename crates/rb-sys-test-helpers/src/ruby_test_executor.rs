@@ -79,6 +79,9 @@ impl RubyTestExecutor {
             panic!("RubyTestExecutor is not running");
         }
 
+        // This code is pretty sketchy for Apple silicon for Cargo < 1.57
+        // (without crossbeam). If you are running into issues, try upgrading
+        // Rust.
         match result_receiver
             .recv()
             .expect("Failed to receive test result")

@@ -1,3 +1,4 @@
+#![allow(rustdoc::broken_intra_doc_links)]
 //! Definitions for the compiled Ruby macros.
 //!
 //! Since macros are rely on the C preprocessor, they are not automatically

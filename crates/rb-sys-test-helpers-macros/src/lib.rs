@@ -1,8 +1,21 @@
+#![allow(rustdoc::bare_urls)]
+#![doc = include_str!("../readme.md")]
+
 use proc_macro::{TokenStream, TokenTree};
 use quote::quote;
 use syn::{spanned::Spanned, ItemFn};
 
 /// A proc-macro which generates a `#[test]` function has access to a valid Ruby VM.
+///
+/// Doing this properly it is not trivial, so this function abstracts away the
+/// details. Under the hood, it ensures:
+///
+/// 1. The Ruby VM is setup and initialized once and only once.
+/// 2. All code runs on the same OS thread.
+/// 3. Exceptions are properly handled and propagated as Rust `Result<T,
+///    RubyException>` values.
+///
+/// ### Example
 ///
 /// ```
 /// use rb_sys_test_helpers_macros::ruby_test;
