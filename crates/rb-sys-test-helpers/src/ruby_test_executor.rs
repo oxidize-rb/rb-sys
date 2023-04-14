@@ -108,7 +108,7 @@ unsafe fn ruby_setup_ceremony() {
         let mut argc = 0;
         let mut argv: [*mut std::os::raw::c_char; 0] = [];
         let mut argv = argv.as_mut_ptr();
-        rb_w32_sysinit(&mut argc, &mut argv);
+        rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
     }
 
     match ruby_setup() {
