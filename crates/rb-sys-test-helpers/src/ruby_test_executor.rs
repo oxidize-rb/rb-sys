@@ -1,4 +1,3 @@
-use once_cell::sync::OnceCell;
 use std::panic;
 use std::sync::mpsc::{self, Sender};
 use std::sync::Once;
@@ -11,6 +10,8 @@ use rb_sys::{
     rb_errinfo, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr, ruby_exec_node,
     ruby_process_options, ruby_setup, Qnil, VALUE,
 };
+
+use crate::once_cell::OnceCell;
 
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
 

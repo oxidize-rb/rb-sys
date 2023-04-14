@@ -24,6 +24,7 @@
 //! ```
 //!
 
+mod once_cell;
 mod ruby_exception;
 mod ruby_test_executor;
 mod utils;
