@@ -7,7 +7,14 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
-use crate::{ruby_special_consts, VALUE};
+use std::ffi::c_long;
+
+#[cfg(ruby_gte_3_0)]
+use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
+#[cfg(ruby_lt_3_0)]
+use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
+use crate::ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
+use crate::{ruby_special_consts, value_type, RB_TYPE_P, VALUE};
 
 pub const Qfalse: ruby_special_consts = ruby_special_consts::RUBY_Qfalse;
 pub const Qtrue: ruby_special_consts = ruby_special_consts::RUBY_Qtrue;
@@ -86,6 +93,61 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 ///             once had Fixnum/Bignum back in the old days.
 pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
     (obj.into() & 0xff) == SYMBOL_FLAG as VALUE
+}
+
+/// Get the backend storage of a Ruby array.
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer and returns
+/// raw pointers to Ruby memory. The caller must ensure that the pointer stays live
+/// for the duration of usage the the underlying array (by either GC marking or
+/// keeping the RArray on the stack).
+///
+/// @param[in]  a  An object of ::RArray.
+/// @return     Its backend storage.
+#[inline(always)]
+pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
+    let value: VALUE = obj.into();
+
+    debug_assert!(RB_TYPE_P(value) == value_type::RUBY_T_ARRAY);
+
+    let rbasic = &*(value as *const crate::RBasic);
+    let rarray = &*(value as *const crate::RArray);
+
+    if (rbasic.flags & RARRAY_EMBED_FLAG as VALUE) != 0 {
+        rarray.as_.ary.as_ptr()
+    } else {
+        rarray.as_.heap.ptr
+    }
+}
+
+/// Get the length of a Ruby array.
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer in order to
+/// access internal Ruby memory.
+///
+/// @param[in]  a  An object of ::RArray.
+/// @return     Its length.
+#[inline(always)]
+pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
+    let value: VALUE = obj.into();
+
+    debug_assert!(RB_TYPE_P(value) == value_type::RUBY_T_ARRAY);
+
+    let rbasic = &*(value as *const crate::RBasic);
+    let rarray = &*(value as *const crate::RArray);
+
+    if (rbasic.flags & RARRAY_EMBED_FLAG as VALUE) != 0 {
+        let len = (rbasic.flags >> RARRAY_EMBED_LEN_SHIFT as VALUE)
+            & (RARRAY_EMBED_LEN_MASK as VALUE >> RARRAY_EMBED_LEN_SHIFT as VALUE);
+
+        len as _
+    } else {
+        rarray.as_.heap.len as _
+    }
 }
 
 /// Checks if the given object is a so-called Flonum.
