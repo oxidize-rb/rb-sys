@@ -14,11 +14,11 @@ bench = false
 doctest = true
 
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
-rb-sys-test-helpers-macros = { path = "../rb-sys-test-helpers-macros" }
+rb-sys = { version = "0.9.71", path = "../rb-sys", features = ["link-ruby"] }
+rb-sys-test-helpers-macros = { version = "0.1.0", path = "../rb-sys-test-helpers-macros" }
 
 [build-dependencies]
-rb-sys-env = { path = "../rb-sys-env" }
+rb-sys-env = { version = "0.1.2", path = "../rb-sys-env" }
 
 [dev-dependencies]
 rusty-fork = "0.3.0"
