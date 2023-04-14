@@ -1,18 +1,18 @@
 use rb_sys::macros::*;
 use rb_sys::*;
-use rb_sys_test_helpers::ruby_test;
+use rb_sys_test_helpers::{rstring, ruby_test};
 use std::{slice, str};
 
 #[ruby_test]
 fn test_rstring_len() {
-    let rstr = rstring!("foo");
+    let rstr = unsafe { rstring!("foo") };
 
     assert_eq!(unsafe { RSTRING_LEN(rstr) }, 3);
 }
 
 #[ruby_test]
 fn test_rarray_len() {
-    let rstr: VALUE = rstring!("foo");
+    let rstr: VALUE = unsafe { rstring!("foo") };
     let rarray = unsafe { rb_ary_new() };
     unsafe { rb_ary_push(rarray, rstr) };
 
@@ -21,7 +21,7 @@ fn test_rarray_len() {
 
 #[ruby_test]
 fn test_rstring_ptr() {
-    let rstr = rstring!("foo");
+    let rstr = unsafe { rstring!("foo") };
 
     let rust_str = unsafe {
         let ptr = RSTRING_PTR(rstr);
@@ -36,7 +36,7 @@ fn test_rstring_ptr() {
 #[ruby_test]
 fn test_rarray_ptr() {
     let ary = unsafe { rb_ary_new() };
-    let foo = rstring!("foo");
+    let foo = unsafe { rstring!("foo") };
 
     unsafe { rb_ary_push(ary, Qtrue as _) };
     unsafe { rb_ary_push(ary, Qnil as _) };

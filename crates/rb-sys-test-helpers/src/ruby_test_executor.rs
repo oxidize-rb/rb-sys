@@ -1,13 +1,15 @@
 use once_cell::sync::OnceCell;
-use std::ffi::c_void;
 use std::panic;
 use std::sync::mpsc::{self, Sender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
 
+#[cfg(ruby_gte_3_0)]
+use rb_sys::rb_ext_ractor_safe;
+
 use rb_sys::{
-    rb_errinfo, rb_ext_ractor_safe, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr,
-    ruby_exec_node, ruby_process_options, ruby_setup, Qnil, VALUE,
+    rb_errinfo, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr, ruby_exec_node,
+    ruby_process_options, ruby_setup, Qnil, VALUE,
 };
 
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
@@ -133,10 +135,14 @@ unsafe fn ruby_setup_ceremony() {
         let mut msg = rb_inspect(err);
         let msg = rb_string_value_cstr(&mut msg);
 
-        // Force the compiler to not optimize this out.
-        #[allow(clippy::cmp_null)]
-        let ensure_ractor_safe = rb_ext_ractor_safe as *const c_void != std::ptr::null();
-        assert!(ensure_ractor_safe);
+        // Force the compiler to not optimize out rb_ext_ractor_safe...
+        #[cfg(ruby_gte_3_0)]
+        {
+            #[allow(clippy::cmp_null)]
+            let ensure_ractor_safe =
+                rb_ext_ractor_safe as *const std::ffi::c_void != std::ptr::null();
+            assert!(ensure_ractor_safe);
+        }
 
         let msg = std::ffi::CStr::from_ptr(msg).to_string_lossy().into_owned();
         rb_set_errinfo(Qnil as _);

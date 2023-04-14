@@ -1,5 +1,5 @@
 use rb_sys::*;
-use rb_sys_test_helpers::ruby_test;
+use rb_sys_test_helpers::{rstring_to_string, ruby_test};
 
 #[ruby_test]
 fn basic_smoke_test() {

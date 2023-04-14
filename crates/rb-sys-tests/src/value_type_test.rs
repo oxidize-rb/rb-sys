@@ -1,6 +1,6 @@
 use rb_sys::value_type::*;
 use rb_sys::*;
-use rb_sys_test_helpers::ruby_test;
+use rb_sys_test_helpers::{rstring, ruby_test};
 
 #[ruby_test]
 fn test_builtin_type_p() {

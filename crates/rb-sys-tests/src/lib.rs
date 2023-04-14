@@ -2,9 +2,6 @@
 
 extern crate rb_sys;
 
-#[macro_use]
-mod helpers;
-
 #[cfg(test)]
 mod basic_smoke_test;
 

@@ -1,6 +1,6 @@
 use rb_sys::special_consts::*;
 use rb_sys::*;
-use rb_sys_test_helpers::ruby_test;
+use rb_sys_test_helpers::{rstring, ruby_test};
 
 #[ruby_test]
 fn test_fixnum_p() {

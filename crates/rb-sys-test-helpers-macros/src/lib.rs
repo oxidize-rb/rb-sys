@@ -64,7 +64,25 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
         #(#attrs)*
         #vis #sig {
             rb_sys_test_helpers::with_ruby_vm(|| {
-                #block
+                let result = rb_sys_test_helpers::protect(|| {
+                    #block
+                });
+
+                match result {
+                    Ok(_) => (),
+                    Err(err) => {
+                        match std::env::var("RUST_BACKTRACE") {
+                            Ok(val) if val == "1" => {
+                                eprintln!("ruby exception:");
+                                let errinfo = format!("{:#?}", err);
+                                let errinfo = errinfo.replace("\n", "\n    ");
+                                eprintln!("    {}", errinfo);
+                            },
+                            _ => (),
+                        }
+                        panic!("{}", err.inspect());
+                    },
+                };
             });
         }
     };
