@@ -49,16 +49,7 @@
       "request": "launch",
       "name": "Debug integration test 'rb-sys-tests'",
       "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--test=rb-sys-tests",
-          "--package=rb-sys-tests"
-        ],
-        "filter": {
-          "name": "rb-sys-tests",
-          "kind": "test"
-        }
+        "args": ["test", "--no-run", "--package=rb-sys-tests"]
       },
       "args": [],
       "cwd": "${workspaceFolder}"

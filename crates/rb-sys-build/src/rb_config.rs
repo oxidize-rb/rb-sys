@@ -415,7 +415,7 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
 }
 
-// Needed because Rust 1.51 does not support link-arg, and thus rpath
+// Needed because Rust 1.54 does not support link-arg, and thus rpath
 // See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
 fn append_ld_library_path(search_paths: Vec<&str>) {
     let env_var_name = if is_mswin_or_mingw() {
@@ -438,9 +438,21 @@ fn append_ld_library_path(search_paths: Vec<&str>) {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
     use super::*;
+    use std::{sync::Mutex, vec};
+
+    lazy_static::lazy_static! {
+        static ref ENV_LOCK: Mutex<()> = Mutex::new(());
+    }
+
+    fn with_locked_env<F, T>(f: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        let _guard = ENV_LOCK.lock().unwrap();
+        f()
+    }
+
     #[test]
     fn test_extract_lib_search_paths() {
         let mut rb_config = RbConfig::new();
@@ -680,46 +692,50 @@ mod tests {
 
     #[test]
     fn test_link_mswin() {
-        let old_var = env::var("TARGET").ok();
-        env::set_var("TARGET", "x86_64-pc-windows-msvc");
+        with_locked_env(|| {
+            let old_var = env::var("TARGET").ok();
+            env::set_var("TARGET", "x86_64-pc-windows-msvc");
 
-        let mut rb_config = RbConfig::new();
-        rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib".into());
-        rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
-        rb_config.set_value_for_key("LIBS", "user32.lib".into());
-        rb_config.link_ruby(false);
+            let mut rb_config = RbConfig::new();
+            rb_config.set_value_for_key("LIBRUBYARG_SHARED", "x64-vcruntime140-ruby320.lib".into());
+            rb_config.set_value_for_key("libdir", "D:/ruby-mswin/lib".into());
+            rb_config.set_value_for_key("LIBS", "user32.lib".into());
+            rb_config.link_ruby(false);
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-search=native=D:/ruby-mswin/lib",
-                "cargo:rustc-link-lib=x64-vcruntime140-ruby320",
-                "cargo:rustc-link-lib=user32",
-            ],
-            rb_config.cargo_args()
-        );
+            assert_eq!(
+                vec![
+                    "cargo:rustc-link-search=native=D:/ruby-mswin/lib",
+                    "cargo:rustc-link-lib=x64-vcruntime140-ruby320",
+                    "cargo:rustc-link-lib=user32",
+                ],
+                rb_config.cargo_args()
+            );
 
-        if let Some(old_var) = old_var {
-            env::set_var("TARGET", old_var);
-        } else {
-            env::remove_var("TARGET");
-        }
+            if let Some(old_var) = old_var {
+                env::set_var("TARGET", old_var);
+            } else {
+                env::remove_var("TARGET");
+            }
+        })
     }
 
     #[test]
     fn test_link_static() {
-        let mut rb_config = RbConfig::new();
-        rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static".into());
-        rb_config.set_value_for_key("libdir", "/opt/ruby".into());
+        with_locked_env(|| {
+            let mut rb_config = RbConfig::new();
+            rb_config.set_value_for_key("LIBRUBYARG_STATIC", "-lruby-static".into());
+            rb_config.set_value_for_key("libdir", "/opt/ruby".into());
 
-        rb_config.link_ruby(true);
+            rb_config.link_ruby(true);
 
-        assert_eq!(
-            vec![
-                "cargo:rustc-link-search=native=/opt/ruby",
-                "cargo:rustc-link-lib=static=ruby-static",
-            ],
-            rb_config.cargo_args()
-        );
+            assert_eq!(
+                vec![
+                    "cargo:rustc-link-search=native=/opt/ruby",
+                    "cargo:rustc-link-lib=static=ruby-static",
+                ],
+                rb_config.cargo_args()
+            );
+        });
     }
 
     #[test]

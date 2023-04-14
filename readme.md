@@ -7,10 +7,11 @@
 The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If
 it's not easy, it's a bug.
 
-- [Rust bindings (`rb-sys` crate)](./crates/rb-sys/readme.md)
-- [Ruby gem for compiling extensions](./gem/README.md)
-- [GitHub action][setup-action] to setup a Ruby on Rust environment for testing
-- [GitHub action][cross-gem-action] to easily cross compile in CI
+- [Battle-tested **Ruby FFI bindings** ](./crates/rb-sys/readme.md) for Rust (via `rb-sys` crate)
+- [Ruby gem for **compiling extensions**](./gem/README.md)
+- [GitHub action][setup-action] to **setup a test environment in CI**
+- [GitHub action][cross-gem-action] to easily **cross compile in CI**
+- [**Test helpers**)][test-helpers] for testing Ruby extensions in Rust
 
 ## Features
 
@@ -41,7 +42,7 @@ building your own gem.
 
 - Ruby: <!--toolchains .policy.minimum-supported-ruby-version -->2.4<!--/toolchains-->+ (for full compatibility with
   Rubygems)
-- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.51<!--/toolchains-->+ (for old versions of rust
+- Rust: <!--toolchains .policy.minimum-supported-rust-version -->1.54<!--/toolchains-->+ (for old versions of rust
   toolchains ubuntu)
 
 ## Supported Platforms
@@ -101,3 +102,4 @@ defined in the Apache-2.0 license, shall be dual licensed as above, without any 
 [rb-sys-gem-docs]: https://github.com/oxidize-rb/rb-sys/tree/main/gem#the-rb_sys-gem
 [wasmtime-rb]: https://github.com/bytecodealliance/wasmtime-rb
 [wasmtime]: https://github.com/bytecodealliance/wasmtime
+[test-helpers]: ./crates/rb-sys-test-helpers/readme.md

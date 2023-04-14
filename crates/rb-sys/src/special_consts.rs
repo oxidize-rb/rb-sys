@@ -1,3 +1,4 @@
+#![allow(rustdoc::broken_intra_doc_links)]
 //! Definitions for Ruby's special constants.
 //!
 //! Makes it easier to reference important Ruby constants, without havign to dig
@@ -48,6 +49,8 @@ pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
 /// @param[in]  obj    An arbitrary ruby object.
 /// @retval     true   `obj` is ::RUBY_Qnil.
 /// @retval     false  Anything else.
+///
+/// ### Example
 ///
 /// ```
 /// use rb_sys::special_consts::*;
@@ -116,6 +119,8 @@ pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
 /// @param[in]  obj    An arbitrary ruby object.
 /// @retval     true   `obj` is a special constant.
 /// @retval     false  Anything else.
+///
+/// ### Example
 ///
 /// ```
 /// use rb_sys::special_consts::*;

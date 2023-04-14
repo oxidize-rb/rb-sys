@@ -1,6 +1,7 @@
 use rb_sys::*;
+use rb_sys_test_helpers::{rstring_to_string, ruby_test};
 
-#[test]
+#[ruby_test]
 fn basic_smoke_test() {
     let cstr = std::ffi::CString::new("hello").unwrap();
     let str = cstr.into_raw();
@@ -17,7 +18,7 @@ fn basic_smoke_test() {
     }
 }
 
-#[test]
+#[ruby_test]
 fn test_global_variables_are_properly_linked() {
     unsafe { assert!(!rb_sys::rb_eArgError != 0) }
     unsafe { assert!(!rb_sys::rb_eTypeError != 0) }

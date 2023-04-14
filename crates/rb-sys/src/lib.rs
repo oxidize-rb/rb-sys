@@ -1,3 +1,6 @@
+#![allow(rustdoc::bare_urls)]
+#![doc = include_str!("../readme.md")]
+
 pub mod bindings;
 #[cfg(feature = "ruby-macros")]
 pub mod macros;

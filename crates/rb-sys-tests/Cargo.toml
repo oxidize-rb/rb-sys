@@ -4,7 +4,7 @@ version = "0.9.71"
 edition = "2018"
 autotests = false
 publish = false
-rust-version = "1.51"
+rust-version = "1.54"
 
 [lib]
 bench = false
@@ -17,7 +17,8 @@ ruby-macros = ["rb-sys/ruby-macros"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
-ctor = "0.1"
+rb-sys-env = { path = "../rb-sys-env" }
+rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }

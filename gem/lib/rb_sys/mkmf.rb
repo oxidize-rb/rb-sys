@@ -80,7 +80,7 @@ module RbSys
         #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)", indent: 1)}
         #{endif_stmt}
 
-        # Set the build profile (dev, release, etc.) Compat with Rust 1.51.
+        # Set the build profile (dev, release, etc.) Compat with Rust 1.54.
         #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "release")}
         #{assign_stmt("RB_SYS_CARGO_PROFILE_FLAG", "--release", indent: 1)}
         #{else_stmt}

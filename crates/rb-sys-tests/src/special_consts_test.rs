@@ -1,38 +1,33 @@
 use rb_sys::special_consts::*;
 use rb_sys::*;
+use rb_sys_test_helpers::{rstring, ruby_test};
 
-#[test]
+#[ruby_test]
 fn test_fixnum_p() {
-    unsafe {
-        let int = rb_num2fix(1);
-        let big = rb_int2big(9999999);
+    let int = unsafe { rb_num2fix(1) };
+    let big = unsafe { rb_int2big(9999999) };
 
-        assert!(FIXNUM_P(int));
-        assert!(!FIXNUM_P(big));
-    }
+    assert!(FIXNUM_P(int));
+    assert!(!FIXNUM_P(big));
 }
 
-#[test]
+#[ruby_test]
 fn test_static_sym_p() {
-    unsafe {
-        let id = rb_intern_str(rstring!("foo"));
-        let sym = rb_id2sym(id);
+    let id = unsafe { rb_intern_str(rstring!("teststaticsymp")) };
+    let sym = unsafe { rb_id2sym(id) };
 
-        assert!(STATIC_SYM_P(sym));
-        assert!(!STATIC_SYM_P(Qnil));
-    }
+    assert!(STATIC_SYM_P(sym));
+    assert!(!STATIC_SYM_P(Qnil));
 }
 
-#[test]
+#[ruby_test]
 fn test_flonum_p() {
-    unsafe {
-        let flonum = rb_float_new(0.0);
+    let flonum = unsafe { rb_float_new(0.0) };
 
-        #[cfg(ruby_use_flonum)]
-        assert!(FLONUM_P(flonum));
-        #[cfg(not(ruby_use_flonum))]
-        assert!(!FLONUM_P(flonum));
+    #[cfg(ruby_use_flonum)]
+    assert!(FLONUM_P(flonum));
+    #[cfg(not(ruby_use_flonum))]
+    assert!(!FLONUM_P(flonum));
 
-        assert!(!FLONUM_P(Qnil));
-    }
+    assert!(!FLONUM_P(Qnil));
 }
