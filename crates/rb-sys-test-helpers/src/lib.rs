@@ -22,8 +22,15 @@
 //!     });
 //! }
 //! ```
+//!
 
-use std::{panic::UnwindSafe, sync::Mutex};
+mod ruby_test_executor;
+
+use rb_sys::{rb_errinfo, rb_set_errinfo, Qnil, VALUE};
+use ruby_test_executor::global_executor;
+use std::{mem::MaybeUninit, panic::UnwindSafe};
+
+pub use rb_sys_test_helpers_macros::*;
 
 /// Initializes a Ruby VM, and ensures all tests are run by the same thread and
 /// that the Ruby VM is initialized from.
@@ -42,52 +49,11 @@ use std::{panic::UnwindSafe, sync::Mutex};
 ///     assert_eq!(result, "hello world");
 /// });
 /// ```
-pub fn with_ruby_vm<F, T>(f: F) -> T
+pub fn with_ruby_vm<F>(f: F)
 where
-    F: FnOnce() -> T + UnwindSafe,
+    F: FnOnce() + UnwindSafe + Send + 'static,
 {
-    static INIT: std::sync::Once = std::sync::Once::new();
-    static mut EXECUTOR: Option<RubyTestExecutor> = None;
-
-    unsafe {
-        INIT.call_once(|| {
-            ruby_setup_ceremony();
-            EXECUTOR = Some(RubyTestExecutor::default());
-        });
-    }
-
-    let executor = unsafe { EXECUTOR.as_ref().unwrap() };
-    executor.run_test(f)
-}
-
-fn ruby_setup_ceremony() {
-    unsafe {
-        #[cfg(windows)]
-        {
-            let mut argc = 0;
-            let mut argv: [*mut std::os::raw::c_char; 0] = [];
-            let mut argv = argv.as_mut_ptr();
-            rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
-        }
-
-        match rb_sys::ruby_setup() {
-            0 => {}
-            code => panic!("Failed to setup Ruby (error code: {})", code),
-        };
-
-        let mut argv: [*mut i8; 3] = [
-            "ruby\0".as_ptr() as _,
-            "-e\0".as_ptr() as _,
-            "\0".as_ptr() as _,
-        ];
-
-        let node = rb_sys::ruby_process_options(argv.len() as i32, argv.as_mut_ptr());
-
-        match rb_sys::ruby_exec_node(node) {
-            0 => {}
-            code => panic!("Failed to execute Ruby (error code: {})", code),
-        };
-    }
+    global_executor().run(f)
 }
 
 /// Runs a test with GC stress enabled to help find GC bugs.
@@ -126,51 +92,92 @@ pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
     }
 }
 
-#[derive(Debug)]
-struct RubyTestExecutor {
-    executor: Mutex<tokio::runtime::Runtime>,
-}
+/// Catches a Ruby exception and returns it as a `Result` (using [`rb_sys::rb_protect`]).
+///
+/// ### Example
+///
+/// ```
+/// use rb_sys_test_helpers::{catch_ruby_exception, with_ruby_vm};
+/// use rb_sys::VALUE;
+///
+/// with_ruby_vm(|| unsafe {
+///     let result: Result<&str, VALUE> = catch_ruby_exception(|| {
+///         rb_sys::rb_raise(rb_sys::rb_eRuntimeError, "hello world\0".as_ptr() as _);
+///         "this will never be returned"
+///     });
+///
+///     assert!(result.is_err());
+/// });
+/// ```
+pub fn catch_ruby_exception<F, T>(f: F) -> Result<T, rb_sys::VALUE>
+where
+    F: FnMut() -> T + std::panic::UnwindSafe,
+{
+    unsafe extern "C" fn ffi_closure<T, F: FnMut() -> T>(args: VALUE) -> VALUE {
+        let args: *mut (Option<*mut F>, Option<MaybeUninit<T>>) = args as _;
+        let args = &mut *args;
+        let (func, outbuf) = args;
+        let func = func.take().unwrap();
+        let func = &mut *func;
+        let mut outbuf = outbuf.take().unwrap();
 
-impl RubyTestExecutor {
-    pub fn run_test<F, T>(&self, f: F) -> T
-    where
-        F: FnOnce() -> T + UnwindSafe,
-    {
-        // Make sure we don't panic while holding the lock.
-        let result = {
-            let local_ex = &self.executor.lock().expect("failed to lock Ruby executor");
+        let result = func();
+        outbuf.write(result);
 
-            std::panic::catch_unwind(|| {
-                local_ex.block_on(async move {
-                    let result = std::panic::catch_unwind(f);
-                    result
-                })
-            })
-        };
+        outbuf.as_ptr() as _
+    }
 
-        match result {
-            Ok(Ok(result)) => result,
-            Ok(Err(err)) => std::panic::resume_unwind(err),
-            Err(err) => std::panic::resume_unwind(err),
+    unsafe {
+        let mut state = 0;
+        let func = Some(f);
+        let func_ref = &func as *const _;
+        let outbuf: MaybeUninit<&T> = MaybeUninit::uninit();
+        let outbuf_ref = &outbuf as *const _;
+        let args = (Some(func_ref), Some(outbuf_ref));
+        let args = &args as *const _ as VALUE;
+        let result = rb_sys::rb_protect(Some(ffi_closure::<T, F>), args, &mut state);
+        let result: *const MaybeUninit<T> = result as _;
+
+        if state == 0 {
+            if let Some(result) = result.as_ref() {
+                Ok(result.assume_init_read())
+            } else {
+                panic!("rb_protect returned a null pointer")
+            }
+        } else {
+            let err = rb_errinfo();
+            rb_set_errinfo(Qnil as _);
+            Err(err)
         }
     }
 }
 
-impl Default for RubyTestExecutor {
-    fn default() -> Self {
-        Self {
-            executor: Mutex::new(
-                tokio::runtime::Builder::new_multi_thread()
-                    .max_blocking_threads(1)
-                    .worker_threads(1)
-                    .build()
-                    .unwrap(),
-            ),
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rb_sys::Qtrue;
+
+    #[test]
+    fn test_catch_ruby_exception_returns_correct_value() {
+        with_ruby_vm(|| {
+            let result = catch_ruby_exception(|| "my val");
+
+            assert_eq!(result, Ok("my val"));
+        });
+    }
+
+    #[test]
+    fn test_catch_ruby_exception_capture_ruby_exception() {
+        with_ruby_vm(|| unsafe {
+            let result = catch_ruby_exception(|| {
+                rb_sys::rb_raise(rb_sys::rb_eRuntimeError, "hello world\0".as_ptr() as _);
+            });
+
+            assert!(result.is_err());
+            assert_eq!(
+                Qtrue as VALUE,
+                rb_sys::rb_obj_is_kind_of(result.unwrap_err(), rb_sys::rb_eRuntimeError)
+            );
+        });
     }
 }
-
-unsafe impl Sync for RubyTestExecutor {}
-unsafe impl Send for RubyTestExecutor {}
-
-pub use rb_sys_test_helpers_macros::*;

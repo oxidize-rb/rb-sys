@@ -98,6 +98,8 @@ fn is_env_variable_defined(name: &str) -> bool {
 }
 
 fn is_linting() -> bool {
+    println!("cargo:rerun-if-env-changed=RUSTC_WRAPPER");
+
     let clippy = match std::env::var_os("CARGO_CFG_FEATURE") {
         Some(val) => val.to_str().unwrap_or("").contains("clippy"),
         _ => false,
