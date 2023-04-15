@@ -1,23 +1,38 @@
 #![allow(rustdoc::broken_intra_doc_links)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
-//! Definitions for the compiled Ruby macros.
+//! Implementation of Ruby macros.
 //!
-//! Since macros are rely on the C preprocessor, they are not automatically
-//! available to Rust. This module compiles a tiny snippet of C code that is
-//! used to generate the Ruby macros, so they can be used in Rust.
+//! Since macros are rely on the C preprocessor, or defined as `inline` C
+//! functions, they are not available when linking libruby. In order to use the
+//! libruby macros from Rust, `rb-sys` implements them using the following
+//! strategies:
+//!
+//! 1. Some macros are implemented in Rust, as inline functions. Using these
+//!    does not require compiling C code, and can be used in Rust code without the
+//!    `ruby-macros` feature.
+//! 2. The rest are implemented in C code  that exports the macros as functions
+//!    that can be used in Rust. This requires the `ruby-macros` feature.
 
 #[cfg(ruby_gte_3_0)]
 use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
 #[cfg(all(ruby_lt_3_0, ruby_gt_2_4))]
 use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
-#[cfg(ruby_lte_2_4)]
-const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
-
 #[cfg(ruby_gt_2_4)]
 use crate::ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
+
 #[cfg(ruby_lte_2_4)]
-use crate::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
+mod ruby_lte_2_4 {
+    pub const RARRAY_EMBED_FLAG: u32 = 1 << 13;
+    pub const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
+    pub const RARRAY_EMBED_LEN_MASK: u32 = RUBY_FL_USER3 | RUBY_FL_USER4;
+    pub const RUBY_FL_USHIFT: u32 = 12;
+    pub const RUBY_FL_USER3: u32 = 1 << (RUBY_FL_USHIFT as u32 + 3);
+    pub const RUBY_FL_USER4: u32 = 1 << (RUBY_FL_USHIFT as u32 + 4);
+}
+
+#[cfg(ruby_lte_2_4)]
+use ruby_lte_2_4::*;
 
 use crate::{
     value_type, Qnil, FIXNUM_FLAG, FLONUM_FLAG, FLONUM_MASK, IMMEDIATE_MASK, RB_TYPE_P,
