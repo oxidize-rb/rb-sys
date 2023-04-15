@@ -12,7 +12,7 @@ use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
 #[cfg(all(ruby_lt_3_0, ruby_gt_2_4))]
 use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
 #[cfg(ruby_lte_2_4)]
-use crate::RARRAY_EMBED_LEN_SHIFT;
+const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
 
 #[cfg(ruby_gt_2_4)]
 use crate::ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
