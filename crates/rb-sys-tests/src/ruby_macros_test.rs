@@ -44,7 +44,7 @@ fn test_rarray_ptr() {
     unsafe { rb_ary_push(ary, foo) };
 
     let slice = unsafe {
-        let ptr = RARRAY_PTR(ary);
+        let ptr = RARRAY_CONST_PTR(ary);
         let len = RARRAY_LEN(ary);
 
         slice::from_raw_parts(ptr as _, len as _)
