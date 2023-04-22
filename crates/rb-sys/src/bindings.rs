@@ -8,7 +8,6 @@
 #![allow(unknown_lints)]
 #![allow(deref_nullptr)]
 #![warn(unknown_lints)]
-#![allow(unaligned_references)]
 #![allow(clippy::all)]
 #![allow(rustdoc::broken_intra_doc_links)]
 #![allow(rustdoc::invalid_rust_codeblocks)]
