@@ -181,6 +181,10 @@ def docker_tmp
   @docker_tmp ||= "/tmp/rb-sys-dock"
 end
 
+def docker_bundle_home
+  @docker_bundle_home ||= "/tmp/rb-sys-dock/bundle-home"
+end
+
 def cache_dir
   return @cache_dir if defined?(@cache_dir)
 
@@ -255,6 +259,18 @@ def mount_bundle_cache
   "#{volume(dir, bundle_path)} -e BUNDLE_PATH=#{bundle_path.inspect}"
 end
 
+def mount_bundle_config
+  bundle_config = File.join(ENV["HOME"] || "~", ".bundle", "config")
+
+  return unless File.exist?(bundle_config)
+
+  logger.trace("Mounting bundle config: #{bundle_config}")
+  parts = []
+  parts << volume(bundle_config, File.join(docker_bundle_home, ".bundle", "config"), mode: "ro")
+  parts << "-e BUNDLE_HOME=#{docker_bundle_home.inspect}"
+  parts.join(" ")
+end
+
 def tmp_target_dir
   return @tmp_target_dir if defined?(@tmp_target_dir)
 
@@ -293,10 +309,13 @@ def default_command_to_run(input_args)
 end
 
 def uid_gid
-  if /darwin/.match?(RbConfig::CONFIG["host_os"])
-    ["1000", "1000"]
+  explicit_uid = ENV["RB_SYS_DOCK_UID"]
+  explicit_gid = ENV["RB_SYS_DOCK_GID"]
+
+  if /darwin/.match?(RbConfig::CONFIG["host_os"]) && !default_docker_command.include?("podman")
+    [explicit_uid || "1000", explicit_gid || "1000"]
   else
-    [Process.uid, Process.gid]
+    [explicit_uid || Process.uid, explicit_gid || Process.gid]
   end
 end
 
@@ -346,6 +365,7 @@ def rcd(input_args)
       #{mount_cargo_registry} \
       #{mount_rustup_toolchains} \
       #{mount_bundle_cache} \
+      #{mount_bundle_config} \
       #{mount_command_history} \
       #{user_mapping} \
       -e GEM_PRIVATE_KEY_PASSPHRASE \
