@@ -29,6 +29,8 @@ main() {
   cargo fetch
   chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
+  echo "export RUSTUP_PERMIT_COPY_RENAME=\"true\"" >> "/etc/rubybashrc"
+
   builtin popd
   rm -rf "${td}"
   rm "${0}"
