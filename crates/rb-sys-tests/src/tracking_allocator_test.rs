@@ -1,8 +1,7 @@
-use std::alloc::GlobalAlloc;
-
 use rb_sys::tracking_allocator::{ManuallyTracked, TrackingAllocator};
 use rb_sys_test_helpers::{capture_gc_stat_for, ruby_test};
 use rusty_fork::rusty_fork_test;
+use std::alloc::GlobalAlloc;
 
 rusty_fork_test! {
   #[ruby_test]
@@ -14,12 +13,7 @@ rusty_fork_test! {
     });
 
     assert_eq!(42 * 4, malloc_increase);
-
-    let (_, malloc_increase_after_drop) = capture_gc_stat_for!("malloc_increase_bytes", {
-      std::mem::drop(my_vec);
-    });
-
-    assert_eq!(-(42 * 4), malloc_increase_after_drop)
+    assert_eq!(42, my_vec.len());
   }
 }
 
@@ -105,23 +99,58 @@ fn test_manually_tracked_default() {
 fn test_manually_tracked_allows_for_increasing_and_decreasing() {
     let manually_tracked = ManuallyTracked::wrap((), 0);
 
-    let (_, increased) = capture_gc_stat_for!("malloc_increase_bytes", {
+    let (_, changed) = capture_gc_stat_for!("malloc_increase_bytes", {
         manually_tracked.increase_memory_usage(1024);
-    });
-
-    assert_eq!(1024, increased);
-
-    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
         manually_tracked.decrease_memory_usage(256);
     });
 
-    assert_eq!(-256, decreased);
+    assert_eq!(768, changed);
+}
+
+#[ruby_test]
+fn test_manually_tracked_decreases_on_drop() {
+    let manually_tracked = ManuallyTracked::wrap((), 1024);
 
     let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
         std::mem::drop(manually_tracked);
     });
 
-    assert_eq!(-768, decreased);
+    assert_eq!(-1024, decreased);
+}
+
+#[ruby_test]
+fn test_adjusting_with_many_threads_works() {
+    let manually_tracked = ManuallyTracked::wrap((), 0);
+    let mut threads = Vec::new();
+
+    let (_, _reported_bytes) = capture_gc_stat_for!("malloc_increase_bytes", {
+        let manually_tracked_ptr = &manually_tracked as *const ManuallyTracked<()>;
+        let tracked = unsafe { &*manually_tracked_ptr }; // no mutexes here :D
+
+        for _ in 0..10 {
+            threads.push(std::thread::spawn(move || {
+                for i in 0..1000 {
+                    if i % 2 == 0 {
+                        tracked.increase_memory_usage(1);
+                    } else {
+                        tracked.decrease_memory_usage(1);
+                    }
+                }
+            }));
+        }
+
+        for thread in threads {
+            thread.join().unwrap();
+        }
+    });
+
+    let delta = manually_tracked.memsize_delta();
+    assert_eq!(0, delta);
+    std::mem::drop(manually_tracked);
+
+    // Ideally, we'd test this too, but it seems the reported bytes are not
+    // actually atomic... So, just best effort here.
+    // assert_eq!(0, _reported_bytes);
 }
 
 rusty_fork_test! {

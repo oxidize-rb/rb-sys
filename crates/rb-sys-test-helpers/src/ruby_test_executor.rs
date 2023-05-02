@@ -1,17 +1,17 @@
 use std::panic;
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
 
+use crate::once_cell::OnceCell;
+use crate::trigger_full_gc;
 #[cfg(ruby_gte_3_0)]
 use rb_sys::rb_ext_ractor_safe;
-
 use rb_sys::{
     rb_errinfo, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr, ruby_exec_node,
     ruby_process_options, ruby_setup, Qnil, VALUE,
 };
-
-use crate::once_cell::OnceCell;
 
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
 
@@ -22,25 +22,36 @@ pub struct RubyTestExecutor {
 
 impl RubyTestExecutor {
     pub fn start() -> Self {
-        let (sender, receiver) = mpsc::sync_channel::<Box<dyn FnOnce() + Send>>(1);
+        let (sender, receiver) = mpsc::sync_channel::<Box<dyn FnOnce() + Send>>(0);
 
-        // Spawn a new scoped thread
         let handle = thread::spawn(move || {
-            static INIT: Once = Once::new();
-
-            INIT.call_once(|| unsafe {
-                ruby_setup_ceremony();
-            });
-
             for closure in receiver {
                 closure();
             }
         });
 
-        Self {
+        let executor = Self {
             sender: Some(sender),
             handle: Some(handle),
-        }
+        };
+
+        executor.run(|| {
+            static INIT: Once = Once::new();
+            static mut STATE: AtomicU8 = AtomicU8::new(0);
+
+            INIT.call_once(|| unsafe {
+                STATE.fetch_add(1, Ordering::SeqCst);
+                ruby_setup_ceremony();
+                STATE.fetch_add(1, Ordering::SeqCst);
+            });
+
+            // Wait for the main thread to finish setting up Ruby
+            while unsafe { STATE.load(Ordering::Acquire) != 2 } {
+                std::thread::yield_now();
+            }
+        });
+
+        executor
     }
 
     pub fn shutdown(&mut self) {
@@ -66,7 +77,7 @@ impl RubyTestExecutor {
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
     {
-        let (result_sender, result_receiver) = mpsc::sync_channel(1);
+        let (result_sender, result_receiver) = mpsc::sync_channel(8);
 
         let closure = Box::new(move || {
             let result = panic::catch_unwind(panic::AssertUnwindSafe(f));
@@ -90,6 +101,17 @@ impl RubyTestExecutor {
             Ok(result) => result,
             Err(err) => std::panic::resume_unwind(err),
         }
+    }
+
+    pub fn run_test<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce() -> R + Send + 'static,
+        R: Send + 'static,
+    {
+        self.run(|| {
+            trigger_full_gc!();
+            f()
+        })
     }
 }
 
@@ -180,7 +202,7 @@ mod tests {
                 RUBY_VM_AT_EXIT_CALLED = Some("hell yeah it was");
             }
 
-            executor.run(|| {
+            executor.run_test(|| {
                 unsafe { ruby_vm_at_exit(Some(set_called))}
             });
 

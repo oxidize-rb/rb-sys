@@ -3,7 +3,7 @@ use std::sync::atomic::Ordering;
 /// A simple implementation of a once cell so we can support Rust 2018. We
 /// should drop this once we can since it's wasteful due to the spin-lock.
 #[derive(Debug)]
-pub(crate) struct OnceCell<T> {
+pub struct OnceCell<T> {
     ready: std::sync::atomic::AtomicBool,
     value: std::sync::Once,
     value_ptr: std::cell::UnsafeCell<Option<T>>,

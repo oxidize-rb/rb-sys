@@ -141,7 +141,7 @@ macro_rules! set_global_tracking_allocator {
 #[derive(Debug)]
 pub struct ManuallyTracked<T> {
     item: T,
-    memsize: AtomicIsize,
+    memsize_delta: AtomicIsize,
 }
 
 impl<T> ManuallyTracked<T> {
@@ -152,20 +152,28 @@ impl<T> ManuallyTracked<T> {
 
         Self {
             item,
-            memsize: AtomicIsize::new(delta),
+            memsize_delta: AtomicIsize::new(delta),
         }
     }
 
     /// Increase the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn increase_memory_usage(&self, memsize: usize) {
-        let delta = TrackingAllocator::adjust_memory_usage(memsize as isize);
-        self.memsize.fetch_add(delta, Ordering::AcqRel);
+        self.memsize_delta
+            .fetch_add(memsize as isize, Ordering::SeqCst);
+        TrackingAllocator::adjust_memory_usage(memsize as isize);
     }
 
     /// Decrease the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn decrease_memory_usage(&self, memsize: usize) {
-        let delta = TrackingAllocator::adjust_memory_usage(-(memsize as isize));
-        self.memsize.fetch_add(delta, Ordering::AcqRel);
+        self.memsize_delta
+            .fetch_sub(memsize as isize, Ordering::SeqCst);
+
+        TrackingAllocator::adjust_memory_usage(-(memsize as isize));
+    }
+
+    /// Get the current memory usage delta.
+    pub fn memsize_delta(&self) -> isize {
+        self.memsize_delta.load(Ordering::SeqCst)
     }
 
     /// Get a shared reference to the inner `T`.
@@ -187,7 +195,7 @@ impl Default for ManuallyTracked<()> {
 
 impl<T> Drop for ManuallyTracked<T> {
     fn drop(&mut self) {
-        let memsize = self.memsize.swap(0, Ordering::SeqCst);
+        let memsize = self.memsize_delta.swap(0, Ordering::SeqCst);
         TrackingAllocator::adjust_memory_usage(0 - memsize);
     }
 }

@@ -1,3 +1,18 @@
+/// Memoizes the result [`rb_sys::VALUE`] of the given expression.
+#[macro_export]
+macro_rules! memoized {
+    ($e:expr) => {{
+        pub static INIT: std::sync::Once = std::sync::Once::new();
+        pub static mut MEMOIZED_VAL: Option<rb_sys::VALUE> = None;
+
+        INIT.call_once(|| unsafe {
+            MEMOIZED_VAL.replace($e);
+        });
+
+        unsafe { *MEMOIZED_VAL.as_ref().unwrap() }
+    }};
+}
+
 /// Creates a new Ruby string from a Rust string.
 #[macro_export]
 macro_rules! rstring {
@@ -18,12 +33,26 @@ macro_rules! rsymbol {
 #[macro_export]
 macro_rules! capture_gc_stat_for {
     ($id:literal, $e:expr) => {{
-        let id = $crate::rsymbol!($id);
-        let before = unsafe { rb_sys::rb_gc_stat(id) };
-        let result = $e;
-        let after = unsafe { rb_sys::rb_gc_stat(id) };
+        pub static CAPTURE_LOCK_INIT: std::sync::Once = std::sync::Once::new();
+        pub static mut CAPTURE_LOCK: Option<std::sync::Mutex<()>> = None;
 
-        (result, after as isize - before as isize)
+        CAPTURE_LOCK_INIT.call_once(|| unsafe {
+            CAPTURE_LOCK.replace(std::sync::Mutex::new(()));
+        });
+
+        let id = $crate::memoized! { $crate::rsymbol!($id) };
+
+        unsafe {
+            let lock = CAPTURE_LOCK.as_ref().unwrap();
+            let lock = lock.lock().unwrap();
+            let before = unsafe { rb_sys::rb_gc_stat(id) };
+            let result = $e;
+            let after = unsafe { rb_sys::rb_gc_stat(id) };
+
+            $crate::trigger_full_gc!();
+
+            (result, after as isize - before as isize)
+        }
     }};
 }
 
@@ -58,4 +87,17 @@ macro_rules! rb_funcall_typed {
             }
         }
     }};
+}
+
+/// Runs the garbage collector 10 times to ensure that we have a clean slate.
+#[macro_export]
+macro_rules! trigger_full_gc {
+    () => {
+        let cmd = "GC.start(full_mark: false, immediate_sweep: false)\0".as_ptr() as *const _;
+
+        for _ in 0..20 {
+            unsafe { rb_sys::rb_eval_string(cmd) };
+            std::thread::yield_now();
+        }
+    };
 }

@@ -42,7 +42,7 @@ pub fn with_ruby_vm<F>(f: F)
 where
     F: FnOnce() + UnwindSafe + Send + 'static,
 {
-    global_executor().run(f)
+    global_executor().run_test(f)
 }
 
 /// Runs a test with GC stress enabled to help find GC bugs.
