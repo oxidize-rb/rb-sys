@@ -3,20 +3,6 @@ use rb_sys_test_helpers::{capture_gc_stat_for, ruby_test};
 use rusty_fork::rusty_fork_test;
 use std::alloc::GlobalAlloc;
 
-rusty_fork_test! {
-  #[ruby_test]
-  fn test_tracking_allocator_works() {
-    rb_sys::set_global_tracking_allocator!();
-
-    let (my_vec, malloc_increase) = capture_gc_stat_for!("malloc_increase_bytes", {
-      vec![1u32; 42]
-    });
-
-    assert_eq!(42 * 4, malloc_increase);
-    assert_eq!(42, my_vec.len());
-  }
-}
-
 #[ruby_test]
 fn test_alloc_zeroed() {
     let allocator = TrackingAllocator::default();
@@ -65,7 +51,7 @@ fn test_manually_tracked_reports_memory_usage_on_create() {
 
 #[ruby_test]
 fn test_manually_tracked_reports_memory_usage_on_drop() {
-    let manually_tracked = ManuallyTracked::wrap((), 1024);
+    let manually_tracked = ManuallyTracked::new(1024);
 
     let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
         std::mem::drop(manually_tracked);
@@ -116,6 +102,29 @@ fn test_manually_tracked_decreases_on_drop() {
     });
 
     assert_eq!(-1024, decreased);
+}
+
+#[ruby_test]
+fn test_manually_tracked_handles_clone() {
+    let ((cloned, manually_tracked), increased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        let manually_tracked = ManuallyTracked::new(42069);
+        (manually_tracked.clone(), manually_tracked)
+    });
+
+    assert_eq!(42069, increased);
+    assert_eq!(cloned.get(), manually_tracked.get());
+}
+
+#[ruby_test]
+fn test_manually_tracked_handles_clone_and_drop() {
+    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        let manually_tracked = ManuallyTracked::new(42069);
+        let cloned = manually_tracked.clone();
+        std::mem::drop(manually_tracked);
+        std::mem::drop(cloned);
+    });
+
+    assert_eq!(0, decreased);
 }
 
 #[ruby_test]

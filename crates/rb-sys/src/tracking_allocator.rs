@@ -3,7 +3,11 @@
 use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_available};
 use std::{
     alloc::{GlobalAlloc, Layout, System},
-    sync::atomic::{AtomicIsize, Ordering},
+    fmt::Formatter,
+    sync::{
+        atomic::{AtomicIsize, Ordering},
+        Arc,
+    },
 };
 
 /// A simple wrapper over [`std::alloc::System`] which reports memory usage to
@@ -121,10 +125,59 @@ macro_rules! set_global_tracking_allocator {
     };
 }
 
+#[derive(Debug)]
+#[repr(transparent)]
+struct MemsizeDelta(Arc<AtomicIsize>);
+
+impl MemsizeDelta {
+    fn new(delta: isize) -> Self {
+        TrackingAllocator::adjust_memory_usage(delta);
+        Self(Arc::new(AtomicIsize::new(delta)))
+    }
+
+    fn add(&self, delta: usize) {
+        if delta == 0 {
+            return;
+        }
+
+        self.0.fetch_add(delta as _, Ordering::SeqCst);
+        TrackingAllocator::adjust_memory_usage(delta as _);
+    }
+
+    fn sub(&self, delta: usize) {
+        if delta == 0 {
+            return;
+        }
+
+        self.0.fetch_sub(delta as isize, Ordering::SeqCst);
+        TrackingAllocator::adjust_memory_usage(-(delta as isize));
+    }
+
+    fn get(&self) -> isize {
+        self.0.load(Ordering::SeqCst)
+    }
+}
+
+impl Clone for MemsizeDelta {
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
+
+impl Drop for MemsizeDelta {
+    fn drop(&mut self) {
+        let memsize = self.0.swap(0, Ordering::SeqCst);
+        TrackingAllocator::adjust_memory_usage(0 - memsize);
+    }
+}
+
 /// A guard which adjusts the memory usage reported to the Ruby GC by `delta`.
 /// This allows you to track resources which are invisible to the Rust
 /// allocator, such as items that are known to internally use `mmap` or direct
 /// `malloc` in their implementation.
+///
+/// Internally, it uses an [`Arc<AtomicIsize>`] to track the memory usage delta,
+/// and is safe to clone when `T` is [`Clone`].
 ///
 /// # Example
 /// ```
@@ -138,42 +191,34 @@ macro_rules! set_global_tracking_allocator {
 /// // Will tell the Ruby GC that 1024 bytes were freed.
 /// std::mem::drop(item);
 /// ```
-#[derive(Debug)]
 pub struct ManuallyTracked<T> {
     item: T,
-    memsize_delta: AtomicIsize,
+    memsize_delta: MemsizeDelta,
 }
 
 impl<T> ManuallyTracked<T> {
     /// Create a new `ManuallyTracked<T>`, and immediately report that `memsize`
     /// bytes were allocated.
     pub fn wrap(item: T, memsize: usize) -> Self {
-        let delta = TrackingAllocator::adjust_memory_usage(memsize as isize);
-
         Self {
             item,
-            memsize_delta: AtomicIsize::new(delta),
+            memsize_delta: MemsizeDelta::new(memsize as _),
         }
     }
 
     /// Increase the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn increase_memory_usage(&self, memsize: usize) {
-        self.memsize_delta
-            .fetch_add(memsize as isize, Ordering::AcqRel);
-        TrackingAllocator::adjust_memory_usage(memsize as isize);
+        self.memsize_delta.add(memsize);
     }
 
     /// Decrease the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn decrease_memory_usage(&self, memsize: usize) {
-        self.memsize_delta
-            .fetch_sub(memsize as isize, Ordering::AcqRel);
-
-        TrackingAllocator::adjust_memory_usage(-(memsize as isize));
+        self.memsize_delta.sub(memsize);
     }
 
     /// Get the current memory usage delta.
     pub fn memsize_delta(&self) -> isize {
-        self.memsize_delta.load(Ordering::SeqCst)
+        self.memsize_delta.get()
     }
 
     /// Get a shared reference to the inner `T`.
@@ -187,15 +232,34 @@ impl<T> ManuallyTracked<T> {
     }
 }
 
+impl ManuallyTracked<()> {
+    /// Create a new `ManuallyTracked<()>`, and immediately report that
+    /// `memsize` bytes were allocated.
+    pub fn new(memsize: usize) -> Self {
+        Self::wrap((), memsize)
+    }
+}
+
 impl Default for ManuallyTracked<()> {
     fn default() -> Self {
         Self::wrap((), 0)
     }
 }
 
-impl<T> Drop for ManuallyTracked<T> {
-    fn drop(&mut self) {
-        let memsize = self.memsize_delta.swap(0, Ordering::SeqCst);
-        TrackingAllocator::adjust_memory_usage(0 - memsize);
+impl<T: Clone> Clone for ManuallyTracked<T> {
+    fn clone(&self) -> Self {
+        Self {
+            item: self.item.clone(),
+            memsize_delta: self.memsize_delta.clone(),
+        }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for ManuallyTracked<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ManuallyTracked")
+            .field("item", &self.item)
+            .field("memsize_delta", &self.memsize_delta)
+            .finish()
     }
 }
