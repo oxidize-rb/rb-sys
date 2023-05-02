@@ -159,14 +159,14 @@ impl<T> ManuallyTracked<T> {
     /// Increase the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn increase_memory_usage(&self, memsize: usize) {
         self.memsize_delta
-            .fetch_add(memsize as isize, Ordering::SeqCst);
+            .fetch_add(memsize as isize, Ordering::AcqRel);
         TrackingAllocator::adjust_memory_usage(memsize as isize);
     }
 
     /// Decrease the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn decrease_memory_usage(&self, memsize: usize) {
         self.memsize_delta
-            .fetch_sub(memsize as isize, Ordering::SeqCst);
+            .fetch_sub(memsize as isize, Ordering::AcqRel);
 
         TrackingAllocator::adjust_memory_usage(-(memsize as isize));
     }

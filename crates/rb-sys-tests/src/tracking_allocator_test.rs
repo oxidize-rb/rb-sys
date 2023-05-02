@@ -150,7 +150,7 @@ fn test_adjusting_with_many_threads_works() {
 
     // Ideally, we'd test this too, but it seems the reported bytes are not
     // actually atomic... So, just best effort here.
-    // assert_eq!(0, _reported_bytes);
+    assert_eq!(0, _reported_bytes);
 }
 
 rusty_fork_test! {
