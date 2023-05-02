@@ -1,3 +1,4 @@
+use rb_sys::tracking_allocator::ManuallyTracked;
 use rb_sys::*;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_long;
@@ -17,6 +18,10 @@ unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> Rub
     let reversed = ruby_string.to_string().chars().rev().collect::<String>();
     let reversed_cstring = CString::new(reversed).unwrap();
     let size = ruby_string.len() as c_long;
+
+    // Just here to test out the tracking allocator
+    let manually_tracked = ManuallyTracked::new("foo", 1024);
+    assert!(manually_tracked.to_string() == "foo");
 
     rb_utf8_str_new(reversed_cstring.as_ptr(), size)
 }

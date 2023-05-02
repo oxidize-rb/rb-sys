@@ -108,3 +108,49 @@ macro_rules! set_global_tracking_allocator {
     };
 }
 
+/// A guard which adjusts the memory usage reported to the Ruby GC by `delta`.
+/// This allows you to track resources which are invisible to the Rust
+/// allocator, such as items that are known to internally use `mmap` or direct
+/// `malloc` in their implementation.
+///
+/// # Example
+/// ```
+/// use rb_sys::tracking_allocator::ManuallyTracked;
+///
+/// type SomethingThatUsedMmap = ();
+///
+/// // Will tell the Ruby GC that 1024 bytes were allocated.
+/// let item = ManuallyTracked::new(SomethingThatUsedMmap, 1024);
+///
+/// // Will tell the Ruby GC that 1024 bytes were freed.
+/// std::mem::drop(item);
+/// ```
+#[derive(Debug)]
+pub struct ManuallyTracked<T> {
+    item: T,
+    memsize: isize,
+}
+
+impl<T> ManuallyTracked<T> {
+    /// Create a new `ManuallyTracked<T>`, and immediately report that `memsize`
+    /// bytes were allocated.
+    pub fn new(item: T, memsize: isize) -> Self {
+        TrackingAllocator::adjust_memory_usage(memsize);
+
+        Self { item, memsize }
+    }
+}
+
+impl<T> std::ops::Deref for ManuallyTracked<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.item
+    }
+}
+
+impl<T> Drop for ManuallyTracked<T> {
+    fn drop(&mut self) {
+        TrackingAllocator::adjust_memory_usage(0 - self.memsize);
+    }
+}
