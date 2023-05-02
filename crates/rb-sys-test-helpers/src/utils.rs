@@ -6,6 +6,27 @@ macro_rules! rstring {
     };
 }
 
+/// Creates a new Ruby symbol from a Rust literal str.
+#[macro_export]
+macro_rules! rsymbol {
+    ($s:literal) => {
+        unsafe { rb_sys::rb_id2sym(rb_sys::rb_intern(concat!($s, "\0").as_ptr() as _)) }
+    };
+}
+
+/// Captures the GC stat before and after the expression.
+#[macro_export]
+macro_rules! capture_gc_stat_for {
+    ($id:literal, $e:expr) => {{
+        let id = $crate::rsymbol!($id);
+        let before = unsafe { rb_sys::rb_gc_stat(id) };
+        let result = $e;
+        let after = unsafe { rb_sys::rb_gc_stat(id) };
+
+        (result, after as isize - before as isize)
+    }};
+}
+
 /// Allows you to convert a Ruby string to a Rust string.
 #[macro_export]
 macro_rules! rstring_to_string {

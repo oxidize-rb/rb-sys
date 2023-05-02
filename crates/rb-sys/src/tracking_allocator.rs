@@ -13,7 +13,7 @@ use std::alloc::{GlobalAlloc, Layout, System};
 ///
 /// let mut vec = Vec::new_in(TrackingAllocator::default());
 /// ```
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct TrackingAllocator;
 
 impl TrackingAllocator {
@@ -43,6 +43,16 @@ impl TrackingAllocator {
                 rb_gc_adjust_memory_usage(delta);
             }
         }
+    }
+
+    /// Create a new [`TrackingAllocator`].
+    pub const fn new() -> Self {
+        Self
+    }
+
+    /// Create a new [`TrackingAllocator`] with default values.
+    pub const fn default() -> Self {
+        Self::new()
     }
 }
 
