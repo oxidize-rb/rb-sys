@@ -37,9 +37,9 @@ impl TrackingAllocator {
     /// // ...and then after the memory is freed, adjust the memory usage again.
     /// TrackingAllocator::adjust_memory_usage(-1024);
     /// ```
-    pub fn adjust_memory_usage(delta: isize) {
+    pub fn adjust_memory_usage(delta: isize) -> isize {
         if delta == 0 {
-            return;
+            return 0;
         }
 
         #[cfg(target_pointer_width = "32")]
@@ -51,6 +51,9 @@ impl TrackingAllocator {
         unsafe {
             if is_ruby_vm_available() {
                 rb_gc_adjust_memory_usage(delta);
+                delta as isize
+            } else {
+                0
             }
         }
     }
@@ -62,7 +65,7 @@ unsafe impl GlobalAlloc for TrackingAllocator {
         let delta = layout.size() as isize;
 
         if !ret.is_null() && delta != 0 {
-            Self::adjust_memory_usage(delta)
+            Self::adjust_memory_usage(delta);
         }
 
         ret
@@ -73,7 +76,7 @@ unsafe impl GlobalAlloc for TrackingAllocator {
         let delta = layout.size() as isize;
 
         if !ret.is_null() && delta != 0 {
-            Self::adjust_memory_usage(delta)
+            Self::adjust_memory_usage(delta);
         }
 
         ret
@@ -145,24 +148,24 @@ impl<T> ManuallyTracked<T> {
     /// Create a new `ManuallyTracked<T>`, and immediately report that `memsize`
     /// bytes were allocated.
     pub fn wrap(item: T, memsize: usize) -> Self {
-        TrackingAllocator::adjust_memory_usage(memsize as isize);
+        let delta = TrackingAllocator::adjust_memory_usage(memsize as isize);
 
         Self {
             item,
-            memsize: AtomicIsize::new(memsize as isize),
+            memsize: AtomicIsize::new(delta),
         }
     }
 
     /// Increase the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn increase_memory_usage(&self, memsize: usize) {
-        self.memsize.fetch_add(memsize as isize, Ordering::AcqRel);
-        TrackingAllocator::adjust_memory_usage(memsize as isize);
+        let delta = TrackingAllocator::adjust_memory_usage(memsize as isize);
+        self.memsize.fetch_add(delta, Ordering::AcqRel);
     }
 
     /// Decrease the memory usage reported to the Ruby GC by `memsize` bytes.
     pub fn decrease_memory_usage(&self, memsize: usize) {
-        self.memsize.fetch_sub(memsize as isize, Ordering::AcqRel);
-        TrackingAllocator::adjust_memory_usage(-(memsize as isize));
+        let delta = TrackingAllocator::adjust_memory_usage(-(memsize as isize));
+        self.memsize.fetch_add(delta, Ordering::AcqRel);
     }
 
     /// Get a shared reference to the inner `T`.
@@ -184,7 +187,7 @@ impl Default for ManuallyTracked<()> {
 
 impl<T> Drop for ManuallyTracked<T> {
     fn drop(&mut self) {
-        let memsize = self.memsize.load(Ordering::SeqCst);
+        let memsize = self.memsize.swap(0, Ordering::SeqCst);
         TrackingAllocator::adjust_memory_usage(0 - memsize);
     }
 }
