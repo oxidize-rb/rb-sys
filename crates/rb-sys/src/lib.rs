@@ -6,12 +6,10 @@ pub mod macros;
 pub mod special_consts;
 pub mod value_type;
 
-#[cfg(use_global_allocator)]
-mod allocator;
+mod hidden;
 mod ruby_abi_version;
+mod utils;
 
-#[cfg(use_global_allocator)]
-pub use allocator::*;
 pub use bindings::*;
 pub use macros::*;
 pub use ruby_abi_version::*;
