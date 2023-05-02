@@ -1,22 +1,28 @@
 //! Support for reporting Rust memory usage to the Ruby GC.
 
 use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_available};
-use std::alloc::{GlobalAlloc, Layout, System};
+use std::{
+    alloc::{GlobalAlloc, Layout, System},
+    sync::atomic::{AtomicIsize, Ordering},
+};
 
 /// A simple wrapper over [`std::alloc::System`] which reports memory usage to
 /// the Ruby GC. This gives the GC a more accurate picture of the process'
 /// memory usage so it can make better decisions about when to run.
-///
-/// # Example
-/// ```
-/// use rb_sys::TrackingAllocator;
-///
-/// let mut vec = Vec::new_in(TrackingAllocator::default());
-/// ```
 #[derive(Debug)]
 pub struct TrackingAllocator;
 
 impl TrackingAllocator {
+    /// Create a new [`TrackingAllocator`].
+    pub const fn new() -> Self {
+        Self
+    }
+
+    /// Create a new [`TrackingAllocator`] with default values.
+    pub const fn default() -> Self {
+        Self::new()
+    }
+
     /// Adjust the memory usage reported to the Ruby GC by `delta`. Useful for
     /// tracking allocations invisible to the Rust allocator, such as `mmap` or
     /// direct `malloc` calls.
@@ -32,6 +38,10 @@ impl TrackingAllocator {
     /// TrackingAllocator::adjust_memory_usage(-1024);
     /// ```
     pub fn adjust_memory_usage(delta: isize) {
+        if delta == 0 {
+            return;
+        }
+
         #[cfg(target_pointer_width = "32")]
         let delta = delta as i32;
 
@@ -43,16 +53,6 @@ impl TrackingAllocator {
                 rb_gc_adjust_memory_usage(delta);
             }
         }
-    }
-
-    /// Create a new [`TrackingAllocator`].
-    pub const fn new() -> Self {
-        Self
-    }
-
-    /// Create a new [`TrackingAllocator`] with default values.
-    pub const fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -138,29 +138,53 @@ macro_rules! set_global_tracking_allocator {
 #[derive(Debug)]
 pub struct ManuallyTracked<T> {
     item: T,
-    memsize: isize,
+    memsize: AtomicIsize,
 }
 
 impl<T> ManuallyTracked<T> {
     /// Create a new `ManuallyTracked<T>`, and immediately report that `memsize`
     /// bytes were allocated.
-    pub fn new(item: T, memsize: isize) -> Self {
-        TrackingAllocator::adjust_memory_usage(memsize);
+    pub fn wrap(item: T, memsize: usize) -> Self {
+        TrackingAllocator::adjust_memory_usage(memsize as isize);
 
-        Self { item, memsize }
+        Self {
+            item,
+            memsize: AtomicIsize::new(memsize as isize),
+        }
+    }
+
+    /// Increase the memory usage reported to the Ruby GC by `memsize` bytes.
+    pub fn increase_memory_usage(&self, memsize: usize) {
+        self.memsize.fetch_add(memsize as isize, Ordering::AcqRel);
+        TrackingAllocator::adjust_memory_usage(memsize as isize);
+    }
+
+    /// Decrease the memory usage reported to the Ruby GC by `memsize` bytes.
+    pub fn decrease_memory_usage(&self, memsize: usize) {
+        self.memsize.fetch_sub(memsize as isize, Ordering::AcqRel);
+        TrackingAllocator::adjust_memory_usage(-(memsize as isize));
+    }
+
+    /// Get a shared reference to the inner `T`.
+    pub fn get(&self) -> &T {
+        &self.item
+    }
+
+    /// Get a mutable reference to the inner `T`.
+    pub fn get_mut(&mut self) -> &mut T {
+        &mut self.item
     }
 }
 
-impl<T> std::ops::Deref for ManuallyTracked<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.item
+impl Default for ManuallyTracked<()> {
+    fn default() -> Self {
+        Self::wrap((), 0)
     }
 }
 
 impl<T> Drop for ManuallyTracked<T> {
     fn drop(&mut self) {
-        TrackingAllocator::adjust_memory_usage(0 - self.memsize);
+        let memsize = self.memsize.load(Ordering::SeqCst);
+        TrackingAllocator::adjust_memory_usage(0 - memsize);
     }
 }

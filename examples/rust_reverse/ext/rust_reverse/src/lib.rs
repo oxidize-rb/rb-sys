@@ -20,8 +20,8 @@ unsafe extern "C" fn pub_reverse(_klass: RubyValue, mut input: RubyValue) -> Rub
     let size = ruby_string.len() as c_long;
 
     // Just here to test out the tracking allocator
-    let manually_tracked = ManuallyTracked::new("foo", 1024);
-    assert!(manually_tracked.to_string() == "foo");
+    let manually_tracked = ManuallyTracked::wrap("foo", 1024);
+    assert_eq!("foo", manually_tracked.get().to_string());
 
     rb_utf8_str_new(reversed_cstring.as_ptr(), size)
 }

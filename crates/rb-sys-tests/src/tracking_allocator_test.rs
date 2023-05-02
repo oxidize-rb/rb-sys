@@ -64,14 +64,14 @@ fn test_realloc() {
 #[ruby_test]
 fn test_manually_tracked_reports_memory_usage_on_create() {
     let (_, increased) =
-        capture_gc_stat_for!("malloc_increase_bytes", { ManuallyTracked::new((), 1024) });
+        capture_gc_stat_for!("malloc_increase_bytes", { ManuallyTracked::wrap((), 1024) });
 
     assert_eq!(1024, increased);
 }
 
 #[ruby_test]
 fn test_manually_tracked_reports_memory_usage_on_drop() {
-    let manually_tracked = ManuallyTracked::new((), 1024);
+    let manually_tracked = ManuallyTracked::wrap((), 1024);
 
     let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
         std::mem::drop(manually_tracked);
@@ -80,12 +80,56 @@ fn test_manually_tracked_reports_memory_usage_on_drop() {
     assert_eq!(-1024, decreased)
 }
 
+#[ruby_test]
+fn test_manually_tracked_default() {
+    let manually_tracked = ManuallyTracked::default();
+
+    assert_eq!(&(), manually_tracked.get());
+
+    let (_, increased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        manually_tracked.increase_memory_usage(1024);
+    });
+
+    assert_eq!(1024, increased);
+
+    manually_tracked.decrease_memory_usage(1024);
+
+    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        std::mem::drop(manually_tracked);
+    });
+
+    assert_eq!(0, decreased);
+}
+
+#[ruby_test]
+fn test_manually_tracked_allows_for_increasing_and_decreasing() {
+    let manually_tracked = ManuallyTracked::wrap((), 0);
+
+    let (_, increased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        manually_tracked.increase_memory_usage(1024);
+    });
+
+    assert_eq!(1024, increased);
+
+    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        manually_tracked.decrease_memory_usage(256);
+    });
+
+    assert_eq!(-256, decreased);
+
+    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+        std::mem::drop(manually_tracked);
+    });
+
+    assert_eq!(-768, decreased);
+}
+
 rusty_fork_test! {
   #[test]
   fn test_manually_tracked_works_without_ruby_vm_available() {
-    let manually_tracked = ManuallyTracked::new(vec![1, 2, 3], 1024);
+    let manually_tracked = ManuallyTracked::wrap(vec![1, 2, 3], 1024);
 
-    assert_eq!(3, manually_tracked.len());
+    assert_eq!(3, manually_tracked.get().len());
 
     std::mem::drop(manually_tracked);
   }
