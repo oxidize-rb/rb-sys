@@ -4,6 +4,7 @@
 pub mod bindings;
 pub mod macros;
 pub mod special_consts;
+pub mod tracking_allocator;
 pub mod value_type;
 
 mod hidden;
@@ -20,7 +21,7 @@ pub type Value = VALUE;
 pub type RubyValue = VALUE;
 
 #[cfg(use_global_allocator)]
-ruby_global_allocator!();
+set_global_tracking_allocator!();
 
 #[cfg(use_ruby_abi_version)]
 ruby_abi_version!();
