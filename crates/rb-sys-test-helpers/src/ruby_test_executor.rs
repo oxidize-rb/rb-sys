@@ -68,7 +68,7 @@ impl RubyTestExecutor {
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
     {
-        let (result_sender, result_receiver) = mpsc::sync_channel(8);
+        let (result_sender, result_receiver) = mpsc::sync_channel(1);
 
         let closure = Box::new(move || {
             let result = panic::catch_unwind(panic::AssertUnwindSafe(f));
