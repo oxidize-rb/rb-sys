@@ -1,5 +1,4 @@
 use std::panic;
-use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
@@ -37,18 +36,10 @@ impl RubyTestExecutor {
 
         executor.run(|| {
             static INIT: Once = Once::new();
-            static mut STATE: AtomicU8 = AtomicU8::new(0);
 
             INIT.call_once(|| unsafe {
-                STATE.fetch_add(1, Ordering::SeqCst);
                 ruby_setup_ceremony();
-                STATE.fetch_add(1, Ordering::SeqCst);
             });
-
-            // Wait for the main thread to finish setting up Ruby
-            while unsafe { STATE.load(Ordering::Acquire) != 2 } {
-                std::thread::yield_now();
-            }
         });
 
         executor
