@@ -33,23 +33,14 @@ macro_rules! rsymbol {
 #[macro_export]
 macro_rules! capture_gc_stat_for {
     ($id:literal, $e:expr) => {{
-        pub static CAPTURE_LOCK_INIT: std::sync::Once = std::sync::Once::new();
-        pub static mut CAPTURE_LOCK: Option<std::sync::Mutex<()>> = None;
-
-        CAPTURE_LOCK_INIT.call_once(|| unsafe {
-            CAPTURE_LOCK.replace(std::sync::Mutex::new(()));
-        });
-
         let id = $crate::memoized! { $crate::rsymbol!($id) };
 
         unsafe {
-            let lock = CAPTURE_LOCK.as_ref().unwrap();
-            let lock = lock.lock().unwrap();
+            $crate::trigger_full_gc!();
+
             let before = unsafe { rb_sys::rb_gc_stat(id) };
             let result = $e;
             let after = unsafe { rb_sys::rb_gc_stat(id) };
-
-            $crate::trigger_full_gc!();
 
             (result, after as isize - before as isize)
         }

@@ -53,7 +53,7 @@ fn test_manually_tracked_reports_memory_usage_on_create() {
 fn test_manually_tracked_reports_memory_usage_on_drop() {
     let manually_tracked = ManuallyTracked::new(1024);
 
-    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+    let (_, decreased) = capture_gc_stat_for!("oldmalloc_increase_bytes", {
         std::mem::drop(manually_tracked);
     });
 
@@ -97,7 +97,7 @@ fn test_manually_tracked_allows_for_increasing_and_decreasing() {
 fn test_manually_tracked_decreases_on_drop() {
     let manually_tracked = ManuallyTracked::wrap((), 1024);
 
-    let (_, decreased) = capture_gc_stat_for!("malloc_increase_bytes", {
+    let (_, decreased) = capture_gc_stat_for!("oldmalloc_increase_bytes", {
         std::mem::drop(manually_tracked);
     });
 
