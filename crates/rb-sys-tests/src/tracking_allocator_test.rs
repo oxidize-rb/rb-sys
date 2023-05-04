@@ -1,5 +1,5 @@
 use rb_sys::tracking_allocator::{ManuallyTracked, TrackingAllocator};
-use rb_sys_test_helpers::{capture_gc_stat_for, ruby_test};
+use rb_sys_test_helpers::{capture_gc_stat_for, ruby_test, with_ruby_vm};
 use rusty_fork::rusty_fork_test;
 use std::alloc::GlobalAlloc;
 
@@ -170,5 +170,16 @@ rusty_fork_test! {
     assert_eq!(3, manually_tracked.get().len());
 
     std::mem::drop(manually_tracked);
+  }
+}
+
+rusty_fork_test! {
+  #[test]
+  fn test_rb_cobject_static_is_zero_before_ruby_start() {
+    assert_eq!(0, unsafe { rb_sys::rb_cObject });
+
+    with_ruby_vm(|| {
+      assert_ne!(0, unsafe { rb_sys::rb_cObject });
+    });
   }
 }

@@ -1,6 +1,6 @@
 //! Support for reporting Rust memory usage to the Ruby GC.
 
-use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_available};
+use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_started};
 use std::{
     alloc::{GlobalAlloc, Layout, System},
     fmt::Formatter,
@@ -53,7 +53,7 @@ impl TrackingAllocator {
         let delta = delta as i64;
 
         unsafe {
-            if is_ruby_vm_available() {
+            if is_ruby_vm_started() {
                 rb_gc_adjust_memory_usage(delta);
                 delta as isize
             } else {
