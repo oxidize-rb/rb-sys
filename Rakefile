@@ -16,7 +16,8 @@ def cargo_test_task(name, *args)
   desc "Run cargo tests for #{name.inspect} against current Ruby"
   task task_name do
     default_args = ENV["CI"] || extra_args.include?("--verbose") ? [] : ["--quiet"]
-    sh "cargo", "test", *default_args, *extra_args, *args, "-p", name
+    test_args = ENV["CI"] || extra_args.include?("--verbose") ? ["--", "--nocapture"] : []
+    sh "cargo", "test", *default_args, *extra_args, *args, "-p", name, *test_args
     puts "=" * 80
   end
 

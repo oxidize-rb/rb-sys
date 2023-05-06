@@ -16,3 +16,6 @@ mod value_type_test;
 
 #[cfg(test)]
 mod special_consts_test;
+
+#[cfg(test)]
+mod tracking_allocator_test;

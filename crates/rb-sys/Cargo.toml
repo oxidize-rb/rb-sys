@@ -16,6 +16,9 @@ rust-version = "1.54"
 [build-dependencies]
 rb-sys-build = { version = "0.9.75", path = "../rb-sys-build" }
 
+[dev-dependencies]
+rb-sys-test-helpers = { version = "0.1.1", path = "../rb-sys-test-helpers" }
+
 [features]
 default = []
 link-ruby = []

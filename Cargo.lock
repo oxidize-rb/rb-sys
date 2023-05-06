@@ -227,6 +227,7 @@ name = "rb-sys"
 version = "0.9.75"
 dependencies = [
  "rb-sys-build",
+ "rb-sys-test-helpers",
 ]
 
 [[package]]
@@ -274,6 +275,7 @@ dependencies = [
  "rb-sys",
  "rb-sys-env",
  "rb-sys-test-helpers",
+ "rusty-fork",
 ]
 
 [[package]]
