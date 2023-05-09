@@ -144,14 +144,14 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "rb-sys-build",
 ]
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "bindgen",
  "lazy_static",
@@ -181,7 +181,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
 name = "rust_reverse"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "rb-sys",
 ]

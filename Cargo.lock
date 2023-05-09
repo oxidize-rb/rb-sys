@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "rb-sys-build",
  "rb-sys-test-helpers",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "bindgen",
  "cc",
@@ -270,7 +270,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.75"
+version = "0.9.76"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
