@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys-test-helpers"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 description = "Helpers for testing Ruby extensions from Rust"
 homepage = "https://github.com/oxidize-rb/rb-sys"
@@ -14,7 +14,7 @@ bench = false
 doctest = true
 
 [dependencies]
-rb-sys = { version = "0.9.76", path = "../rb-sys", features = ["link-ruby"] }
+rb-sys = { version = "0.9", path = "../rb-sys", features = ["link-ruby"] }
 rb-sys-test-helpers-macros = { version = "0.1.0", path = "../rb-sys-test-helpers-macros" }
 
 [build-dependencies]
