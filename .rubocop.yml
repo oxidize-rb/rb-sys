@@ -5,4 +5,4 @@ inherit_gem:
 
 AllCops:
   Exclude:
-    - examples/rust_reverse/tmp/
+    - examples/rust_reverse/tmp/**/*

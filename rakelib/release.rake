@@ -23,7 +23,12 @@ namespace :release do
     crates = ["rb-sys-build", "rb-sys"]
 
     crates.each do |crate|
-      sh "cargo publish -p #{crate}"
+      sh "cargo publish -p #{crate} #{extra_args.join(" ")}"
+    end
+
+    if extra_args.include?("--dry-run")
+      puts "Skipping gem release because --dry-run was passed"
+      next
     end
 
     Dir.chdir("gem") do
