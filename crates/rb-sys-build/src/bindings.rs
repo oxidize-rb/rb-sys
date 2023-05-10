@@ -5,7 +5,7 @@ use crate::RbConfig;
 use quote::ToTokens;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, error::Error};
 use syn::{Expr, ExprLit, ItemConst, Lit};
 
@@ -100,7 +100,7 @@ pub fn generate(
     Ok(out_path)
 }
 
-fn run_rustfmt(path: &PathBuf) {
+fn run_rustfmt(path: &Path) {
     let mut cmd = std::process::Command::new("rustfmt");
     cmd.stderr(std::process::Stdio::inherit());
     cmd.stdout(std::process::Stdio::inherit());
