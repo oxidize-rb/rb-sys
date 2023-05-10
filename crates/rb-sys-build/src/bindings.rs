@@ -5,7 +5,7 @@ use crate::RbConfig;
 use quote::ToTokens;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, error::Error};
 use syn::{Expr, ExprLit, ItemConst, Lit};
 
@@ -73,7 +73,7 @@ pub fn generate(
         syn::parse_file(&code_string)?
     };
 
-    let ruby_version = rbconfig.ruby_version();
+    let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
     let crate_version = env!("CARGO_PKG_VERSION");
     let out_path = out_dir.join(format!(
@@ -82,11 +82,13 @@ pub fn generate(
     ));
 
     let code = {
+        sanitizer::ensure_backwards_compatible_encoding_pointers(&mut tokens);
         clean_docs(rbconfig, &mut tokens);
 
         if is_msvc() {
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
+
         push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
         tokens.into_token_stream().to_string()
     };
@@ -98,7 +100,7 @@ pub fn generate(
     Ok(out_path)
 }
 
-fn run_rustfmt(path: &PathBuf) {
+fn run_rustfmt(path: &Path) {
     let mut cmd = std::process::Command::new("rustfmt");
     cmd.stderr(std::process::Stdio::inherit());
     cmd.stdout(std::process::Stdio::inherit());
@@ -115,7 +117,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
         return;
     }
 
-    let ver = rbconfig.ruby_version();
+    let ver = rbconfig.ruby_program_version();
 
     sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
         eprintln!("Failed to clean up docs, skipping: {}", e);
@@ -123,8 +125,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 }
 
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
-    bindgen::Builder::default()
-        .use_core()
+    let bindings = bindgen::Builder::default()
         .rustfmt_bindings(false) // We use syn so this is pointless
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
@@ -136,8 +137,16 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
+        .merge_extern_blocks(true)
+        .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
         .impl_debug(cfg!(feature = "bindgen-impl-debug"))
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+
+    if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {
+        bindings.enable_function_attribute_detection()
+    } else {
+        bindings
+    }
 }
 
 // This is needed because bindgen doesn't support the `__declspec(dllimport)` on

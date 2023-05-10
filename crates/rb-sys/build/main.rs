@@ -28,7 +28,7 @@ fn main() {
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    let ruby_version = rbconfig.ruby_version();
+    let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
     let crate_version = env!("CARGO_PKG_VERSION");
     let cfg_capture_path = out_dir.join(format!(

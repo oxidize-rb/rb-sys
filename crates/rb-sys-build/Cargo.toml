@@ -6,7 +6,7 @@ description = "Build system for rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
-rust-version = "1.54"
+rust-version = "1.57"
 
 [lib]
 bench = false
@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 regex = "1"
 shell-words = "1.1"
-bindgen = { version = "0.60", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.62", default-features = false, features = ["runtime"] }
 cc-impl = { version = "1.0", optional = true, package = "cc" }
 syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
 quote = "1.0"
@@ -29,3 +29,6 @@ bindgen-rbimpls = []
 bindgen-deprecated-types = []
 bindgen-layout-tests = []
 bindgen-impl-debug = []
+bindgen-sizet-is-usize = []
+bindgen-return-const-encoding-pointers = []
+bindgen-enable-function-attribute-detection = []

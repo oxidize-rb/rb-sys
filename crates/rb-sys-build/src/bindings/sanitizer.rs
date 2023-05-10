@@ -29,6 +29,31 @@ pub fn add_link_ruby_directives(
     Ok(())
 }
 
+/// Converts all `*const rb_encoding` and  `*const OnigEncodingTypeST` to *mut
+/// _` to keep backwards compatibility with bindgen < 0.62.
+pub fn ensure_backwards_compatible_encoding_pointers(syntax: &mut syn::File) {
+    for item in syntax.items.iter_mut() {
+        if let Item::ForeignMod(fmod) = item {
+            for item in fmod.items.iter_mut() {
+                if let syn::ForeignItem::Fn(f) = item {
+                    if let syn::ReturnType::Type(_, ty) = &mut f.sig.output {
+                        if let syn::Type::Ptr(ptr) = &mut **ty {
+                            if let syn::Type::Path(path) = &*ptr.elem {
+                                if path.path.segments.len() == 1
+                                    && path.path.segments[0].ident == "OnigEncodingTypeST"
+                                    || path.path.segments[0].ident == "rb_encoding"
+                                {
+                                    ptr.mutability = Some(syn::token::Mut::default());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Turn the cruby comments into rustdoc comments.
 pub fn cleanup_docs(syntax: &mut syn::File, ruby_version: &str) -> Result<(), Box<dyn Error>> {
     let footer = doc_footer(ruby_version);

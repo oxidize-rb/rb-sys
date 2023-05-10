@@ -19,8 +19,12 @@ jobs:
             ref: main
             run: rake
           - name: "matsadler/magnus"
-            slug: magnus
-            ref: "0.5.0"
+            slug: magnus-0.5
+            ref: "0.5.3"
+            run: cargo test
+          - name: "matsadler/magnus"
+            slug: magnus-head
+            ref: "51d154ce32a3ef06542454fc720ad4f291dba86a"
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
