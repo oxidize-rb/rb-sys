@@ -80,12 +80,8 @@ module RbSys
         #{conditional_assign("RB_SYS_CARGO_PROFILE_DIR", "$(RB_SYS_CARGO_PROFILE)", indent: 1)}
         #{endif_stmt}
 
-        # Set the build profile (dev, release, etc.) Compat with Rust 1.54.
-        #{if_eq_stmt("$(RB_SYS_CARGO_PROFILE)", "release")}
-        #{assign_stmt("RB_SYS_CARGO_PROFILE_FLAG", "--release", indent: 1)}
-        #{else_stmt}
+        # Set the build profile (dev, release, etc.).
         #{assign_stmt("RB_SYS_CARGO_PROFILE_FLAG", "--profile $(RB_SYS_CARGO_PROFILE)", indent: 1)}
-        #{endif_stmt}
 
         # Account for sub-directories when using `--target` argument with Cargo
         #{conditional_assign("RB_SYS_CARGO_TARGET_DIR", "target")}
@@ -332,8 +328,8 @@ module RbSys
         raise "libclang version 5.0.0 or greater is required (current #{libclang_version})"
       end
 
-      if libclang_version >= Gem::Version.new("15.0.0")
-        raise "libclang version > 14.0.0 or greater is required (current #{libclang_version})"
+      if libclang_version >= Gem::Version.new("17.0.0")
+        raise "libclang version < 17.0.0 or greater is required (current #{libclang_version})"
       end
     end
 

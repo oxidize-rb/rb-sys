@@ -15,7 +15,7 @@ use std::ffi::OsString;
 
 use crate::{
     memoize,
-    utils::{is_msvc, is_mswin_or_mingw, shellsplit},
+    utils::{is_msvc, shellsplit},
 };
 
 use self::flags::Flags;
@@ -167,9 +167,18 @@ impl RbConfig {
         self
     }
 
-    /// Returns the current ruby version.
-    pub fn ruby_version(&self) -> String {
-        self.get("ruby_version")
+    /// Returns the current ruby program version.
+    pub fn ruby_program_version(&self) -> String {
+        if let Some(progv) = self.get_optional("RUBY_PROGRAM_VERSION") {
+            progv
+        } else {
+            format!(
+                "{}.{}.{}",
+                self.get("MAJOR"),
+                self.get("MINOR"),
+                self.get("TEENY")
+            )
+        }
     }
 
     /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
@@ -246,8 +255,6 @@ impl RbConfig {
             result.push(format!("cargo:rustc-link-search={}", search_path));
             search_paths.push(search_path.name.as_str());
         }
-
-        append_ld_library_path(search_paths);
 
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
@@ -413,27 +420,6 @@ fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
     regex
         .captures(arg)
         .map(|cap| cap.name("name").unwrap().as_str().trim().to_owned())
-}
-
-// Needed because Rust 1.54 does not support link-arg, and thus rpath
-// See <https://doc.rust-lang.org/cargo/reference/environment-variables.html#dynamic-library-paths
-fn append_ld_library_path(search_paths: Vec<&str>) {
-    let env_var_name = if is_mswin_or_mingw() {
-        "PATH"
-    } else if cfg!(target_os = "macos") {
-        "DYLD_FALLBACK_LIBRARY_PATH"
-    } else {
-        "LD_LIBRARY_PATH"
-    };
-
-    let new_path = match std::env::var_os(env_var_name) {
-        Some(val) => {
-            format!("{}:{}", val.to_str().unwrap(), search_paths.join(":"))
-        }
-        None => search_paths.join(":"),
-    };
-
-    println!("cargo:rustc-env={}={}", env_var_name, new_path);
 }
 
 #[cfg(test)]
