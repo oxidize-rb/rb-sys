@@ -2,9 +2,9 @@ use std::panic;
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 use crate::once_cell::OnceCell;
-use crate::trigger_full_gc;
 #[cfg(ruby_gte_3_0)]
 use rb_sys::rb_ext_ractor_safe;
 use rb_sys::{
@@ -17,6 +17,7 @@ static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
 pub struct RubyTestExecutor {
     sender: Option<SyncSender<Box<dyn FnOnce() + Send>>>,
     handle: Option<JoinHandle<()>>,
+    timeout: Duration,
 }
 
 impl RubyTestExecutor {
@@ -32,6 +33,7 @@ impl RubyTestExecutor {
         let executor = Self {
             sender: Some(sender),
             handle: Some(handle),
+            timeout: Duration::from_secs(5),
         };
 
         executor.run(|| {
@@ -45,7 +47,13 @@ impl RubyTestExecutor {
         executor
     }
 
+    pub fn set_test_timeout(&mut self, timeout: Duration) {
+        self.timeout = timeout;
+    }
+
     pub fn shutdown(&mut self) {
+        self.set_test_timeout(Duration::from_secs(3));
+
         self.run(|| unsafe {
             let ret = rb_sys::ruby_cleanup(0);
 
@@ -77,7 +85,7 @@ impl RubyTestExecutor {
                 .expect("Failed to send Ruby test result to Rust test thread");
         });
 
-        if let Some(sender) = &self.sender {
+        if let Some(sender) = self.sender.as_ref() {
             sender
                 .send(closure)
                 .expect("Failed to send closure to Ruby test thread");
@@ -85,12 +93,12 @@ impl RubyTestExecutor {
             panic!("RubyTestExecutor is not running");
         }
 
-        match result_receiver
-            .recv()
-            .expect("Failed to receive test result")
-        {
-            Ok(result) => result,
-            Err(err) => std::panic::resume_unwind(err),
+        match result_receiver.recv_timeout(self.timeout) {
+            Ok(Ok(result)) => result,
+            Ok(Err(err)) => std::panic::resume_unwind(err),
+            Err(_err) => {
+                panic!("Ruby test timed out after {:?}", self.timeout);
+            }
         }
     }
 
@@ -99,10 +107,7 @@ impl RubyTestExecutor {
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
     {
-        self.run(|| {
-            trigger_full_gc!();
-            f()
-        })
+        self.run(f)
     }
 }
 
@@ -200,6 +205,19 @@ mod tests {
             drop(executor);
 
             assert_eq!(Some("hell yeah it was"), unsafe { RUBY_VM_AT_EXIT_CALLED });
+        }
+    }
+
+    rusty_fork_test! {
+        #[test]
+        #[should_panic]
+        fn test_timeout() {
+            let mut executor = RubyTestExecutor::start();
+            executor.set_test_timeout(Duration::from_millis(100));
+
+            executor.run_test(|| {
+                std::thread::sleep(Duration::from_millis(200));
+            });
         }
     }
 }
