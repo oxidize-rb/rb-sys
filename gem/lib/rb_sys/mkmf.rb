@@ -173,24 +173,35 @@ module RbSys
     end
 
     def env_vars(builder)
-      lines = builder.build_env.map { |k, v| env_line(k, v) }
-      lines << env_line("CC", strip_cmd(env_or_makefile_config("CC")))
-      lines << env_line("CXX", strip_cmd(env_or_makefile_config("CXX")))
-      lines << env_line("AR", strip_cmd(env_or_makefile_config("AR"))) unless env_or_makefile_config("AR") == "libtool -static"
+      lines = []
+
+      if (cc = env_or_makefile_config("CC", builder)) && find_executable(cc)
+        lines << assign_stmt("CC", cc)
+      end
+
+      if (cxx = env_or_makefile_config("CXX", builder)) && find_executable(cxx)
+        lines << assign_stmt("CXX", cxx)
+      end
+
+      if (ar = env_or_makefile_config("AR", builder)) && find_executable(ar)
+        lines << assign_stmt("AR", ar)
+      end
+
+      lines += builder.build_env.map { |k, v| env_line(k, v) }
       lines.compact.join("\n")
     end
 
     def env_line(k, v)
       return unless v
-      export_env(k, v.gsub("\n", '\n'))
+      export_env(k, strip_cmd(v.gsub("\n", '\n')))
     end
 
     def strip_cmd(cmd)
       cmd.gsub("-nologo", "").strip
     end
 
-    def env_or_makefile_config(key)
-      ENV[key] || RbConfig::MAKEFILE_CONFIG[key]
+    def env_or_makefile_config(key, builder)
+      builder.env[key] || ENV[key] || RbConfig::MAKEFILE_CONFIG[key]
     end
 
     def gsub_cargo_command!(cargo_command, builder:)
