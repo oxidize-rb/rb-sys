@@ -97,7 +97,8 @@ impl RubyTestExecutor {
             Ok(Ok(result)) => result,
             Ok(Err(err)) => std::panic::resume_unwind(err),
             Err(_err) => {
-                panic!("Ruby test timed out after {:?}", self.timeout);
+                eprintln!("Ruby test timed out after {:?}", self.timeout);
+                std::process::abort();
             }
         }
     }
@@ -213,10 +214,10 @@ mod tests {
         #[should_panic]
         fn test_timeout() {
             let mut executor = RubyTestExecutor::start();
-            executor.set_test_timeout(Duration::from_millis(100));
+            executor.set_test_timeout(Duration::from_millis(1));
 
             executor.run_test(|| {
-                std::thread::sleep(Duration::from_millis(200));
+                std::thread::sleep(Duration::from_millis(100));
             });
         }
     }

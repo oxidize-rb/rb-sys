@@ -62,6 +62,14 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
     let vis = input.vis;
     let sig = &input.sig;
 
+    let block = quote! {
+        let ret = {
+            #block;
+        };
+        rb_sys_test_helpers::trigger_full_gc!();
+        ret
+    };
+
     let block = if gc_stress {
         quote! {
             rb_sys_test_helpers::with_gc_stress(|| {
