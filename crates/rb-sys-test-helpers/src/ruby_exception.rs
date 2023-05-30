@@ -8,7 +8,7 @@ use std::ffi::CStr;
 
 /// A simple wrapper around a Ruby exception that provides some convenience
 /// methods for testing.
-#[derive(Clone, Copy, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct RubyException {
     value: VALUE,
 }
@@ -20,7 +20,7 @@ impl RubyException {
     }
 
     /// Get the message of the Ruby exception.
-    pub fn message(self) -> Option<String> {
+    pub fn message(&self) -> Option<String> {
         unsafe {
             rb_funcall_typed!(self.value, "message", [], RUBY_T_STRING)
                 .map(|mut message| rstring_to_string!(message))
@@ -28,7 +28,7 @@ impl RubyException {
     }
 
     /// Get the full message of the Ruby exception.
-    pub fn full_message(self) -> Option<String> {
+    pub fn full_message(&self) -> Option<String> {
         unsafe {
             if let Some(mut message) =
                 rb_funcall_typed!(self.value, "full_message", [], RUBY_T_STRING)
@@ -42,7 +42,7 @@ impl RubyException {
     }
 
     /// Get the backtrace string of the Ruby exception.
-    pub fn backtrace(self) -> Option<String> {
+    pub fn backtrace(&self) -> Option<String> {
         unsafe {
             if let Some(backtrace) = rb_funcall_typed!(self.value, "backtrace", [], RUBY_T_ARRAY) {
                 let mut backtrace = rb_ary_join(backtrace, rb_str_new("\n".as_ptr() as _, 1));
@@ -60,7 +60,7 @@ impl RubyException {
     }
 
     /// Get the inspect string of the Ruby exception.
-    pub fn inspect(self) -> String {
+    pub fn inspect(&self) -> String {
         unsafe {
             if let Some(mut inspect) = rb_funcall_typed!(self.value, "inspect", [], RUBY_T_STRING) {
                 rstring_to_string!(inspect)
@@ -71,11 +71,17 @@ impl RubyException {
     }
 
     /// Get the class name of the Ruby exception.
-    pub fn classname(self) -> String {
+    pub fn classname(&self) -> String {
         unsafe {
             let classname = rb_class2name(rb_obj_class(self.value));
             CStr::from_ptr(classname).to_string_lossy().into_owned()
         }
+    }
+}
+
+impl Drop for RubyException {
+    fn drop(&mut self) {
+        rb_sys::rb_gc_guard!(self.value);
     }
 }
 
