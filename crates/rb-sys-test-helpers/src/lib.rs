@@ -111,7 +111,7 @@ where
         let mut outbuf = outbuf.take().unwrap();
 
         let result = func();
-        outbuf.as_mut_ptr().write(result);
+        outbuf.as_mut_ptr().write_volatile(result);
 
         outbuf.as_ptr() as _
     }
@@ -126,7 +126,7 @@ where
 
         if state == 0 {
             if let Some(result) = outbuf_ptr.as_ref() {
-                Ok(result.as_ptr().read())
+                Ok(result.as_ptr().read_volatile())
             } else {
                 panic!("rb_protect returned a null pointer")
             }
