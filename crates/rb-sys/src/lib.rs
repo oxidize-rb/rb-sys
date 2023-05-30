@@ -3,6 +3,7 @@
 
 pub mod bindings;
 pub mod macros;
+pub mod memory;
 pub mod special_consts;
 pub mod tracking_allocator;
 pub mod value_type;
@@ -13,6 +14,7 @@ mod utils;
 
 pub use bindings::*;
 pub use macros::*;
+pub use memory::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
 pub use value_type::*;

@@ -19,3 +19,6 @@ mod special_consts_test;
 
 #[cfg(test)]
 mod tracking_allocator_test;
+
+#[cfg(test)]
+mod memory_test;
