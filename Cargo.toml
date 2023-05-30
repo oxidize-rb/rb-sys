@@ -11,3 +11,6 @@ exclude = [
     "examples/rust_reverse/ext/rust_reverse",
     "crates/rb-sys-test-helpers-macros-impl",
 ]
+
+[profile.dev]
+opt-level = 3
