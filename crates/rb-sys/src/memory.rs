@@ -43,9 +43,11 @@
 #[macro_export]
 macro_rules! rb_gc_guard {
     ($v:expr) => {{
-        let val: $crate::VALUE = std::ptr::read_volatile(&$v as *const _);
-        let rb_gc_guarded_ptr = &val as *const _;
-        unsafe { std::arch::asm!("/* [{}] */", in(reg) &rb_gc_guarded_ptr) };
-        rb_gc_guarded_ptr;
+        unsafe {
+            let val: $crate::VALUE = $v;
+            let rb_gc_guarded_ptr = std::ptr::read_volatile(&&val);
+            std::arch::asm!("/* {0} */", in(reg) rb_gc_guarded_ptr);
+            *rb_gc_guarded_ptr
+        }
     }};
 }
