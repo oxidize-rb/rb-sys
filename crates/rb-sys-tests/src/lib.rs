@@ -20,5 +20,5 @@ mod special_consts_test;
 #[cfg(test)]
 mod tracking_allocator_test;
 
-#[cfg(test)]
+#[cfg(all(test, unix, feature = "ruby-macros"))]
 mod memory_test;
