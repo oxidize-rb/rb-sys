@@ -79,11 +79,11 @@ impl RubyException {
     }
 }
 
-impl Drop for RubyException {
-    fn drop(&mut self) {
-        rb_sys::rb_gc_guard!(self.value);
-    }
-}
+// impl Drop for RubyException {
+//     fn drop(&mut self) {
+//         rb_sys::rb_gc_guard!(self.value);
+//     }
+// }
 
 impl std::fmt::Debug for RubyException {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
