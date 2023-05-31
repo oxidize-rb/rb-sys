@@ -38,9 +38,10 @@ pub use utils::*;
 ///     assert_eq!(result, "hello world");
 /// });
 /// ```
-pub fn with_ruby_vm<F>(f: F)
+pub fn with_ruby_vm<R, F>(f: F) -> R
 where
-    F: FnOnce() + UnwindSafe + Send + 'static,
+    R: Send + 'static,
+    F: FnOnce() -> R + UnwindSafe + Send + 'static,
 {
     global_executor().run_test(f)
 }
@@ -63,7 +64,11 @@ where
 ///    assert_eq!(hello_world, "hello world");
 /// });
 /// ```
-pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
+pub fn with_gc_stress<R, F>(f: F) -> R
+where
+    R: Send + 'static,
+    F: FnOnce() -> R + UnwindSafe + Send + 'static,
+{
     unsafe {
         let stress_intern = rb_intern("stress\0".as_ptr() as _);
         let stress_eq_intern = rb_intern("stress=\0".as_ptr() as _);
@@ -144,11 +149,9 @@ mod tests {
 
     #[test]
     fn test_protect_returns_correct_value() {
-        with_ruby_vm(|| {
-            let result = protect(|| "my val");
+        let ret = with_ruby_vm(|| protect(|| "my val"));
 
-            assert_eq!(result, Ok("my val"));
-        });
+        assert_eq!(ret, Ok("my val"));
     }
 
     #[test]

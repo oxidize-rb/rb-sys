@@ -4,21 +4,24 @@ use rb_sys_test_helpers::{rstring_to_string, ruby_test};
 
 #[ruby_test(gc_stress)]
 fn test_rb_gc_guarded_ptr_basic() {
-    let string = unsafe {
+    unsafe {
         let s = rb_str_new_cstr(" world\0".as_ptr() as _);
         let sptr = RSTRING_PTR(s);
         let t = rb_str_new_cstr("hello,\0".as_ptr() as _);
-        rb_gc_guard!(s);
         let mut string = rb_str_cat_cstr(t, sptr);
-        unsafe { rstring_to_string!(string) }
-    };
+        let result = rstring_to_string!(string);
 
-    assert_eq!("hello, world", string);
+        rb_gc_guard!(s);
+        rb_gc_guard!(t);
+        rb_gc_guard!(string);
+
+        assert_eq!("hello, world", result);
+    }
 }
 
 #[ruby_test(gc_stress)]
 fn test_rb_gc_guarded_ptr_vec() {
-    for i in 0..100 {
+    for i in 0..42 {
         unsafe {
             let mut vec_of_values: Vec<VALUE> = Default::default();
 

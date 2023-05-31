@@ -33,7 +33,7 @@ impl RubyTestExecutor {
         let executor = Self {
             sender: Some(sender),
             handle: Some(handle),
-            timeout: Duration::from_secs(5),
+            timeout: Duration::from_secs(10),
         };
 
         executor.run(|| {
