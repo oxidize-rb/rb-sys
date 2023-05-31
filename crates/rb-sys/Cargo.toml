@@ -26,6 +26,7 @@ no-link-ruby = []
 ruby-macros = ["rb-sys-build/cc"]
 ruby-static = []
 global-allocator = []
+rb-gc-guard = [] # Needs asm features Rust 1.59+
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]
