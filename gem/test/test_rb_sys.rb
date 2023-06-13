@@ -63,6 +63,17 @@ class TestRbSys < Minitest::Test
     assert_match(/-C debuginfo=42$/, makefile.read)
   end
 
+  def test_installs_extra_rustup_targets
+    makefile = create_makefile do |b|
+      b.extra_rustup_targets = ["wasm32-unknown-unknown", "wasm32-wasi-unknown"]
+    end
+
+    makefile_output = makefile.read
+
+    assert_match(/rustup target add wasm32-unknown-unknown$/, makefile_output)
+    assert_match(/rustup target add wasm32-wasi-unknown$/, makefile_output)
+  end
+
   def test_uses_extra_cargo_args
     makefile = create_makefile do |b|
       b.extra_cargo_args = ["--crate-type", "cdylib"]

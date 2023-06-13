@@ -19,12 +19,16 @@ module RbSys
       # Directories to clean after installing with Rubygems
       attr_accessor :rubygems_clean_dirs
 
+      # Extra targets to install
+      attr_accessor :extra_rustup_targets
+
       def initialize(builder)
         @builder = builder
         @force_install_rust_toolchain = false
         @auto_install_rust_toolchain = true
         @clean_after_install = rubygems_invoked?
         @rubygems_clean_dirs = ["./cargo-vendor"]
+        @extra_rustup_targets = []
       end
 
       # @api private

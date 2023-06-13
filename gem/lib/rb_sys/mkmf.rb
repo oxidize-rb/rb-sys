@@ -253,10 +253,17 @@ module RbSys
         \t$(Q) curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
         \t$(Q) $(CARGO_HOME)/bin/rustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
         \t$(Q) $(CARGO_HOME)/bin/rustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
+        #{install_extra_rustup_targets(builder)}
 
         $(RUSTLIB): $(CARGO)
         #{endif_stmt}
       MAKE
+    end
+
+    def install_extra_rustup_targets(builder)
+      builder.extra_rustup_targets.map do |target|
+        "\t$(Q) $(CARGO_HOME)/bin/rustup target add #{target}"
+      end.join("\n")
     end
 
     def force_install_rust_toolchain?(builder)
