@@ -137,6 +137,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
+        .opaque_type("^__sFILE$")
         .merge_extern_blocks(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
         .impl_debug(cfg!(feature = "bindgen-impl-debug"))
