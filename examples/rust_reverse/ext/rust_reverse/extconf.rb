@@ -31,4 +31,7 @@ create_rust_makefile("rust_reverse/rust_reverse") do |r|
 
   # Extra args to pass to the `rustc` command (optional)
   r.extra_rustc_args = []
+
+  # Extra targets to install via rustup (optional)
+  r.extra_rustup_targets = ["wasm32-unknown-unknown"]
 end
