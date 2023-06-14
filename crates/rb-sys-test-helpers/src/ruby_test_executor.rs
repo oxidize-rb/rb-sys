@@ -217,18 +217,16 @@ mod tests {
 
     rusty_fork_test! {
         #[test]
-        #[should_panic]
         fn test_timeout() {
             let mut executor = RubyTestExecutor::start();
             executor.set_test_timeout(Duration::from_millis(10));
 
-            executor
+            let result = executor
                 .run_test(|| {
                     std::thread::sleep(Duration::from_millis(1000));
-                })
-                .unwrap();
+                });
 
-            drop(executor);
+            assert_eq!("Ruby test timed out after 10ms", format!("{}", result.unwrap_err()));
         }
     }
 }
