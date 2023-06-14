@@ -220,13 +220,15 @@ mod tests {
         #[should_panic]
         fn test_timeout() {
             let mut executor = RubyTestExecutor::start();
-            executor.set_test_timeout(Duration::from_millis(1));
+            executor.set_test_timeout(Duration::from_millis(10));
 
             executor
                 .run_test(|| {
-                    std::thread::sleep(Duration::from_millis(100));
+                    std::thread::sleep(Duration::from_millis(1000));
                 })
-                .unwrap()
+                .unwrap();
+
+            drop(executor);
         }
     }
 }
