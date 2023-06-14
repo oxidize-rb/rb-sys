@@ -133,3 +133,13 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           repository: rbsys/${{ matrix.platform.ruby_target }}
           readme-filepath: ./readme.md
+
+      - name: Slack Noti on Failure
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        # if: failure()
+        if: always()
