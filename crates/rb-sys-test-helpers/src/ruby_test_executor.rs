@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::panic;
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
@@ -15,19 +16,29 @@ use rb_sys::{
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
 
 pub struct RubyTestExecutor {
-    sender: Option<SyncSender<Box<dyn FnOnce() + Send>>>,
-    handle: Option<JoinHandle<()>>,
+    #[allow(clippy::type_complexity)]
+    sender: Option<SyncSender<Box<dyn FnOnce() -> Result<(), Box<dyn Error>> + Send>>>,
+    handle: Option<JoinHandle<Result<(), std::boxed::Box<dyn Error + Send>>>>,
     timeout: Duration,
 }
 
 impl RubyTestExecutor {
     pub fn start() -> Self {
-        let (sender, receiver) = mpsc::sync_channel::<Box<dyn FnOnce() + Send>>(0);
+        let (sender, receiver) =
+            mpsc::sync_channel::<Box<dyn FnOnce() -> Result<(), Box<dyn Error>> + Send>>(0);
 
-        let handle = thread::spawn(move || {
+        let handle = thread::spawn(move || -> Result<(), Box<dyn Error + Send>> {
             for closure in receiver {
-                closure();
+                match closure() {
+                    Ok(()) => {}
+                    Err(err) => {
+                        // transmute to avoid the Send bound
+                        let err: Box<dyn Error + Send> = unsafe { std::mem::transmute(err) };
+                        return Err(err);
+                    }
+                }
             }
+            Ok(())
         });
 
         let executor = Self {
@@ -36,13 +47,15 @@ impl RubyTestExecutor {
             timeout: Duration::from_secs(10),
         };
 
-        executor.run(|| {
-            static INIT: Once = Once::new();
+        executor
+            .run(|| {
+                static INIT: Once = Once::new();
 
-            INIT.call_once(|| unsafe {
-                ruby_setup_ceremony();
-            });
-        });
+                INIT.call_once(|| unsafe {
+                    ruby_setup_ceremony();
+                });
+            })
+            .unwrap();
 
         executor
     }
@@ -54,7 +67,7 @@ impl RubyTestExecutor {
     pub fn shutdown(&mut self) {
         self.set_test_timeout(Duration::from_secs(3));
 
-        self.run(|| unsafe {
+        let _ = self.run(|| unsafe {
             let ret = rb_sys::ruby_cleanup(0);
 
             if ret != 0 {
@@ -67,43 +80,36 @@ impl RubyTestExecutor {
         }
 
         if let Some(handle) = self.handle.take() {
-            handle.join().expect("Failed to join executor thread");
+            let _ = handle.join().expect("Failed to join executor thread");
         }
     }
 
-    pub fn run<F, R>(&self, f: F) -> R
+    pub fn run<F, R>(&self, f: F) -> Result<R, Box<dyn Error>>
     where
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
     {
         let (result_sender, result_receiver) = mpsc::sync_channel(1);
 
-        let closure = Box::new(move || {
+        let closure = Box::new(move || -> Result<(), Box<dyn Error>> {
             let result = panic::catch_unwind(panic::AssertUnwindSafe(f));
-            result_sender
-                .send(result)
-                .expect("Failed to send Ruby test result to Rust test thread");
+            result_sender.send(result).map_err(Into::into)
         });
 
         if let Some(sender) = self.sender.as_ref() {
-            sender
-                .send(closure)
-                .expect("Failed to send closure to Ruby test thread");
+            sender.send(closure)?;
         } else {
-            panic!("RubyTestExecutor is not running");
+            return Err("Ruby test executor is shutdown".into());
         }
 
         match result_receiver.recv_timeout(self.timeout) {
-            Ok(Ok(result)) => result,
+            Ok(Ok(result)) => Ok(result),
             Ok(Err(err)) => std::panic::resume_unwind(err),
-            Err(_err) => {
-                eprintln!("Ruby test timed out after {:?}", self.timeout);
-                std::process::abort();
-            }
+            Err(_err) => Err(format!("Ruby test timed out after {:?}", self.timeout).into()),
         }
     }
 
-    pub fn run_test<F, R>(&self, f: F) -> R
+    pub fn run_test<F, R>(&self, f: F) -> Result<R, Box<dyn Error>>
     where
         F: FnOnce() -> R + Send + 'static,
         R: Send + 'static,
@@ -201,7 +207,7 @@ mod tests {
 
             executor.run_test(|| {
                 unsafe { ruby_vm_at_exit(Some(set_called))}
-            });
+            }).unwrap();
 
             drop(executor);
 
@@ -210,16 +216,17 @@ mod tests {
     }
 
     rusty_fork_test! {
-        // Flaky for some reason...
-        // #[test]
+        #[test]
         #[should_panic]
         fn test_timeout() {
             let mut executor = RubyTestExecutor::start();
             executor.set_test_timeout(Duration::from_millis(1));
 
-            executor.run_test(|| {
-                std::thread::sleep(Duration::from_millis(100));
-            });
+            executor
+                .run_test(|| {
+                    std::thread::sleep(Duration::from_millis(100));
+                })
+                .unwrap()
         }
     }
 }

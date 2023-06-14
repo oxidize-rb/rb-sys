@@ -74,7 +74,7 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let block = quote! {
         let ret = {
-            #block;
+            #block
         };
         rb_sys_test_helpers::trigger_full_gc!();
         ret
@@ -100,13 +100,13 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
                             },
                             _ => (),
                         }
-                        panic!("{}", err.inspect());
+                        Err(err)
                     },
-                    Ok(v) => v,
+                    Ok(v) => Ok(v),
                 };
 
                 ret
-            })
+            }).expect("test execution failure").expect("ruby exception");
         }
     };
 

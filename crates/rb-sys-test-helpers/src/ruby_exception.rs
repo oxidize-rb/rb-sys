@@ -119,7 +119,7 @@ mod tests {
     use rb_sys::rb_eval_string;
 
     #[test]
-    fn test_exception() {
+    fn test_exception() -> Result<(), Box<dyn std::error::Error>> {
         with_ruby_vm(|| {
             let exception = protect(|| unsafe {
                 rb_eval_string("raise 'oh no'\0".as_ptr() as _);

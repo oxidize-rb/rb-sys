@@ -7,7 +7,7 @@ mod utils;
 
 use rb_sys::{rb_errinfo, rb_intern, rb_set_errinfo, Qnil, VALUE};
 use ruby_test_executor::global_executor;
-use std::{mem::MaybeUninit, panic::UnwindSafe};
+use std::{error::Error, mem::MaybeUninit, panic::UnwindSafe};
 
 pub use rb_sys_test_helpers_macros::*;
 pub use ruby_exception::RubyException;
@@ -38,7 +38,7 @@ pub use utils::*;
 ///     assert_eq!(result, "hello world");
 /// });
 /// ```
-pub fn with_ruby_vm<R, F>(f: F) -> R
+pub fn with_ruby_vm<R, F>(f: F) -> Result<R, Box<dyn Error>>
 where
     R: Send + 'static,
     F: FnOnce() -> R + UnwindSafe + Send + 'static,
@@ -148,10 +148,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_protect_returns_correct_value() {
-        let ret = with_ruby_vm(|| protect(|| "my val"));
+    fn test_protect_returns_correct_value() -> Result<(), Box<dyn Error>> {
+        let ret = with_ruby_vm(|| protect(|| "my val"))?;
 
         assert_eq!(ret, Ok("my val"));
+
+        Ok(())
     }
 
     #[test]
@@ -162,6 +164,7 @@ mod tests {
             });
 
             assert!(result.is_err());
-        });
+        })
+        .unwrap();
     }
 }

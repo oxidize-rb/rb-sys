@@ -180,6 +180,6 @@ rusty_fork_test! {
 
     with_ruby_vm(|| {
       assert_ne!(0, unsafe { rb_sys::rb_cObject });
-    });
+    }).unwrap();
   }
 }

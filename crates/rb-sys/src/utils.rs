@@ -40,6 +40,7 @@ mod tests {
 
         with_ruby_vm(|| {
             assert!(unsafe { is_ruby_vm_started() });
-        });
+        })
+        .unwrap();
     }
 }
