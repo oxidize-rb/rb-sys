@@ -11,7 +11,7 @@ homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 links = "rb"
 repository = "https://github.com/oxidize-rb/rb-sys"
-rust-version = "1.57"
+rust-version = "1.59"
 
 [build-dependencies]
 rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
@@ -32,8 +32,12 @@ bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]
 bindgen-impl-debug = ["rb-sys-build/bindgen-impl-debug"]
 bindgen-sizet-is-usize = ["rb-sys-build/bindgen-sizet-is-usize"]
-bindgen-return-const-encoding-pointers = ["rb-sys-build/bindgen-return-const-encoding-pointers"]
-bindgen-enable-function-attribute-detection = ["rb-sys-build/bindgen-enable-function-attribute-detection"]
+bindgen-return-const-encoding-pointers = [
+  "rb-sys-build/bindgen-return-const-encoding-pointers",
+]
+bindgen-enable-function-attribute-detection = [
+  "rb-sys-build/bindgen-enable-function-attribute-detection",
+]
 
 [lib]
 doctest = false
