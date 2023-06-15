@@ -26,8 +26,13 @@ impl Build {
         build.include(format!("{}/include/internal", rb.get("rubyhdrdir")));
         build.include(format!("{}/include/impl", rb.get("rubyhdrdir")));
 
+        build.define("CARGO_PKG_VERSION", env!("CARGO_PKG_VERSION"));
+        build.define("RUBY_MAJOR", rb.get_optional("MAJOR").as_deref());
+        build.define("RUBY_MINOR", rb.get_optional("MINOR").as_deref());
+        build.define("RUBY_PATCH", rb.get_optional("TEENY").as_deref());
+
         for flag in &rb.cflags {
-            build.flag(flag);
+            build.flag_if_supported(flag);
         }
 
         build

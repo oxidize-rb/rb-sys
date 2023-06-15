@@ -18,7 +18,11 @@ rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 
 [dev-dependencies]
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
-rb-sys = { path = ".", features = ["compiled-c-impls", "link-ruby"] }
+rb-sys = { path = ".", features = [
+  "compiled-c-impls",
+  "link-ruby",
+  "bypass-stable-abi-version-checks",
+] }
 rusty-fork = "0.3.0"
 
 [features]
@@ -30,6 +34,7 @@ compiled-c-impls = ["rb-sys-build/cc"]
 bypass-stable-abi-version-checks = []
 ruby-static = []
 global-allocator = []
+stable-abi = ["rb-sys-build/stable-abi"]
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]

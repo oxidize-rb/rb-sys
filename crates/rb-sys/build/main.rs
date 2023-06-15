@@ -1,5 +1,5 @@
+mod c_glue;
 mod features;
-mod unlinkable;
 mod version;
 
 use features::*;
@@ -60,7 +60,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     if is_compiled_c_impls_enabled() || is_ruby_macros_enabled() {
-        unlinkable::compile(&mut rbconfig);
+        c_glue::compile(&mut rbconfig);
     }
 
     if is_link_ruby_enabled() {

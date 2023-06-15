@@ -32,9 +32,7 @@ mod ruby_lte_2_4 {
 #[cfg(ruby_lte_2_4)]
 use ruby_lte_2_4::*;
 
-use crate::{
-    unlinkable, Qnil, FIXNUM_FLAG, FLONUM_FLAG, FLONUM_MASK, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE,
-};
+use crate::{unlinkable, Qnil, FIXNUM_FLAG, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE};
 
 /// Emulates Ruby's "if" statement.
 ///
@@ -169,11 +167,11 @@ pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
 /// @note       These days there are Flonums and non-Flonum floats, just like we
 ///             once had Fixnum/Bignum back in the old days.
 #[inline(always)]
-pub fn FLONUM_P<T: Into<VALUE>>(obj: T) -> bool {
+pub fn FLONUM_P<T: Into<VALUE>>(#[allow(unused)] obj: T) -> bool {
     #[cfg(ruby_use_flonum = "true")]
     let ret = {
         let obj = obj.into() as u32;
-        (obj & (FLONUM_MASK as u32)) == FLONUM_FLAG as u32
+        (obj & (crate::FLONUM_MASK as u32)) == crate::FLONUM_FLAG as u32
     };
 
     #[cfg(not(ruby_use_flonum = "true"))]

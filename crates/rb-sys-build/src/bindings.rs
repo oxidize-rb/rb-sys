@@ -1,5 +1,6 @@
 mod sanitizer;
 
+use crate::bindings::sanitizer::categorize_by_abi_stability;
 use crate::utils::is_msvc;
 use crate::RbConfig;
 use quote::ToTokens;
@@ -45,7 +46,6 @@ pub fn generate(
     }
 
     let bindings = default_bindgen(clang_args)
-        .header_contents("wrapper.h", &wrapper_h)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
@@ -68,7 +68,12 @@ pub fn generate(
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
+    let bindings = gen_opaque_struct(bindings, "RArray", &mut wrapper_h);
+    let bindings = gen_opaque_struct(bindings, "RString", &mut wrapper_h);
+
     let mut tokens = {
+        let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
+        eprintln!("Wrapper header content is:\n---\n{}\n---\n", wrapper_h);
         let code_string = bindings.generate()?.to_string();
         syn::parse_file(&code_string)?
     };
@@ -89,6 +94,7 @@ pub fn generate(
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
 
+        categorize_by_abi_stability(&mut tokens);
         push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
         tokens.into_token_stream().to_string()
     };
@@ -243,4 +249,20 @@ impl<'a> ConfValue<'a> {
             ),
         }
     }
+}
+
+fn gen_opaque_struct(
+    bindings: bindgen::Builder,
+    name: &str,
+    wrapper_h: &mut String,
+) -> bindgen::Builder {
+    let struct_name = format!("rb_sys__Opaque__{}", name);
+    wrapper_h.push_str(&format!(
+        "struct {} {{ struct {} dummy; }};\n",
+        struct_name, name
+    ));
+
+    bindings
+        .opaque_type(&struct_name)
+        .allowlist_type(struct_name)
 }

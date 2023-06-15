@@ -30,6 +30,7 @@ namespace :test do
   cargo_test_task "rb-sys-tests"
   cargo_test_task "rb-sys-env"
   cargo_test_task "rb-sys-test-helpers"
+  cargo_test_task "rb-sys-tests", "--features", "stable-abi"
 
   desc "Test against all installed Rubies"
   task :rubies do

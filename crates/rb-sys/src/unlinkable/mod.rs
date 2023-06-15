@@ -5,14 +5,10 @@ mod compiled_c_impls;
 mod rust_impls;
 
 pub(crate) mod impls {
-    #[cfg(all(
-        compiled_c_impls_available,
-        not(ruby_abi_stable),
-        not(feature = "bypass-stable-abi-version-checks")
-    ))]
+    #[cfg(all(compiled_c_impls_available, not(ruby_abi_stable),))]
     pub(crate) use super::compiled_c_impls::*;
 
-    #[cfg(any(ruby_abi_stable, feature = "bypass-stable-abi-version-checks"))]
+    #[cfg(any(ruby_abi_stable))]
     pub(crate) use super::rust_impls::*;
 }
 
@@ -32,13 +28,12 @@ mod tests {
             #[rb_sys_test_helpers::ruby_test]
             fn $name() {
                 let data = $data_factory;
-                #[allow(unused)]
-                // let rust_result = unsafe { super::rust_impls::$func(data) };
-                let compiled_c_result = unsafe { super::compiled_c_impls::$func(data) };
-                let compiled_c_result_2 = unsafe { super::compiled_c_impls::$func(data) };
 
-                // assert_eq!(compiled_c_result, rust_result);
-                assert_eq!(compiled_c_result, compiled_c_result_2);
+                #[allow(unused)]
+                let rust_result = unsafe { super::rust_impls::$func(data) };
+                let compiled_c_result = unsafe { super::compiled_c_impls::$func(data) };
+
+                assert_eq!(compiled_c_result, rust_result);
             }
         };
     }

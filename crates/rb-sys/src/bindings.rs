@@ -12,4 +12,13 @@
 #![allow(rustdoc::broken_intra_doc_links)]
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::invalid_html_tags)]
+
 include!(env!("RB_SYS_BINDINGS_PATH"));
+
+#[cfg(feature = "stable-abi")]
+pub use stable::*;
+
+#[cfg(not(feature = "stable-abi"))]
+pub use unstable::*;
+
+pub use uncategorized::*;
