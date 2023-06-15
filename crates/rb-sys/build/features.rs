@@ -26,6 +26,25 @@ pub fn is_ruby_macros_enabled() -> bool {
     !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
 }
 
+pub fn is_rb_sys_repo() -> bool {
+    let path = std::env::current_dir().unwrap();
+    let path = path.to_str().unwrap();
+
+    path.ends_with("rb-sys")
+}
+
+pub fn is_compiled_c_impls_enabled() -> bool {
+    if !is_rb_sys_repo() {
+        return false;
+    }
+
+    if is_rb_sys_repo() {
+        is_env_variable_defined("CARGO_FEATURE_COMPILED_C_IMPLS")
+    } else {
+        !is_linting() && is_env_variable_defined("CARGO_FEATURE_COMPILED_C_IMPLS")
+    }
+}
+
 pub fn is_gem_enabled() -> bool {
     cfg!(rb_sys_gem)
 }

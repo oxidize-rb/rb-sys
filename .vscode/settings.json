@@ -4,6 +4,8 @@
   "rust-analyzer.procMacro.attributes.enable": true,
   "rust-analyzer.linkedProjects": [
     "examples/rust_reverse/ext/rust_reverse/Cargo.toml",
-    "Cargo.toml"
-  ]
+    "Cargo.toml",
+    "./crates/rb-sys/Cargo.toml"
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }

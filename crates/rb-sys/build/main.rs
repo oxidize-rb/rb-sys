@@ -1,5 +1,5 @@
 mod features;
-mod ruby_macros;
+mod unlinkable;
 mod version;
 
 use features::*;
@@ -23,6 +23,8 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
     Version::new(3, 2),
     Version::new(3, 3),
 ];
+
+const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
 
 fn main() {
     let mut rbconfig = RbConfig::current();
@@ -57,8 +59,8 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_ruby_macros_enabled() {
-        ruby_macros::compile(&mut rbconfig);
+    if is_compiled_c_impls_enabled() || is_ruby_macros_enabled() {
+        unlinkable::compile(&mut rbconfig);
     }
 
     if is_link_ruby_enabled() {
@@ -119,6 +121,10 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_teeny", "TEENY");
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
+
+    if Version::current(rbconfig) <= LATEST_STABLE_VERSION {
+        println!("cargo:rustc-cfg=ruby_abi_stable");
+    }
 
     if is_global_allocator_enabled(rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");

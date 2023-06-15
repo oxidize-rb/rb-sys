@@ -33,13 +33,16 @@ pub(crate) unsafe fn is_ruby_vm_started() -> bool {
 mod tests {
     use super::*;
     use rb_sys_test_helpers::with_ruby_vm;
+    use rusty_fork::rusty_fork_test;
 
-    #[test]
-    fn test_is_ruby_vm_started() {
-        assert!(!unsafe { is_ruby_vm_started() });
+    rusty_fork_test! {
+        #[test]
+        fn test_is_ruby_vm_started() {
+            assert!(!unsafe { is_ruby_vm_started() });
 
-        with_ruby_vm(|| {
-            assert!(unsafe { is_ruby_vm_started() });
-        });
+            with_ruby_vm(|| {
+                assert!(unsafe { is_ruby_vm_started() });
+            });
+        }
     }
 }

@@ -9,6 +9,7 @@ pub mod value_type;
 
 mod hidden;
 mod ruby_abi_version;
+mod unlinkable;
 mod utils;
 
 pub use bindings::*;
