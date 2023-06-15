@@ -28,6 +28,7 @@ rusty-fork = "0.3.0"
 [features]
 default = []
 link-ruby = []
+fuzz = []
 no-link-ruby = []
 ruby-macros = ["rb-sys-build/cc"]
 compiled-c-impls = ["rb-sys-build/cc"]

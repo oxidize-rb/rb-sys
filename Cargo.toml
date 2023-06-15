@@ -10,4 +10,5 @@ members = [
 exclude = [
     "examples/rust_reverse/ext/rust_reverse",
     "crates/rb-sys-test-helpers-macros-impl",
+    "./fuzz",
 ]

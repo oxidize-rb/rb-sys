@@ -1,8 +1,8 @@
-#[cfg(compiled_c_impls_available)]
-mod compiled_c_impls;
+#[cfg(all(compiled_c_impls_available))]
+pub mod compiled_c_impls;
 
 #[cfg(any(ruby_abi_stable, feature = "bypass-stable-abi-version-checks"))]
-mod rust_impls;
+pub mod rust_impls;
 
 pub(crate) mod impls {
     #[cfg(all(compiled_c_impls_available, not(ruby_abi_stable),))]
@@ -79,6 +79,19 @@ mod tests {
       data_factory: {
         let mut state = 0;
         let ret = unsafe { rb_sys::rb_eval_string_protect("'foo'\0".as_ptr() as _, &mut state as _) };
+        assert_eq!(state, 0);
+        ret
+      }
+    );
+
+    parity_test!(
+      name: test_rstring_len_evaled_shared,
+      func: rstring_len,
+      data_factory: {
+        let mut state = 0;
+        let ret = unsafe { rb_sys::rb_eval_string_protect("'foo' + 'bar' + ('a' * 12)\0".as_ptr() as _, &mut state as _) };
+        let ret = unsafe { rb_sys::rb_str_new_shared(ret) };
+        unsafe { rb_sys::rb_str_cat_cstr(ret, "baz\0".as_ptr() as _)};
         assert_eq!(state, 0);
         ret
       }

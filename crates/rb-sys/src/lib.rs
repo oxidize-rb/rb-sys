@@ -9,8 +9,12 @@ pub mod value_type;
 
 mod hidden;
 mod ruby_abi_version;
-mod unlinkable;
 mod utils;
+
+#[cfg(feature = "fuzz")]
+pub mod unlinkable;
+#[cfg(not(feature = "fuzz"))]
+mod unlinkable;
 
 pub use bindings::*;
 pub use macros::*;
