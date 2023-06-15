@@ -9,9 +9,7 @@ compile_error!("this module can only be used when in stable Ruby ABI mode, to by
 use std::ffi::{c_char, c_long};
 
 use crate::internal::{RArray, RString};
-use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
-use crate::ruby_rarray_flags::RARRAY_EMBED_FLAG;
-use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_MASK;
+use crate::ruby_rarray_flags::{RARRAY_EMBED_FLAG, RARRAY_EMBED_LEN_MASK};
 use crate::ruby_rstring_flags::RSTRING_NOEMBED;
 use crate::{value_type, RB_TYPE_P, VALUE};
 
@@ -73,20 +71,21 @@ pub unsafe fn rstring_ptr(str: VALUE) -> *const c_char {
 pub unsafe fn rarray_len(value: VALUE) -> c_long {
     assert!(RB_TYPE_P(value) == value_type::RUBY_T_ARRAY);
 
+    #[cfg(ruby_gte_3_0)]
+    use crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT;
+    #[cfg(ruby_lt_3_0)]
+    use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
+
     let rarray = &*(value as *const RArray);
 
-    let res = if is_flag_enabled(rarray.basic.flags as _, RARRAY_EMBED_FLAG as _) {
-        let len = flags_shift(rarray.basic.flags as u32, RARRAY_EMBED_LEN_SHIFT as u32)
-            & flags_shift(RARRAY_EMBED_LEN_MASK as u32, RARRAY_EMBED_LEN_SHIFT as u32);
+    if is_flag_enabled(rarray.basic.flags as _, RARRAY_EMBED_FLAG as _) {
+        let len = (rarray.basic.flags >> RARRAY_EMBED_LEN_SHIFT as VALUE)
+            & (RARRAY_EMBED_LEN_MASK as VALUE >> RARRAY_EMBED_LEN_SHIFT as VALUE);
 
         len as _
     } else {
         rarray.as_.heap.len as _
-    };
-
-    eprintln!("rarray_len: {}", res);
-
-    res
+    }
 }
 
 #[cfg(any(
@@ -110,11 +109,6 @@ pub unsafe fn rarray_const_ptr(value: VALUE) -> *const VALUE {
     } else {
         rarray.as_.heap.ptr
     }
-}
-
-#[inline(always)]
-fn flags_shift(flags: u32, shift: u32) -> u32 {
-    (flags >> shift) & 1
 }
 
 #[inline(always)]

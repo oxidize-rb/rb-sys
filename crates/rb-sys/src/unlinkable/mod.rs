@@ -63,6 +63,39 @@ mod tests {
     );
 
     parity_test!(
+      name: test_rstring_ptr_evaled_basic,
+      func: rstring_ptr,
+      data_factory: {
+        let mut state = 0;
+        let ret = unsafe { rb_sys::rb_eval_string_protect("'foo'\0".as_ptr() as _, &mut state as _) };
+        assert_eq!(state, 0);
+        ret
+      }
+    );
+
+    parity_test!(
+      name: test_rstring_len_evaled_basic,
+      func: rstring_len,
+      data_factory: {
+        let mut state = 0;
+        let ret = unsafe { rb_sys::rb_eval_string_protect("'foo'\0".as_ptr() as _, &mut state as _) };
+        assert_eq!(state, 0);
+        ret
+      }
+    );
+
+    parity_test!(
+      name: test_rstring_ptr_evaled_empty,
+      func: rstring_ptr,
+      data_factory: {
+        let mut state = 0;
+        let ret = unsafe { rb_sys::rb_eval_string_protect("''\0".as_ptr() as _, &mut state as _) };
+        assert_eq!(state, 0);
+        ret
+      }
+    );
+
+    parity_test!(
         name: test_rstring_ptr_long,
         func: rstring_ptr,
         data_factory: {
@@ -77,6 +110,28 @@ mod tests {
           let ary = unsafe { rb_sys::rb_ary_new() };
           unsafe { rb_sys::rb_ary_push(ary, gen_rstring!("foo")) };
           ary
+        }
+    );
+
+    parity_test!(
+        name: test_rarray_len_evaled_basic,
+        func: rarray_len,
+        data_factory: {
+          let mut state = 0;
+          let ret = unsafe { rb_sys::rb_eval_string_protect("[2, nil, :foo]\0".as_ptr() as _, &mut state as _) };
+          assert_eq!(state, 0);
+          ret
+        }
+    );
+
+    parity_test!(
+        name: test_rarray_len_evaled_empty,
+        func: rarray_len,
+        data_factory: {
+          let mut state = 0;
+          let ret = unsafe { rb_sys::rb_eval_string_protect("[]\0".as_ptr() as _, &mut state as _) };
+          assert_eq!(state, 0);
+          ret
         }
     );
 
@@ -99,6 +154,17 @@ mod tests {
           let ary = unsafe { rb_sys::rb_ary_new() };
           unsafe { rb_sys::rb_ary_push(ary, gen_rstring!("foo")) };
           ary
+        }
+    );
+
+    parity_test!(
+        name: test_rarray_const_ptr_evaled_basic,
+        func: rarray_const_ptr,
+        data_factory: {
+          let mut state = 0;
+          let ret = unsafe { rb_sys::rb_eval_string_protect("[2, nil, :foo]\0".as_ptr() as _, &mut state as _) };
+          assert_eq!(state, 0);
+          ret
         }
     );
 
