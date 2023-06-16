@@ -20,18 +20,22 @@ extern "C" {
 pub struct Definition;
 
 impl StableAbiDefinition for Definition {
+    #[inline]
     unsafe fn rstring_len(obj: crate::VALUE) -> std::ffi::c_long {
         impl_rstring_len(obj)
     }
 
+    #[inline]
     unsafe fn rstring_ptr(obj: crate::VALUE) -> *const std::ffi::c_char {
         impl_rstring_ptr(obj)
     }
 
+    #[inline]
     unsafe fn rarray_len(obj: crate::VALUE) -> std::ffi::c_long {
         impl_rarray_len(obj)
     }
 
+    #[inline]
     unsafe fn rarray_const_ptr(obj: crate::VALUE) -> *const crate::VALUE {
         impl_rarray_const_ptr(obj)
     }

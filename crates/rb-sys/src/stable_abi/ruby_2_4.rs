@@ -16,6 +16,7 @@ const RUBY_FL_USER4: u32 = 1 << (RUBY_FL_USHIFT as u32 + 4);
 pub struct Definition;
 
 impl StableAbiDefinition for Definition {
+    #[inline]
     unsafe fn rstring_len(obj: VALUE) -> c_long {
         assert!(value_type::RB_TYPE_P(obj) == value_type::RUBY_T_STRING);
         let rstring: &RString = &*(obj as *const RString);
@@ -34,6 +35,7 @@ impl StableAbiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn rstring_ptr(obj: VALUE) -> *const c_char {
         assert!(value_type::RB_TYPE_P(obj) == value_type::RUBY_T_STRING);
         let rstring: &RString = &*(obj as *const RString);
@@ -48,6 +50,7 @@ impl StableAbiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn rarray_len(obj: VALUE) -> c_long {
         assert!(value_type::RB_TYPE_P(obj) == value_type::RUBY_T_ARRAY);
         let rarray: &RArray = &*(obj as *const RArray);
@@ -65,6 +68,7 @@ impl StableAbiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE {
         assert!(value_type::RB_TYPE_P(obj) == value_type::RUBY_T_ARRAY);
         let rarray: &RArray = &*(obj as *const RArray);
