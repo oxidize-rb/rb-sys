@@ -40,7 +40,8 @@ fuzz_target!(|data: &str| {
         // rstring_len
         {
             let rust_result = rb_sys::unlinkable::rust_impls::rstring_len(ruby_string);
-            let compiled_c_result = rb_sys::unlinkable::compiled_c_impls::rstring_len(ruby_string);
+            let compiled_c_result =
+                rb_sys::unlinkable::compiled_stable_abi::rstring_len(ruby_string);
 
             assert_eq!(compiled_c_result, rust_result);
         }
@@ -48,7 +49,8 @@ fuzz_target!(|data: &str| {
         // rstring_ptr
         {
             let rust_result = rb_sys::unlinkable::rust_impls::rstring_ptr(ruby_string);
-            let compiled_c_result = rb_sys::unlinkable::compiled_c_impls::rstring_ptr(ruby_string);
+            let compiled_c_result =
+                rb_sys::unlinkable::compiled_stable_abi::rstring_ptr(ruby_string);
 
             assert_eq!(compiled_c_result, rust_result);
         }

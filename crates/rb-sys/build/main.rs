@@ -59,7 +59,7 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_compiled_c_impls_enabled() || is_ruby_macros_enabled() {
+    if is_compiled_stable_abi_enabled() || is_ruby_macros_enabled() {
         c_glue::compile(&mut rbconfig);
     }
 

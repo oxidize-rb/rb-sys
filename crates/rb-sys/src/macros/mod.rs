@@ -14,25 +14,12 @@
 //! 2. The rest are implemented in C code  that exports the macros as functions
 //!    that can be used in Rust. This requires the `ruby-macros` feature.
 
+use crate::stable_abi::StableAbi;
 use std::ffi::{c_char, c_long};
 
-#[cfg(all(ruby_lt_3_0, ruby_gt_2_4))]
-use crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT;
-
-#[cfg(ruby_lte_2_4)]
-mod ruby_lte_2_4 {
-    pub const RARRAY_EMBED_FLAG: u32 = 1 << 13;
-    pub const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
-    pub const RARRAY_EMBED_LEN_MASK: u32 = RUBY_FL_USER3 | RUBY_FL_USER4;
-    pub const RUBY_FL_USHIFT: u32 = 12;
-    pub const RUBY_FL_USER3: u32 = 1 << (RUBY_FL_USHIFT as u32 + 3);
-    pub const RUBY_FL_USER4: u32 = 1 << (RUBY_FL_USHIFT as u32 + 4);
-}
-
-#[cfg(ruby_lte_2_4)]
-use ruby_lte_2_4::*;
-
-use crate::{unlinkable, Qnil, FIXNUM_FLAG, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE};
+use crate::{
+    stable_abi::StableAbiDefinition, Qnil, FIXNUM_FLAG, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE,
+};
 
 /// Emulates Ruby's "if" statement.
 ///
@@ -110,7 +97,7 @@ pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
 #[inline(always)]
 pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
     let value: VALUE = obj.into();
-    unlinkable::rarray_const_ptr(value)
+    StableAbi::rarray_const_ptr(value)
 }
 
 /// Get the length of a Ruby array.
@@ -125,7 +112,7 @@ pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
 #[inline(always)]
 pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
     let value: VALUE = obj.into();
-    unlinkable::rarray_len(value)
+    StableAbi::rarray_len(value)
 }
 
 /// Get the length of a Ruby string.
@@ -140,7 +127,7 @@ pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 #[inline(always)]
 pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
     let value: VALUE = obj.into();
-    unlinkable::rstring_len(value)
+    StableAbi::rstring_len(value)
 }
 
 /// Get the backend storage of a Ruby string.
@@ -155,7 +142,7 @@ pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 #[inline(always)]
 pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
     let value: VALUE = obj.into();
-    unlinkable::rstring_ptr(value)
+    StableAbi::rstring_ptr(value)
 }
 
 /// Checks if the given object is a so-called Flonum.

@@ -33,7 +33,7 @@ pub fn is_rb_sys_repo() -> bool {
     path.ends_with("rb-sys")
 }
 
-pub fn is_compiled_c_impls_enabled() -> bool {
+pub fn is_compiled_stable_abi_enabled() -> bool {
     if !is_rb_sys_repo() {
         return false;
     }

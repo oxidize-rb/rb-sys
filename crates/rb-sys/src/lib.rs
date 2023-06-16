@@ -12,9 +12,9 @@ mod ruby_abi_version;
 mod utils;
 
 #[cfg(feature = "fuzz")]
-pub mod unlinkable;
+pub mod stable_abi;
 #[cfg(not(feature = "fuzz"))]
-mod unlinkable;
+mod stable_abi;
 
 pub use bindings::*;
 pub use macros::*;

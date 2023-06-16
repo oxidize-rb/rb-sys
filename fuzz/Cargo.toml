@@ -11,7 +11,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 rb-sys-test-helpers = { path = "../crates/rb-sys-test-helpers" }
 rb-sys = { path = "../crates/rb-sys", features = [
-  "compiled-c-impls",
+  "compiled-stable-abi",
   "link-ruby",
   "bypass-stable-abi-version-checks",
   "fuzz",

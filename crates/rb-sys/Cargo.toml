@@ -19,7 +19,7 @@ rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 [dev-dependencies]
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 rb-sys = { path = ".", features = [
-  "compiled-c-impls",
+  "compiled-stable-abi",
   "link-ruby",
   "bypass-stable-abi-version-checks",
 ] }
@@ -31,7 +31,7 @@ link-ruby = []
 fuzz = []
 no-link-ruby = []
 ruby-macros = ["rb-sys-build/cc"]
-compiled-c-impls = ["rb-sys-build/cc"]
+compiled-stable-abi = ["rb-sys-build/cc"]
 bypass-stable-abi-version-checks = []
 ruby-static = []
 global-allocator = []

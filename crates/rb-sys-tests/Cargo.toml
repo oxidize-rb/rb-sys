@@ -12,9 +12,9 @@ doctest = false
 doc = false
 
 [features]
-default = ["ruby-macros", "compiled-c-impls"]
+default = ["ruby-macros", "compiled-stable-abi"]
 ruby-macros = ["rb-sys/ruby-macros"]
-compiled-c-impls = ["rb-sys/compiled-c-impls"]
+compiled-stable-abi = ["rb-sys/compiled-stable-abi"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = ["link-ruby"] }

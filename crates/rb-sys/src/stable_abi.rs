@@ -1,36 +1,82 @@
-//! Rust implemenations of Ruby preprocessor macros and inlined functions.
+//! Stable ABI functions which provide access to Ruby internals that
+//! is compatible across Ruby versions, and are guaranteed to be not break due
+//! to Ruby binary changes.
+//!
+//! ### Goals
+//!
+//! 1. To provide access to Ruby internals that are not exposed by the libruby
+//!    (i.e. C macros and inline functions).
+//! 2. Provide support for Ruby development versions, which can make breaking
+//!    changes without semantic versioning. We want to support these versions
+//!    to ensure Rust extensions don't prevent the Ruby core team from testing
+//!    changes in production.
+//!
 
-use crate::{
-    internal::{RArray, RString},
-    VALUE,
-};
+use crate::VALUE;
 use std::ffi::{c_char, c_long};
 
-use super::embeddable::Embeddable;
+pub trait StableAbiDefinition {
+    /// Get the length of a Ruby string (akin to `RSTRING_LEN`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid.
+    unsafe fn rstring_len(obj: VALUE) -> c_long;
 
-#[inline(always)]
-pub unsafe fn rstring_len(str: VALUE) -> c_long {
-    let rstring: &RString = Embeddable::from_value(str);
-    rstring.len()
+    /// Get a pointer to the bytes of a Ruby string (akin to `RSTRING_PTR`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid.
+    unsafe fn rstring_ptr(obj: VALUE) -> *const c_char;
+
+    /// Get the length of a Ruby array (akin to `RARRAY_LEN`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid.
+    unsafe fn rarray_len(obj: VALUE) -> c_long;
+
+    /// Get a pointer to the elements of a Ruby array (akin to `RARRAY_CONST_PTR`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid.
+    unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE;
 }
 
-#[inline(always)]
-pub unsafe fn rstring_ptr(str: VALUE) -> *const c_char {
-    let rstring: &RString = Embeddable::from_value(str);
-    rstring.ptr()
-}
+#[cfg(any(compiled_stable_abi_available, feature = "compiled-stable-abi"))]
+mod compiled;
 
-#[inline(always)]
-pub unsafe fn rarray_len(value: VALUE) -> c_long {
-    let rarray: &RArray = Embeddable::from_value(value);
-    rarray.len()
-}
+#[cfg(ruby_eq_2_4)]
+#[path = "stable_abi/ruby_2_4.rs"]
+mod abi;
 
-#[inline(always)]
-pub unsafe fn rarray_const_ptr(value: VALUE) -> *const VALUE {
-    let rarray: &RArray = Embeddable::from_value(value);
-    rarray.ptr()
-}
+#[cfg(ruby_eq_2_7)]
+#[path = "stable_abi/ruby_2_7.rs"]
+mod abi;
+
+#[cfg(ruby_eq_3_0)]
+#[path = "stable_abi/ruby_3_0.rs"]
+mod abi;
+
+#[cfg(ruby_eq_3_1)]
+#[path = "stable_abi/ruby_3_1.rs"]
+mod abi;
+
+#[cfg(ruby_eq_3_2)]
+#[path = "stable_abi/ruby_3_2.rs"]
+mod abi;
+
+#[cfg(ruby_gt_3_2)]
+#[path = "stable_abi/ruby_dev.rs"]
+mod abi;
+
+pub use abi::Definition as StableAbi;
 
 #[cfg(test)]
 mod tests {
@@ -45,11 +91,12 @@ mod tests {
         ) => {
             #[rb_sys_test_helpers::ruby_test]
             fn $name() {
+                use super::StableAbiDefinition;
                 let data = $data_factory;
 
                 #[allow(unused)]
-                let rust_result = unsafe { super::$func(data) };
-                let compiled_c_result = unsafe { crate::unlinkable::compiled_c_impls::$func(data) };
+                let rust_result = unsafe { super::StableAbi::$func(data) };
+                let compiled_c_result = unsafe { super::compiled::Definition::$func(data) };
 
                 assert_eq!(
                     compiled_c_result, rust_result,
@@ -72,7 +119,7 @@ mod tests {
         name: test_rstring_len_long,
         func: rstring_len,
         data_factory: {
-          gen_rstring!(include_str!("../../../../Cargo.lock"))
+          gen_rstring!(include_str!("../../../Cargo.lock"))
         }
     );
 
@@ -134,7 +181,7 @@ mod tests {
         name: test_rstring_ptr_long,
         func: rstring_ptr,
         data_factory: {
-          gen_rstring!(include_str!("../../../../Cargo.lock"))
+          gen_rstring!(include_str!("../../../Cargo.lock"))
         }
     );
 

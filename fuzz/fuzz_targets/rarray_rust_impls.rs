@@ -22,7 +22,7 @@ fuzz_target!(|data: Vec<u64>| {
 
         {
             let rust_result = rb_sys::unlinkable::rust_impls::rarray_len(ruby_array);
-            let compiled_c_result = rb_sys::unlinkable::compiled_c_impls::rarray_len(ruby_array);
+            let compiled_c_result = rb_sys::unlinkable::compiled_stable_abi::rarray_len(ruby_array);
 
             assert_eq!(compiled_c_result, rust_result);
         }
@@ -30,7 +30,7 @@ fuzz_target!(|data: Vec<u64>| {
         {
             let rust_result = rb_sys::unlinkable::rust_impls::rarray_const_ptr(ruby_array);
             let compiled_c_result =
-                rb_sys::unlinkable::compiled_c_impls::rarray_const_ptr(ruby_array);
+                rb_sys::unlinkable::compiled_stable_abi::rarray_const_ptr(ruby_array);
 
             assert_eq!(compiled_c_result, rust_result);
         }
