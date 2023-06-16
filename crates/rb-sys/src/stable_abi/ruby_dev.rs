@@ -1,1 +1,1 @@
-pub use super::compiled::Definition;
+pub use super::Compiled as Definition;

@@ -1,8 +1,7 @@
 use super::StableAbiDefinition;
 use crate::{
     internal::{RArray, RString},
-    value_type::{self},
-    VALUE,
+    value_type, VALUE,
 };
 use std::ffi::{c_char, c_long};
 

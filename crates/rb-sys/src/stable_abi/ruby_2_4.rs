@@ -1,14 +1,13 @@
 use super::StableAbiDefinition;
 use crate::{
     internal::{RArray, RString},
-    value_type::{self},
-    VALUE,
+    value_type, VALUE,
 };
 use std::ffi::{c_char, c_long};
 
 const RARRAY_EMBED_FLAG: u32 = 1 << 13;
 const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
-const RARRAY_EMBED_LEN_MASK: u32 = crRUBY_FL_USER3 | RUBY_FL_USER4;
+const RARRAY_EMBED_LEN_MASK: u32 = RUBY_FL_USER3 | RUBY_FL_USER4;
 const RUBY_FL_USHIFT: u32 = 12;
 const RUBY_FL_USER3: u32 = 1 << (RUBY_FL_USHIFT as u32 + 3);
 const RUBY_FL_USER4: u32 = 1 << (RUBY_FL_USHIFT as u32 + 4);
