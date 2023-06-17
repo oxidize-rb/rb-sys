@@ -141,3 +141,11 @@ fn is_linting() -> bool {
 
     clippy || rust_analyzer
 }
+
+pub fn is_extra_warnings_enabled() -> bool {
+    if is_linting() {
+        return false;
+    }
+
+    is_env_variable_defined("CARGO_FEATURE_EXTRA_WARNINGS")
+}

@@ -33,12 +33,20 @@ fn main() {
 
     let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
+    let current_ruby_version = Version::current(&rbconfig);
     let crate_version = env!("CARGO_PKG_VERSION");
     let cfg_capture_path = out_dir.join(format!(
         "cfg-capture-{}-{}-{}",
         crate_version, ruby_platform, ruby_version
     ));
     let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
+
+    if is_extra_warnings_enabled() && current_ruby_version < MIN_SUPPORTED_STABLE_VERSION {
+        println!(
+            "cargo:warning=Support for Ruby {} will be removed in a future release.",
+            current_ruby_version
+        );
+    }
 
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -61,7 +69,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     if is_stable_abi_enabled()
-        || is_compiled_stable_abi_needed(&Version::current(&rbconfig))
+        || is_compiled_stable_abi_needed(&current_ruby_version)
         || is_ruby_macros_enabled()
     {
         c_glue::compile();

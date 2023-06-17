@@ -94,8 +94,8 @@ pub fn generate(
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
 
-        categorize_by_abi_stability(&mut tokens);
         push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
+        categorize_by_abi_stability(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 

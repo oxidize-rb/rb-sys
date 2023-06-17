@@ -197,9 +197,5 @@ pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
 /// ```
 #[inline(always)]
 pub fn SPECIAL_CONST_P<T: Into<VALUE>>(obj: T) -> bool {
-    let value: VALUE = obj.into();
-    let is_immediate = value & (IMMEDIATE_MASK as VALUE) != 0;
-    let test = (value & !(Qnil as VALUE)) != 0;
-
-    is_immediate || !test
+    StableAbi::special_const_p(obj.into())
 }

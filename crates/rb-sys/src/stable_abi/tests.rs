@@ -10,6 +10,7 @@ macro_rules! parity_test {
 
             #[allow(unused)]
             let rust_result = unsafe { super::StableAbi::$func(data) };
+            #[allow(unused_unsafe)]
             let compiled_c_result = unsafe { super::Compiled::$func(data) };
 
             assert_eq!(
@@ -173,5 +174,21 @@ parity_test!(
         unsafe { rb_sys::rb_ary_push(ary, gen_rstring!("foo")) };
       }
       ary
+    }
+);
+
+parity_test!(
+    name: test_special_const_p_for_bool,
+    func: special_const_p,
+    data_factory: {
+      rb_sys::Qtrue as _
+    }
+);
+
+parity_test!(
+    name: test_special_const_p_for_string,
+    func: special_const_p,
+    data_factory: {
+      gen_rstring!("foo")
     }
 );

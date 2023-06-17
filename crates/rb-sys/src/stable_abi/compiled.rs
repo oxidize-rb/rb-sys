@@ -15,6 +15,9 @@ extern "C" {
 
     #[link_name = "impl_rarray_const_ptr"]
     fn impl_rarray_const_ptr(ary: VALUE) -> *const VALUE;
+
+    #[link_name = "impl_special_const_p"]
+    fn impl_special_const_p(value: VALUE) -> bool;
 }
 
 pub struct Definition;
@@ -38,5 +41,10 @@ impl StableAbiDefinition for Definition {
     #[inline]
     unsafe fn rarray_const_ptr(obj: crate::VALUE) -> *const crate::VALUE {
         impl_rarray_const_ptr(obj)
+    }
+
+    #[inline]
+    fn special_const_p(value: crate::VALUE) -> bool {
+        unsafe { impl_special_const_p(value) }
     }
 }

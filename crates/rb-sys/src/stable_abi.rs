@@ -46,6 +46,9 @@ pub trait StableAbiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
     unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE;
+
+    /// Tests if the given value is a special constant.
+    fn special_const_p(value: VALUE) -> bool;
 }
 
 #[cfg(any(not(ruby_abi_stable), feature = "stable-abi-compiled"))]

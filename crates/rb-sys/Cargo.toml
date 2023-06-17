@@ -22,6 +22,7 @@ rb-sys = { path = ".", features = [
   "stable-abi",
   "stable-abi-compiled",
   "link-ruby",
+  "extra-warnings",
 ] }
 rusty-fork = "0.3.0"
 
@@ -32,6 +33,7 @@ fuzz = []
 no-link-ruby = []
 ruby-static = []
 global-allocator = []
+extra-warnings = []
 ruby-macros = ["rb-sys-build/cc"]
 stable-abi = ["rb-sys-build/stable-abi", "rb-sys-build/cc"]
 stable-abi-compiled = ["rb-sys-build/cc"]

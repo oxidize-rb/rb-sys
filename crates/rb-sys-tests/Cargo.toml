@@ -17,7 +17,7 @@ ruby-macros = ["rb-sys/ruby-macros"]
 stable-abi-compiled = ["rb-sys/stable-abi-compiled"]
 
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
+rb-sys = { path = "../rb-sys", features = ["link-ruby", "extra-warnings"] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 rusty-fork = "0.3.0"

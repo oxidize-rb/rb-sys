@@ -19,3 +19,8 @@ const VALUE *
 impl_rarray_const_ptr(VALUE obj) {
   return RARRAY_CONST_PTR(obj);
 }
+
+int
+impl_special_const_p(VALUE obj) {
+  return SPECIAL_CONST_P(obj);
+}
