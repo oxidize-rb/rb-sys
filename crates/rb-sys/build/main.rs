@@ -25,6 +25,7 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
 ];
 
 const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
+const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 fn main() {
     let mut rbconfig = RbConfig::current();
@@ -59,8 +60,11 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_compiled_stable_abi_enabled() || is_ruby_macros_enabled() {
-        c_glue::compile(&mut rbconfig);
+    if is_stable_abi_enabled()
+        || is_compiled_stable_abi_needed(&Version::current(&rbconfig))
+        || is_ruby_macros_enabled()
+    {
+        c_glue::compile();
     }
 
     if is_link_ruby_enabled() {

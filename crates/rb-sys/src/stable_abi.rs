@@ -48,7 +48,7 @@ pub trait StableAbiDefinition {
     unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE;
 }
 
-#[cfg(any(compiled_stable_abi_available, feature = "compiled-stable-abi"))]
+#[cfg(any(not(ruby_abi_stable), feature = "stable-abi-compiled"))]
 mod compiled;
 
 #[cfg(ruby_eq_2_6)]
@@ -71,13 +71,12 @@ mod abi;
 #[path = "stable_abi/ruby_3_2.rs"]
 mod abi;
 
-#[cfg(ruby_gt_3_2)]
-#[path = "stable_abi/ruby_dev.rs"]
-mod abi;
+#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]
+use compiled as abi;
 
 pub use abi::Definition as StableAbi;
 
-#[cfg(any(compiled_stable_abi_available, feature = "compiled-stable-abi"))]
+#[cfg(feature = "stable-abi-compiled")]
 pub use compiled::Definition as Compiled;
 
 #[cfg(test)]
