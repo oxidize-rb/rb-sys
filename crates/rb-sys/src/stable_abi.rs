@@ -12,7 +12,7 @@
 //!    changes in production.
 
 use crate::VALUE;
-use std::ffi::{c_char, c_long};
+use std::os::raw::{c_char, c_long};
 
 pub trait StableAbiDefinition {
     /// Get the length of a Ruby string (akin to `RSTRING_LEN`).

@@ -15,7 +15,7 @@
 //!    that can be used in Rust. This requires the `ruby-macros` feature.
 
 use crate::stable_abi::StableAbi;
-use std::ffi::{c_char, c_long};
+use std::os::raw::{c_char, c_long};
 
 use crate::{
     stable_abi::StableAbiDefinition, Qnil, FIXNUM_FLAG, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE,

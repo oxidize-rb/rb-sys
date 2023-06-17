@@ -1,6 +1,6 @@
 use super::StableAbiDefinition;
 use crate::VALUE;
-use std::ffi::{c_char, c_long};
+use std::os::raw::{c_char, c_long};
 
 #[allow(dead_code)]
 extern "C" {

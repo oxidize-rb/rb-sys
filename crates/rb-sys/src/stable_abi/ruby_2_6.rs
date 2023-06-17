@@ -6,7 +6,7 @@ use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
-use std::ffi::{c_char, c_long};
+use std::os::raw::{c_char, c_long};
 
 pub struct Definition;
 
