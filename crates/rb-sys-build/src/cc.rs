@@ -7,9 +7,9 @@ pub struct Build;
 /// or other C code that is only accessible from C.
 impl Build {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> cc_impl::Build {
+    pub fn new() -> cc::Build {
         let rb = rb_config();
-        let mut build = cc_impl::Build::new();
+        let mut build = cc::Build::new();
         let cc_args = rb.get("CC");
         let mut cc_args = cc_args.split_whitespace().collect::<Vec<_>>();
 

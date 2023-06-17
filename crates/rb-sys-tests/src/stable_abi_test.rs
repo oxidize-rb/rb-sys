@@ -1,17 +1,16 @@
-use crate as rb_sys;
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
     (name: $name:ident, func: $func:ident, data_factory: $data_factory:expr) => {
         #[rb_sys_test_helpers::ruby_test]
         fn $name() {
-            use super::StableAbiDefinition;
+            use rb_sys::stable_abi::*;
             let data = $data_factory;
 
             #[allow(unused)]
-            let rust_result = unsafe { super::StableAbi::$func(data) };
+            let rust_result = unsafe { StableAbi::$func(data) };
             #[allow(unused_unsafe)]
-            let compiled_c_result = unsafe { super::Compiled::$func(data) };
+            let compiled_c_result = unsafe { Compiled::$func(data) };
 
             assert_eq!(
                 compiled_c_result, rust_result,
@@ -34,7 +33,7 @@ parity_test!(
     name: test_rstring_len_long,
     func: rstring_len,
     data_factory: {
-      gen_rstring!(include_str!("../../../../Cargo.lock"))
+      gen_rstring!(include_str!("../../../Cargo.lock"))
     }
 );
 
@@ -96,7 +95,7 @@ parity_test!(
     name: test_rstring_ptr_long,
     func: rstring_ptr,
     data_factory: {
-      gen_rstring!(include_str!("../../../../Cargo.lock"))
+      gen_rstring!(include_str!("../../../Cargo.lock"))
     }
 );
 

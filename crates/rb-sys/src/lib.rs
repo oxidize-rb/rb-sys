@@ -4,6 +4,7 @@
 pub mod bindings;
 pub mod macros;
 pub mod special_consts;
+pub mod stable_abi;
 pub mod tracking_allocator;
 pub mod value_type;
 
@@ -11,15 +12,11 @@ mod hidden;
 mod ruby_abi_version;
 mod utils;
 
-#[cfg(feature = "fuzz")]
-pub mod stable_abi;
-#[cfg(not(feature = "fuzz"))]
-mod stable_abi;
-
 pub use bindings::*;
 pub use macros::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
+pub use stable_abi::StableAbi;
 pub use value_type::*;
 
 pub type Value = VALUE;

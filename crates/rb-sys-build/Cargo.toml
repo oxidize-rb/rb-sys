@@ -16,7 +16,7 @@ doctest = false
 regex = "1"
 shell-words = "1.1"
 bindgen = { version = "0.62", default-features = false, features = ["runtime"] }
-cc-impl = { version = "1.0", optional = true, package = "cc" }
+cc = { version = "1.0" }
 syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
 quote = "1.0"
 lazy_static = "1.4.0"
@@ -24,7 +24,6 @@ proc-macro2 = "1.0"
 
 [features]
 default = []
-cc = ["cc-impl"]
 stable-abi = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []

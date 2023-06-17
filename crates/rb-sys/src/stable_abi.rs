@@ -81,6 +81,3 @@ pub use abi::Definition as StableAbi;
 
 #[cfg(feature = "stable-abi-compiled")]
 pub use compiled::Definition as Compiled;
-
-#[cfg(test)]
-mod tests;

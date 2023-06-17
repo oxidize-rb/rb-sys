@@ -1,4 +1,3 @@
-#[cfg(feature = "stable-abi")]
 pub fn compile() {
     use crate::features::is_extra_warnings_enabled;
     use std::path::Path;
@@ -17,6 +16,3 @@ pub fn compile() {
         );
     });
 }
-
-#[cfg(not(feature = "stable-abi"))]
-pub fn compile() {}
