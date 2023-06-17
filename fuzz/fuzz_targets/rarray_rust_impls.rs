@@ -2,6 +2,7 @@
 
 use libfuzzer_sys::fuzz_target;
 use rb_sys_test_helpers::setup_ruby_unguarded;
+use rb_sys::stable
 
 fuzz_target!(|data: Vec<u64>| {
     unsafe {
