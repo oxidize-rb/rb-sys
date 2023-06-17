@@ -51,8 +51,8 @@ pub trait StableAbiDefinition {
 #[cfg(any(compiled_stable_abi_available, feature = "compiled-stable-abi"))]
 mod compiled;
 
-#[cfg(ruby_eq_2_4)]
-#[path = "stable_abi/ruby_2_4.rs"]
+#[cfg(ruby_eq_2_6)]
+#[path = "stable_abi/ruby_2_6.rs"]
 mod abi;
 
 #[cfg(ruby_eq_2_7)]

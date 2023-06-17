@@ -1,16 +1,12 @@
 use super::StableAbiDefinition;
+
+use crate::ruby_rarray_flags::*;
+use crate::ruby_rstring_flags::*;
 use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
 use std::ffi::{c_char, c_long};
-
-const RARRAY_EMBED_FLAG: u32 = 1 << 13;
-const RARRAY_EMBED_LEN_SHIFT: u32 = 15;
-const RARRAY_EMBED_LEN_MASK: u32 = RUBY_FL_USER3 | RUBY_FL_USER4;
-const RUBY_FL_USHIFT: u32 = 12;
-const RUBY_FL_USER3: u32 = 1 << (RUBY_FL_USHIFT as u32 + 3);
-const RUBY_FL_USER4: u32 = 1 << (RUBY_FL_USHIFT as u32 + 4);
 
 pub struct Definition;
 
@@ -23,8 +19,6 @@ impl StableAbiDefinition for Definition {
         let is_heap = (flags & RSTRING_NOEMBED as VALUE) != 0;
 
         if !is_heap {
-            use RSTRING_EMBED_LEN_SHIFT;
-
             let mut f = rstring.basic.flags;
             f &= RSTRING_EMBED_LEN_MASK as VALUE;
             f >>= RSTRING_EMBED_LEN_SHIFT as VALUE;
