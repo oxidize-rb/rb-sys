@@ -9,6 +9,10 @@ pub fn compile() {
         build.extra_warnings(true);
     }
 
+    if !is_extra_warnings_enabled() {
+        println!("cargo:warning=Compiling C glue code for the Ruby stable ABI");
+    }
+
     let path = Path::new("src").join("stable_abi").join("compiled.c");
     println!("cargo:rerun-if-changed={}", path.display());
     build.file(path);

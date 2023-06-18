@@ -1,6 +1,3 @@
-#![allow(rustdoc::broken_intra_doc_links)]
-#![allow(non_upper_case_globals)]
-#![allow(non_snake_case)]
 //! Implementation of Ruby macros.
 //!
 //! Since macros are rely on the C preprocessor, or defined as `inline` C
@@ -14,6 +11,10 @@
 //! 2. The rest are implemented in C code  that exports the macros as functions
 //!    that can be used in Rust. This requires the `ruby-macros` feature.
 
+#![allow(rustdoc::broken_intra_doc_links)]
+#![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
+
 use crate::stable_abi::StableAbi;
 use std::os::raw::{c_char, c_long};
 
@@ -23,9 +24,9 @@ use crate::{
 
 /// Emulates Ruby's "if" statement.
 ///
-/// @param[in]  obj    An arbitrary ruby object.
-/// @retval     false  `obj` is either ::RUBY_Qfalse or ::RUBY_Qnil.
-/// @retval     true   Anything else.
+/// - @param[in]  obj    An arbitrary ruby object.
+/// - @retval     false  `obj` is either ::RUBY_Qfalse or ::RUBY_Qnil.
+/// - @retval     true   Anything else.
 ///
 /// ```
 /// use rb_sys::special_consts::*;
@@ -41,9 +42,9 @@ pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
 
 /// Checks if the given object is nil.
 ///
-/// @param[in]  obj    An arbitrary ruby object.
-/// @retval     true   `obj` is ::RUBY_Qnil.
-/// @retval     false  Anything else.
+/// - @param[in]  obj    An arbitrary ruby object.
+/// - @retval     true   `obj` is ::RUBY_Qnil.
+/// - @retval     false  Anything else.
 ///
 /// ### Example
 ///
@@ -60,10 +61,10 @@ pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
 
 /// Checks if the given object is a so-called Fixnum.
 ///
-/// @param[in]  obj    An arbitrary ruby object.
-/// @retval     true   `obj` is a Fixnum.
-/// @retval     false  Anything else.
-/// @note       Fixnum was  a thing  in the  20th century, but  it is  rather an
+/// - @param[in]  obj    An arbitrary ruby object.
+/// - @retval     true   `obj` is a Fixnum.
+/// - @retval     false  Anything else.
+/// - @note       Fixnum was  a thing  in the  20th century, but  it is  rather an
 ///             implementation detail today.
 #[inline(always)]
 pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
@@ -72,12 +73,12 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 
 /// Checks if the given object is a static symbol.
 ///
-/// @param[in]  obj    An arbitrary ruby object.
-/// @retval     true   `obj` is a static symbol
-/// @retval     false  Anything else.
-/// @see        RB_DYNAMIC_SYM_P()
-/// @see        RB_SYMBOL_P()
-/// @note       These days  there are static  and dynamic symbols, just  like we
+/// - @param[in]  obj    An arbitrary ruby object.
+/// - @retval     true   `obj` is a static symbol
+/// - @retval     false  Anything else.
+/// - @see        RB_DYNAMIC_SYM_P()
+/// - @see        RB_SYMBOL_P()
+/// - @note       These days  there are static  and dynamic symbols, just  like we
 ///             once had Fixnum/Bignum back in the old days.
 pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
     (obj.into() & 0xff) == SYMBOL_FLAG as VALUE
@@ -92,8 +93,8 @@ pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// for the duration of usage the the underlying array (by either GC marking or
 /// keeping the RArray on the stack).
 ///
-/// @param[in]  a  An object of ::RArray.
-/// @return     Its backend storage.
+/// - @param[in]  a  An object of ::RArray.
+/// - @return     Its backend storage.
 #[inline(always)]
 pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
     let value: VALUE = obj.into();
@@ -107,8 +108,8 @@ pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
 /// This function is unsafe because it dereferences a raw pointer in order to
 /// access internal Ruby memory.
 ///
-/// @param[in]  a  An object of ::RArray.
-/// @return     Its length.
+/// - @param[in]  a  An object of ::RArray.
+/// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
     let value: VALUE = obj.into();
@@ -122,8 +123,8 @@ pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 /// This function is unsafe because it dereferences a raw pointer in order to
 /// access internal Ruby memory.
 ///
-/// @param[in]  a  An object of ::RString.
-/// @return     Its length.
+/// - @param[in]  a  An object of ::RString.
+/// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
     let value: VALUE = obj.into();
@@ -137,8 +138,8 @@ pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 /// This function is unsafe because it dereferences a raw pointer and returns
 /// raw pointers to Ruby memory.
 ///
-/// @param[in]  a  An object of ::RString.
-/// @return     Its backend storage
+/// - @param[in]  a  An object of ::RString.
+/// - @return     Its backend storage
 #[inline(always)]
 pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
     let value: VALUE = obj.into();

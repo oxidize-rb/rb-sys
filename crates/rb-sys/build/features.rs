@@ -26,33 +26,11 @@ pub fn is_ruby_macros_enabled() -> bool {
     !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
 }
 
-pub fn is_rb_sys_repo() -> bool {
-    let path = std::env::current_dir().unwrap();
-    let path = path.to_str().unwrap();
+pub fn is_compiled_stable_abi_needed(ver: &Version) -> bool {
+    let needs_rust_impls = MIN_SUPPORTED_STABLE_VERSION > *ver || *ver > LATEST_STABLE_VERSION;
+    let is_feature_enabled = is_env_variable_defined("CARGO_FEATURE_STABLE_ABI_COMPILED");
 
-    path.ends_with("rb-sys")
-}
-
-pub fn is_stable_abi_enabled() -> bool {
-    if !is_rb_sys_repo() {
-        return false;
-    }
-
-    let feature_detected = is_env_variable_defined("CARGO_FEATURE_STABLE_ABI_COMPILED")
-        && is_env_variable_defined("CARGO_FEATURE_STABLE_ABI");
-
-    if is_rb_sys_repo() {
-        feature_detected
-    } else {
-        !is_linting() && feature_detected
-    }
-}
-
-pub fn is_compiled_stable_abi_needed(ruby_version: &Version) -> bool {
-    let is_latest_stable = *ruby_version == LATEST_STABLE_VERSION;
-    let is_min_supported_stable = ruby_version >= &MIN_SUPPORTED_STABLE_VERSION;
-
-    is_latest_stable || is_min_supported_stable
+    needs_rust_impls || is_feature_enabled
 }
 
 pub fn is_gem_enabled() -> bool {
