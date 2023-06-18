@@ -1,11 +1,14 @@
 pub fn compile() {
     use crate::features::is_extra_warnings_enabled;
     use std::path::Path;
-
     let mut build = rb_sys_build::cc::Build::new();
+
     if !is_extra_warnings_enabled() {
         build.warnings(false);
+    } else {
+        build.extra_warnings(true);
     }
+
     let path = Path::new("src").join("stable_abi").join("compiled.c");
     println!("cargo:rerun-if-changed={}", path.display());
     build.file(path);
