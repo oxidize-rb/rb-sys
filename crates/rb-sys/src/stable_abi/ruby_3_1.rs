@@ -75,6 +75,7 @@ impl StableAbiDefinition for Definition {
             rarray.as_.heap.ptr
         }
     }
+
     #[inline]
     fn special_const_p(value: VALUE) -> bool {
         let is_immediate = value & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;

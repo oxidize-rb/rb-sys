@@ -51,7 +51,10 @@ pub trait StableAbiDefinition {
     fn special_const_p(value: VALUE) -> bool;
 }
 
-#[cfg(any(not(ruby_abi_stable), feature = "stable-abi-compiled"))]
+#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]
+use compiled as abi;
+
+#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6, feature = "stable-abi-compiled"))]
 mod compiled;
 
 #[cfg(ruby_eq_2_6)]
@@ -73,9 +76,6 @@ mod abi;
 #[cfg(ruby_eq_3_2)]
 #[path = "stable_abi/ruby_3_2.rs"]
 mod abi;
-
-#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]
-use compiled as abi;
 
 pub use abi::Definition as StableAbi;
 
