@@ -73,7 +73,7 @@ impl StableAbiDefinition for Definition {
 
     #[inline]
     fn special_const_p(value: VALUE) -> bool {
-        let is_immediate = value & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
+        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
         let test = (value & !(crate::Qnil as VALUE)) != 0;
 
         is_immediate || !test
@@ -81,11 +81,25 @@ impl StableAbiDefinition for Definition {
 
     #[inline]
     unsafe fn rb_builtin_type(obj: VALUE) -> crate::ruby_value_type {
-        debug_assert!(!Self::special_const_p(obj));
-
         let rbasic = obj as *const crate::RBasic;
         let ret: u32 = ((*rbasic).flags & crate::ruby_value_type::RUBY_T_MASK as VALUE) as _;
 
         std::mem::transmute::<_, crate::ruby_value_type>(ret)
+    }
+
+    #[inline]
+    fn rb_nil_p(obj: VALUE) -> bool {
+        obj == (crate::Qnil as VALUE)
+    }
+
+    #[inline]
+    fn rb_fixnum_p(obj: VALUE) -> bool {
+        (obj & crate::FIXNUM_FLAG as VALUE) != 0
+    }
+
+    #[inline]
+    fn rb_static_sym_p(obj: VALUE) -> bool {
+        let mask = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
+        (obj & mask) == crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
     }
 }

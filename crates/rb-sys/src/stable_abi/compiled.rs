@@ -21,6 +21,15 @@ extern "C" {
 
     #[link_name = "impl_rb_builtin_type"]
     fn impl_rb_builtin_type(obj: VALUE) -> crate::ruby_value_type;
+
+    #[link_name = "impl_rb_nil_p"]
+    fn impl_rb_nil_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rb_fixnum_p"]
+    fn impl_rb_fixnum_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rb_static_sym_p"]
+    fn impl_rb_static_sym_p(obj: VALUE) -> bool;
 }
 
 pub struct Definition;
@@ -54,5 +63,20 @@ impl StableAbiDefinition for Definition {
     #[inline]
     unsafe fn rb_builtin_type(obj: crate::VALUE) -> crate::ruby_value_type {
         impl_rb_builtin_type(obj)
+    }
+
+    #[inline]
+    fn rb_nil_p(obj: VALUE) -> bool {
+        unsafe { impl_rb_nil_p(obj) }
+    }
+
+    #[inline]
+    fn rb_fixnum_p(obj: VALUE) -> bool {
+        unsafe { impl_rb_fixnum_p(obj) }
+    }
+
+    #[inline]
+    fn rb_static_sym_p(obj: VALUE) -> bool {
+        unsafe { impl_rb_static_sym_p(obj) }
     }
 }

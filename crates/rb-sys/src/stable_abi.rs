@@ -59,6 +59,15 @@ pub trait StableAbiDefinition {
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn rb_builtin_type(obj: VALUE) -> crate::ruby_value_type;
+
+    /// Checks if the given object is nil.
+    fn rb_nil_p(obj: VALUE) -> bool;
+
+    /// Checks if the given object is a so-called Fixnum.
+    fn rb_fixnum_p(obj: VALUE) -> bool;
+
+    /// Checks if the given object is a static symbol.
+    fn rb_static_sym_p(obj: VALUE) -> bool;
 }
 
 #[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]

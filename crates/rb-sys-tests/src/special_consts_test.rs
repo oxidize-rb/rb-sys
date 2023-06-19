@@ -3,7 +3,7 @@ use rb_sys::*;
 use rb_sys_test_helpers::{rstring, ruby_test};
 
 #[ruby_test]
-fn test_fixnum_p() {
+fn test_rb_fixnum_p() {
     let int = unsafe { rb_num2fix(1) };
     let big = unsafe { rb_int2big(9999999) };
 
@@ -12,7 +12,7 @@ fn test_fixnum_p() {
 }
 
 #[ruby_test]
-fn test_static_sym_p() {
+fn test_rb_static_sym_p() {
     let id = unsafe { rb_intern_str(rstring!("teststaticsymp")) };
     let sym = unsafe { rb_id2sym(id) };
 

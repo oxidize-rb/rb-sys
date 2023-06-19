@@ -191,6 +191,22 @@ parity_test!(
 );
 
 parity_test!(
+    name: test_special_const_p_for_static_sym,
+    func: special_const_p,
+    data_factory: {
+      ruby_eval!(":foo")
+    }
+);
+
+parity_test!(
+    name: test_special_const_p_for_symbol,
+    func: special_const_p,
+    data_factory: {
+      ruby_eval!("'foo'.to_sym")
+    }
+);
+
+parity_test!(
     name: test_rb_builtin_type_for_string,
     func: rb_builtin_type,
     data_factory: {
@@ -219,5 +235,70 @@ parity_test!(
     func: rb_builtin_type,
     data_factory: {
       ruby_eval!("File.open('Cargo.toml')")
+    }
+);
+
+parity_test!(
+    name: test_rb_builtin_type_for_symbol,
+    func: rb_builtin_type,
+    data_factory: {
+      ruby_eval!("'foosymmmm'.to_sym")
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_nil_p_for_nil,
+    func: rb_nil_p,
+    data_factory: {
+      rb_sys::Qnil as _
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_nil_p_for_false,
+    func: rb_nil_p,
+    data_factory: {
+      rb_sys::Qfalse as _
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_nil_p_for_string,
+    func: rb_nil_p,
+    data_factory: {
+      gen_rstring!("foo")
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_fixnum_p_for_fixnum,
+    func: rb_fixnum_p,
+    data_factory: {
+      ruby_eval!("1")
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_fixnum_p_for_string,
+    func: rb_fixnum_p,
+    data_factory: {
+      gen_rstring!("foo")
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_static_sym_p_for_static_sym,
+    func: rb_static_sym_p,
+    data_factory: {
+      let interned = unsafe { rb_sys::rb_intern2("new_sym".as_ptr() as _, 7) };
+      unsafe { rb_sys::rb_id2sym(interned) }
+    }
+);
+
+parity_test! (
+    name: test_rb_rb_static_sym_p_for_regular_sym,
+    func: rb_static_sym_p,
+    data_factory: {
+      ruby_eval!("'bar'.to_sym")
     }
 );

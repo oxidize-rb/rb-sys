@@ -29,3 +29,18 @@ enum ruby_value_type
 impl_rb_builtin_type(VALUE obj) {
   return RB_BUILTIN_TYPE(obj);
 }
+
+int
+impl_rb_nil_p(VALUE obj) {
+  return NIL_P(obj);
+}
+
+int
+impl_rb_fixnum_p(VALUE obj) {
+  return FIXNUM_P(obj);
+}
+
+int
+impl_rb_static_sym_p(VALUE obj) {
+  return STATIC_SYM_P(obj);
+}
