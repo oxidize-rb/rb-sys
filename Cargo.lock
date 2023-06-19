@@ -266,7 +266,7 @@ dependencies = [
  "quote",
  "rb-sys",
  "rb-sys-test-helpers",
- "syn 1.0.109",
+ "syn 2.0.5",
 ]
 
 [[package]]
