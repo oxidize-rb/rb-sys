@@ -49,6 +49,16 @@ pub trait StableAbiDefinition {
 
     /// Tests if the given value is a special constant.
     fn special_const_p(value: VALUE) -> bool;
+
+    /// Queries the type of the object.
+    ///
+    /// # Note
+    /// The input `obj` must not be a special constant.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn rb_builtin_type(obj: VALUE) -> crate::ruby_value_type;
 }
 
 #[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]

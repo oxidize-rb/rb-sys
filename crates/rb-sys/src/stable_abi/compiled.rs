@@ -18,6 +18,9 @@ extern "C" {
 
     #[link_name = "impl_special_const_p"]
     fn impl_special_const_p(value: VALUE) -> bool;
+
+    #[link_name = "impl_rb_builtin_type"]
+    fn impl_rb_builtin_type(obj: VALUE) -> crate::ruby_value_type;
 }
 
 pub struct Definition;
@@ -46,5 +49,10 @@ impl StableAbiDefinition for Definition {
     #[inline]
     fn special_const_p(value: crate::VALUE) -> bool {
         unsafe { impl_special_const_p(value) }
+    }
+
+    #[inline]
+    unsafe fn rb_builtin_type(obj: crate::VALUE) -> crate::ruby_value_type {
+        impl_rb_builtin_type(obj)
     }
 }

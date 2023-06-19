@@ -21,6 +21,27 @@ macro_rules! parity_test {
     };
 }
 
+macro_rules! ruby_eval {
+    ($expr:literal) => {{
+        unsafe {
+            let mut state = 0;
+            let ret =
+                rb_sys::rb_eval_string_protect(concat!($expr, "\0").as_ptr() as _, &mut state as _);
+
+            if state != 0 {
+                let mut err_string = rb_sys::rb_inspect(rb_sys::rb_errinfo());
+                rb_sys::rb_set_errinfo(rb_sys::Qnil as _);
+                let err_string = rb_sys::rb_string_value_cstr(&mut err_string);
+                let err_string = std::ffi::CStr::from_ptr(err_string);
+                let err_string = err_string.to_str().unwrap();
+                panic!("Ruby error: {}", err_string);
+            }
+
+            ret
+        }
+    }};
+}
+
 parity_test!(
     name: test_rstring_len_basic,
     func: rstring_len,
@@ -49,10 +70,7 @@ parity_test!(
   name: test_rstring_ptr_evaled_basic,
   func: rstring_ptr,
   data_factory: {
-    let mut state = 0;
-    let ret = unsafe { rb_sys::rb_eval_string_protect("'foo'\0".as_ptr() as _, &mut state as _) };
-    assert_eq!(state, 0);
-    ret
+    ruby_eval!("'foo'")
   }
 );
 
@@ -60,10 +78,7 @@ parity_test!(
   name: test_rstring_len_evaled_basic,
   func: rstring_len,
   data_factory: {
-    let mut state = 0;
-    let ret = unsafe { rb_sys::rb_eval_string_protect("'foo'\0".as_ptr() as _, &mut state as _) };
-    assert_eq!(state, 0);
-    ret
+    ruby_eval!("'foo'")
   }
 );
 
@@ -71,12 +86,7 @@ parity_test!(
   name: test_rstring_len_evaled_shared,
   func: rstring_len,
   data_factory: {
-    let mut state = 0;
-    let ret = unsafe { rb_sys::rb_eval_string_protect("'foo' + 'bar' + ('a' * 12)\0".as_ptr() as _, &mut state as _) };
-    let ret = unsafe { rb_sys::rb_str_new_shared(ret) };
-    unsafe { rb_sys::rb_str_cat_cstr(ret, "baz\0".as_ptr() as _)};
-    assert_eq!(state, 0);
-    ret
+    ruby_eval!("'foo' + 'bar' + ('a' * 12)")
   }
 );
 
@@ -84,10 +94,7 @@ parity_test!(
   name: test_rstring_ptr_evaled_empty,
   func: rstring_ptr,
   data_factory: {
-    let mut state = 0;
-    let ret = unsafe { rb_sys::rb_eval_string_protect("''\0".as_ptr() as _, &mut state as _) };
-    assert_eq!(state, 0);
-    ret
+    ruby_eval!("''")
   }
 );
 
@@ -113,10 +120,7 @@ parity_test!(
     name: test_rarray_len_evaled_basic,
     func: rarray_len,
     data_factory: {
-      let mut state = 0;
-      let ret = unsafe { rb_sys::rb_eval_string_protect("[2, nil, :foo]\0".as_ptr() as _, &mut state as _) };
-      assert_eq!(state, 0);
-      ret
+      ruby_eval!("[2, nil, :foo]")
     }
 );
 
@@ -124,10 +128,7 @@ parity_test!(
     name: test_rarray_len_evaled_empty,
     func: rarray_len,
     data_factory: {
-      let mut state = 0;
-      let ret = unsafe { rb_sys::rb_eval_string_protect("[]\0".as_ptr() as _, &mut state as _) };
-      assert_eq!(state, 0);
-      ret
+      ruby_eval!("[]")
     }
 );
 
@@ -157,10 +158,7 @@ parity_test!(
     name: test_rarray_const_ptr_evaled_basic,
     func: rarray_const_ptr,
     data_factory: {
-      let mut state = 0;
-      let ret = unsafe { rb_sys::rb_eval_string_protect("[2, nil, :foo]\0".as_ptr() as _, &mut state as _) };
-      assert_eq!(state, 0);
-      ret
+      ruby_eval!("[2, nil, :foo]")
     }
 );
 
@@ -189,5 +187,37 @@ parity_test!(
     func: special_const_p,
     data_factory: {
       gen_rstring!("foo")
+    }
+);
+
+parity_test!(
+    name: test_rb_builtin_type_for_string,
+    func: rb_builtin_type,
+    data_factory: {
+      gen_rstring!("foo")
+    }
+);
+
+parity_test!(
+    name: test_rb_builtin_type_for_array,
+    func: rb_builtin_type,
+    data_factory: {
+      ruby_eval!("[]")
+    }
+);
+
+parity_test!(
+    name: test_rb_builtin_type_for_hash,
+    func: rb_builtin_type,
+    data_factory: {
+      ruby_eval!("{foo: 'bar'}")
+    }
+);
+
+parity_test!(
+    name: test_rb_builtin_type_for_file,
+    func: rb_builtin_type,
+    data_factory: {
+      ruby_eval!("File.open('Cargo.toml')")
     }
 );

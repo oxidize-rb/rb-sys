@@ -24,3 +24,8 @@ int
 impl_special_const_p(VALUE obj) {
   return SPECIAL_CONST_P(obj);
 }
+
+enum ruby_value_type
+impl_rb_builtin_type(VALUE obj) {
+  return RB_BUILTIN_TYPE(obj);
+}

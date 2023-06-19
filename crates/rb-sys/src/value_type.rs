@@ -7,11 +7,11 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
-use std::convert::TryInto;
+use crate::stable_abi::*;
 
 use crate::{
-    ruby_value_type::{self, RUBY_T_MASK},
-    Qfalse, Qnil, Qtrue, Qundef, RBasic, FIXNUM_P, FLONUM_P, SPECIAL_CONST_P, STATIC_SYM_P, VALUE,
+    ruby_value_type, Qfalse, Qnil, Qtrue, Qundef, FIXNUM_P, FLONUM_P, SPECIAL_CONST_P,
+    STATIC_SYM_P, VALUE,
 };
 
 pub use ruby_value_type::*;
@@ -27,14 +27,7 @@ pub use ruby_value_type::*;
 /// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
-    debug_assert!(!SPECIAL_CONST_P(obj));
-
-    let rbasic = obj as *const RBasic;
-
-    let ret = (*rbasic).flags & RUBY_T_MASK as VALUE;
-    let ret: u32 = ret.try_into().unwrap();
-
-    std::mem::transmute::<_, ruby_value_type>(ret)
+    StableAbi::rb_builtin_type(obj)
 }
 
 /// Queries if the object is an instance of ::rb_cInteger.
