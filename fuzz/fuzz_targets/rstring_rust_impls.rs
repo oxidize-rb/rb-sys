@@ -28,7 +28,7 @@ fuzz_target!(|data: &str| {
         }
 
         let rb_string = rb_sys::rb_utf8_str_new(data.as_ptr() as _, data.len() as _);
-        let mut pretty_printed = rb_sys::rb_inspect(rb_string);
+        let mut pretty_printed = rb_sys::rb_str_dump(rb_string);
         let serialized = rb_sys::rb_string_value_cstr(&mut pretty_printed);
 
         let mut state = 0;
