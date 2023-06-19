@@ -26,21 +26,31 @@ impl_special_const_p(VALUE obj) {
 }
 
 enum ruby_value_type
-impl_rb_builtin_type(VALUE obj) {
+impl_builtin_type(VALUE obj) {
   return RB_BUILTIN_TYPE(obj);
 }
 
 int
-impl_rb_nil_p(VALUE obj) {
+impl_nil_p(VALUE obj) {
   return NIL_P(obj);
 }
 
 int
-impl_rb_fixnum_p(VALUE obj) {
+impl_fixnum_p(VALUE obj) {
   return FIXNUM_P(obj);
 }
 
 int
-impl_rb_static_sym_p(VALUE obj) {
+impl_static_sym_p(VALUE obj) {
   return STATIC_SYM_P(obj);
+}
+
+int
+impl_flonum_p(VALUE obj) {
+  return FLONUM_P(obj);
+}
+
+int
+impl_immediate_p(VALUE obj) {
+  return IMMEDIATE_P(obj);
 }

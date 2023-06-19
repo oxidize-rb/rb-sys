@@ -1,24 +1,28 @@
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
-    (name: $name:ident, func: $func:ident, data_factory: $data_factory:expr) => {
-        #[rb_sys_test_helpers::ruby_test]
-        fn $name() {
-            use rb_sys::stable_abi::*;
-            let data = $data_factory;
+  (name: $name:ident, func: $func:ident, data_factory: $data_factory:expr $(, expected: $expected:expr)?) => {
+      #[rb_sys_test_helpers::ruby_test]
+      fn $name() {
+          use rb_sys::stable_abi::*;
+          let data = $data_factory;
 
-            #[allow(unused)]
-            let rust_result = unsafe { StableAbi::$func(data) };
-            #[allow(unused_unsafe)]
-            let compiled_c_result = unsafe { Compiled::$func(data) };
+          #[allow(unused)]
+          let rust_result = unsafe { StableAbi::$func(data) };
+          #[allow(unused_unsafe)]
+          let compiled_c_result = unsafe { Compiled::$func(data) };
 
-            assert_eq!(
-                compiled_c_result, rust_result,
-                "compiled_c was {:?}, rust was {:?}",
-                compiled_c_result, rust_result
-            );
-        }
-    };
+          assert_eq!(
+              compiled_c_result, rust_result,
+              "compiled_c was {:?}, rust was {:?}",
+              compiled_c_result, rust_result
+          );
+
+          $(
+              assert_eq!($expected, rust_result);
+          )?
+      }
+  };
 }
 
 macro_rules! ruby_eval {
@@ -207,98 +211,121 @@ parity_test!(
 );
 
 parity_test!(
-    name: test_rb_builtin_type_for_string,
-    func: rb_builtin_type,
+    name: test_builtin_type_for_string,
+    func: builtin_type,
     data_factory: {
       gen_rstring!("foo")
     }
 );
 
 parity_test!(
-    name: test_rb_builtin_type_for_array,
-    func: rb_builtin_type,
+    name: test_builtin_type_for_array,
+    func: builtin_type,
     data_factory: {
       ruby_eval!("[]")
     }
 );
 
 parity_test!(
-    name: test_rb_builtin_type_for_hash,
-    func: rb_builtin_type,
+    name: test_builtin_type_for_hash,
+    func: builtin_type,
     data_factory: {
       ruby_eval!("{foo: 'bar'}")
     }
 );
 
 parity_test!(
-    name: test_rb_builtin_type_for_file,
-    func: rb_builtin_type,
+    name: test_builtin_type_for_file,
+    func: builtin_type,
     data_factory: {
       ruby_eval!("File.open('Cargo.toml')")
     }
 );
 
 parity_test!(
-    name: test_rb_builtin_type_for_symbol,
-    func: rb_builtin_type,
+    name: test_builtin_type_for_symbol,
+    func: builtin_type,
     data_factory: {
       ruby_eval!("'foosymmmm'.to_sym")
     }
 );
 
 parity_test! (
-    name: test_rb_rb_nil_p_for_nil,
-    func: rb_nil_p,
+    name: test_rb_nil_p_for_nil,
+    func: nil_p,
     data_factory: {
       rb_sys::Qnil as _
     }
 );
 
 parity_test! (
-    name: test_rb_rb_nil_p_for_false,
-    func: rb_nil_p,
+    name: test_rb_nil_p_for_false,
+    func: nil_p,
     data_factory: {
       rb_sys::Qfalse as _
     }
 );
 
 parity_test! (
-    name: test_rb_rb_nil_p_for_string,
-    func: rb_nil_p,
+    name: test_rb_nil_p_for_string,
+    func: nil_p,
     data_factory: {
       gen_rstring!("foo")
     }
 );
 
 parity_test! (
-    name: test_rb_rb_fixnum_p_for_fixnum,
-    func: rb_fixnum_p,
+    name: test_rb_fixnum_p_for_fixnum,
+    func: fixnum_p,
     data_factory: {
       ruby_eval!("1")
-    }
+    },
+    expected: true
 );
 
 parity_test! (
-    name: test_rb_rb_fixnum_p_for_string,
-    func: rb_fixnum_p,
+    name: test_rb_fixnum_p_for_string,
+    func: fixnum_p,
     data_factory: {
       gen_rstring!("foo")
-    }
+    },
+    expected: false
 );
 
 parity_test! (
-    name: test_rb_rb_static_sym_p_for_static_sym,
-    func: rb_static_sym_p,
+    name: test_rb_static_sym_p_for_static_sym,
+    func: static_sym_p,
     data_factory: {
       let interned = unsafe { rb_sys::rb_intern2("new_sym".as_ptr() as _, 7) };
       unsafe { rb_sys::rb_id2sym(interned) }
-    }
+    },
+    expected: true
 );
 
 parity_test! (
-    name: test_rb_rb_static_sym_p_for_regular_sym,
-    func: rb_static_sym_p,
+    name: test_rb_static_sym_p_for_regular_sym,
+    func: static_sym_p,
     data_factory: {
       ruby_eval!("'bar'.to_sym")
-    }
+    },
+    expected: false
+);
+
+// flonum tests
+parity_test! (
+    name: test_rb_flonum_p_for_flonum,
+    func: flonum_p,
+    data_factory: {
+      ruby_eval!("1.0")
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_flonum_p_false_for_fixnum,
+    func: flonum_p,
+    data_factory: {
+      ruby_eval!("1")
+    },
+    expected: false
 );

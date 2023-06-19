@@ -19,17 +19,23 @@ extern "C" {
     #[link_name = "impl_special_const_p"]
     fn impl_special_const_p(value: VALUE) -> bool;
 
-    #[link_name = "impl_rb_builtin_type"]
-    fn impl_rb_builtin_type(obj: VALUE) -> crate::ruby_value_type;
+    #[link_name = "impl_builtin_type"]
+    fn impl_builtin_type(obj: VALUE) -> crate::ruby_value_type;
 
-    #[link_name = "impl_rb_nil_p"]
-    fn impl_rb_nil_p(obj: VALUE) -> bool;
+    #[link_name = "impl_nil_p"]
+    fn impl_nil_p(obj: VALUE) -> bool;
 
-    #[link_name = "impl_rb_fixnum_p"]
-    fn impl_rb_fixnum_p(obj: VALUE) -> bool;
+    #[link_name = "impl_fixnum_p"]
+    fn impl_fixnum_p(obj: VALUE) -> bool;
 
-    #[link_name = "impl_rb_static_sym_p"]
-    fn impl_rb_static_sym_p(obj: VALUE) -> bool;
+    #[link_name = "impl_static_sym_p"]
+    fn impl_static_sym_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_flonum_p"]
+    fn impl_flonum_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_immediate_p"]
+    fn impl_immediate_p(obj: VALUE) -> bool;
 }
 
 pub struct Definition;
@@ -61,22 +67,32 @@ impl StableAbiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rb_builtin_type(obj: crate::VALUE) -> crate::ruby_value_type {
-        impl_rb_builtin_type(obj)
+    unsafe fn builtin_type(obj: crate::VALUE) -> crate::ruby_value_type {
+        impl_builtin_type(obj)
     }
 
     #[inline]
-    fn rb_nil_p(obj: VALUE) -> bool {
-        unsafe { impl_rb_nil_p(obj) }
+    fn nil_p(obj: VALUE) -> bool {
+        unsafe { impl_nil_p(obj) }
     }
 
     #[inline]
-    fn rb_fixnum_p(obj: VALUE) -> bool {
-        unsafe { impl_rb_fixnum_p(obj) }
+    fn fixnum_p(obj: VALUE) -> bool {
+        unsafe { impl_fixnum_p(obj) }
     }
 
     #[inline]
-    fn rb_static_sym_p(obj: VALUE) -> bool {
-        unsafe { impl_rb_static_sym_p(obj) }
+    fn static_sym_p(obj: VALUE) -> bool {
+        unsafe { impl_static_sym_p(obj) }
+    }
+
+    #[inline]
+    fn flonum_p(obj: VALUE) -> bool {
+        unsafe { impl_flonum_p(obj) }
+    }
+
+    #[inline]
+    fn immediate_p(obj: VALUE) -> bool {
+        unsafe { impl_immediate_p(obj) }
     }
 }

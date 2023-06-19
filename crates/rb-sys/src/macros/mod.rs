@@ -16,11 +16,8 @@
 #![allow(non_snake_case)]
 
 use crate::stable_abi::StableAbi;
+use crate::{stable_abi::StableAbiDefinition, Qnil, VALUE};
 use std::os::raw::{c_char, c_long};
-
-use crate::{
-    stable_abi::StableAbiDefinition, Qnil, FIXNUM_FLAG, IMMEDIATE_MASK, SYMBOL_FLAG, VALUE,
-};
 
 /// Emulates Ruby's "if" statement.
 ///
@@ -56,7 +53,7 @@ pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
 /// ```
 #[inline(always)]
 pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
-    obj.into() == (Qnil as VALUE)
+    StableAbi::nil_p(obj.into())
 }
 
 /// Checks if the given object is a so-called Fixnum.
@@ -68,7 +65,7 @@ pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
 ///             implementation detail today.
 #[inline(always)]
 pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
-    (obj.into() & FIXNUM_FLAG as VALUE) != 0
+    StableAbi::fixnum_p(obj.into())
 }
 
 /// Checks if the given object is a static symbol.
@@ -81,7 +78,7 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @note       These days  there are static  and dynamic symbols, just  like we
 ///             once had Fixnum/Bignum back in the old days.
 pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
-    (obj.into() & 0xff) == SYMBOL_FLAG as VALUE
+    StableAbi::static_sym_p(obj.into())
 }
 
 /// Get the backend storage of a Ruby array.
@@ -97,8 +94,7 @@ pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @return     Its backend storage.
 #[inline(always)]
 pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
-    let value: VALUE = obj.into();
-    StableAbi::rarray_const_ptr(value)
+    StableAbi::rarray_const_ptr(obj.into())
 }
 
 /// Get the length of a Ruby array.
@@ -112,8 +108,7 @@ pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
 /// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
-    let value: VALUE = obj.into();
-    StableAbi::rarray_len(value)
+    StableAbi::rarray_len(obj.into())
 }
 
 /// Get the length of a Ruby string.
@@ -127,8 +122,7 @@ pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 /// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
-    let value: VALUE = obj.into();
-    StableAbi::rstring_len(value)
+    StableAbi::rstring_len(obj.into())
 }
 
 /// Get the backend storage of a Ruby string.
@@ -142,8 +136,7 @@ pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 /// - @return     Its backend storage
 #[inline(always)]
 pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
-    let value: VALUE = obj.into();
-    StableAbi::rstring_ptr(value)
+    StableAbi::rstring_ptr(obj.into())
 }
 
 /// Checks if the given object is a so-called Flonum.
@@ -156,16 +149,7 @@ pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
 ///             once had Fixnum/Bignum back in the old days.
 #[inline(always)]
 pub fn FLONUM_P<T: Into<VALUE>>(#[allow(unused)] obj: T) -> bool {
-    #[cfg(ruby_use_flonum = "true")]
-    let ret = {
-        let obj = obj.into() as u32;
-        (obj & (crate::FLONUM_MASK as u32)) == crate::FLONUM_FLAG as u32
-    };
-
-    #[cfg(not(ruby_use_flonum = "true"))]
-    let ret = false;
-
-    ret
+    StableAbi::flonum_p(obj.into())
 }
 
 /// Checks if  the given  object is  an immediate  i.e. an  object which  has no
@@ -178,7 +162,7 @@ pub fn FLONUM_P<T: Into<VALUE>>(#[allow(unused)] obj: T) -> bool {
 /// @note       The concept of "immediate" is purely C specific.
 #[inline(always)]
 pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
-    obj.into() & (IMMEDIATE_MASK as VALUE) != 0
+    StableAbi::immediate_p(obj.into())
 }
 
 /// Checks if the given object is of enum ::ruby_special_consts.

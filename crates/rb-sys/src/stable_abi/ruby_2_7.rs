@@ -85,7 +85,7 @@ impl StableAbiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rb_builtin_type(obj: VALUE) -> crate::ruby_value_type {
+    unsafe fn builtin_type(obj: VALUE) -> crate::ruby_value_type {
         let rbasic = obj as *const crate::RBasic;
         let ret: u32 = ((*rbasic).flags & crate::ruby_value_type::RUBY_T_MASK as VALUE) as _;
 
@@ -93,18 +93,34 @@ impl StableAbiDefinition for Definition {
     }
 
     #[inline]
-    fn rb_nil_p(obj: VALUE) -> bool {
+    fn nil_p(obj: VALUE) -> bool {
         obj == (crate::Qnil as VALUE)
     }
 
     #[inline]
-    fn rb_fixnum_p(obj: VALUE) -> bool {
+    fn fixnum_p(obj: VALUE) -> bool {
         (obj & crate::FIXNUM_FLAG as VALUE) != 0
     }
 
     #[inline]
-    fn rb_static_sym_p(obj: VALUE) -> bool {
+    fn static_sym_p(obj: VALUE) -> bool {
         let mask = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
         (obj & mask) == crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
+    }
+
+    #[inline]
+    fn flonum_p(obj: VALUE) -> bool {
+        #[cfg(ruby_use_flonum = "true")]
+        let ret = (obj & crate::FLONUM_MASK as VALUE) == crate::FLONUM_FLAG as VALUE;
+
+        #[cfg(not(ruby_use_flonum = "true"))]
+        let ret = false;
+
+        ret
+    }
+
+    #[inline]
+    fn immediate_p(obj: VALUE) -> bool {
+        (obj & crate::special_consts::IMMEDIATE_MASK as VALUE) != 0
     }
 }

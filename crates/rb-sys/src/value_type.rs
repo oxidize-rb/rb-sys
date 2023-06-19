@@ -27,7 +27,7 @@ pub use ruby_value_type::*;
 /// attemping to access the underlying [`RBasic`] struct.
 #[inline(always)]
 pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
-    StableAbi::rb_builtin_type(obj)
+    StableAbi::builtin_type(obj)
 }
 
 /// Queries if the object is an instance of ::rb_cInteger.
