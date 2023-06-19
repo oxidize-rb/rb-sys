@@ -24,11 +24,11 @@ jobs:
             run: cargo test
           - name: "matsadler/magnus"
             slug: magnus-head
-            ref: "51d154ce32a3ef06542454fc720ad4f291dba86a"
+            ref: "05359fcd2369f014570f1e417c7c2d462625af5e"
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
-        ruby: ["2.7", "3.2"]
+        ruby: ["2.7", "3.2", "ruby-head"]
 
     runs-on: ${{ matrix.os }}
     steps:
