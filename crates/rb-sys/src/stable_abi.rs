@@ -75,6 +75,9 @@ pub trait StableAbiDefinition {
     // Checks if the given  object is  an immediate  i.e. an  object which  has
     // no corresponding storage inside of the object space.
     fn immediate_p(obj: VALUE) -> bool;
+
+    /// Emulates Ruby's "if" statement by testing if the given `obj` is neither `Qnil` or `Qfalse`.
+    fn rb_test(ob: VALUE) -> bool;
 }
 
 #[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]

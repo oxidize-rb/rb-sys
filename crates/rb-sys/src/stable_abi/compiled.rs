@@ -36,6 +36,9 @@ extern "C" {
 
     #[link_name = "impl_immediate_p"]
     fn impl_immediate_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rb_test"]
+    fn impl_rb_test(obj: VALUE) -> bool;
 }
 
 pub struct Definition;
@@ -94,5 +97,10 @@ impl StableAbiDefinition for Definition {
     #[inline]
     fn immediate_p(obj: VALUE) -> bool {
         unsafe { impl_immediate_p(obj) }
+    }
+
+    #[inline]
+    fn rb_test(obj: VALUE) -> bool {
+        unsafe { impl_rb_test(obj) }
     }
 }

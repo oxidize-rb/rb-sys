@@ -118,4 +118,9 @@ impl StableAbiDefinition for Definition {
     fn immediate_p(obj: VALUE) -> bool {
         (obj & crate::special_consts::IMMEDIATE_MASK as VALUE) != 0
     }
+
+    #[inline]
+    fn rb_test(obj: VALUE) -> bool {
+        (obj & !(crate::Qnil as VALUE)) != 0
+    }
 }

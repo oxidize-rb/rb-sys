@@ -54,3 +54,8 @@ int
 impl_immediate_p(VALUE obj) {
   return IMMEDIATE_P(obj);
 }
+
+int
+impl_rb_test(VALUE obj) {
+  return RB_TEST(obj);
+}

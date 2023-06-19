@@ -329,3 +329,39 @@ parity_test! (
     },
     expected: false
 );
+
+parity_test! (
+    name: test_rb_test_for_true,
+    func: rb_test,
+    data_factory: {
+      rb_sys::Qtrue as _
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_test_for_false,
+    func: rb_test,
+    data_factory: {
+      rb_sys::Qfalse as _
+    },
+    expected: false
+);
+
+parity_test! (
+    name: test_rb_test_for_nil,
+    func: rb_test,
+    data_factory: {
+      rb_sys::Qnil as _
+    },
+    expected: false
+);
+
+parity_test! (
+    name: test_rb_test_for_fixnum,
+    func: rb_test,
+    data_factory: {
+      ruby_eval!("1")
+    },
+    expected: true
+);

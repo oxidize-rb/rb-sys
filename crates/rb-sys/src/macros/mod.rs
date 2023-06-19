@@ -34,7 +34,7 @@ use std::os::raw::{c_char, c_long};
 /// ```
 #[inline(always)]
 pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
-    (obj.into() & !(Qnil as VALUE)) != 0
+    StableAbi::rb_test(obj.into())
 }
 
 /// Checks if the given object is nil.
