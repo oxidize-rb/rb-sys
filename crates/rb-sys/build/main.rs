@@ -64,6 +64,7 @@ fn main() {
         &mut cfg_capture_file,
     )
     .expect("generate bindings");
+    println!("Bindings generated at: {}", bindings_path.display());
     println!(
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
         bindings_path.display()
@@ -71,7 +72,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     if is_compiled_stable_api_needed(&current_ruby_version) {
-        c_glue::compile();
+        c_glue::compile().expect("stable API C glue to compile");
     }
 
     if is_link_ruby_enabled() {
