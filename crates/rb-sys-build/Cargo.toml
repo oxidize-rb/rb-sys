@@ -24,7 +24,6 @@ proc-macro2 = "1.0"
 
 [features]
 default = []
-unstable-api = []
 bindgen-rbimpls = []
 bindgen-deprecated-types = []
 bindgen-layout-tests = []
