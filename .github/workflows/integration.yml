@@ -33,10 +33,18 @@ jobs:
         exclude:
           - os: windows-latest
             ruby: ruby-head
-            slug: magnus-head
+            repo:
+              name: "matsadler/magnus"
+              slug: magnus-head
+              ref: "05359fcd2369f014570f1e417c7c2d462625af5e"
+              run: cargo test
           - os: windows-latest
             ruby: ruby-head
-            slug: magnus-0.5
+            repo:
+              name: "matsadler/magnus"
+              slug: magnus-0.5
+              ref: "0.5.4"
+              run: cargo test
 
     runs-on: ${{ matrix.os }}
     steps:
