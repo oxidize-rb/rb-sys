@@ -28,6 +28,8 @@ const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
 const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 fn main() {
+    warn_deprecated_feature_flags();
+
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
@@ -41,7 +43,7 @@ fn main() {
     ));
     let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
-    if is_extra_warnings_enabled() && current_ruby_version < MIN_SUPPORTED_STABLE_VERSION {
+    if current_ruby_version < MIN_SUPPORTED_STABLE_VERSION {
         println!(
             "cargo:warning=Support for Ruby {} will be removed in a future release.",
             current_ruby_version
@@ -68,7 +70,7 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_compiled_stable_api_needed(&current_ruby_version) || is_ruby_macros_enabled() {
+    if is_compiled_stable_api_needed(&current_ruby_version) {
         c_glue::compile();
     }
 
@@ -241,5 +243,11 @@ fn expose_cargo_features(cap: &mut File) {
         }
 
         cfg_capture!(cap, "cargo:{}={}", key.to_lowercase(), val);
+    }
+}
+
+fn warn_deprecated_feature_flags() {
+    if cfg!(feature = "ruby-macros") {
+        println!("cargo:warning=The \"ruby-macros\" feature flag is deprecated and will be removed in a future release.");
     }
 }

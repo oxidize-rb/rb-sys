@@ -18,17 +18,9 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
     }
 }
 
-pub fn is_ruby_macros_enabled() -> bool {
-    if is_mswin_or_mingw() {
-        return false;
-    }
-
-    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
-}
-
 pub fn is_compiled_stable_api_needed(ver: &Version) -> bool {
     let needs_rust_impls = MIN_SUPPORTED_STABLE_VERSION > *ver || *ver > LATEST_STABLE_VERSION;
-    let is_feature_enabled = is_env_variable_defined("CARGO_FEATURE_STABLE_ABI_COMPILED");
+    let is_feature_enabled = is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED");
 
     needs_rust_impls || is_feature_enabled
 }
@@ -118,12 +110,4 @@ fn is_linting() -> bool {
     };
 
     clippy || rust_analyzer
-}
-
-pub fn is_extra_warnings_enabled() -> bool {
-    if is_linting() {
-        return false;
-    }
-
-    is_env_variable_defined("CARGO_FEATURE_EXTRA_WARNINGS")
 }

@@ -127,22 +127,27 @@ impl StableApiDefinition for Definition {
         impl_type_p(obj, ty)
     }
 
+    #[inline]
     unsafe fn dynamic_sym_p(obj: VALUE) -> bool {
         impl_dynamic_sym_p(obj)
     }
 
+    #[inline]
     unsafe fn symbol_p(obj: VALUE) -> bool {
         impl_symbol_p(obj)
     }
 
+    #[inline]
     unsafe fn float_type_p(obj: VALUE) -> bool {
         impl_float_type_p(obj)
     }
 
+    #[inline]
     unsafe fn rb_type(obj: VALUE) -> crate::ruby_value_type {
         impl_rb_type(obj)
     }
 
+    #[inline]
     unsafe fn integer_type_p(obj: VALUE) -> bool {
         impl_integer_type_p(obj)
     }

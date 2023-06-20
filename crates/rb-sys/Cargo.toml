@@ -18,26 +18,18 @@ rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 
 [dev-dependencies]
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
-rb-sys = { path = ".", features = [
-  "ruby-macros",
-  "unstable-api",
-  "stable-api-compiled",
-  "link-ruby",
-  "extra-warnings",
-] }
+rb-sys = { path = ".", features = ["link-ruby", "stable-api-compiled"] }
 rusty-fork = "0.3.0"
 
 [features]
-default = ["ruby-macros", "unstable-api"]
+default = []
 link-ruby = []
 fuzz = []
 no-link-ruby = []
 ruby-static = []
 global-allocator = []
-extra-warnings = []
-ruby-macros = ["unstable-api"]
-unstable-api = []
 stable-api-compiled = []
+ruby-macros = [] # deprecated
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]

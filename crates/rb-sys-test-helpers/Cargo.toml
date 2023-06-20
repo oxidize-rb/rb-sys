@@ -14,10 +14,7 @@ bench = false
 doctest = true
 
 [dependencies]
-rb-sys = { version = "0.9", path = "../rb-sys", features = [
-  "link-ruby",
-  "extra-warnings",
-] }
+rb-sys = { path = "../rb-sys", features = ["link-ruby", "stable-api-compiled"] }
 rb-sys-test-helpers-macros = { version = "0.1.0", path = "../rb-sys-test-helpers-macros" }
 
 [build-dependencies]
