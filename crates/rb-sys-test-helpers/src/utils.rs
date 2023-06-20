@@ -71,7 +71,7 @@ macro_rules! rb_funcall_typed {
             let argv = $args.as_ptr();
             let result = rb_sys::rb_check_funcall($v, id, args.len() as _, argv);
 
-            if RB_TYPE_P(result) != $t as _ {
+            if !RB_TYPE_P(result, $t as _) {
                 None
             } else {
                 Some(result)

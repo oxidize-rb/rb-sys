@@ -1,5 +1,5 @@
 use super::StableAbiDefinition;
-use crate::VALUE;
+use crate::{ruby_value_type, VALUE};
 use std::os::raw::{c_char, c_long};
 
 #[allow(dead_code)]
@@ -20,7 +20,7 @@ extern "C" {
     fn impl_special_const_p(value: VALUE) -> bool;
 
     #[link_name = "impl_builtin_type"]
-    fn impl_builtin_type(obj: VALUE) -> crate::ruby_value_type;
+    fn impl_builtin_type(obj: VALUE) -> ruby_value_type;
 
     #[link_name = "impl_nil_p"]
     fn impl_nil_p(obj: VALUE) -> bool;
@@ -39,38 +39,56 @@ extern "C" {
 
     #[link_name = "impl_rb_test"]
     fn impl_rb_test(obj: VALUE) -> bool;
+
+    #[link_name = "impl_type_p"]
+    fn impl_type_p(obj: VALUE, ty: ruby_value_type) -> bool;
+
+    #[link_name = "impl_dynamic_sym_p"]
+    fn impl_dynamic_sym_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_symbol_p"]
+    fn impl_symbol_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_float_type_p"]
+    fn impl_float_type_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rb_type"]
+    fn impl_rb_type(obj: VALUE) -> ruby_value_type;
+
+    #[link_name = "impl_integer_type_p"]
+    fn impl_integer_type_p(obj: VALUE) -> bool;
 }
 
 pub struct Definition;
 
 impl StableAbiDefinition for Definition {
     #[inline]
-    unsafe fn rstring_len(obj: crate::VALUE) -> std::os::raw::c_long {
+    unsafe fn rstring_len(obj: VALUE) -> std::os::raw::c_long {
         impl_rstring_len(obj)
     }
 
     #[inline]
-    unsafe fn rstring_ptr(obj: crate::VALUE) -> *const std::os::raw::c_char {
+    unsafe fn rstring_ptr(obj: VALUE) -> *const std::os::raw::c_char {
         impl_rstring_ptr(obj)
     }
 
     #[inline]
-    unsafe fn rarray_len(obj: crate::VALUE) -> std::os::raw::c_long {
+    unsafe fn rarray_len(obj: VALUE) -> std::os::raw::c_long {
         impl_rarray_len(obj)
     }
 
     #[inline]
-    unsafe fn rarray_const_ptr(obj: crate::VALUE) -> *const crate::VALUE {
+    unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE {
         impl_rarray_const_ptr(obj)
     }
 
     #[inline]
-    fn special_const_p(value: crate::VALUE) -> bool {
+    fn special_const_p(value: VALUE) -> bool {
         unsafe { impl_special_const_p(value) }
     }
 
     #[inline]
-    unsafe fn builtin_type(obj: crate::VALUE) -> crate::ruby_value_type {
+    unsafe fn builtin_type(obj: VALUE) -> ruby_value_type {
         impl_builtin_type(obj)
     }
 
@@ -102,5 +120,30 @@ impl StableAbiDefinition for Definition {
     #[inline]
     fn rb_test(obj: VALUE) -> bool {
         unsafe { impl_rb_test(obj) }
+    }
+
+    #[inline]
+    unsafe fn type_p(obj: VALUE, ty: ruby_value_type) -> bool {
+        impl_type_p(obj, ty)
+    }
+
+    unsafe fn dynamic_sym_p(obj: VALUE) -> bool {
+        impl_dynamic_sym_p(obj)
+    }
+
+    unsafe fn symbol_p(obj: VALUE) -> bool {
+        impl_symbol_p(obj)
+    }
+
+    unsafe fn float_type_p(obj: VALUE) -> bool {
+        impl_float_type_p(obj)
+    }
+
+    unsafe fn rb_type(obj: VALUE) -> crate::ruby_value_type {
+        impl_rb_type(obj)
+    }
+
+    unsafe fn integer_type_p(obj: VALUE) -> bool {
+        impl_integer_type_p(obj)
     }
 }

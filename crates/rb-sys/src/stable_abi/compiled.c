@@ -59,3 +59,31 @@ int
 impl_rb_test(VALUE obj) {
   return RB_TEST(obj);
 }
+
+int
+impl_type_p(VALUE obj, enum ruby_value_type type) {
+  return RB_TYPE_P(obj, type);
+}
+
+int
+impl_dynamic_sym_p(VALUE obj) {
+  return RB_DYNAMIC_SYM_P(obj);
+}
+
+int impl_symbol_p(VALUE obj) {
+  return RB_SYMBOL_P(obj);
+}
+
+int impl_float_type_p(VALUE obj) {
+  return RB_FLOAT_TYPE_P(obj);
+}
+
+enum ruby_value_type
+impl_rb_type(VALUE obj) {
+  return rb_type(obj);
+}
+
+int
+impl_integer_type_p(VALUE obj) {
+  return RB_INTEGER_TYPE_P(obj);
+}

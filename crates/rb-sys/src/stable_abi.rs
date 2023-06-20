@@ -60,14 +60,49 @@ pub trait StableAbiDefinition {
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn builtin_type(obj: VALUE) -> crate::ruby_value_type;
 
+    /// Tests if the object's type is the given type.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn type_p(obj: VALUE, ty: crate::ruby_value_type) -> bool;
+
     /// Checks if the given object is nil.
     fn nil_p(obj: VALUE) -> bool;
 
     /// Checks if the given object is a so-called Fixnum.
     fn fixnum_p(obj: VALUE) -> bool;
 
+    /// Checks if the given object is a dynamic symbol.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn dynamic_sym_p(obj: VALUE) -> bool;
+
     /// Checks if the given object is a static symbol.
     fn static_sym_p(obj: VALUE) -> bool;
+
+    /// Checks if the given object is a symbol.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn symbol_p(obj: VALUE) -> bool;
+
+    /// Checks if the given object is a so-called Flonum.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn float_type_p(obj: VALUE) -> bool;
+
+    /// Checks if the given object is an integer type
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn integer_type_p(obj: VALUE) -> bool;
 
     /// Checks if the given object is a so-called Flonum.
     fn flonum_p(obj: VALUE) -> bool;
@@ -77,7 +112,19 @@ pub trait StableAbiDefinition {
     fn immediate_p(obj: VALUE) -> bool;
 
     /// Emulates Ruby's "if" statement by testing if the given `obj` is neither `Qnil` or `Qfalse`.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
     fn rb_test(ob: VALUE) -> bool;
+
+    /// Queries the type of the object. Identical to `StableAbi::builtin_type`,
+    /// except it can also accept special constants.
+    ///
+    /// # Safety
+    /// This function is unsafe because it could dereference a raw pointer when
+    /// attemping to access the underlying [`RBasic`] struct.
+    unsafe fn rb_type(obj: VALUE) -> crate::ruby_value_type;
 }
 
 #[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]

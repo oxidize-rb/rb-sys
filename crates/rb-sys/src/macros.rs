@@ -15,8 +15,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
+use crate::ruby_value_type;
 use crate::stable_abi::StableAbi;
-use crate::{stable_abi::StableAbiDefinition, Qnil, VALUE};
+use crate::{stable_abi::StableAbiDefinition, VALUE};
 use std::os::raw::{c_char, c_long};
 
 /// Emulates Ruby's "if" statement.
@@ -183,4 +184,100 @@ pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
 #[inline(always)]
 pub fn SPECIAL_CONST_P<T: Into<VALUE>>(obj: T) -> bool {
     StableAbi::special_const_p(obj.into())
+}
+
+/// Queries the type of the object.
+///
+/// @param[in]  obj  Object in question.
+/// @pre        `obj` must not be a special constant.
+/// @return     The type of `obj`.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+#[inline(always)]
+pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
+    StableAbi::builtin_type(obj)
+}
+
+/// Queries if the object is an instance of ::rb_cInteger.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is.
+/// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+#[inline(always)]
+pub unsafe fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool {
+    StableAbi::integer_type_p(obj)
+}
+
+/// Queries if the object is a dynamic symbol.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is.
+/// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+#[inline(always)]
+pub unsafe fn RB_DYNAMIC_SYM_P(obj: VALUE) -> bool {
+    StableAbi::dynamic_sym_p(obj)
+}
+
+/// Queries if the object is an instance of ::rb_cSymbol.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is.
+/// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+#[inline(always)]
+pub unsafe fn RB_SYMBOL_P(obj: VALUE) -> bool {
+    StableAbi::symbol_p(obj)
+}
+
+/// Identical to RB_BUILTIN_TYPE(), except it can also accept special constants.
+///
+/// @param[in]  obj  Object in question.
+/// @return     The type of `obj`.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+#[inline(always)]
+pub unsafe fn RB_TYPE(value: VALUE) -> ruby_value_type {
+    StableAbi::rb_type(value)
+}
+
+/// Queries if the given object is of given type.
+///
+/// @param[in]  obj    An object.
+/// @param[in]  t      A type.
+/// @retval     true   `obj` is of type `t`.
+/// @retval     false  Otherwise.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+pub unsafe fn RB_TYPE_P(obj: VALUE, ty: ruby_value_type) -> bool {
+    StableAbi::type_p(obj, ty)
+}
+
+/// Queries if the object is an instance of ::rb_cFloat.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is.
+/// @retval     false  It isn't.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// attemping to access the underlying [`RBasic`] struct.
+pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
+    StableAbi::float_type_p(obj)
 }

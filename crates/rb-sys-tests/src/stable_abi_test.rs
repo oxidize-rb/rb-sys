@@ -365,3 +365,170 @@ parity_test! (
     },
     expected: true
 );
+
+// tests for dynamic_sym_p
+parity_test! (
+    name: test_rb_dynamic_sym_p_for_dynamic_sym,
+    func: dynamic_sym_p,
+    data_factory: {
+      ruby_eval!("'footestingdynsym'.to_sym")
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_dynamic_sym_p_for_static_sym,
+    func: dynamic_sym_p,
+    data_factory: {
+      let interned = unsafe { rb_sys::rb_intern2("new_sym".as_ptr() as _, 7) };
+      unsafe { rb_sys::rb_id2sym(interned) }
+    },
+    expected: false
+);
+
+parity_test! (
+    name: test_rb_symbol_p_for_dynamic_sym,
+    func: symbol_p,
+    data_factory: {
+      ruby_eval!("'foodyn'.to_sym")
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_symbol_p_for_static_sym,
+    func: symbol_p,
+    data_factory: {
+      let interned = unsafe { rb_sys::rb_intern2("new_sym".as_ptr() as _, 7) };
+      unsafe { rb_sys::rb_id2sym(interned) }
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_float_type_p_for_flonum,
+    func: float_type_p,
+    data_factory: {
+      ruby_eval!("1.0")
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_float_type_p_for_fixnum,
+    func: float_type_p,
+    data_factory: {
+      ruby_eval!("1")
+    },
+    expected: false
+);
+
+// tests for rb_type
+parity_test! (
+    name: test_rb_type_for_fixnum,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("1")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_FIXNUM
+);
+
+parity_test! (
+    name: test_rb_type_for_float,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("1.0")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_FLOAT
+);
+
+parity_test! (
+    name: test_rb_type_for_symbol,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("'foo'.to_sym")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_SYMBOL
+);
+
+parity_test! (
+    name: test_rb_type_for_string,
+    func: rb_type,
+    data_factory: {
+      gen_rstring!("foo")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_STRING
+);
+
+parity_test! (
+    name: test_rb_type_for_array,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("[]")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_ARRAY
+);
+
+parity_test! (
+    name: test_rb_type_for_hash,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("{foo: 'bar'}")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_HASH
+);
+
+parity_test! (
+    name: test_rb_type_for_file,
+    func: rb_type,
+    data_factory: {
+      ruby_eval!("File.open('Cargo.toml')")
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_FILE
+);
+
+parity_test! (
+    name: test_rb_type_for_nil,
+    func: rb_type,
+    data_factory: {
+      rb_sys::Qnil as _
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_NIL
+);
+
+parity_test! (
+    name: test_rb_type_for_true,
+    func: rb_type,
+    data_factory: {
+      rb_sys::Qtrue as _
+    },
+    expected: rb_sys::ruby_value_type::RUBY_T_TRUE
+);
+
+// tests for integer_type_p (include bigint too)
+parity_test! (
+    name: test_rb_integer_type_p_for_fixnum,
+    func: integer_type_p,
+    data_factory: {
+      ruby_eval!("1")
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rb_integer_type_p_for_bignum,
+    func: integer_type_p,
+    data_factory: {
+      ruby_eval!("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_rb_integer_type_p_for_float,
+    func: integer_type_p,
+    data_factory: {
+      ruby_eval!("1.0")
+    },
+    expected: false
+);

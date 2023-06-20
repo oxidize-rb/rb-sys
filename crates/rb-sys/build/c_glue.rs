@@ -16,6 +16,7 @@ pub fn compile() {
     let path = Path::new("src").join("stable_abi").join("compiled.c");
     println!("cargo:rerun-if-changed={}", path.display());
     build.file(path);
+    build.flag_if_supported("-Wno-unused-parameter");
     build.try_compile("compiled").unwrap_or_else(|e| {
         panic!(
             "Failed when attempting to compile C glue code for needed for the Ruby stable ABI: {}",

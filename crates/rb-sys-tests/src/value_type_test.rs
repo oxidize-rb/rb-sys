@@ -46,10 +46,10 @@ fn test_rb_symbol_p() {
 #[ruby_test]
 fn test_rb_type_p() {
     unsafe {
-        assert_eq!(RB_TYPE_P(rstring!("foo")), RUBY_T_STRING);
-        assert_eq!(RB_TYPE_P(rb_to_symbol(rstring!("foo"))), RUBY_T_SYMBOL);
-        assert_eq!(RB_TYPE_P(Qnil), RUBY_T_NIL);
-        assert_eq!(RB_TYPE_P(Qtrue), RUBY_T_TRUE);
-        assert_eq!(RB_TYPE_P(Qfalse), RUBY_T_FALSE);
+        assert!(RB_TYPE_P(rstring!("foo"), RUBY_T_STRING));
+        assert!(RB_TYPE_P(rb_to_symbol(rstring!("foo")), RUBY_T_SYMBOL));
+        assert!(RB_TYPE_P(Qnil as _, RUBY_T_NIL));
+        assert!(RB_TYPE_P(Qtrue as _, RUBY_T_TRUE));
+        assert!(RB_TYPE_P(Qfalse as _, RUBY_T_FALSE));
     }
 }
