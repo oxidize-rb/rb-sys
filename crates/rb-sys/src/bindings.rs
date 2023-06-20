@@ -15,10 +15,10 @@
 
 include!(env!("RB_SYS_BINDINGS_PATH"));
 
-#[cfg(feature = "stable-api")]
+#[cfg(not(feature = "unstable-api"))]
 pub use stable::*;
 
-#[cfg(not(feature = "stable-api"))]
+#[cfg(feature = "unstable-api")]
 pub use unstable::*;
 
 pub use uncategorized::*;

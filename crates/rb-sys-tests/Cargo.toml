@@ -14,7 +14,7 @@ doc = false
 [features]
 default = ["ruby-macros"]
 ruby-macros = ["rb-sys/ruby-macros"]
-stable-api = ["rb-sys/stable-api"]
+unstable-api = ["rb-sys/unstable-api"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = [
