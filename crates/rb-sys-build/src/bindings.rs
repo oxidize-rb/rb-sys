@@ -126,7 +126,6 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     let bindings = bindgen::Builder::default()
-        .rustfmt_bindings(false) // We use syn so this is pointless
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
