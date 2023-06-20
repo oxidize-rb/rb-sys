@@ -14,13 +14,13 @@ doc = false
 [features]
 default = ["ruby-macros"]
 ruby-macros = ["rb-sys/ruby-macros"]
-stable-abi = ["rb-sys/stable-abi"]
+stable-api = ["rb-sys/stable-api"]
 
 [dependencies]
 rb-sys = { path = "../rb-sys", features = [
   "link-ruby",
   "extra-warnings",
-  "stable-abi-compiled",
+  "stable-api-compiled",
 ] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }

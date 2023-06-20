@@ -14,7 +14,7 @@
 use crate::VALUE;
 use std::os::raw::{c_char, c_long};
 
-pub trait StableAbiDefinition {
+pub trait StableApiDefinition {
     /// Get the length of a Ruby string (akin to `RSTRING_LEN`).
     ///
     /// # Safety
@@ -118,7 +118,7 @@ pub trait StableAbiDefinition {
     /// attemping to access the underlying [`RBasic`] struct.
     fn rb_test(ob: VALUE) -> bool;
 
-    /// Queries the type of the object. Identical to `StableAbi::builtin_type`,
+    /// Queries the type of the object. Identical to `StableApi::builtin_type`,
     /// except it can also accept special constants.
     ///
     /// # Safety
@@ -127,33 +127,33 @@ pub trait StableAbiDefinition {
     unsafe fn rb_type(obj: VALUE) -> crate::ruby_value_type;
 }
 
-#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6))]
+#[cfg(any(not(ruby_api_stable), ruby_lt_2_6))]
 use compiled as abi;
 
-#[cfg(any(not(ruby_abi_stable), ruby_lt_2_6, feature = "stable-abi-compiled"))]
+#[cfg(any(not(ruby_api_stable), ruby_lt_2_6, feature = "stable-api-compiled"))]
 mod compiled;
 
 #[cfg(ruby_eq_2_6)]
-#[path = "stable_abi/ruby_2_6.rs"]
+#[path = "stable_api/ruby_2_6.rs"]
 mod abi;
 
 #[cfg(ruby_eq_2_7)]
-#[path = "stable_abi/ruby_2_7.rs"]
+#[path = "stable_api/ruby_2_7.rs"]
 mod abi;
 
 #[cfg(ruby_eq_3_0)]
-#[path = "stable_abi/ruby_3_0.rs"]
+#[path = "stable_api/ruby_3_0.rs"]
 mod abi;
 
 #[cfg(ruby_eq_3_1)]
-#[path = "stable_abi/ruby_3_1.rs"]
+#[path = "stable_api/ruby_3_1.rs"]
 mod abi;
 
 #[cfg(ruby_eq_3_2)]
-#[path = "stable_abi/ruby_3_2.rs"]
+#[path = "stable_api/ruby_3_2.rs"]
 mod abi;
 
-pub use abi::Definition as StableAbi;
+pub use abi::Definition as StableApi;
 
-#[cfg(feature = "stable-abi-compiled")]
+#[cfg(feature = "stable-api-compiled")]
 pub use compiled::Definition as Compiled;

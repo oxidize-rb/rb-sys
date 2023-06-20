@@ -1,4 +1,4 @@
-use super::StableAbiDefinition;
+use super::StableApiDefinition;
 use crate::{ruby_value_type, VALUE};
 use std::os::raw::{c_char, c_long};
 
@@ -61,7 +61,7 @@ extern "C" {
 
 pub struct Definition;
 
-impl StableAbiDefinition for Definition {
+impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rstring_len(obj: VALUE) -> std::os::raw::c_long {
         impl_rstring_len(obj)

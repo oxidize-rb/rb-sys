@@ -4,11 +4,11 @@ macro_rules! parity_test {
   (name: $name:ident, func: $func:ident, data_factory: $data_factory:expr $(, expected: $expected:expr)?) => {
       #[rb_sys_test_helpers::ruby_test]
       fn $name() {
-          use rb_sys::stable_abi::*;
+          use rb_sys::stable_api::*;
           let data = $data_factory;
 
           #[allow(unused)]
-          let rust_result = unsafe { StableAbi::$func(data) };
+          let rust_result = unsafe { StableApi::$func(data) };
           #[allow(unused_unsafe)]
           let compiled_c_result = unsafe { Compiled::$func(data) };
 

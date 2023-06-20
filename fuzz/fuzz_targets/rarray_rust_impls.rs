@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rb_sys::stable_abi::*;
+use rb_sys::stable_api::*;
 use rb_sys_test_helpers::setup_ruby_unguarded;
 
 fuzz_target!(|data: Vec<u64>| {
@@ -22,14 +22,14 @@ fuzz_target!(|data: Vec<u64>| {
         }
 
         {
-            let rust_result = StableAbi::rarray_len(ruby_array);
+            let rust_result = StableApi::rarray_len(ruby_array);
             let compiled_c_result = Compiled::rarray_len(ruby_array);
 
             assert_eq!(compiled_c_result, rust_result);
         }
 
         {
-            let rust_result = StableAbi::rarray_const_ptr(ruby_array);
+            let rust_result = StableApi::rarray_const_ptr(ruby_array);
             let compiled_c_result = Compiled::rarray_const_ptr(ruby_array);
 
             assert_eq!(compiled_c_result, rust_result);

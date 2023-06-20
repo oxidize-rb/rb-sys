@@ -1,5 +1,5 @@
 mod sanitizer;
-mod stable_abi;
+mod stable_api;
 
 use crate::utils::is_msvc;
 use crate::RbConfig;
@@ -68,7 +68,7 @@ pub fn generate(
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
-    let bindings = stable_abi::opaqueify_bindings(bindings, &mut wrapper_h);
+    let bindings = stable_api::opaqueify_bindings(bindings, &mut wrapper_h);
 
     let mut tokens = {
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
@@ -94,7 +94,7 @@ pub fn generate(
         }
 
         push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
-        stable_abi::categorize_bindings(&mut tokens);
+        stable_api::categorize_bindings(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 

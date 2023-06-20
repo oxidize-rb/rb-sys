@@ -68,7 +68,7 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_compiled_stable_abi_needed(&current_ruby_version) || is_ruby_macros_enabled() {
+    if is_compiled_stable_api_needed(&current_ruby_version) || is_ruby_macros_enabled() {
         c_glue::compile();
     }
 
@@ -132,7 +132,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
     if Version::current(rbconfig) <= LATEST_STABLE_VERSION {
-        println!("cargo:rustc-cfg=ruby_abi_stable");
+        println!("cargo:rustc-cfg=ruby_api_stable");
     }
 
     if is_global_allocator_enabled(rbconfig) {

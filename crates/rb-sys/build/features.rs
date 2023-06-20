@@ -26,7 +26,7 @@ pub fn is_ruby_macros_enabled() -> bool {
     !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
 }
 
-pub fn is_compiled_stable_abi_needed(ver: &Version) -> bool {
+pub fn is_compiled_stable_api_needed(ver: &Version) -> bool {
     let needs_rust_impls = MIN_SUPPORTED_STABLE_VERSION > *ver || *ver > LATEST_STABLE_VERSION;
     let is_feature_enabled = is_env_variable_defined("CARGO_FEATURE_STABLE_ABI_COMPILED");
 

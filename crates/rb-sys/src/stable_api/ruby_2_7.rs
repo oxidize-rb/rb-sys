@@ -1,4 +1,4 @@
-use super::StableAbiDefinition;
+use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
@@ -7,7 +7,7 @@ use std::os::raw::{c_char, c_long};
 
 pub struct Definition;
 
-impl StableAbiDefinition for Definition {
+impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rstring_len(obj: VALUE) -> c_long {
         assert!(Self::type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
@@ -17,7 +17,7 @@ impl StableAbiDefinition for Definition {
         let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
 
         if !is_heap {
-            use crate::ruby_rstring_consts::RSTRING_EMBED_LEN_SHIFT;
+            use crate::ruby_rstring_flags::RSTRING_EMBED_LEN_SHIFT;
 
             let mut f = rstring.basic.flags;
             f &= crate::ruby_rstring_flags::RSTRING_EMBED_LEN_MASK as VALUE;
@@ -37,7 +37,7 @@ impl StableAbiDefinition for Definition {
         let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
 
         if !is_heap {
-            rstring.as_.embed.ary.as_ptr() as *const c_char
+            rstring.as_.ary.as_ptr() as *const _
         } else {
             rstring.as_.heap.ptr
         }
@@ -54,7 +54,7 @@ impl StableAbiDefinition for Definition {
         if is_embedded {
             let mut f = rarray.basic.flags;
             f &= crate::ruby_rarray_flags::RARRAY_EMBED_LEN_MASK as VALUE;
-            f >>= crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT as VALUE;
+            f >>= crate::ruby_rarray_flags::RARRAY_EMBED_LEN_SHIFT as VALUE;
             f as c_long
         } else {
             rarray.as_.heap.len
@@ -64,8 +64,8 @@ impl StableAbiDefinition for Definition {
     #[inline]
     unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE {
         assert!(Self::type_p(obj, value_type::RUBY_T_ARRAY));
-        let rarray: &RArray = &*(obj as *const RArray);
 
+        let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
         let is_embedded = (flags & crate::ruby_rarray_flags::RARRAY_EMBED_FLAG as VALUE) != 0;
 

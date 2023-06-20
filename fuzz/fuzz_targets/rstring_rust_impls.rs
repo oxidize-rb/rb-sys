@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rb_sys::stable_abi::*;
+use rb_sys::stable_api::*;
 use rb_sys_test_helpers::setup_ruby_unguarded;
 
 fuzz_target!(|data: &str| {
@@ -40,7 +40,7 @@ fuzz_target!(|data: &str| {
 
         // rstring_len
         {
-            let rust_result = StableAbi::rstring_len(ruby_string);
+            let rust_result = StableApi::rstring_len(ruby_string);
             let compiled_c_result = Compiled::rstring_len(ruby_string);
 
             assert_eq!(compiled_c_result, rust_result);
@@ -48,7 +48,7 @@ fuzz_target!(|data: &str| {
 
         // rstring_ptr
         {
-            let rust_result = StableAbi::rstring_ptr(ruby_string);
+            let rust_result = StableApi::rstring_ptr(ruby_string);
             let compiled_c_result = Compiled::rstring_ptr(ruby_string);
 
             assert_eq!(compiled_c_result, rust_result);

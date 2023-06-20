@@ -12,7 +12,7 @@ libfuzzer-sys = "0.4"
 rb-sys-test-helpers = { path = "../crates/rb-sys-test-helpers" }
 rb-sys = { path = "../crates/rb-sys", features = [
   "extra-warnings",
-  "stable-abi-compiled",
+  "stable-api-compiled",
   "link-ruby",
   "fuzz",
 ] }

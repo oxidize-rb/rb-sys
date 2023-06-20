@@ -13,7 +13,7 @@ pub fn compile() {
         println!("cargo:warning=Compiling C glue code for the Ruby stable ABI");
     }
 
-    let path = Path::new("src").join("stable_abi").join("compiled.c");
+    let path = Path::new("src").join("stable_api").join("compiled.c");
     println!("cargo:rerun-if-changed={}", path.display());
     build.file(path);
     build.flag_if_supported("-Wno-unused-parameter");

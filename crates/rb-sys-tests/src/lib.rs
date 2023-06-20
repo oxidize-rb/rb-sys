@@ -21,4 +21,4 @@ mod special_consts_test;
 mod tracking_allocator_test;
 
 #[cfg(test)]
-mod stable_abi_test;
+mod stable_api_test;
