@@ -6,7 +6,7 @@ description = "Build system for rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
-rust-version = "1.57"
+rust-version = "1.60"
 
 [lib]
 bench = false
@@ -15,9 +15,9 @@ doctest = false
 [dependencies]
 regex = "1"
 shell-words = "1.1"
-bindgen = { version = "0.62", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.66", default-features = false, features = ["runtime"] }
 cc = { version = "1.0" }
-syn = { version = "1.0", features = ["parsing", "full", "extra-traits"] }
+syn = { version = "2.0", features = ["parsing", "full", "extra-traits"] }
 quote = "1.0"
 lazy_static = "1.4.0"
 proc-macro2 = "1.0"
