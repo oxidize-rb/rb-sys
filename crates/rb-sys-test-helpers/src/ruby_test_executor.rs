@@ -184,7 +184,6 @@ pub unsafe fn cleanup_ruby() {
     }
 }
 
-#[must_use]
 pub struct RubyCleanupGuard;
 
 impl Drop for RubyCleanupGuard {
@@ -197,6 +196,7 @@ impl Drop for RubyCleanupGuard {
 ///
 /// ### Safety
 /// This function is not thread-safe and caller must ensure it's only called once.
+#[must_use]
 pub unsafe fn setup_ruby() -> RubyCleanupGuard {
     setup_ruby_unguarded();
 

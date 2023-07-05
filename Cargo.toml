@@ -6,6 +6,7 @@ members = [
     "crates/rb-sys-env",
     "crates/rb-sys-test-helpers",
     "crates/rb-sys-test-helpers-macros",
+    "bench",
 ]
 exclude = [
     "examples/rust_reverse/ext/rust_reverse",

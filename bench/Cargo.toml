@@ -1,0 +1,25 @@
+[package]
+name = "bench"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+test = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+criterion = "0.5.1"
+rb-sys-test-helpers = { path = "../crates/rb-sys-test-helpers" }
+rb-sys = { path = "../crates/rb-sys", features = [
+  "stable-api-compiled",
+  "link-ruby",
+  "fuzz",
+] }
+
+
+[[bench]]
+name = "bench"
+harness = false
+path = "bench/main.rs"
