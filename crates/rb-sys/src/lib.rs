@@ -16,7 +16,7 @@ pub use bindings::*;
 pub use macros::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
-pub use stable_api::StableApi;
+pub use stable_api::StableApiDefinition;
 pub use value_type::*;
 
 pub type Value = VALUE;

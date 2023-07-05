@@ -1,16 +1,17 @@
+use rb_sys::StableApiDefinition;
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
   (name: $name:ident, func: $func:ident, data_factory: $data_factory:expr $(, expected: $expected:expr)?) => {
       #[rb_sys_test_helpers::ruby_test]
       fn $name() {
-          use rb_sys::stable_api::*;
+          use rb_sys::stable_api;
           let data = $data_factory;
 
           #[allow(unused)]
-          let rust_result = unsafe { StableApi::$func(data) };
+          let rust_result = unsafe { stable_api::get_default().$func(data) };
           #[allow(unused_unsafe)]
-          let compiled_c_result = unsafe { Compiled::$func(data) };
+          let compiled_c_result = unsafe { stable_api::get_fallback().$func(data) };
 
           assert_eq!(
               compiled_c_result, rust_result,

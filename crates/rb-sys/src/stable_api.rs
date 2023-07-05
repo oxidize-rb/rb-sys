@@ -21,7 +21,7 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it dereferences a raw pointer to get
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
-    unsafe fn rstring_len(obj: VALUE) -> c_long;
+    unsafe fn rstring_len(&self, obj: VALUE) -> c_long;
 
     /// Get a pointer to the bytes of a Ruby string (akin to `RSTRING_PTR`).
     ///
@@ -29,7 +29,7 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it dereferences a raw pointer to get
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
-    unsafe fn rstring_ptr(obj: VALUE) -> *const c_char;
+    unsafe fn rstring_ptr(&self, obj: VALUE) -> *const c_char;
 
     /// Get the length of a Ruby array (akin to `RARRAY_LEN`).
     ///
@@ -37,7 +37,7 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it dereferences a raw pointer to get
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
-    unsafe fn rarray_len(obj: VALUE) -> c_long;
+    unsafe fn rarray_len(&self, obj: VALUE) -> c_long;
 
     /// Get a pointer to the elements of a Ruby array (akin to `RARRAY_CONST_PTR`).
     ///
@@ -45,10 +45,10 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it dereferences a raw pointer to get
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
-    unsafe fn rarray_const_ptr(obj: VALUE) -> *const VALUE;
+    unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
 
     /// Tests if the given value is a special constant.
-    fn special_const_p(value: VALUE) -> bool;
+    fn special_const_p(&self, value: VALUE) -> bool;
 
     /// Queries the type of the object.
     ///
@@ -58,73 +58,73 @@ pub trait StableApiDefinition {
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn builtin_type(obj: VALUE) -> crate::ruby_value_type;
+    unsafe fn builtin_type(&self, obj: VALUE) -> crate::ruby_value_type;
 
     /// Tests if the object's type is the given type.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn type_p(obj: VALUE, ty: crate::ruby_value_type) -> bool;
+    unsafe fn type_p(&self, obj: VALUE, ty: crate::ruby_value_type) -> bool;
 
     /// Checks if the given object is nil.
-    fn nil_p(obj: VALUE) -> bool;
+    fn nil_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a so-called Fixnum.
-    fn fixnum_p(obj: VALUE) -> bool;
+    fn fixnum_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a dynamic symbol.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn dynamic_sym_p(obj: VALUE) -> bool;
+    unsafe fn dynamic_sym_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a static symbol.
-    fn static_sym_p(obj: VALUE) -> bool;
+    fn static_sym_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a symbol.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn symbol_p(obj: VALUE) -> bool;
+    unsafe fn symbol_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a so-called Flonum.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn float_type_p(obj: VALUE) -> bool;
+    unsafe fn float_type_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is an integer type
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn integer_type_p(obj: VALUE) -> bool;
+    unsafe fn integer_type_p(&self, obj: VALUE) -> bool;
 
     /// Checks if the given object is a so-called Flonum.
-    fn flonum_p(obj: VALUE) -> bool;
+    fn flonum_p(&self, obj: VALUE) -> bool;
 
     // Checks if the given  object is  an immediate  i.e. an  object which  has
     // no corresponding storage inside of the object space.
-    fn immediate_p(obj: VALUE) -> bool;
+    fn immediate_p(&self, obj: VALUE) -> bool;
 
     /// Emulates Ruby's "if" statement by testing if the given `obj` is neither `Qnil` or `Qfalse`.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    fn rb_test(ob: VALUE) -> bool;
+    fn rb_test(&self, ob: VALUE) -> bool;
 
-    /// Queries the type of the object. Identical to `StableApi::builtin_type`,
+    /// Queries the type of the object. Identical to `StableApi.builtin_type`,
     /// except it can also accept special constants.
     ///
     /// # Safety
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
-    unsafe fn rb_type(obj: VALUE) -> crate::ruby_value_type;
+    unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
 }
 
 #[cfg(any(not(ruby_api_stable), ruby_lt_2_6))]
@@ -153,7 +153,16 @@ mod abi;
 #[path = "stable_api/ruby_3_2.rs"]
 mod abi;
 
-pub use abi::Definition as StableApi;
+/// Get the default stable API definition for the current Ruby version.
+pub const fn get_default() -> &'static abi::Definition {
+    const API: abi::Definition = abi::Definition {};
+    &API
+}
 
+/// Get the fallback stable API definition for the current Ruby version, which
+/// is compiled C code that is linked into to this crate.
 #[cfg(feature = "stable-api-compiled")]
-pub use compiled::Definition as Compiled;
+pub const fn get_fallback() -> &'static compiled::Definition {
+    const COMPILED_API: compiled::Definition = compiled::Definition {};
+    &COMPILED_API
+}

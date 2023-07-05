@@ -17,9 +17,13 @@ rb-sys = { path = "../crates/rb-sys", features = [
   "link-ruby",
   "fuzz",
 ] }
+enum_dispatch = "0.3.11"
+
+[build-dependencies]
+rb-sys-env = { path = "../crates/rb-sys-env" }
 
 
 [[bench]]
 name = "bench"
 harness = false
-path = "bench/main.rs"
+path = "src/run.rs"

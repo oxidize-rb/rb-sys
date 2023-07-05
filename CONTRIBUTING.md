@@ -28,3 +28,11 @@ make contribution easier. Here are the steps to use it:
 1. `git clone https://github.com/oxidize-rb/rb-sys`
 2. Make sure you have Ruby installed
 3. Install Rust and Cargo with [Rustup](https://rustup.rs/).
+
+## Running benchmarks
+
+To run the benchmarks, make sure your dev environment, then run `cargo bench`.
+This will run the `criterion` benchmarks and print the results to the console.
+
+To see see plots of the results, you can open
+`target/criterion/report/index.html` in your browser.
