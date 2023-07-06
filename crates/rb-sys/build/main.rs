@@ -3,7 +3,7 @@ mod features;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, RbConfig};
+use rb_sys_build::{bindings, debug_log, RbConfig};
 use std::io::Write;
 use std::{
     env,
@@ -28,6 +28,14 @@ const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
 const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 fn main() {
+    debug_log!("INFO: running rb-sys build script with env:");
+
+    for var in std::env::vars() {
+        if var.0.contains("RUST") || var.0.contains("CARGO") {
+            debug_log!("   {}: {}", var.0, var.1);
+        }
+    }
+
     warn_deprecated_feature_flags();
 
     let mut rbconfig = RbConfig::current();

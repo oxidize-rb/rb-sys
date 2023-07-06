@@ -2,7 +2,7 @@ mod sanitizer;
 mod stable_api;
 
 use crate::utils::is_msvc;
-use crate::RbConfig;
+use crate::{debug_log, RbConfig};
 use quote::ToTokens;
 use std::fs::File;
 use std::io::Write;
@@ -35,7 +35,7 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-    eprintln!("Using bindgen with clang args: {:?}", clang_args);
+    debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
 
@@ -72,7 +72,6 @@ pub fn generate(
 
     let mut tokens = {
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
-        eprintln!("Wrapper header content is:\n---\n{}\n---\n", wrapper_h);
         let code_string = bindings.generate()?.to_string();
         syn::parse_file(&code_string)?
     };
@@ -113,7 +112,7 @@ fn run_rustfmt(path: &Path) {
     cmd.arg(path);
 
     if let Err(e) = cmd.status() {
-        eprintln!("Failed to run rustfmt: {}", e);
+        debug_log!("WARN: failed to run rustfmt: {}", e);
     }
 }
 
@@ -125,7 +124,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     let ver = rbconfig.ruby_program_version();
 
     sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
-        eprintln!("Failed to clean up docs, skipping: {}", e);
+        debug_log!("WARN: failed to clean up docs, skipping: {}", e);
     })
 }
 
@@ -167,7 +166,7 @@ fn qualify_symbols_for_msvc(tokens: &mut syn::File, is_static: bool, rbconfig: &
     };
 
     sanitizer::add_link_ruby_directives(tokens, &name, kind).unwrap_or_else(|e| {
-        eprintln!("Failed to add link directives: {}", e);
+        debug_log!("WARN: failed to add link directives: {}", e);
     });
 }
 

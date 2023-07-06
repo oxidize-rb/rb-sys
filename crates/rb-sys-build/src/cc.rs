@@ -1,5 +1,5 @@
 use crate::{
-    rb_config,
+    debug_log, rb_config,
     utils::{is_msvc, shellsplit},
 };
 use std::{
@@ -211,7 +211,10 @@ fn get_compiler() -> Command {
     let cmd = get_tool("CC", "cc");
 
     match get_tool_from_rb_config_or_env("CC_WRAPPER") {
-        Some(wrapper) if !wrapper.is_empty() => cmd.wrapped(wrapper),
+        Some(wrapper) if !wrapper.is_empty() => {
+            debug_log!("INFO: using CC_WRAPPER ({:?})", wrapper);
+            cmd.wrapped(wrapper)
+        }
         _ => match rustc_wrapper_fallback() {
             Some(wrapper) => cmd.wrapped(wrapper),
             _ => cmd,
@@ -227,6 +230,7 @@ fn rustc_wrapper_fallback() -> Option<String> {
     let wrapper_stem = wrapper_path.file_stem()?;
 
     if VALID_WRAPPERS.contains(&wrapper_stem.to_str()?) {
+        debug_log!("INFO: using RUSTC_WRAPPER ({:?})", rustc_wrapper);
         Some(rustc_wrapper.to_str()?.to_owned())
     } else {
         None
@@ -251,8 +255,9 @@ fn get_tool(env_var: &str, default: &str) -> Command {
     let tool = tool_args.next().unwrap_or_else(|| default.to_string());
 
     let mut cmd = new_command(&tool);
+    cmd.args(tool_args.clone());
 
-    cmd.args(tool_args);
+    debug_log!("INFO: found {:?} tool ({:?})", env_var, &cmd);
 
     cmd
 }
@@ -260,9 +265,9 @@ fn get_tool(env_var: &str, default: &str) -> Command {
 fn get_tool_from_rb_config_or_env(env_var: &str) -> Option<String> {
     let rb = rb_config();
 
-    rb.get_optional(env_var)
+    get_tool_from_env(env_var)
         .filter(|s| !s.is_empty())
-        .or_else(|| get_tool_from_env(env_var))
+        .or_else(|| rb.get_optional(env_var))
 }
 
 fn get_tool_from_env(env_var: &str) -> Option<String> {
@@ -278,7 +283,7 @@ fn get_tool_from_env(env_var: &str) -> Option<String> {
 }
 
 fn run_command(mut cmd: Command) -> Result<ExitStatus> {
-    eprintln!("Running {:?}", cmd);
+    debug_log!("INFO: running command ({:?})", cmd);
     let status = cmd.status()?;
 
     if !status.success() {

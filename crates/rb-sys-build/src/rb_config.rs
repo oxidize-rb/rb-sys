@@ -14,7 +14,7 @@ use search_path::*;
 use std::ffi::OsString;
 
 use crate::{
-    memoize,
+    debug_log, memoize,
     utils::{is_msvc, shellsplit},
 };
 
@@ -287,6 +287,8 @@ impl RbConfig {
         for arg in &cargo_args {
             println!("{}", arg);
         }
+
+        debug_log!("INFO: printing cargo args ({:?})", cargo_args);
 
         let encoded_cargo_args = cargo_args.join("\x1E");
         let encoded_cargo_args = encoded_cargo_args.replace('\n', "\x1F");
