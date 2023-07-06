@@ -68,6 +68,7 @@ jobs:
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         id: setup
         with:
+          cache-version: v2
           ruby-version: ${{ matrix.ruby }}
           rustup-toolchain: ${{ matrix.rust }}
       - name: ✏️ Replace rb-sys

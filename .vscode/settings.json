@@ -1,5 +1,4 @@
 {
-  "rust-analyzer.checkOnSave.command": "clippy",
   "editor.formatOnSave": true,
   "rust-analyzer.procMacro.attributes.enable": true,
   "rust-analyzer.linkedProjects": [
