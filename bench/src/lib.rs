@@ -3,6 +3,7 @@ use rb_sys::rb_gc_register_mark_object;
 use rb_sys::stable_api::{get_default, get_fallback};
 use rb_sys::StableApiDefinition;
 
+pub mod baselines;
 pub mod stable_abi_rarray;
 pub mod stable_abi_rstring;
 
@@ -47,4 +48,9 @@ impl StableApiBenchExt for Criterion {
     }
 }
 
-criterion_group!(benches, stable_abi_rstring::run, stable_abi_rarray::run);
+criterion_group!(
+    benches,
+    stable_abi_rstring::run,
+    stable_abi_rarray::run,
+    baselines::run
+);
