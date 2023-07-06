@@ -185,7 +185,7 @@ impl RbConfig {
     pub fn cppflags(&self) -> Vec<String> {
         if let Some(cppflags) = self.get_optional("CPPFLAGS") {
             let flags = self.subst_shell_variables(&cppflags);
-            shellsplit(&flags)
+            shellsplit(flags)
         } else {
             vec![]
         }
@@ -212,13 +212,18 @@ impl RbConfig {
     pub fn get_optional(&self, key: &str) -> Option<String> {
         println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
 
-        match env::var(format!("RBCONFIG_{}", key)) {
-            Ok(val) => Some(val.trim_matches('\n').to_string()),
-            _ => self
-                .value_map
-                .get(key)
-                .map(|val| val.trim_matches('\n').to_owned()),
-        }
+        let val = match self.value_map.get(key) {
+            Some(val) => Some(val.trim_matches('\n').to_string()),
+            None => match env::var(format!("RBCONFIG_{}", key)) {
+                Ok(val) => Some(val.trim_matches('\n').to_string()),
+                _ => self
+                    .value_map
+                    .get(key)
+                    .map(|val| val.trim_matches('\n').to_owned()),
+            },
+        };
+
+        val
     }
 
     /// Enables the use of rpath for linking.

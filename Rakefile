@@ -178,7 +178,7 @@ end
 desc "Run criterion benchmarks"
 task :bench do
   Dir.chdir("bench") do
-    extra_args = ARGV[(ARGV.index("--") || -1)..-1] || []
+    extra_args = ARGV[(ARGV.index("bench") + 1)..-1] || []
     sh "cargo", "bench", *extra_args
   end
 end

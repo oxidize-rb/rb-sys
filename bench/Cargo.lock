@@ -521,7 +521,6 @@ name = "rb-sys-build"
 version = "0.9.79"
 dependencies = [
  "bindgen",
- "cc",
  "lazy_static",
  "proc-macro2",
  "quote",

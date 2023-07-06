@@ -1,8 +1,11 @@
-use crate::{rb_config, utils::is_msvc};
+use crate::{
+    rb_config,
+    utils::{is_msvc, shellsplit},
+};
 use std::{
     collections::{hash_map::DefaultHasher, HashSet},
     env,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs,
     hash::Hasher,
     path::{Path, PathBuf},
@@ -28,16 +31,16 @@ impl Build {
     }
 
     pub fn try_compile(self, name: &str) -> Result<()> {
-        let (compiler, cc_args) = get_compiler();
-        let (archiver, ar_args) = get_archiver();
+        let compiler = get_compiler();
+        let archiver = get_archiver();
         let out_dir = PathBuf::from(env::var("OUT_DIR")?).join("cc");
         fs::create_dir_all(&out_dir)?;
         let rb = rb_config();
 
-        let object_files = self.compile_each_file(&compiler, &cc_args, &rb, &out_dir)?;
+        let object_files = self.compile_each_file(compiler, &rb, &out_dir)?;
         let (lib_path, lib_name) =
-            self.archive_object_files(&archiver, &ar_args, name, &out_dir, object_files)?;
-        self.strip_archived_objects(&archiver, &lib_path)?;
+            self.archive_object_files(archiver.copied(), name, &out_dir, object_files)?;
+        self.strip_archived_objects(archiver, &lib_path)?;
 
         println!("cargo:rustc-link-search=native={}", out_dir.display());
         println!("cargo:rustc-link-lib=static={}", lib_name);
@@ -47,22 +50,20 @@ impl Build {
 
     fn compile_each_file(
         &self,
-        compiler: &str,
-        cc_args: &[String],
+        compiler: Command,
         rb: &rb_config::RbConfig,
         out_dir: &Path,
     ) -> Result<HashSet<PathBuf>> {
         self.files
             .iter()
-            .map(|f| self.compile_file(f, compiler, cc_args, rb, out_dir))
+            .map(|f| self.compile_file(f, compiler.copied(), rb, out_dir))
             .collect()
     }
 
     fn compile_file(
         &self,
         f: &Path,
-        compiler: &str,
-        cc_args: &[String],
+        compiler: Command,
         rb: &rb_config::RbConfig,
         out_dir: &Path,
     ) -> Result<PathBuf> {
@@ -73,9 +74,8 @@ impl Build {
             .join(hasher.finish().to_string())
             .with_extension("o");
 
-        let mut cmd = new_command(compiler);
-        cmd.args(cc_args)
-            .args(&get_include_args(rb))
+        let mut cmd = compiler;
+        cmd.args(&get_include_args(rb))
             .arg("-c")
             .arg(f)
             .args(&rb.cflags)
@@ -90,13 +90,12 @@ impl Build {
 
     fn archive_object_files(
         &self,
-        archiver: &str,
-        ar_args: &[String],
+        archiver: Command,
         name: &str,
         out_dir: &Path,
         object_files: HashSet<PathBuf>,
     ) -> Result<(PathBuf, String)> {
-        let mut cmd = new_command(archiver);
+        let mut cmd = archiver;
         let mut hasher = DefaultHasher::new();
         object_files
             .iter()
@@ -104,8 +103,6 @@ impl Build {
         let lib_name = format!("{}-{}", name, hasher.finish());
         let lib_filename = format!("lib{}.a", lib_name);
         let dst = out_dir.join(lib_filename);
-
-        cmd.args(ar_args);
 
         // The argument structure differs for MSVC and GCC.
         if is_msvc() {
@@ -140,8 +137,8 @@ impl Build {
         Ok((dst, lib_name))
     }
 
-    fn strip_archived_objects(&self, archiver: &str, libpath: &Path) -> Result<()> {
-        let mut cmd = new_command(archiver);
+    fn strip_archived_objects(&self, archiver: Command, libpath: &Path) -> Result<()> {
+        let mut cmd = archiver;
 
         if is_msvc() {
             cmd.arg("/LTCG").arg(libpath);
@@ -210,32 +207,74 @@ fn get_common_args() -> Vec<String> {
     items
 }
 
-fn get_compiler() -> (String, Vec<String>) {
-    let (name, args) = get_tool("CC", "cc");
-    (name, split_arguments(args))
-}
+fn get_compiler() -> Command {
+    let cmd = get_tool("CC", "cc");
 
-fn get_archiver() -> (String, Vec<String>) {
-    let (name, args) = get_tool("AR", "ar");
-    if name == "libtool" {
-        ("ar".into(), vec![])
-    } else {
-        (name, split_arguments(args))
+    match get_tool_from_rb_config_or_env("CC_WRAPPER") {
+        Some(wrapper) if !wrapper.is_empty() => cmd.wrapped(wrapper),
+        _ => match rustc_wrapper_fallback() {
+            Some(wrapper) => cmd.wrapped(wrapper),
+            _ => cmd,
+        },
     }
 }
 
-fn get_tool(env_var: &str, default: &str) -> (String, String) {
-    let rb = rb_config();
-    let tool_args = rb.get(env_var);
-    let mut tool_args = tool_args.split_whitespace();
-    let tool = tool_args.next().unwrap_or(default);
-    let remaining_args = tool_args.collect::<Vec<_>>().join(" ");
+fn rustc_wrapper_fallback() -> Option<String> {
+    const VALID_WRAPPERS: &[&str] = &["sccache", "cachepot"];
 
-    (tool.to_owned(), remaining_args)
+    let rustc_wrapper = std::env::var_os("RUSTC_WRAPPER")?;
+    let wrapper_path = Path::new(&rustc_wrapper);
+    let wrapper_stem = wrapper_path.file_stem()?;
+
+    if VALID_WRAPPERS.contains(&wrapper_stem.to_str()?) {
+        Some(rustc_wrapper.to_str()?.to_owned())
+    } else {
+        None
+    }
 }
 
-fn split_arguments(args: String) -> Vec<String> {
-    args.split_whitespace().map(Into::into).collect()
+fn get_archiver() -> Command {
+    let cmd = get_tool("AR", "ar");
+
+    if cmd.get_program() == "libtool" {
+        new_command("ar")
+    } else {
+        cmd
+    }
+}
+
+fn get_tool(env_var: &str, default: &str) -> Command {
+    let tool_args = get_tool_from_rb_config_or_env(env_var)
+        .unwrap_or_else(|| panic!("no {} tool found", env_var));
+
+    let mut tool_args = shellsplit(tool_args).into_iter();
+    let tool = tool_args.next().unwrap_or_else(|| default.to_string());
+
+    let mut cmd = new_command(&tool);
+
+    cmd.args(tool_args);
+
+    cmd
+}
+
+fn get_tool_from_rb_config_or_env(env_var: &str) -> Option<String> {
+    let rb = rb_config();
+
+    rb.get_optional(env_var)
+        .filter(|s| !s.is_empty())
+        .or_else(|| get_tool_from_env(env_var))
+}
+
+fn get_tool_from_env(env_var: &str) -> Option<String> {
+    let target_slug = env::var("TARGET").ok()?.replace('-', "_");
+    let env_var_with_target = format!("{}_{}", env_var, target_slug);
+
+    println!("cargo:rerun-if-env-changed={}", env_var);
+    println!("cargo:rerun-if-env-changed={}", env_var_with_target);
+
+    env::var(env_var)
+        .or_else(|_| env::var(env_var_with_target))
+        .ok()
 }
 
 fn run_command(mut cmd: Command) -> Result<ExitStatus> {
@@ -260,5 +299,46 @@ fn get_output_file_flag(file: &Path) -> Vec<OsString> {
         vec![format!("-Fo{}", file.display()).into()]
     } else {
         vec!["-o".into(), file.into()]
+    }
+}
+
+pub trait CommandExt {
+    fn copied(&self) -> Command;
+    fn wrapped<W: AsRef<OsStr>>(&self, wrapper: W) -> Command;
+}
+
+impl CommandExt for Command {
+    fn copied(&self) -> Command {
+        let mut cmd = Command::new(self.get_program());
+        cmd.args(self.get_args());
+
+        for (k, v) in self.get_envs() {
+            if let Some(v) = v {
+                cmd.env(k, v);
+            } else {
+                cmd.env_remove(k);
+            }
+        }
+        cmd
+    }
+
+    fn wrapped<W: AsRef<OsStr>>(&self, wrapper: W) -> Command {
+        let mut new_cmd = Command::new(wrapper);
+
+        new_cmd.arg(self.get_program());
+
+        for arg in self.get_args() {
+            new_cmd.arg(arg);
+        }
+
+        for (k, v) in self.get_envs() {
+            if let Some(v) = v {
+                new_cmd.env(k, v);
+            } else {
+                new_cmd.env_remove(k);
+            }
+        }
+
+        new_cmd
     }
 }
