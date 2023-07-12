@@ -70,7 +70,7 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    stable_api_config::configure(&current_ruby_version).unwrap();
+    stable_api_config::configure(current_ruby_version).unwrap();
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);

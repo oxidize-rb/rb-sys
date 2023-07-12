@@ -1,4 +1,7 @@
-use crate::RbConfig;
+use crate::{
+    stable_api_config::{LATEST_STABLE_VERSION, MIN_SUPPORTED_STABLE_VERSION},
+    RbConfig,
+};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub struct Version(u32, u32);
@@ -21,6 +24,10 @@ impl Version {
             rbconfig.get("MAJOR").parse::<i32>().unwrap() as _,
             rbconfig.get("MINOR").parse::<i32>().unwrap() as _,
         )
+    }
+
+    pub fn is_stable(&self) -> bool {
+        *self >= MIN_SUPPORTED_STABLE_VERSION && *self <= LATEST_STABLE_VERSION
     }
 }
 
