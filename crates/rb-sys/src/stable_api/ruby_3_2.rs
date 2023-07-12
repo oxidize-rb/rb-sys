@@ -32,7 +32,7 @@ impl StableApiDefinition for Definition {
         let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
 
         if !is_heap {
-            rstring.as_.embed.ary.as_ptr() as *const c_char
+            &rstring.as_.embed.ary as *const _
         } else {
             rstring.as_.heap.ptr
         }

@@ -37,7 +37,7 @@ impl StableApiDefinition for Definition {
         let is_heap = (flags & RSTRING_NOEMBED as VALUE) != 0;
 
         if !is_heap {
-            rstring.as_.ary.as_ptr() as *const _
+            &rstring.as_.ary as *const _
         } else {
             rstring.as_.heap.ptr
         }
