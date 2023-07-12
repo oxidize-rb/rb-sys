@@ -20,4 +20,7 @@ quote = "1.0"
 
 [dev-dependencies]
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
-rb-sys = { path = "../rb-sys", features = ["link-ruby", "stable-api-compiled"] }
+rb-sys = { path = "../rb-sys", features = [
+  "link-ruby",
+  "stable-api-compiled-testing",
+] }

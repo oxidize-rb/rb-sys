@@ -13,7 +13,7 @@ test = false
 criterion = "0.5.1"
 rb-sys-test-helpers = { path = "../crates/rb-sys-test-helpers" }
 rb-sys = { path = "../crates/rb-sys", features = [
-  "stable-api-compiled",
+  "stable-api-compiled-testing",
   "link-ruby",
   "fuzz",
 ] }

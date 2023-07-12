@@ -19,10 +19,19 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
 }
 
 pub fn is_compiled_stable_api_needed(ver: &Version) -> bool {
-    let needs_rust_impls = MIN_SUPPORTED_STABLE_VERSION > *ver || *ver > LATEST_STABLE_VERSION;
-    let is_feature_enabled = is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED");
+    let needs_c_fallback = MIN_SUPPORTED_STABLE_VERSION > *ver || *ver > LATEST_STABLE_VERSION;
+    let wants_c_fallback = explicitly_enabled_stable_api_compiled_fallback();
 
-    needs_rust_impls || is_feature_enabled
+    (needs_c_fallback && wants_c_fallback) || testing_stable_api_compiled_fallback()
+}
+
+pub fn explicitly_enabled_stable_api_compiled_fallback() -> bool {
+    cfg!(rb_sys_use_stable_api_compiled_fallback)
+        || is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED_FALLBACK")
+}
+
+pub fn testing_stable_api_compiled_fallback() -> bool {
+    is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED_TESTING")
 }
 
 pub fn is_gem_enabled() -> bool {

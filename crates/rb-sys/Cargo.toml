@@ -18,7 +18,10 @@ rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 
 [dev-dependencies]
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
-rb-sys = { path = ".", features = ["link-ruby", "stable-api-compiled"] }
+rb-sys = { path = ".", features = [
+  "link-ruby",
+  "stable-api-compiled-fallback",
+] }
 rusty-fork = "0.3.0"
 
 [features]
@@ -28,7 +31,10 @@ fuzz = []
 no-link-ruby = []
 ruby-static = []
 global-allocator = []
-stable-api-compiled = []
+stable-api-compiled-fallback = [] # Fallback to compiled C API
+stable-api-compiled-testing = [
+  "stable-api-compiled-fallback",
+] # For testing the fallback in rb-sys (internal)
 ruby-macros = [] # deprecated
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]

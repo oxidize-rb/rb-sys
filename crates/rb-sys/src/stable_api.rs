@@ -127,42 +127,58 @@ pub trait StableApiDefinition {
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
 }
 
-#[cfg(any(not(ruby_api_stable), ruby_lt_2_6))]
-use compiled as abi;
+#[cfg(all(
+    explicitly_enabled_stable_api_compiled_fallback,
+    has_stable_api_compiled,
+    any(not(current_ruby_is_stable), ruby_lt_2_6,)
+))]
+use compiled as api;
 
-#[cfg(any(not(ruby_api_stable), ruby_lt_2_6, feature = "stable-api-compiled"))]
+#[cfg(all(
+    explicitly_enabled_stable_api_compiled_fallback,
+    has_stable_api_compiled,
+))]
 mod compiled;
+
+#[cfg(all(
+    not(has_stable_api_compiled),
+    any(not(current_ruby_is_stable), ruby_lt_2_6)
+))]
+compile_error!("Compiled stable API is needed but could not find it.");
 
 #[cfg(ruby_eq_2_6)]
 #[path = "stable_api/ruby_2_6.rs"]
-mod abi;
+mod api;
 
 #[cfg(ruby_eq_2_7)]
 #[path = "stable_api/ruby_2_7.rs"]
-mod abi;
+mod api;
 
 #[cfg(ruby_eq_3_0)]
 #[path = "stable_api/ruby_3_0.rs"]
-mod abi;
+mod api;
 
 #[cfg(ruby_eq_3_1)]
 #[path = "stable_api/ruby_3_1.rs"]
-mod abi;
+mod api;
 
 #[cfg(ruby_eq_3_2)]
 #[path = "stable_api/ruby_3_2.rs"]
-mod abi;
+mod api;
 
 /// Get the default stable API definition for the current Ruby version.
-pub const fn get_default() -> &'static abi::Definition {
-    const API: abi::Definition = abi::Definition {};
+pub const fn get_default() -> &'static api::Definition {
+    const API: api::Definition = api::Definition {};
     &API
 }
 
 /// Get the fallback stable API definition for the current Ruby version, which
 /// is compiled C code that is linked into to this crate.
-#[cfg(feature = "stable-api-compiled")]
-pub const fn get_fallback() -> &'static compiled::Definition {
+#[cfg(all(
+    explicitly_enabled_stable_api_compiled_fallback,
+    has_stable_api_compiled,
+))]
+pub const fn get_compiled() -> &'static compiled::Definition {
     const COMPILED_API: compiled::Definition = compiled::Definition {};
     &COMPILED_API
 }

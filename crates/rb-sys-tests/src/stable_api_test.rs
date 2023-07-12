@@ -11,7 +11,7 @@ macro_rules! parity_test {
           #[allow(unused)]
           let rust_result = unsafe { stable_api::get_default().$func(data) };
           #[allow(unused_unsafe)]
-          let compiled_c_result = unsafe { stable_api::get_fallback().$func(data) };
+          let compiled_c_result = unsafe { stable_api::get_compiled().$func(data) };
 
           assert_eq!(
               compiled_c_result, rust_result,

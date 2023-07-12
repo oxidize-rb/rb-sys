@@ -20,7 +20,7 @@ create_rust_makefile("rust_reverse/rust_reverse") do |r|
   r.ext_dir = "."
 
   # Extra flags to pass to the $RUSTFLAGS environment variable (optional)
-  r.extra_rustflags << "--cfg=some_nested_config_var_for_crate"
+  r.extra_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback"
 
   # Force a rust toolchain to be installed via rustup (optional)
   # You can also set the env var `RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN=true`

@@ -79,8 +79,13 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
+    if explicitly_enabled_stable_api_compiled_fallback() {
+        println!("cargo:rustc-cfg=explicitly_enabled_stable_api_compiled_fallback");
+    }
+
     if is_compiled_stable_api_needed(&current_ruby_version) {
         c_glue::compile().expect("stable API C glue to compile");
+        println!("cargo:rustc-cfg=has_stable_api_compiled");
     }
 
     if is_link_ruby_enabled() {
@@ -143,7 +148,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
     if Version::current(rbconfig) <= LATEST_STABLE_VERSION {
-        println!("cargo:rustc-cfg=ruby_api_stable");
+        println!("cargo:rustc-cfg=current_ruby_is_stable");
     }
 
     if is_global_allocator_enabled(rbconfig) {
