@@ -22,10 +22,14 @@ module RbSys
       # Extra targets to install
       attr_accessor :extra_rustup_targets
 
+      # Use compiled C code fallback for stable API for ruby-head (default: false)
+      attr_accessor :use_stable_api_compiled_fallback
+
       def initialize(builder)
         @builder = builder
         @force_install_rust_toolchain = false
         @auto_install_rust_toolchain = true
+        @use_stable_api_compiled_fallback = false
         @clean_after_install = rubygems_invoked?
         @rubygems_clean_dirs = ["./cargo-vendor"]
         @extra_rustup_targets = []
@@ -52,6 +56,10 @@ module RbSys
       # @api private
       def rubygems_invoked?
         ENV.key?("SOURCE_DATE_EPOCH")
+      end
+
+      def use_stable_api_compiled_fallback?
+        @use_stable_api_compiled_fallback
       end
     end
   end

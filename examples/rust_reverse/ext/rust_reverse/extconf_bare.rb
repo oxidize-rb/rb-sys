@@ -6,5 +6,6 @@ require "mkmf"
 require "rb_sys/mkmf"
 
 create_rust_makefile("rust_reverse") do |r|
-  r.extra_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback"
+  # Enable stable API compiled fallback for ruby-head (optional)
+  r.use_stable_api_compiled_fallback = true
 end

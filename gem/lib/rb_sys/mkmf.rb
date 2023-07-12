@@ -53,6 +53,8 @@ module RbSys
       RbConfig.expand(srcdir = srcprefix.dup)
 
       full_cargo_command = cargo_command(srcdir, builder)
+      global_rustflags = GLOBAL_RUSTFLAGS.dup
+      global_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback" if builder.use_stable_api_compiled_fallback?
 
       make_install = +<<~MAKE
         #{conditional_assign("RB_SYS_BUILD_DIR", File.join(Dir.pwd, ".rb-sys"))}
@@ -68,7 +70,7 @@ module RbSys
 
         #{set_cargo_profile(builder)}
         #{conditional_assign("RB_SYS_CARGO_FEATURES", builder.features.join(","))}
-        #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", GLOBAL_RUSTFLAGS.join(" "))}
+        #{conditional_assign("RB_SYS_GLOBAL_RUSTFLAGS", global_rustflags.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_RUSTFLAGS", builder.extra_rustflags.join(" "))}
         #{conditional_assign("RB_SYS_EXTRA_CARGO_ARGS", builder.extra_cargo_args.join(" "))}
         #{conditional_assign("RB_SYS_CARGO_MANIFEST_DIR", builder.manifest_dir)}

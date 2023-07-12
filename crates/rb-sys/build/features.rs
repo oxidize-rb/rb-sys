@@ -26,8 +26,11 @@ pub fn is_compiled_stable_api_needed(ver: &Version) -> bool {
 }
 
 pub fn explicitly_enabled_stable_api_compiled_fallback() -> bool {
-    cfg!(rb_sys_use_stable_api_compiled_fallback)
-        || is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED_FALLBACK")
+    println!("cargo:rerun-if-env-changed=RB_SYS_USE_STABLE_API_COMPILED_FALLBACK");
+
+    is_env_variable_defined("CARGO_FEATURE_STABLE_API_COMPILED_FALLBACK")
+        || cfg!(rb_sys_use_stable_api_compiled_fallback)
+        || is_env_variable_defined("RB_SYS_USE_STABLE_API_COMPILED_FALLBACK")
 }
 
 pub fn testing_stable_api_compiled_fallback() -> bool {
