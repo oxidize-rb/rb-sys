@@ -25,6 +25,18 @@ impl Build {
         Self::default()
     }
 
+    pub fn default_cflags() -> Vec<String> {
+        let mut cflags = vec![];
+
+        if cfg!(target_os = "openbsd") {
+            cflags.push("-fdeclspec".into());
+        } else {
+            cflags.push("-fms-extensions".into());
+        };
+
+        cflags
+    }
+
     pub fn file(&mut self, file: PathBuf) {
         println!("cargo:rerun-if-changed={}", file.display());
         self.files.push(file);
@@ -196,6 +208,8 @@ fn get_common_args() -> Vec<String> {
             flags.push("-fPIC".into());
             flags.push("-fno-omit-frame-pointer".into());
         }
+
+        flags.extend(Build::default_cflags());
     }
 
     let mut items = vec![];

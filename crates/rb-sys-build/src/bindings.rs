@@ -1,6 +1,7 @@
 mod sanitizer;
 mod stable_api;
 
+use crate::cc::Build;
 use crate::utils::is_msvc;
 use crate::{debug_log, RbConfig};
 use quote::ToTokens;
@@ -20,18 +21,12 @@ pub fn generate(
 ) -> Result<PathBuf, Box<dyn Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
-    let extension_flag = if cfg!(target_os = "openbsd") {
-        "-fdeclspec"
-    } else {
-        "-fms-extensions"
-    };
-
     let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
-        extension_flag.to_string(),
     ];
 
+    clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
