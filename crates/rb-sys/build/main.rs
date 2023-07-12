@@ -1,5 +1,6 @@
 mod c_glue;
 mod features;
+mod stable_api_config;
 mod version;
 
 use features::*;
@@ -23,9 +24,6 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
     Version::new(3, 2),
     Version::new(3, 3),
 ];
-
-const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
-const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 fn main() {
     debug_log!("INFO: running rb-sys build script with env:");
@@ -51,13 +49,6 @@ fn main() {
     ));
     let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
 
-    if current_ruby_version < MIN_SUPPORTED_STABLE_VERSION {
-        println!(
-            "cargo:warning=Support for Ruby {} will be removed in a future release.",
-            current_ruby_version
-        );
-    }
-
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
     println!("cargo:rerun-if-env-changed=RUBY");
@@ -79,14 +70,7 @@ fn main() {
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if explicitly_enabled_stable_api_compiled_fallback() {
-        println!("cargo:rustc-cfg=explicitly_enabled_stable_api_compiled_fallback");
-    }
-
-    if is_compiled_stable_api_needed(&current_ruby_version) {
-        c_glue::compile().expect("stable API C glue to compile");
-        println!("cargo:rustc-cfg=has_stable_api_compiled");
-    }
+    stable_api_config::configure(&current_ruby_version).unwrap();
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);
@@ -147,10 +131,6 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
-    if Version::current(rbconfig) <= LATEST_STABLE_VERSION {
-        println!("cargo:rustc-cfg=current_ruby_is_stable");
-    }
-
     if is_global_allocator_enabled(rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
@@ -168,14 +148,14 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     for v in SUPPORTED_RUBY_VERSIONS.iter() {
         let v = v.to_owned();
 
-        if &version < v {
+        if version < v {
             println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if &version <= v {
+        if version <= v {
             println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
@@ -187,14 +167,14 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
-        if &version == v {
+        if version == v {
             println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if &version >= v {
+        if version >= v {
             println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
@@ -206,7 +186,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
-        if &version > v {
+        if version > v {
             println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {

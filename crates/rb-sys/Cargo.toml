@@ -35,6 +35,7 @@ stable-api-compiled-fallback = [] # Fallback to compiled C API
 stable-api-compiled-testing = [
   "stable-api-compiled-fallback",
 ] # For testing the fallback in rb-sys (internal)
+stable-api-compiled-force = [] # Always use the compiled C API
 ruby-macros = [] # deprecated
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]

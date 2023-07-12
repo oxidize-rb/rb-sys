@@ -107,8 +107,8 @@ pub trait StableApiDefinition {
     /// Checks if the given object is a so-called Flonum.
     fn flonum_p(&self, obj: VALUE) -> bool;
 
-    // Checks if the given  object is  an immediate  i.e. an  object which  has
-    // no corresponding storage inside of the object space.
+    /// Checks if the given  object is  an immediate  i.e. an  object which  has
+    /// no corresponding storage inside of the object space.
     fn immediate_p(&self, obj: VALUE) -> bool;
 
     /// Emulates Ruby's "if" statement by testing if the given `obj` is neither `Qnil` or `Qfalse`.
@@ -127,44 +127,34 @@ pub trait StableApiDefinition {
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
 }
 
-#[cfg(all(
-    explicitly_enabled_stable_api_compiled_fallback,
-    has_stable_api_compiled,
-    any(not(current_ruby_is_stable), ruby_lt_2_6,)
-))]
-use compiled as api;
-
-#[cfg(all(
-    explicitly_enabled_stable_api_compiled_fallback,
-    has_stable_api_compiled,
-))]
+#[cfg(stable_api_enable_compiled_mod)]
 mod compiled;
 
-#[cfg(all(
-    not(has_stable_api_compiled),
-    any(not(current_ruby_is_stable), ruby_lt_2_6)
-))]
-compile_error!("Compiled stable API is needed but could not find it.");
-
-#[cfg(ruby_eq_2_6)]
+#[cfg(all(ruby_eq_2_6, stable_api_include_rust_impl))]
 #[path = "stable_api/ruby_2_6.rs"]
-mod api;
+mod rust;
 
-#[cfg(ruby_eq_2_7)]
+#[cfg(all(ruby_eq_2_7, stable_api_include_rust_impl))]
 #[path = "stable_api/ruby_2_7.rs"]
-mod api;
+mod rust;
 
-#[cfg(ruby_eq_3_0)]
+#[cfg(all(ruby_eq_3_0, stable_api_include_rust_impl))]
 #[path = "stable_api/ruby_3_0.rs"]
-mod api;
+mod rust;
 
-#[cfg(ruby_eq_3_1)]
+#[cfg(all(ruby_eq_3_1, stable_api_include_rust_impl))]
 #[path = "stable_api/ruby_3_1.rs"]
-mod api;
+mod rust;
 
-#[cfg(ruby_eq_3_2)]
+#[cfg(all(ruby_eq_3_2, stable_api_include_rust_impl))]
 #[path = "stable_api/ruby_3_2.rs"]
-mod api;
+mod rust;
+
+#[cfg(stable_api_export_compiled_as_api)]
+use compiled as api;
+
+#[cfg(not(stable_api_export_compiled_as_api))]
+use rust as api;
 
 /// Get the default stable API definition for the current Ruby version.
 pub const fn get_default() -> &'static api::Definition {
@@ -174,10 +164,7 @@ pub const fn get_default() -> &'static api::Definition {
 
 /// Get the fallback stable API definition for the current Ruby version, which
 /// is compiled C code that is linked into to this crate.
-#[cfg(all(
-    explicitly_enabled_stable_api_compiled_fallback,
-    has_stable_api_compiled,
-))]
+#[cfg(all(stable_api_enable_compiled_mod))]
 pub const fn get_compiled() -> &'static compiled::Definition {
     const COMPILED_API: compiled::Definition = compiled::Definition {};
     &COMPILED_API
