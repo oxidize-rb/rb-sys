@@ -1,8 +1,16 @@
 use crate::{c_glue, features::is_env_variable_defined, version::Version};
-use std::error::Error;
+use std::{convert::TryFrom, error::Error};
 
 pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
 pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
+
+pub fn configure(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
+    let strategy = Strategy::try_from(current_ruby_version)?;
+
+    strategy.apply()?;
+
+    Ok(())
+}
 
 #[derive(Debug)]
 enum Strategy {
@@ -10,33 +18,38 @@ enum Strategy {
     CompiledOnly,
     RustThenCompiled(Version),
     Testing(Version),
-    None,
 }
 
-pub fn configure(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
-    let mut strategy = Strategy::None;
+impl TryFrom<Version> for Strategy {
+    type Error = Box<dyn Error>;
 
-    if current_ruby_version.is_stable() {
-        strategy = Strategy::RustOnly(current_ruby_version);
-    } else {
-        maybe_warn_old_ruby_version(current_ruby_version);
+    fn try_from(current_ruby_version: Version) -> Result<Self, Self::Error> {
+        let mut strategy = None;
+
+        if current_ruby_version.is_stable() {
+            strategy = Some(Strategy::RustOnly(current_ruby_version));
+        } else {
+            maybe_warn_old_ruby_version(current_ruby_version);
+        }
+
+        if is_fallback_enabled() {
+            strategy = Some(Strategy::RustThenCompiled(current_ruby_version));
+        }
+
+        if is_testing() {
+            strategy = Some(Strategy::Testing(current_ruby_version));
+        }
+
+        if is_force_enabled() {
+            strategy = Some(Strategy::CompiledOnly);
+        }
+
+        if let Some(strategy) = strategy {
+            return Ok(strategy);
+        }
+
+        Err("Stable API is needed but could not find a candidate. Try enabling the `stable-api-compiled-fallback` feature in rb-sys.".into())
     }
-
-    if is_fallback_enabled() && !current_ruby_version.is_stable() {
-        strategy = Strategy::RustThenCompiled(current_ruby_version);
-    }
-
-    if is_testing() {
-        strategy = Strategy::Testing(current_ruby_version);
-    }
-
-    if is_force_enabled() {
-        strategy = Strategy::CompiledOnly;
-    }
-
-    strategy.apply()?;
-
-    Ok(())
 }
 
 impl Strategy {
@@ -74,9 +87,6 @@ impl Strategy {
                 } else {
                     println!("cargo:rustc-cfg=stable_api_export_compiled_as_api");
                 }
-            }
-            Strategy::None => {
-                return Err("Stable API is needed but could not find a candidate. Try enabling the `stable-api-compiled-fallback` feature in rb-sys.".into());
             }
         };
 
