@@ -14,6 +14,7 @@ mod ruby_abi_version;
 mod utils;
 
 pub use bindings::*;
+#[cfg(feature = "stable-api")]
 pub use macros::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
