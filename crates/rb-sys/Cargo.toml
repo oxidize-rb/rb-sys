@@ -31,7 +31,8 @@ fuzz = []
 no-link-ruby = []
 ruby-static = []
 global-allocator = []
-stable-api-compiled-fallback = [] # Fallback to compiled C API
+stable-api = []
+stable-api-compiled-fallback = ["stable-api"] # Fallback to compiled C API
 stable-api-compiled-testing = [
   "stable-api-compiled-fallback",
 ] # For testing the fallback in rb-sys (internal)

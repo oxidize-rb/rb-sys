@@ -4,6 +4,7 @@
 pub mod bindings;
 pub mod macros;
 pub mod special_consts;
+#[cfg(feature = "stable-api")]
 pub mod stable_api;
 pub mod tracking_allocator;
 pub mod value_type;
@@ -16,6 +17,7 @@ pub use bindings::*;
 pub use macros::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
+#[cfg(feature = "stable-api")]
 pub use stable_api::StableApiDefinition;
 pub use value_type::*;
 

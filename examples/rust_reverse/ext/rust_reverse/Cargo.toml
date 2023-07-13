@@ -13,4 +13,6 @@ rb-sys = { version = "0.9.79", path = "./../../../../crates/rb-sys", features = 
 crate-type = ["cdylib"]
 
 [features]
+default = ["stable-api-compiled-testing"]
 test-feature = []
+stable-api-compiled-testing = ["rb-sys/stable-api-compiled-testing"]
