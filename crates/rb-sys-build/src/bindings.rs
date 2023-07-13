@@ -87,13 +87,13 @@ pub fn generate(
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
 
-        push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
+        push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
         stable_api::categorize_bindings(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 
-    let mut out_file = File::create(&out_path).unwrap();
-    std::io::Write::write_all(&mut out_file, code.as_bytes()).unwrap();
+    let mut out_file = File::create(&out_path)?;
+    std::io::Write::write_all(&mut out_file, code.as_bytes())?;
     run_rustfmt(&out_path);
 
     Ok(out_path)
