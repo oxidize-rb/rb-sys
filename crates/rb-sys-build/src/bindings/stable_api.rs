@@ -55,7 +55,7 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
             if opaque_idents_to_swap.contains(&s.ident.to_string()) {
                 internal_items.push(s.clone());
                 s.attrs.push(syn::parse_quote! {
-                    #[deprecated(note = "To improve ABI stability with ruby-head, usage of this internal struct has been deprecated. All necessary functions are now provided, so direct usage of internal fields should no longer be necessary. To migrate, please replace the usage of this internal struct with its counterpart in the `rb_sys::stable` module. For example, instead of `use rb_sys::rb_sys__Opaque__ExampleStruct;`, use `use rb_sys::stable::ExampleStruct;`. This struct will be removed in a future version of rb_sys.")]
+                    #[deprecated(note = "To improve API stability with ruby-head, direct usage of Ruby internal structs has been deprecated. To migrate, please replace the usage of this internal struct with its counterpart in the `rb_sys::stable` module. For example, instead of `use rb_sys::rb_sys__Opaque__ExampleStruct;`, use `use rb_sys::stable::ExampleStruct;`. If you need to access the internals of these items, you can use the provided `rb-sys::macros` instead.")]
                 });
                 unstable_items.push(item);
             } else {
