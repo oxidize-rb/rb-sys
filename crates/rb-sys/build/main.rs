@@ -1,5 +1,5 @@
-mod c_glue;
 mod features;
+#[cfg(feature = "stable-api")]
 mod stable_api_config;
 mod version;
 
@@ -32,7 +32,6 @@ fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
-    let current_ruby_version = Version::current(&rbconfig);
     let crate_version = env!("CARGO_PKG_VERSION");
     let cfg_capture_path = out_dir.join(format!(
         "cfg-capture-{}-{}-{}",
@@ -62,7 +61,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     #[cfg(feature = "stable-api")]
-    stable_api_config::configure(current_ruby_version).unwrap();
+    stable_api_config::setup(Version::current(&rbconfig)).unwrap();
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);

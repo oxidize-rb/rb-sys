@@ -1,10 +1,10 @@
-use crate::{c_glue, features::is_env_variable_defined, version::Version};
-use std::{convert::TryFrom, error::Error};
+use crate::{features::is_env_variable_defined, version::Version};
+use std::{convert::TryFrom, error::Error, path::Path};
 
 pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
 pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
-pub fn configure(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
+pub fn setup(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
     let strategy = Strategy::try_from(current_ruby_version)?;
 
     strategy.apply()?;
@@ -63,7 +63,7 @@ impl Strategy {
                 }
             }
             Strategy::CompiledOnly => {
-                c_glue::compile()?;
+                compile()?;
                 println!("cargo:rustc-cfg=stable_api_enable_compiled_mod");
                 println!("cargo:rustc-cfg=stable_api_export_compiled_as_api");
             }
@@ -72,13 +72,13 @@ impl Strategy {
                     println!("cargo:rustc-cfg=stable_api_has_rust_impl");
                     println!("cargo:rustc-cfg=stable_api_include_rust_impl");
                 } else {
-                    c_glue::compile()?;
+                    compile()?;
                     println!("cargo:rustc-cfg=stable_api_enable_compiled_mod");
                     println!("cargo:rustc-cfg=stable_api_export_compiled_as_api");
                 }
             }
             Strategy::Testing(current_ruby_version) => {
-                c_glue::compile()?;
+                compile()?;
 
                 println!("cargo:rustc-cfg=stable_api_enable_compiled_mod");
 
@@ -121,4 +121,13 @@ fn maybe_warn_old_ruby_version(current_ruby_version: Version) {
             current_ruby_version
         );
     }
+}
+
+fn compile() -> Result<(), Box<dyn Error>> {
+    let mut build = rb_sys_build::cc::Build::new();
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = crate_dir.join("src").join("stable_api").join("compiled.c");
+
+    build.file(path);
+    build.try_compile("compiled")
 }
