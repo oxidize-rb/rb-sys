@@ -5,6 +5,9 @@ use crate::{
 };
 use std::os::raw::{c_char, c_long};
 
+#[cfg(not(ruby_eq_2_7))]
+compile_error!("This file should only be included in Ruby 2.7 builds");
+
 pub struct Definition;
 
 impl StableApiDefinition for Definition {

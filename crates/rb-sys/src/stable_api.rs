@@ -130,24 +130,12 @@ pub trait StableApiDefinition {
 #[cfg(stable_api_enable_compiled_mod)]
 mod compiled;
 
-#[cfg(all(ruby_eq_2_6, stable_api_include_rust_impl))]
-#[path = "stable_api/ruby_2_6.rs"]
-mod rust;
-
-#[cfg(all(ruby_eq_2_7, stable_api_include_rust_impl))]
-#[path = "stable_api/ruby_2_7.rs"]
-mod rust;
-
-#[cfg(all(ruby_eq_3_0, stable_api_include_rust_impl))]
-#[path = "stable_api/ruby_3_0.rs"]
-mod rust;
-
-#[cfg(all(ruby_eq_3_1, stable_api_include_rust_impl))]
-#[path = "stable_api/ruby_3_1.rs"]
-mod rust;
-
-#[cfg(all(ruby_eq_3_2, stable_api_include_rust_impl))]
-#[path = "stable_api/ruby_3_2.rs"]
+#[cfg(stable_api_include_rust_impl)]
+#[cfg_attr(ruby_eq_2_6, path = "stable_api/ruby_2_7.rs")]
+#[cfg_attr(ruby_eq_2_7, path = "stable_api/ruby_2_7.rs")]
+#[cfg_attr(ruby_eq_3_0, path = "stable_api/ruby_3_0.rs")]
+#[cfg_attr(ruby_eq_3_1, path = "stable_api/ruby_3_1.rs")]
+#[cfg_attr(ruby_eq_3_2, path = "stable_api/ruby_3_2.rs")]
 mod rust;
 
 #[cfg(stable_api_export_compiled_as_api)]
