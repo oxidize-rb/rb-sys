@@ -31,23 +31,26 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rstring_ptr(&self, obj: VALUE) -> *const c_char {
         assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
-        let rstring: &RString = &*(obj as *const RString);
 
+        let rstring: &RString = &*(obj as *const RString);
         let flags = rstring.basic.flags;
         let is_heap = (flags & RSTRING_NOEMBED as VALUE) != 0;
-
-        if !is_heap {
-            &rstring.as_.ary as *const _
+        let ptr = if !is_heap {
+            std::ptr::addr_of!(rstring.as_.ary) as *const _
         } else {
             rstring.as_.heap.ptr
-        }
+        };
+
+        assert!(!ptr.is_null());
+
+        ptr
     }
 
     #[inline]
     unsafe fn rarray_len(&self, obj: VALUE) -> c_long {
         assert!(self.type_p(obj, value_type::RUBY_T_ARRAY));
-        let rarray: &RArray = &*(obj as *const RArray);
 
+        let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
         let is_embedded = (flags & RARRAY_EMBED_FLAG as VALUE) != 0;
 
@@ -64,16 +67,19 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE {
         assert!(self.type_p(obj, value_type::RUBY_T_ARRAY));
-        let rarray: &RArray = &*(obj as *const RArray);
 
+        let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
         let is_embedded = (flags & RARRAY_EMBED_FLAG as VALUE) != 0;
-
-        if is_embedded {
+        let ptr = if is_embedded {
             rarray.as_.ary.as_ptr()
         } else {
             rarray.as_.heap.ptr
-        }
+        };
+
+        assert!(!ptr.is_null());
+
+        ptr
     }
 
     #[inline]

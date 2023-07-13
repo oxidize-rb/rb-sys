@@ -35,12 +35,15 @@ impl StableApiDefinition for Definition {
         let rstring: &RString = &*(obj as *const RString);
         let flags = rstring.basic.flags;
         let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
-
-        if !is_heap {
-            &rstring.as_.ary as *const _
+        let ptr = if !is_heap {
+            std::ptr::addr_of!(rstring.as_.ary) as *const _
         } else {
             rstring.as_.heap.ptr
-        }
+        };
+
+        assert!(!ptr.is_null());
+
+        ptr
     }
 
     #[inline]
@@ -68,12 +71,15 @@ impl StableApiDefinition for Definition {
         let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
         let is_embedded = (flags & crate::ruby_rarray_flags::RARRAY_EMBED_FLAG as VALUE) != 0;
-
-        if is_embedded {
-            rarray.as_.ary.as_ptr()
+        let ptr = if is_embedded {
+            std::ptr::addr_of!(rarray.as_.ary) as *const _
         } else {
             rarray.as_.heap.ptr
-        }
+        };
+
+        assert!(!ptr.is_null());
+
+        ptr
     }
 
     #[inline]
