@@ -2,6 +2,7 @@
 #![doc = include_str!("../readme.md")]
 
 pub mod bindings;
+#[cfg(feature = "stable-api")]
 pub mod macros;
 pub mod special_consts;
 #[cfg(feature = "stable-api")]
@@ -22,7 +23,9 @@ pub use special_consts::*;
 pub use stable_api::StableApiDefinition;
 pub use value_type::*;
 
+#[deprecated(since = "0.9.79", note = "Use `VALUE` instead")]
 pub type Value = VALUE;
+#[deprecated(since = "0.9.79", note = "Use `VALUE` instead")]
 pub type RubyValue = VALUE;
 
 #[cfg(use_global_allocator)]
