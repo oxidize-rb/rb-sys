@@ -17,7 +17,6 @@ rust-version = "1.60"
 rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 
 [dev-dependencies]
-rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 rb-sys = { path = ".", features = [
   "link-ruby",
   "stable-api-compiled-fallback",
@@ -37,7 +36,7 @@ stable-api-compiled-testing = [
   "stable-api-compiled-fallback",
 ] # For testing the fallback in rb-sys (internal)
 stable-api-compiled-force = [] # Always use the compiled C API
-ruby-macros = [] # deprecated
+ruby-macros = ["stable-api"] # deprecated
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]

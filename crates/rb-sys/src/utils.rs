@@ -32,7 +32,6 @@ pub(crate) unsafe fn is_ruby_vm_started() -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rb_sys_test_helpers::with_ruby_vm;
     use rusty_fork::rusty_fork_test;
 
     rusty_fork_test! {
@@ -40,9 +39,20 @@ mod tests {
         fn test_is_ruby_vm_started() {
             assert!(!unsafe { is_ruby_vm_started() });
 
-            with_ruby_vm(|| {
-                assert!(unsafe { is_ruby_vm_started() });
-            });
+            #[cfg(windows)]
+            {
+                let mut argc = 0;
+                let mut argv: [*mut std::os::raw::c_char; 0] = [];
+                let mut argv = argv.as_mut_ptr();
+                rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
+            }
+
+            match unsafe { crate::ruby_setup() } {
+                0 => {}
+                code => panic!("Failed to setup Ruby (error code: {})", code),
+            };
+
+            assert!(unsafe { is_ruby_vm_started() });
         }
     }
 }

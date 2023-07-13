@@ -4,7 +4,7 @@ mod stable_api_config;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, debug_log, RbConfig};
+use rb_sys_build::{bindings, RbConfig};
 use std::io::Write;
 use std::{
     env,
@@ -26,19 +26,10 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
 ];
 
 fn main() {
-    debug_log!("INFO: running rb-sys build script with env:");
-
-    for var in std::env::vars() {
-        if var.0.contains("RUST") || var.0.contains("CARGO") {
-            debug_log!("   {}: {}", var.0, var.1);
-        }
-    }
-
     warn_deprecated_feature_flags();
 
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
     let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
     let current_ruby_version = Version::current(&rbconfig);
@@ -242,6 +233,6 @@ fn expose_cargo_features(cap: &mut File) {
 
 fn warn_deprecated_feature_flags() {
     if cfg!(feature = "ruby-macros") {
-        println!("cargo:warning=The \"ruby-macros\" feature flag is deprecated and will be removed in a future release.");
+        println!("cargo:warning=The \"ruby-macros\" feature flag is deprecated and will be removed in a future release. Please use \"stable-api\" instead.");
     }
 }

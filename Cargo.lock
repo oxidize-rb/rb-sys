@@ -235,7 +235,6 @@ version = "0.9.79"
 dependencies = [
  "rb-sys",
  "rb-sys-build",
- "rb-sys-test-helpers",
  "rusty-fork",
 ]
 
@@ -272,7 +271,6 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "rb-sys",
- "rb-sys-test-helpers",
  "syn",
 ]
 
