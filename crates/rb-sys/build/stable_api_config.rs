@@ -1,8 +1,8 @@
-use crate::{features::is_env_variable_defined, version::Version};
+use crate::{
+    features::is_env_variable_defined,
+    version::{Version, MIN_SUPPORTED_STABLE_VERSION},
+};
 use std::{convert::TryFrom, error::Error, path::Path};
-
-pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
-pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 pub fn setup(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
     let strategy = Strategy::try_from(current_ruby_version)?;

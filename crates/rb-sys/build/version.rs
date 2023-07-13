@@ -1,7 +1,7 @@
-use crate::{
-    stable_api_config::{LATEST_STABLE_VERSION, MIN_SUPPORTED_STABLE_VERSION},
-    RbConfig,
-};
+use crate::RbConfig;
+
+pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
+pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub struct Version(u32, u32);
