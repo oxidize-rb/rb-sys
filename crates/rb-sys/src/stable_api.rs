@@ -129,18 +129,16 @@ pub trait StableApiDefinition {
 
 #[cfg(stable_api_enable_compiled_mod)]
 mod compiled;
+#[cfg(stable_api_export_compiled_as_api)]
+use compiled as api;
 
 #[cfg(stable_api_include_rust_impl)]
-#[cfg_attr(ruby_eq_2_6, path = "stable_api/ruby_2_7.rs")]
+#[cfg_attr(ruby_eq_2_6, path = "stable_api/ruby_2_6.rs")]
 #[cfg_attr(ruby_eq_2_7, path = "stable_api/ruby_2_7.rs")]
 #[cfg_attr(ruby_eq_3_0, path = "stable_api/ruby_3_0.rs")]
 #[cfg_attr(ruby_eq_3_1, path = "stable_api/ruby_3_1.rs")]
 #[cfg_attr(ruby_eq_3_2, path = "stable_api/ruby_3_2.rs")]
 mod rust;
-
-#[cfg(stable_api_export_compiled_as_api)]
-use compiled as api;
-
 #[cfg(not(stable_api_export_compiled_as_api))]
 use rust as api;
 

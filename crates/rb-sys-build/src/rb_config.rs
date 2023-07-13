@@ -66,26 +66,33 @@ impl RbConfig {
 
         let mut rbconfig = RbConfig::new();
 
-        let output = memoize!(String: {
-            let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
+        // Never use the current Ruby's RbConfig if we're cross compiling, or
+        // else bad things happen
+        let parsed = if rbconfig.is_cross_compiling() {
+            HashMap::new()
+        } else {
+            let output = memoize!(String: {
+                let ruby = env::var_os("RUBY").unwrap_or_else(|| OsString::from("ruby"));
 
-            let config = Command::new(ruby)
-                .arg("--disable-gems")
-                .arg("-rrbconfig")
-                .arg("-e")
-                .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
-                .output()
-                .unwrap_or_else(|e| panic!("ruby not found: {}", e));
-            String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
-        });
+                let config = Command::new(ruby)
+                    .arg("--disable-gems")
+                    .arg("-rrbconfig")
+                    .arg("-e")
+                    .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
+                    .output()
+                    .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+                String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
+            });
 
-        let mut parsed = HashMap::new();
-        for line in output.split('\x1E') {
-            let mut parts = line.splitn(2, '\x1F');
-            if let (Some(key), Some(val)) = (parts.next(), parts.next()) {
-                parsed.insert(key.to_owned(), val.to_owned());
+            let mut parsed = HashMap::new();
+            for line in output.split('\x1E') {
+                let mut parts = line.splitn(2, '\x1F');
+                if let (Some(key), Some(val)) = (parts.next(), parts.next()) {
+                    parsed.insert(key.to_owned(), val.to_owned());
+                }
             }
-        }
+            parsed
+        };
 
         parsed.get("cflags").map(|f| rbconfig.push_cflags(f));
         parsed.get("DLDFLAGS").map(|f| rbconfig.push_dldflags(f));
@@ -210,20 +217,8 @@ impl RbConfig {
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
     pub fn get_optional(&self, key: &str) -> Option<String> {
-        println!("cargo:rerun-if-env-changed=RBCONFIG_{}", key);
-
-        let val = match self.value_map.get(key) {
-            Some(val) => Some(val.trim_matches('\n').to_string()),
-            None => match env::var(format!("RBCONFIG_{}", key)) {
-                Ok(val) => Some(val.trim_matches('\n').to_string()),
-                _ => self
-                    .value_map
-                    .get(key)
-                    .map(|val| val.trim_matches('\n').to_owned()),
-            },
-        };
-
-        val
+        self.try_rbconfig_env(key)
+            .or_else(|| self.try_value_map(key))
     }
 
     /// Enables the use of rpath for linking.
@@ -420,6 +415,18 @@ impl RbConfig {
         }
 
         self
+    }
+
+    fn try_value_map(&self, key: &str) -> Option<String> {
+        self.value_map
+            .get(key)
+            .map(|val| val.trim_matches('\n').to_owned())
+    }
+
+    fn try_rbconfig_env(&self, key: &str) -> Option<String> {
+        println!("cargo:rerun-if-env-changed={}", key);
+        let key = format!("RBCONFIG_{}", key);
+        env::var(key).map(|v| v.trim_matches('\n').to_owned()).ok()
     }
 }
 
@@ -728,6 +735,41 @@ mod tests {
                 ],
                 rb_config.cargo_args()
             );
+        });
+    }
+
+    #[test]
+    fn test_prioritizes_rbconfig_env() {
+        with_locked_env(|| {
+            env::set_var("RBCONFIG_libdir", "/foo");
+            let rb_config = RbConfig::new();
+
+            assert_eq!(rb_config.get("libdir"), "/foo");
+            assert_eq!(rb_config.get_optional("libdir"), Some("/foo".into()));
+
+            env::remove_var("RBCONFIG_libdir");
+        });
+    }
+
+    #[test]
+    fn test_never_loads_shell_rbconfig_if_cross_compiling() {
+        with_locked_env(|| {
+            env::set_var("RBCONFIG_CROSS_COMPILING", "yes");
+
+            let rb_config = RbConfig::current();
+
+            assert!(rb_config.value_map.is_empty());
+        });
+    }
+
+    #[test]
+    fn test_loads_shell_rbconfig_if_not_cross_compiling() {
+        with_locked_env(|| {
+            env::set_var("RBCONFIG_CROSS_COMPILING", "no");
+
+            let rb_config = RbConfig::current();
+
+            assert!(!rb_config.value_map.is_empty());
         });
     }
 
