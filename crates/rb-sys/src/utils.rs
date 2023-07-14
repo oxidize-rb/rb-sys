@@ -44,7 +44,7 @@ mod tests {
                 let mut argc = 0;
                 let mut argv: [*mut std::os::raw::c_char; 0] = [];
                 let mut argv = argv.as_mut_ptr();
-                rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
+                unsafe { rb_sys::rb_w32_sysinit(&mut argc, &mut argv) };
             }
 
             match unsafe { crate::ruby_setup() } {
