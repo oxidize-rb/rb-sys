@@ -233,8 +233,9 @@ dependencies = [
 name = "rb-sys"
 version = "0.9.79"
 dependencies = [
+ "rb-sys",
  "rb-sys-build",
- "rb-sys-test-helpers",
+ "rusty-fork",
 ]
 
 [[package]]
@@ -242,7 +243,6 @@ name = "rb-sys-build"
 version = "0.9.79"
 dependencies = [
  "bindgen",
- "cc",
  "lazy_static",
  "proc-macro2",
  "quote",
@@ -271,7 +271,6 @@ version = "0.1.0"
 dependencies = [
  "quote",
  "rb-sys",
- "rb-sys-test-helpers",
  "syn",
 ]
 

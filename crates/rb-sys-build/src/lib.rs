@@ -1,8 +1,6 @@
 pub mod bindings;
-pub mod utils;
-
-#[cfg(feature = "cc")]
 pub mod cc;
+pub mod utils;
 
 mod rb_config;
 

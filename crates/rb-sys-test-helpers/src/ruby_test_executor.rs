@@ -40,7 +40,7 @@ impl RubyTestExecutor {
             static INIT: Once = Once::new();
 
             INIT.call_once(|| unsafe {
-                ruby_setup_ceremony();
+                setup_ruby_unguarded();
             });
         });
 
@@ -55,11 +55,7 @@ impl RubyTestExecutor {
         self.set_test_timeout(Duration::from_secs(3));
 
         self.run(|| unsafe {
-            let ret = rb_sys::ruby_cleanup(0);
-
-            if ret != 0 {
-                panic!("Failed to cleanup Ruby (error code: {})", ret);
-            }
+            cleanup_ruby();
         });
 
         if let Some(sender) = self.sender.take() {
@@ -122,7 +118,11 @@ pub fn global_executor() -> &'static RubyTestExecutor {
     unsafe { &GLOBAL_EXECUTOR }.get_or_init(RubyTestExecutor::start)
 }
 
-unsafe fn ruby_setup_ceremony() {
+/// Setup the Ruby VM, without cleaning up afterwards.
+///
+/// ### Safety
+/// This function is not thread-safe and caller must ensure it's only called once.
+pub unsafe fn setup_ruby_unguarded() {
     trick_the_linker();
 
     #[cfg(windows)]
@@ -170,6 +170,37 @@ unsafe fn ruby_setup_ceremony() {
         0 => {}
         code => panic!("Failed to execute Ruby (error code: {})", code),
     };
+}
+
+/// Cleanup the Ruby VM.
+///
+/// ### Safety
+/// This function is not thread-safe and caller must ensure it's only called once.
+pub unsafe fn cleanup_ruby() {
+    let ret = rb_sys::ruby_cleanup(0);
+
+    if ret != 0 {
+        panic!("Failed to cleanup Ruby (error code: {})", ret);
+    }
+}
+
+pub struct RubyCleanupGuard;
+
+impl Drop for RubyCleanupGuard {
+    fn drop(&mut self) {
+        unsafe { cleanup_ruby() };
+    }
+}
+
+/// Setup the Ruby VM and return a guard that will cleanup the VM when dropped.
+///
+/// ### Safety
+/// This function is not thread-safe and caller must ensure it's only called once.
+#[must_use]
+pub unsafe fn setup_ruby() -> RubyCleanupGuard {
+    setup_ruby_unguarded();
+
+    RubyCleanupGuard
 }
 
 fn trick_the_linker() {

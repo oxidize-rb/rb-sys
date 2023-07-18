@@ -1,7 +1,9 @@
 mod sanitizer;
+mod stable_api;
 
+use crate::cc::Build;
 use crate::utils::is_msvc;
-use crate::RbConfig;
+use crate::{debug_log, RbConfig};
 use quote::ToTokens;
 use std::fs::File;
 use std::io::Write;
@@ -19,22 +21,16 @@ pub fn generate(
 ) -> Result<PathBuf, Box<dyn Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
-    let extension_flag = if cfg!(target_os = "openbsd") {
-        "-fdeclspec"
-    } else {
-        "-fms-extensions"
-    };
-
     let mut clang_args = vec![
         format!("-I{}", rbconfig.get("rubyhdrdir")),
         format!("-I{}", rbconfig.get("rubyarchhdrdir")),
-        extension_flag.to_string(),
     ];
 
+    clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-    eprintln!("Using bindgen with clang args: {:?}", clang_args);
+    debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
 
@@ -45,7 +41,6 @@ pub fn generate(
     }
 
     let bindings = default_bindgen(clang_args)
-        .header_contents("wrapper.h", &wrapper_h)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
@@ -68,7 +63,10 @@ pub fn generate(
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
+    let bindings = stable_api::opaqueify_bindings(bindings, &mut wrapper_h);
+
     let mut tokens = {
+        let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
         let code_string = bindings.generate()?.to_string();
         syn::parse_file(&code_string)?
     };
@@ -89,12 +87,13 @@ pub fn generate(
             qualify_symbols_for_msvc(&mut tokens, static_ruby, rbconfig);
         }
 
-        push_cargo_cfg_from_bindings(&tokens, cfg_out).expect("write cfg");
+        push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
+        stable_api::categorize_bindings(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 
-    let mut out_file = File::create(&out_path).unwrap();
-    std::io::Write::write_all(&mut out_file, code.as_bytes()).unwrap();
+    let mut out_file = File::create(&out_path)?;
+    std::io::Write::write_all(&mut out_file, code.as_bytes())?;
     run_rustfmt(&out_path);
 
     Ok(out_path)
@@ -108,7 +107,7 @@ fn run_rustfmt(path: &Path) {
     cmd.arg(path);
 
     if let Err(e) = cmd.status() {
-        eprintln!("Failed to run rustfmt: {}", e);
+        debug_log!("WARN: failed to run rustfmt: {}", e);
     }
 }
 
@@ -120,7 +119,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     let ver = rbconfig.ruby_program_version();
 
     sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
-        eprintln!("Failed to clean up docs, skipping: {}", e);
+        debug_log!("WARN: failed to clean up docs, skipping: {}", e);
     })
 }
 
@@ -162,7 +161,7 @@ fn qualify_symbols_for_msvc(tokens: &mut syn::File, is_static: bool, rbconfig: &
     };
 
     sanitizer::add_link_ruby_directives(tokens, &name, kind).unwrap_or_else(|e| {
-        eprintln!("Failed to add link directives: {}", e);
+        debug_log!("WARN: failed to add link directives: {}", e);
     });
 }
 

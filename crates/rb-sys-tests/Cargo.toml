@@ -11,12 +11,11 @@ bench = false
 doctest = false
 doc = false
 
-[features]
-default = ["ruby-macros"]
-ruby-macros = ["rb-sys/ruby-macros"]
-
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby"] }
+rb-sys = { path = "../rb-sys", features = [
+  "link-ruby",
+  "stable-api-compiled-testing",
+] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 rusty-fork = "0.3.0"

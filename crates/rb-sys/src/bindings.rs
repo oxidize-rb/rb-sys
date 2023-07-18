@@ -12,4 +12,9 @@
 #![allow(rustdoc::broken_intra_doc_links)]
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::invalid_html_tags)]
+#![allow(deprecated)]
+
 include!(env!("RB_SYS_BINDINGS_PATH"));
+
+pub use uncategorized::*;
+pub use unstable::*;

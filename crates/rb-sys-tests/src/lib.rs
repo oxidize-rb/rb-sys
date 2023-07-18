@@ -8,7 +8,7 @@ mod basic_smoke_test;
 #[cfg(test)]
 mod ruby_abi_version_test;
 
-#[cfg(all(test, unix, feature = "ruby-macros"))]
+#[cfg(test)]
 mod ruby_macros_test;
 
 #[cfg(test)]
@@ -19,3 +19,6 @@ mod special_consts_test;
 
 #[cfg(test)]
 mod tracking_allocator_test;
+
+#[cfg(test)]
+mod stable_api_test;

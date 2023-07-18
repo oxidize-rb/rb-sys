@@ -1,5 +1,6 @@
 mod features;
-mod ruby_macros;
+#[cfg(feature = "stable-api")]
+mod stable_api_config;
 mod version;
 
 use features::*;
@@ -25,9 +26,10 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
 ];
 
 fn main() {
+    warn_deprecated_feature_flags();
+
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-
     let ruby_version = rbconfig.ruby_program_version();
     let ruby_platform = rbconfig.platform();
     let crate_version = env!("CARGO_PKG_VERSION");
@@ -51,15 +53,15 @@ fn main() {
         &mut cfg_capture_file,
     )
     .expect("generate bindings");
+    println!("Bindings generated at: {}", bindings_path.display());
     println!(
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
         bindings_path.display()
     );
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
-    if is_ruby_macros_enabled() {
-        ruby_macros::compile(&mut rbconfig);
-    }
+    #[cfg(feature = "stable-api")]
+    stable_api_config::setup(Version::current(&rbconfig)).unwrap();
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);
@@ -137,14 +139,14 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     for v in SUPPORTED_RUBY_VERSIONS.iter() {
         let v = v.to_owned();
 
-        if &version < v {
+        if version < v {
             println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
         } else {
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if &version <= v {
+        if version <= v {
             println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
         } else {
@@ -156,14 +158,14 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
-        if &version == v {
+        if version == v {
             println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
         } else {
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
-        if &version >= v {
+        if version >= v {
             println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
         } else {
@@ -175,7 +177,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
-        if &version > v {
+        if version > v {
             println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
         } else {
@@ -226,5 +228,11 @@ fn expose_cargo_features(cap: &mut File) {
         }
 
         cfg_capture!(cap, "cargo:{}={}", key.to_lowercase(), val);
+    }
+}
+
+fn warn_deprecated_feature_flags() {
+    if cfg!(feature = "ruby-macros") {
+        println!("cargo:warning=The \"ruby-macros\" feature flag is deprecated and will be removed in a future release. Please use \"stable-api\" instead.");
     }
 }

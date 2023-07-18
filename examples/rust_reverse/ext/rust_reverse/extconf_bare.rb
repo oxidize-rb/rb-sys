@@ -5,4 +5,7 @@ $LOAD_PATH.unshift(File.expand_path("../../../../gem/lib", __dir__))
 require "mkmf"
 require "rb_sys/mkmf"
 
-create_rust_makefile("rust_reverse")
+create_rust_makefile("rust_reverse") do |r|
+  # Enable stable API compiled fallback for ruby-head (optional)
+  r.use_stable_api_compiled_fallback = true
+end

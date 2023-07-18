@@ -29,6 +29,17 @@ macro_rules! rsymbol {
     };
 }
 
+/// Evaluates a Ruby expression.
+#[macro_export]
+macro_rules! eval {
+    () => {
+        unsafe { rb_sys::rb_eval_string("\0".as_ptr() as _) }
+    };
+    ($s:expr) => {
+        unsafe { rb_sys::rb_eval_string(concat!($s, "\0").as_ptr() as _) }
+    };
+}
+
 /// Captures the GC stat before and after the expression.
 #[macro_export]
 macro_rules! capture_gc_stat_for {
@@ -71,7 +82,7 @@ macro_rules! rb_funcall_typed {
             let argv = $args.as_ptr();
             let result = rb_sys::rb_check_funcall($v, id, args.len() as _, argv);
 
-            if RB_TYPE_P(result) != $t as _ {
+            if !RB_TYPE_P(result, $t as _) {
                 None
             } else {
                 Some(result)
