@@ -45,6 +45,7 @@ module RbSys
         gemspec.files.reject! { |f| f.end_with?(".rs") }
         gemspec.files.reject! { |f| f.match?(/Cargo.(toml|lock)$/) }
         gemspec.files.reject! { |f| extconf.end_with?(f) }
+        gemspec.extensions.reject! { |f| f.end_with?("Cargo.toml") }
       end
     end
 
