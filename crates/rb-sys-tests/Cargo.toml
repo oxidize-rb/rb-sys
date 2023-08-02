@@ -4,19 +4,18 @@ version = "0.9.79"
 edition = "2018"
 autotests = false
 publish = false
-rust-version = "1.59"
+rust-version = "1.60"
 
 [lib]
 bench = false
 doctest = false
 doc = false
 
-[features]
-default = ["ruby-macros"]
-ruby-macros = ["rb-sys/ruby-macros"]
-
 [dependencies]
-rb-sys = { path = "../rb-sys", features = ["link-ruby", "rb-gc-guard"] }
+rb-sys = { path = "../rb-sys", features = [
+  "link-ruby",
+  "stable-api-compiled-testing",
+] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
 rusty-fork = "0.3.0"

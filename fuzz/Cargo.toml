@@ -1,0 +1,36 @@
+[package]
+name = "rb-sys-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+rb-sys-test-helpers = { path = "../crates/rb-sys-test-helpers" }
+rb-sys = { path = "../crates/rb-sys", features = [
+  "stable-api-compiled-testing",
+  "link-ruby",
+  "fuzz",
+] }
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "rstring_rust_impls"
+path = "fuzz_targets/rstring_rust_impls.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "rarray_rust_impls"
+path = "fuzz_targets/rarray_rust_impls.rs"
+test = false
+doc = false

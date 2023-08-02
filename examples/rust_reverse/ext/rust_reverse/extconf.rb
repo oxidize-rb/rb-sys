@@ -34,4 +34,7 @@ create_rust_makefile("rust_reverse/rust_reverse") do |r|
 
   # Extra targets to install via rustup (optional)
   r.extra_rustup_targets = ["wasm32-unknown-unknown"]
+
+  # Enable stable API compiled fallback for ruby-head (optional)
+  r.use_stable_api_compiled_fallback = true
 end

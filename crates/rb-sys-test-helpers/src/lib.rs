@@ -11,6 +11,7 @@ use std::{error::Error, mem::MaybeUninit, panic::UnwindSafe};
 
 pub use rb_sys_test_helpers_macros::*;
 pub use ruby_exception::RubyException;
+pub use ruby_test_executor::{cleanup_ruby, setup_ruby, setup_ruby_unguarded};
 pub use utils::*;
 
 /// Run a given function with inside of a Ruby VM.

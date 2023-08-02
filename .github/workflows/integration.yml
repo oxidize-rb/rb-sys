@@ -2,6 +2,9 @@
 name: Integration
 on:
   push:
+    branches:
+      - main
+  pull_request: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,15 +23,31 @@ jobs:
             run: rake
           - name: "matsadler/magnus"
             slug: magnus-0.5
-            ref: "0.5.3"
+            ref: "0.5.4"
             run: cargo test
           - name: "matsadler/magnus"
             slug: magnus-head
-            ref: "51d154ce32a3ef06542454fc720ad4f291dba86a"
+            ref: "05359fcd2369f014570f1e417c7c2d462625af5e"
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
-        ruby: ["2.7", "3.2"]
+        ruby: ["2.7", "3.2", "ruby-head"]
+        # Should re-include these after unstable-api is enabled
+        exclude:
+          - os: windows-latest
+            ruby: ruby-head
+            repo:
+              name: "matsadler/magnus"
+              slug: magnus-head
+              ref: "05359fcd2369f014570f1e417c7c2d462625af5e"
+              run: cargo test
+          - os: windows-latest
+            ruby: ruby-head
+            repo:
+              name: "matsadler/magnus"
+              slug: magnus-0.5
+              ref: "0.5.4"
+              run: cargo test
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -49,6 +68,7 @@ jobs:
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         id: setup
         with:
+          cache-version: v2
           ruby-version: ${{ matrix.ruby }}
           rustup-toolchain: ${{ matrix.rust }}
       - name: ✏️ Replace rb-sys

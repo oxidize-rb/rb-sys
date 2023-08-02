@@ -1,6 +1,9 @@
 use crate::RbConfig;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd)]
+pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
+pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
 pub struct Version(u32, u32);
 
 impl Version {
@@ -21,5 +24,15 @@ impl Version {
             rbconfig.get("MAJOR").parse::<i32>().unwrap() as _,
             rbconfig.get("MINOR").parse::<i32>().unwrap() as _,
         )
+    }
+
+    pub fn is_stable(&self) -> bool {
+        *self >= MIN_SUPPORTED_STABLE_VERSION && *self <= LATEST_STABLE_VERSION
+    }
+}
+
+impl std::fmt::Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}.{}", self.0, self.1)
     }
 }

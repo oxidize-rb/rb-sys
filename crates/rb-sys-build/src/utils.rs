@@ -1,3 +1,5 @@
+use crate::debug_log;
+
 /// Check if current platform is mswin.
 pub fn is_msvc() -> bool {
     if let Ok(target) = std::env::var("TARGET") {
@@ -17,12 +19,13 @@ pub fn is_mswin_or_mingw() -> bool {
 }
 
 /// Splits shell words.
-pub fn shellsplit(s: &str) -> Vec<String> {
+pub fn shellsplit<S: AsRef<str>>(s: S) -> Vec<String> {
+    let s = s.as_ref();
     match shell_words::split(s) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("shellsplit failed: {}", e);
-            s.split_whitespace().map(|s| s.to_string()).collect()
+            debug_log!("shellsplit failed: {}", e);
+            s.split_whitespace().map(Into::into).collect()
         }
     }
 }
@@ -39,4 +42,11 @@ macro_rules! memoize {
             VALUE.as_ref().unwrap()
         }
     }};
+}
+
+#[macro_export]
+macro_rules! debug_log {
+    ($($arg:tt)*) => {
+        eprintln!($($arg)*);
+    };
 }

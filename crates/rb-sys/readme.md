@@ -49,21 +49,8 @@ rb-sys = { version = "0.9", features = ["ruby-static"] }
 
 Alternatively, you can set the `RUBY_STATIC=true` environment variable.
 
-## Ruby Macros
-
-The `rb-sys` crates comes with an optional [`ruby-macros` feature](./crates/rb-sys/src/macros/mod.rs). This feature
-compiles a small bit of C code to give access to some commonly used C macros in Ruby.
-
-```toml
-# Cargo.toml
-
-[dependencies]
-rb-sys = { version = "0.9",  features = ["ruby-macros"] }
-```
-
 ### Other features
 
-- `ruby-macros`: Generate Rust functions for Ruby macros like `RSTRING_PTR`.
 - `global-allocator`: Report Rust memory allocations to the Ruby GC (_recommended_).
 - `ruby-static`: Link the static version of libruby.
 - `link-ruby`: Link libruby.

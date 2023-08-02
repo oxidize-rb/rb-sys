@@ -60,7 +60,7 @@ jobs:
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
         with:
-          cache-version: v1
+          cache-version: v2
           ruby-version: ${{ matrix.ruby_version }}
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true

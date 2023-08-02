@@ -18,14 +18,6 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
     }
 }
 
-pub fn is_ruby_macros_enabled() -> bool {
-    if is_mswin_or_mingw() {
-        return false;
-    }
-
-    !is_linting() && is_env_variable_defined("CARGO_FEATURE_RUBY_MACROS")
-}
-
 pub fn is_gem_enabled() -> bool {
     cfg!(rb_sys_gem)
 }
@@ -93,7 +85,7 @@ pub fn is_link_ruby_enabled() -> bool {
     }
 }
 
-fn is_env_variable_defined(name: &str) -> bool {
+pub fn is_env_variable_defined(name: &str) -> bool {
     std::env::var(name).is_ok()
 }
 
