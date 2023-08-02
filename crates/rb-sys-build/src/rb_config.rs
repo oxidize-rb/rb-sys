@@ -1,6 +1,7 @@
 use std::{
     collections::{hash_map::Keys, HashMap},
     env,
+    path::PathBuf,
     process::Command,
 };
 
@@ -385,6 +386,11 @@ impl RbConfig {
         }
 
         result
+    }
+
+    pub fn have_ruby_header<T: AsRef<str>>(&self, header: T) -> bool {
+        let ruby_include_dir: PathBuf = self.get("rubyhdrdir").into();
+        ruby_include_dir.join(header.as_ref()).exists()
     }
 
     fn push_search_path<T: Into<SearchPath>>(&mut self, path: T) -> &mut Self {

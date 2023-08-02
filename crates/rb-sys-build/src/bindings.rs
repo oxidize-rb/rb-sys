@@ -40,6 +40,10 @@ pub fn generate(
         wrapper_h.push_str("#endif\n");
     }
 
+    if rbconfig.have_ruby_header("ruby/io/buffer.h") {
+        clang_args.push("-DHAVE_RUBY_IO_BUFFER_H".to_string());
+    }
+
     let bindings = default_bindgen(clang_args)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
