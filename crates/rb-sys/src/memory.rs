@@ -40,7 +40,6 @@
 /// let my_string = unsafe { rb_utf8_str_new_cstr("hello world\0".as_ptr() as _) };
 /// let _ = rb_gc_guard!(my_string);
 /// ```
-#[cfg(feature = "rb-gc-guard")]
 #[macro_export]
 macro_rules! rb_gc_guard {
     ($v:expr) => {{
