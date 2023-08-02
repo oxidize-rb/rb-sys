@@ -430,8 +430,8 @@ impl RbConfig {
     }
 
     fn try_rbconfig_env(&self, key: &str) -> Option<String> {
-        println!("cargo:rerun-if-env-changed={}", key);
         let key = format!("RBCONFIG_{}", key);
+        println!("cargo:rerun-if-env-changed={}", key);
         env::var(key).map(|v| v.trim_matches('\n').to_owned()).ok()
     }
 }
