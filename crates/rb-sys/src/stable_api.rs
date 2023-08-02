@@ -150,7 +150,7 @@ pub const fn get_default() -> &'static api::Definition {
 
 /// Get the fallback stable API definition for the current Ruby version, which
 /// is compiled C code that is linked into to this crate.
-#[cfg(all(stable_api_enable_compiled_mod))]
+#[cfg(stable_api_enable_compiled_mod)]
 pub const fn get_compiled() -> &'static compiled::Definition {
     const COMPILED_API: compiled::Definition = compiled::Definition {};
     &COMPILED_API

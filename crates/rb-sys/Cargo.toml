@@ -18,6 +18,7 @@ rb-sys-build = { version = "0.9.79", path = "../rb-sys-build" }
 
 [dev-dependencies]
 rb-sys = { path = ".", features = [
+  "rb-gc-guard",
   "link-ruby",
   "stable-api-compiled-fallback",
 ] }
@@ -37,6 +38,7 @@ stable-api-compiled-testing = [
 ] # For testing the fallback in rb-sys (internal)
 stable-api-compiled-force = [] # Always use the compiled C API
 ruby-macros = ["stable-api"] # deprecated
+rb-gc-guard = [] # Needs asm features Rust 1.59+
 bindgen-rbimpls = ["rb-sys-build/bindgen-rbimpls"]
 bindgen-deprecated-types = ["rb-sys-build/bindgen-deprecated-types"]
 bindgen-layout-tests = ["rb-sys-build/bindgen-layout-tests"]

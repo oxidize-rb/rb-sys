@@ -15,6 +15,7 @@ doc = false
 rb-sys = { path = "../rb-sys", features = [
   "link-ruby",
   "stable-api-compiled-testing",
+  "rb-gc-guard",
 ] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }

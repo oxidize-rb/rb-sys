@@ -47,13 +47,15 @@ impl RubyTestExecutor {
             timeout: Duration::from_secs(10),
         };
 
-        executor.run(|| {
-            static INIT: Once = Once::new();
+        executor
+            .run(|| {
+                static INIT: Once = Once::new();
 
-            INIT.call_once(|| unsafe {
-                setup_ruby_unguarded();
-            });
-        });
+                INIT.call_once(|| unsafe {
+                    setup_ruby_unguarded();
+                })
+            })
+            .expect("Failed to setup Ruby");
 
         executor
     }
@@ -65,7 +67,7 @@ impl RubyTestExecutor {
     pub fn shutdown(&mut self) {
         self.set_test_timeout(Duration::from_secs(3));
 
-        self.run(|| unsafe {
+        let _ = self.run(|| unsafe {
             cleanup_ruby();
         });
 
