@@ -9,7 +9,7 @@ Add this to your `Cargo.toml`:
 ```toml
 [dev-dependencies]
 rb-sys-env = { version = "0.1" }
-rb-sys-test-helpers = { version = "0.1" }
+rb-sys-test-helpers = { version = "0.2" }
 ```
 
 Then, in your crate's `build.rs`:

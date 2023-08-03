@@ -1,6 +1,6 @@
 [package]
 name = "rb-sys-test-helpers"
-version = "0.1.4"
+version = "0.2.0"
 edition = "2018"
 description = "Helpers for testing Ruby extensions from Rust"
 homepage = "https://github.com/oxidize-rb/rb-sys"
@@ -18,7 +18,7 @@ rb-sys = { path = "../rb-sys", features = [
   "link-ruby",
   "stable-api-compiled-testing",
 ] }
-rb-sys-test-helpers-macros = { version = "0.1.0", path = "../rb-sys-test-helpers-macros" }
+rb-sys-test-helpers-macros = { version = "0.2.0", path = "../rb-sys-test-helpers-macros" }
 
 [build-dependencies]
 rb-sys-env = { version = "0.1.2", path = "../rb-sys-env" }
