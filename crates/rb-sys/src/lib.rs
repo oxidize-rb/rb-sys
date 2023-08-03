@@ -4,6 +4,7 @@
 pub mod bindings;
 #[cfg(feature = "stable-api")]
 pub mod macros;
+pub mod memory;
 pub mod special_consts;
 #[cfg(feature = "stable-api")]
 pub mod stable_api;
@@ -17,6 +18,7 @@ mod utils;
 pub use bindings::*;
 #[cfg(feature = "stable-api")]
 pub use macros::*;
+pub use memory::*;
 pub use ruby_abi_version::*;
 pub use special_consts::*;
 #[cfg(feature = "stable-api")]

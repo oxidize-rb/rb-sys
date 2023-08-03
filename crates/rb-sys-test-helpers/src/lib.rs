@@ -7,7 +7,7 @@ mod utils;
 
 use rb_sys::{rb_errinfo, rb_intern, rb_set_errinfo, Qnil, VALUE};
 use ruby_test_executor::global_executor;
-use std::{mem::MaybeUninit, panic::UnwindSafe};
+use std::{error::Error, mem::MaybeUninit, panic::UnwindSafe};
 
 pub use rb_sys_test_helpers_macros::*;
 pub use ruby_exception::RubyException;
@@ -39,9 +39,10 @@ pub use utils::*;
 ///     assert_eq!(result, "hello world");
 /// });
 /// ```
-pub fn with_ruby_vm<F>(f: F)
+pub fn with_ruby_vm<R, F>(f: F) -> Result<R, Box<dyn Error>>
 where
-    F: FnOnce() + UnwindSafe + Send + 'static,
+    R: Send + 'static,
+    F: FnOnce() -> R + UnwindSafe + Send + 'static,
 {
     global_executor().run_test(f)
 }
@@ -64,7 +65,11 @@ where
 ///    assert_eq!(hello_world, "hello world");
 /// });
 /// ```
-pub fn with_gc_stress<T>(f: impl FnOnce() -> T + std::panic::UnwindSafe) -> T {
+pub fn with_gc_stress<R, F>(f: F) -> R
+where
+    R: Send + 'static,
+    F: FnOnce() -> R + UnwindSafe + Send + 'static,
+{
     unsafe {
         let stress_intern = rb_intern("stress\0".as_ptr() as _);
         let stress_eq_intern = rb_intern("stress=\0".as_ptr() as _);
@@ -104,32 +109,28 @@ where
     F: FnMut() -> T + std::panic::UnwindSafe,
 {
     unsafe extern "C" fn ffi_closure<T, F: FnMut() -> T>(args: VALUE) -> VALUE {
-        let args: *mut (Option<*mut F>, Option<MaybeUninit<T>>) = args as _;
-        let args = &mut *args;
-        let (func, outbuf) = args;
+        let args: *mut (Option<*mut F>, *mut Option<T>) = args as _;
+        let args = *args;
+        let (mut func, outbuf) = args;
         let func = func.take().unwrap();
         let func = &mut *func;
-        let mut outbuf = outbuf.take().unwrap();
-
         let result = func();
-        outbuf.as_mut_ptr().write(result);
-
-        outbuf.as_ptr() as _
+        outbuf.write_volatile(Some(result));
+        outbuf as _
     }
 
     unsafe {
         let mut state = 0;
         let func_ref = &Some(f) as *const _;
-        let outbuf_ref = &MaybeUninit::uninit() as *const MaybeUninit<T>;
-        let args = &(Some(func_ref), Some(outbuf_ref)) as *const _ as VALUE;
-        let outbuf_ptr = rb_sys::rb_protect(Some(ffi_closure::<T, F>), args, &mut state);
-        let outbuf_ptr: *const MaybeUninit<T> = outbuf_ptr as _;
+        let mut outbuf: MaybeUninit<Option<T>> = MaybeUninit::new(None);
+        let args = &(Some(func_ref), outbuf.as_mut_ptr() as *mut _) as *const _ as VALUE;
+        rb_sys::rb_protect(Some(ffi_closure::<T, F>), args, &mut state);
 
         if state == 0 {
-            if let Some(result) = outbuf_ptr.as_ref() {
-                Ok(result.as_ptr().read())
+            if outbuf.as_mut_ptr().read_volatile().is_some() {
+                Ok(outbuf.assume_init().expect("unreachable"))
             } else {
-                panic!("rb_protect returned a null pointer")
+                Err(RubyException::new(rb_errinfo()))
             }
         } else {
             let err = rb_errinfo();
@@ -144,12 +145,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_protect_returns_correct_value() {
-        with_ruby_vm(|| {
-            let result = protect(|| "my val");
+    fn test_protect_returns_correct_value() -> Result<(), Box<dyn Error>> {
+        let ret = with_ruby_vm(|| protect(|| "my val"))?;
 
-            assert_eq!(result, Ok("my val"));
-        });
+        assert_eq!(ret, Ok("my val"));
+
+        Ok(())
     }
 
     #[test]
@@ -160,6 +161,7 @@ mod tests {
             });
 
             assert!(result.is_err());
-        });
+        })
+        .unwrap();
     }
 }

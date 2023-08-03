@@ -62,22 +62,22 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
     let vis = input.vis;
     let sig = &input.sig;
 
-    let block = quote! {
-        let ret = {
-            #block;
-        };
-        rb_sys_test_helpers::trigger_full_gc!();
-        ret
-    };
-
     let block = if gc_stress {
         quote! {
             rb_sys_test_helpers::with_gc_stress(|| {
                 #block
-            });
+            })
         }
     } else {
         quote! { #block }
+    };
+
+    let block = quote! {
+        let ret = {
+            #block
+        };
+        rb_sys_test_helpers::trigger_full_gc!();
+        ret
     };
 
     let test_fn = quote! {
@@ -89,8 +89,7 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
                     #block
                 });
 
-                match result {
-                    Ok(_) => (),
+                let ret = match result {
                     Err(err) => {
                         match std::env::var("RUST_BACKTRACE") {
                             Ok(val) if val == "1" => {
@@ -101,10 +100,13 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
                             },
                             _ => (),
                         }
-                        panic!("{}", err.inspect());
+                        Err(err)
                     },
+                    Ok(v) => Ok(v),
                 };
-            });
+
+                ret
+            }).expect("test execution failure").expect("ruby exception");
         }
     };
 

@@ -88,7 +88,7 @@ jobs:
 
       - name: 🧪 Cargo test
         shell: bash
-        run: script/ci/upload-on-failure.sh "bundle exec rake test:cargo" "cargo-test" "./target"
+        run: bundle exec rake test:cargo
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem
