@@ -1,6 +1,8 @@
 use crate::RbConfig;
 
+#[allow(dead_code)]
 pub const LATEST_STABLE_VERSION: Version = Version::new(3, 2);
+#[allow(dead_code)]
 pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy)]
@@ -26,6 +28,7 @@ impl Version {
         )
     }
 
+    #[allow(dead_code)]
     pub fn is_stable(&self) -> bool {
         *self >= MIN_SUPPORTED_STABLE_VERSION && *self <= LATEST_STABLE_VERSION
     }
