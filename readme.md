@@ -7,12 +7,6 @@
 The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If
 it's not easy, it's a bug.
 
-- [Battle-tested **Ruby FFI bindings** ](./crates/rb-sys/readme.md) for Rust (via `rb-sys` crate)
-- [Ruby gem for **compiling extensions**](./gem/README.md)
-- [GitHub action][setup-action] to **setup a test environment in CI**
-- [GitHub action][cross-gem-action] to easily **cross compile in CI**
-- [**Test helpers**)][test-helpers] for testing Ruby extensions in Rust
-
 ## Features
 
 - Battle-tested Rust bindings for [the Ruby C API][ruby-c-api]
@@ -20,6 +14,19 @@ it's not easy, it's a bug.
 - Supports all major platforms (Linux, macOS, Windows)
 - Cross compilation of gems
 - Integration with [`rake-compiler`][rake-compiler]
+
+## New to `rb-sys`?
+
+- [Ruby on Rust Book 📖](https://oxidize-rb.github.io/rb-sys/) to describe how to build, test, and deploy a Rusty Ruby Gem
+- [Contributing Docs 💻](./CONTRIBUTING.md) to get started in making your first contributions to rb-sys
+- [`rb-sys` gem 💎](./gem/README.md) to learn more about the `rb-sys` gem for **compiling extensions**
+
+## Quick links
+
+- [Battle-tested **Ruby FFI bindings** ](./crates/rb-sys/readme.md) for Rust (via `rb-sys` crate)
+- [GitHub action][setup-action] to **setup a test environment in CI**
+- [GitHub action][cross-gem-action] to easily **cross compile in CI**
+- [**Test helpers**)][test-helpers] for testing Ruby extensions in Rust
 
 ## Usage
 
