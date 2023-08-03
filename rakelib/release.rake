@@ -23,12 +23,7 @@ namespace :release do
     crates = ["rb-sys-build", "rb-sys"]
 
     crates.each do |crate|
-      sh "cargo publish -p #{crate} #{extra_args.join(" ")}"
-    end
-
-    if extra_args.include?("--dry-run")
-      puts "Skipping gem release because --dry-run was passed"
-      next
+      sh "cargo publish -p #{crate}"
     end
 
     Dir.chdir("gem") do
@@ -40,5 +35,23 @@ namespace :release do
     sh "gh", "release", "create", "v#{RbSys::VERSION}", "--generate-notes"
 
     sh "open", "https://www.rubydoc.info/gems/rb_sys/#{RbSys::VERSION}"
+  end
+
+  desc "Run a dry run of the release"
+  task :dry_run do
+    crates = ["rb-sys-build", "rb-sys", "rb-sys-test-helpers-macros", "rb-sys-test-helpers", "rb-sys-env"]
+
+    crates.each do |crate|
+      system "cargo publish -p #{crate} --dry-run --allow-dirty"
+    end
+  end
+
+  desc "Publish rb-sys-test-helpers"
+  task :publish_test_helpers do
+    crates = ["rb-sys-test-helpers-macros", "rb-sys-test-helpers"]
+
+    crates.each do |crate|
+      sh "cargo publish -p #{crate}"
+    end
   end
 end
