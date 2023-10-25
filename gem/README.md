@@ -21,6 +21,9 @@ GEMSPEC = Gem::Specification.load("my_gem.gemspec")
 
 RbSys::ExtensionTask.new("my-crate-name", GEMSPEC) do |ext|
   ext.lib_dir = "lib/my_gem"
+
+  # If you want to use `rb-sys-dock` for cross-compilation:
+  ext.cross_compile = true
 end
 ```
 
