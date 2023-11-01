@@ -15,7 +15,7 @@ doctest = false
 [dependencies]
 regex = "1"
 shell-words = "1.1"
-bindgen = { version = "0.66", default-features = false, features = ["runtime"] }
+bindgen = { version = "0.69", default-features = false, features = ["runtime"] }
 syn = { version = "2.0", features = ["parsing", "full", "extra-traits"] }
 quote = "1.0"
 lazy_static = "1.4.0"
