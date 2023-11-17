@@ -11,9 +11,9 @@ fn test_rb_gc_guarded_ptr_basic() {
         let mut string = rb_str_cat_cstr(t, sptr);
         let result = rstring_to_string!(string);
 
-        rb_gc_guard!(s);
-        rb_gc_guard!(t);
-        rb_gc_guard!(string);
+        let _ = rb_gc_guard!(s);
+        let _ = rb_gc_guard!(t);
+        let _ = rb_gc_guard!(string);
 
         assert_eq!("hello, world", result);
     }
@@ -41,11 +41,11 @@ fn test_rb_gc_guarded_ptr_vec() {
             let mut inspected = rb_sys::rb_inspect(rarray);
             let result = rstring_to_string!(inspected);
 
-            rb_gc_guard!(s1);
-            rb_gc_guard!(s2);
-            rb_gc_guard!(s3);
-            rb_gc_guard!(rarray);
-            rb_gc_guard!(inspected);
+            let _ = rb_gc_guard!(s1);
+            let _ = rb_gc_guard!(s2);
+            let _ = rb_gc_guard!(s3);
+            let _ = rb_gc_guard!(rarray);
+            let _ = rb_gc_guard!(inspected);
 
             assert_eq!(
                 result,

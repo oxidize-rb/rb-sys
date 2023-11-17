@@ -49,7 +49,7 @@ pub fn generate(
         .blocklist_item("ruby_abi_version")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     let bindings = if cfg!(feature = "bindgen-rbimpls") {
         bindings
@@ -143,7 +143,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .merge_extern_blocks(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
         .impl_debug(cfg!(feature = "bindgen-impl-debug"))
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks));
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {
         bindings.enable_function_attribute_detection()
