@@ -121,7 +121,7 @@ jobs:
         if: env.ACTIONS_STEP_DEBUG == 'true'
         run: bundle exec rake bindings:generate
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: rb-sys-ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
