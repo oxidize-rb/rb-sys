@@ -1,10 +1,30 @@
+use std::vec;
+
 use quote::ToTokens;
+
+use crate::RbConfig;
 
 const OPAQUE_STRUCTS: [&str; 2] = ["RString", "RArray"];
 
+const OPAQUE_STRUCTS_RUBY_3_3: [&str; 3] = [
+    "rb_matchext_struct",
+    "rb_internal_thread_event_data",
+    "rb_io_internal_buffer",
+];
+
 /// Generate opaque structs for the given bindings.
-pub fn opaqueify_bindings(bindings: bindgen::Builder, wrapper_h: &mut String) -> bindgen::Builder {
-    OPAQUE_STRUCTS.iter().fold(bindings, |bindings, name| {
+pub fn opaqueify_bindings(
+    rbconfig: &RbConfig,
+    bindings: bindgen::Builder,
+    wrapper_h: &mut String,
+) -> bindgen::Builder {
+    let version_specific_opaque_structs =
+        get_version_specific_opaque_structs(rbconfig.major_minor());
+    let structs_to_opaque = OPAQUE_STRUCTS
+        .iter()
+        .chain(&version_specific_opaque_structs);
+
+    structs_to_opaque.fold(bindings, |bindings, name| {
         gen_opaque_struct(bindings, name, wrapper_h)
     })
 }
@@ -116,4 +136,15 @@ fn gen_opaque_struct(
     bindings
         .opaque_type(&struct_name)
         .allowlist_type(struct_name)
+}
+
+fn get_version_specific_opaque_structs(major_minor: (u32, u32)) -> Vec<&'static str> {
+    let mut result = vec![];
+    let (major, minor) = major_minor;
+
+    if major == 3 && minor >= 3 {
+        result.extend(OPAQUE_STRUCTS_RUBY_3_3)
+    }
+
+    result
 }
