@@ -15,6 +15,7 @@ jobs:
     name: ${{ matrix.repo.slug }} (ruby=${{ matrix.ruby }}, os=${{ matrix.os }})
     strategy:
       fail-fast: false
+      # TODO: Java example repo
       matrix:
         repo:
           - name: "oxidize-rb/oxi-test"

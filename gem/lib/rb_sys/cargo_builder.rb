@@ -220,15 +220,15 @@ module RbSys
     end
 
     def msvc_target?
-      makefile_config("target_os").include?("msvc")
+      config("target_os").include?("msvc")
     end
-
+  
     def darwin_target?
-      makefile_config("target_os").include?("darwin")
+      config("target_os").include?("darwin")
     end
-
+  
     def mingw_target?
-      makefile_config("target_os").include?("mingw")
+      config("target_os").include?("mingw")
     end
 
     def win_target?
@@ -265,6 +265,10 @@ module RbSys
       return unless val
 
       RbConfig.expand(val.dup)
+    end
+
+    def config(var_name)
+      RbConfig::CONFIG[var_name]
     end
 
     # Copied from ExtConfBuilder
