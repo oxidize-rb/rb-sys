@@ -15,10 +15,9 @@ jobs:
     name: ${{ matrix.repo.slug }} (ruby=${{ matrix.ruby }}, os=${{ matrix.os }})
     strategy:
       fail-fast: false
-      # TODO: Java example repo
       matrix:
         repo:
-          - name: "oxidize-rb/oxi-test"
+          - name: "uvlad7/oxi-test"
             slug: oxi-test
             ref: main
             run: rake
@@ -49,6 +48,13 @@ jobs:
               slug: magnus-0.5
               ref: "0.5.4"
               run: cargo test
+        include:
+          - ruby: jruby-9.4.3.0
+            repo:
+              name: "uvlad7/oxi-test"
+              slug: oxi-test
+              ref: main
+              run: rake
 
     runs-on: ${{ matrix.os }}
     steps:
