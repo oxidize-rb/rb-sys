@@ -226,7 +226,7 @@ module RbSys
     def darwin_target?
       config("target_os").include?("darwin")
     end
-  
+
     def mingw_target?
       config("target_os").include?("mingw")
     end
