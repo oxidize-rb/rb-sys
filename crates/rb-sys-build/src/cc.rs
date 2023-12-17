@@ -14,6 +14,8 @@ use std::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+const WELL_KNOWN_WRAPPERS: &[&str] = &["sccache", "cachepot"];
+
 #[derive(Default, Debug)]
 pub struct Build {
     files: Vec<PathBuf>,
@@ -223,27 +225,27 @@ fn get_common_args() -> Vec<String> {
 
 fn get_compiler() -> Command {
     let cmd = get_tool("CC", "cc");
+    let cmd_program = cmd.get_program().to_str().unwrap_or_default();
+    let already_wrapped = WELL_KNOWN_WRAPPERS.iter().any(|w| cmd_program.contains(w));
 
     match get_tool_from_rb_config_or_env("CC_WRAPPER") {
-        Some(wrapper) if !wrapper.is_empty() => {
+        Some(wrapper) if !wrapper.is_empty() && !already_wrapped => {
             debug_log!("INFO: using CC_WRAPPER ({:?})", wrapper);
             cmd.wrapped(wrapper)
         }
         _ => match rustc_wrapper_fallback() {
-            Some(wrapper) => cmd.wrapped(wrapper),
+            Some(wrapper) if !already_wrapped => cmd.wrapped(wrapper),
             _ => cmd,
         },
     }
 }
 
 fn rustc_wrapper_fallback() -> Option<String> {
-    const VALID_WRAPPERS: &[&str] = &["sccache", "cachepot"];
-
     let rustc_wrapper = std::env::var_os("RUSTC_WRAPPER")?;
     let wrapper_path = Path::new(&rustc_wrapper);
     let wrapper_stem = wrapper_path.file_stem()?;
 
-    if VALID_WRAPPERS.contains(&wrapper_stem.to_str()?) {
+    if WELL_KNOWN_WRAPPERS.contains(&wrapper_stem.to_str()?) {
         debug_log!("INFO: using RUSTC_WRAPPER ({:?})", rustc_wrapper);
         Some(rustc_wrapper.to_str()?.to_owned())
     } else {
