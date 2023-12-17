@@ -6,6 +6,8 @@ module RbSys
   # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
   # @api private
   class CargoBuilder < Gem::Ext::Builder
+    WELL_KNOWN_WRAPPERS = %w[sccache cachepot].freeze
+
     attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags,
       :extra_cargo_args
     attr_writer :profile
@@ -148,6 +150,11 @@ module RbSys
     def linker_args
       cc_flag = Shellwords.split(makefile_config("CC"))
       linker = cc_flag.shift
+
+      if WELL_KNOWN_WRAPPERS.any? { |w| linker.include?(w) }
+        linker = cc_flag.shift
+      end
+
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
 
       return mswin_link_args if linker == "cl"
