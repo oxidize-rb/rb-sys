@@ -38,7 +38,15 @@ jobs:
               slug: oxi-test
               ref: main
               run: rake
-            os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+            os: "ubuntu-latest"
+            rust: ["stable"]
+            ruby: jruby-9.4.3.0
+          - repo:
+              name: "uvlad7/oxi-test"
+              slug: oxi-test
+              ref: main
+              run: rake
+            os: "macos-latest"
             rust: ["stable"]
             ruby: jruby-9.4.3.0
         # Should re-include these after unstable-api is enabled
@@ -58,13 +66,14 @@ jobs:
               ref: "0.5.4"
               run: cargo test
           # Should re-include this after build on windows is fixed
-          - os: windows-latest
-            ruby: jruby-9.4.3.0
-            repo:
+          - repo:
               name: "uvlad7/oxi-test"
               slug: oxi-test
               ref: main
               run: rake
+            os: "windows-latest"
+            rust: ["stable"]
+            ruby: jruby-9.4.3.0
 
     runs-on: ${{ matrix.os }}
     steps:
