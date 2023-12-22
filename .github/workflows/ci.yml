@@ -25,7 +25,7 @@ jobs:
     steps:
       - id: data
         run: |
-          curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
+          curl -s https://raw.githubusercontent.com/uvlad7/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
           echo "minimum-supported-rust-version=$(jq -r '.policy["minimum-supported-rust-version"]' toolchains.json)" >> $GITHUB_OUTPUT
   build_and_test:
     name: 🧪 Test
