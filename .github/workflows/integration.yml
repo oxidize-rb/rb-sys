@@ -39,7 +39,7 @@ jobs:
               ref: main
               run: rake
             os: "ubuntu-latest"
-            rust: ["stable"]
+            rust: "stable"
             ruby: jruby-9.4.3.0
           - repo:
               name: "uvlad7/oxi-test"
@@ -47,7 +47,7 @@ jobs:
               ref: main
               run: rake
             os: "macos-latest"
-            rust: ["stable"]
+            rust: "stable"
             ruby: jruby-9.4.3.0
         # Should re-include these after unstable-api is enabled
         exclude:
@@ -72,7 +72,7 @@ jobs:
               ref: main
               run: rake
             os: "windows-latest"
-            rust: ["stable"]
+            rust: "stable"
             ruby: jruby-9.4.3.0
 
     runs-on: ${{ matrix.os }}
