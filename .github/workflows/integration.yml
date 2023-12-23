@@ -91,6 +91,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: rb-sys
+      - uses: actions/setup-java@v4
+        if: startsWith( matrix.ruby, 'jruby')
+        with:
+          distribution: "temurin"
+          java-version: "17"
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         id: setup
         with:

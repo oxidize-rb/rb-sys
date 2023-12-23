@@ -78,6 +78,12 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
+      - uses: actions/setup-java@v4
+        if: startsWith( matrix.ruby_version, 'jruby')
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
         with:
