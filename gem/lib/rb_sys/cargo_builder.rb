@@ -222,11 +222,11 @@ module RbSys
     def msvc_target?
       config("target_os").include?("msvc")
     end
-  
+
     def darwin_target?
       config("target_os").include?("darwin")
     end
-  
+
     def mingw_target?
       config("target_os").include?("mingw")
     end
