@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable all
-
 # add rename_task method to Rake::Application
 # it has an internal hash with name -> Rake::Task mapping
 module Rake
@@ -29,5 +27,3 @@ class Rake::Task
     end
   end
 end
-
-# rubocop:enable all
