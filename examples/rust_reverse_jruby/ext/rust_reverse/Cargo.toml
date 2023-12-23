@@ -5,7 +5,6 @@ autotests = true      # set true if you want to use "cargo test"
 edition = "2018"
 
 [dependencies]
-jni = { version = "*" }
 robusta_jni = { version = "0.2.2" }
 
 [lib]
