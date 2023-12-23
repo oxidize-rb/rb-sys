@@ -9,6 +9,8 @@ rescue LoadError
   require "rust_reverse/rust_reverse"
 end
 
+require "rust_reverse/jruby"
+
 module RustReverse
   class Error < StandardError; end
   # Your code goes here...

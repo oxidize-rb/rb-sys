@@ -5,14 +5,12 @@ autotests = true      # set true if you want to use "cargo test"
 edition = "2018"
 
 [dependencies]
-rb-sys = { version = "0.9.83", path = "./../../../../crates/rb-sys", features = [
-  "global-allocator",
-] }
+jni = { version = "*" }
+robusta_jni = { version = "0.2.2" }
 
 [lib]
 crate-type = ["cdylib"]
 
 [features]
-default = ["stable-api-compiled-testing"]
+default = []
 test-feature = []
-stable-api-compiled-testing = ["rb-sys/stable-api-compiled-testing"]

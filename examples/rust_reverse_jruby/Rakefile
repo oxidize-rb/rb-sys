@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "rake/testtask"
+require_relative "rake_ext"
+require "rake/javaextensiontask"
 require "rake/extensiontask"
 
 SOURCE_PATTERN = "*.{rs,toml,lock,rb}"
@@ -11,6 +13,15 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList["test/**/test_*.rb"]
 end
 
+Rake::JavaExtensionTask.new("rust_reverse") do |ext|
+  ext.lib_dir = "lib/rust_reverse"
+  ext.ext_dir = "ext"
+  ext.source_version = "11"
+  ext.target_version = "11"
+end
+
+Rake::Task[:compile].rename(:java_compile)
+
 Rake::ExtensionTask.new("rust_reverse") do |ext|
   ext.lib_dir = "lib/rust_reverse"
   ext.source_pattern = SOURCE_PATTERN
@@ -18,6 +29,8 @@ Rake::ExtensionTask.new("rust_reverse") do |ext|
   ext.cross_platform = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32 x86-linux x86_64-linux x86_64-darwin arm64-darwin aarch64-linux]
   ext.config_script = ENV["ALTERNATE_CONFIG_SCRIPT"] || "extconf.rb"
 end
+
+task compile: :java_compile
 
 task :build do
   require "bundler"

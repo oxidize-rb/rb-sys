@@ -8,6 +8,7 @@
 /tmp/
 *.bundle
 *.so
+*.jar
 *.o
 *.a
 mkmf.log

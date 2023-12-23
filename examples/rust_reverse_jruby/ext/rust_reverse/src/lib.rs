@@ -1,38 +1,70 @@
-use rb_sys::tracking_allocator::ManuallyTracked;
-use rb_sys::*;
-use std::os::raw::c_long;
+use robusta_jni::convert::{Signature, TryFromJavaValue, TryIntoJavaValue};
+use robusta_jni::jni::{
+    objects::{JClass, JString},
+    strings::JNIString,
+    sys::{jint, JNI_ERR, JNI_VERSION_1_4},
+    JNIEnv, JavaVM, NativeMethod,
+};
+use std::os::raw::c_void;
 
-// NOTICE: This is a low level library. If you are looking to write a gem in
-// Rust, you should probably use https://github.com/matsadler/magnus instead.
-
-unsafe extern "C" fn pub_reverse(_klass: VALUE, input: VALUE) -> VALUE {
-    if rb_sys::NIL_P(input) {
-        // Just here to test out linking globals on msvc
-        rb_raise(rb_eTypeError, "cannot be nil\0".as_ptr() as *const i8);
+extern "system" fn pub_reverse<'local>(
+    env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    input: <String as TryFromJavaValue<'local, 'local>>::Source,
+) -> <String as TryIntoJavaValue<'local>>::Target {
+    let java_string_res: robusta_jni::jni::errors::Result<String> = TryFromJavaValue::try_from(input, &env);
+    match java_string_res {
+        Ok(java_string) => {
+            let reversed = java_string.chars().rev().collect::<String>();
+            let reversed_res: robusta_jni::jni::errors::Result<<String as TryIntoJavaValue>::Target> =
+                TryIntoJavaValue::try_into(reversed, &env);
+            match reversed_res {
+                Ok(conv_res) => {
+                    return conv_res;
+                }
+                Err(err) => {
+                    // No need to handle err, ClassNotFoundException will be thrown implicitly
+                    let _ = env.throw_new("java/lang/RuntimeException", format!("{:?}", err));
+                }
+            }
+        }
+        Err(err) => {
+            // No need to handle err, ClassNotFoundException will be thrown implicitly
+            let _ = env.throw_new("java/lang/RuntimeException", format!("{:?}", err));
+        }
     }
-
-    let ptr = RSTRING_PTR(input);
-    let len = RSTRING_LEN(input);
-    let slice = std::slice::from_raw_parts(ptr as *const u8, len as usize);
-    let ruby_string = std::str::from_utf8(slice).unwrap();
-    let reversed = ruby_string.chars().rev().collect::<String>();
-
-    // Just here to test out the tracking allocator
-    let manually_tracked = ManuallyTracked::wrap("foo", 1024);
-    assert_eq!(&"foo", manually_tracked.get());
-
-    rb_utf8_str_new(reversed.as_ptr() as _, reversed.len() as c_long)
+    JString::from(std::ptr::null_mut())
 }
 
+/// This function is executed on loading native library by JVM.
+/// It initializes the cache of method and class references.
 #[allow(non_snake_case)]
 #[no_mangle]
-extern "C" fn Init_rust_reverse() {
-    unsafe {
-        let klass = rb_define_module("RustReverse\0".as_ptr() as *const i8);
-        let callback = std::mem::transmute::<
-            unsafe extern "C" fn(VALUE, VALUE) -> VALUE,
-            unsafe extern "C" fn() -> VALUE,
-        >(pub_reverse);
-        rb_define_module_function(klass, "reverse\0".as_ptr() as _, Some(callback), 1)
-    }
+pub extern "system" fn JNI_OnLoad<'local>(vm: JavaVM, _: *mut c_void) -> jint {
+    let Ok(env) = vm.get_env() else {
+        return JNI_ERR;
+    };
+    let Ok(clazz) = env.find_class("rbsys/rust_reverse/RustReverse") else {
+        return JNI_ERR;
+    };
+    let reverse_func = pub_reverse
+        as unsafe extern "system" fn(
+        env: JNIEnv<'local>,
+        _class: JClass<'local>,
+        input: JString<'local>,
+    ) -> JString<'local>;
+    let reverse_ptr = reverse_func as *mut c_void;
+    let reverse_method = NativeMethod {
+        name: JNIString::from("reverseNative"),
+        sig: JNIString::from(format!(
+            "({}){}",
+            <JString as Signature>::SIG_TYPE,
+            <JString as Signature>::SIG_TYPE
+        )),
+        fn_ptr: reverse_ptr,
+    };
+    let Ok(_) = env.register_native_methods(clazz, &[reverse_method]) else {
+        return JNI_ERR;
+    };
+    JNI_VERSION_1_4
 }
