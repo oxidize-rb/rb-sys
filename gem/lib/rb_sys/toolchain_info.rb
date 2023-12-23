@@ -32,7 +32,7 @@ module RbSys
       #
       # @return [RbSys::ToolchainInfo]
       def local
-        @current ||= new(RbConfig::CONFIG["arch"])
+        @current ||= new(RUBY_PLATFORM.include?("java") ? RbConfig::CONFIG.values_at("target_cpu", "target_os").join("-") : RbConfig::CONFIG["arch"])
       end
     end
 

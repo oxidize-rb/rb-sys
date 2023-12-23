@@ -16,7 +16,7 @@ class TestRbSys < Minitest::Test
   def test_local
     skip("Skipping for mswin") if win_target?
     assert RbSys::ToolchainInfo.local.is_a?(RbSys::ToolchainInfo)
-    assert_equal RbSys::ToolchainInfo.local.gem_platform, Gem::Platform.local
+    assert_equal RbSys::ToolchainInfo.local.gem_platform, Gem::Platform.local unless RUBY_PLATFORM.include?("java")
   end
 
   def test_to_s
