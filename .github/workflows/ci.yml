@@ -67,7 +67,7 @@ jobs:
       - name: Patch examples
         shell: bash
         run: |
-          if [[ "${{ startsWith( matrix.ruby, 'jruby') }}" == "true" ]]; then
+          if [[ "${{ startsWith( matrix.ruby_version, 'jruby') }}" == "true" ]]; then
             rm -r examples/rust_reverse/
             mv examples/rust_reverse_jruby/ examples/rust_reverse/
           else
