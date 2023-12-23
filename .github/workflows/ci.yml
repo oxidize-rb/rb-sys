@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup examples
+      - name: Patch examples
         shell: bash
         run: |
           if [[ "${{ startsWith( matrix.ruby, 'jruby') }}" == "true" ]]; then
@@ -164,6 +164,11 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Patch examples
+        shell: bash
+        run: |
+          rm -r examples/rust_reverse_jruby/
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
