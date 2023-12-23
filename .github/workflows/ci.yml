@@ -60,6 +60,11 @@ jobs:
             sys:
               os: ubuntu-latest
               rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
+          # Should re-include this after build on windows is fixed
+          - ruby_version: "jruby-9.4.3.0"
+            sys:
+              os: windows-2022
+              rust_toolchain: stable
         include:
           - ruby_version: mswin
             sys:
