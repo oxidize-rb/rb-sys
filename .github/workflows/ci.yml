@@ -64,6 +64,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup examples
+        shell: bash
+        run: |
+          if [[ "${{ startsWith( matrix.ruby, 'jruby') }}" == "true" ]]; then
+            rm -r examples/rust_reverse/
+            mv examples/rust_reverse_jruby/ examples/rust_reverse/
+          else
+            rm -r examples/rust_reverse_jruby/
+          fi
+
       - name: Setup debug info
         shell: bash
         run: script/ci/set-debug-env.sh
