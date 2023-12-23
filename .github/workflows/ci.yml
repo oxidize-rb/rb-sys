@@ -119,7 +119,7 @@ jobs:
         run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
-        if: startsWith( matrix.ruby_version, 'jruby') != "true"
+        if: startsWith( matrix.ruby_version, 'jruby') != true
         shell: bash
         run: bundle exec rake test:cargo
 
@@ -140,7 +140,7 @@ jobs:
           popd
 
       - name: ✂️ Run clippy
-        if: startsWith( matrix.ruby_version, 'jruby') != "true"
+        if: startsWith( matrix.ruby_version, 'jruby') != true
         run: cargo clippy
 
       - name: 📃 Run cargo fmt
@@ -152,7 +152,7 @@ jobs:
         run: bundle exec standardrb --format github
 
       - name: "🧱 Generate bindings"
-        if: env.ACTIONS_STEP_DEBUG == 'true' && startsWith( matrix.ruby_version, 'jruby') != "true"
+        if: env.ACTIONS_STEP_DEBUG == 'true' && startsWith( matrix.ruby_version, 'jruby') != true
         run: bundle exec rake bindings:generate
 
       - uses: actions/upload-artifact@v3
