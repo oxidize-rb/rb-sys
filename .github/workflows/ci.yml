@@ -55,6 +55,11 @@ jobs:
             rust_toolchain: stable
           - os: windows-2022
             rust_toolchain: stable
+        exclude:
+          - ruby_version: "jruby-9.4.3.0"
+            sys:
+              os: ubuntu-latest
+              rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
         include:
           - ruby_version: mswin
             sys:
@@ -114,6 +119,7 @@ jobs:
         run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
+        if: startsWith( matrix.ruby_version, 'jruby') != "true"
         shell: bash
         run: bundle exec rake test:cargo
 
