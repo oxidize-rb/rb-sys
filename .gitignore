@@ -3,3 +3,6 @@ Gemfile.lock
 tmp/
 gem/docs
 .yardoc/
+.rtx.toml
+*.iml
+.idea/

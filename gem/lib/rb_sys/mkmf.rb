@@ -98,7 +98,7 @@ module RbSys
         TARGET_ENTRY = #{RbConfig::CONFIG["EXPORT_PREFIX"]}Init_$(TARGET_NAME)
         RUBYARCHDIR = $(sitearchdir)$(target_prefix)
         TARGET = #{target}
-        DLLIB = $(TARGET).#{RbConfig::CONFIG["DLEXT"]}
+        DLLIB = $(TARGET).#{RbConfig::MAKEFILE_CONFIG["DLEXT"]}
         RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
         TIMESTAMP_DIR = .

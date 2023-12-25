@@ -1,0 +1,15 @@
+[package]
+name = "rust_reverse"
+version = "0.9.83"
+autotests = true      # set true if you want to use "cargo test"
+edition = "2018"
+
+[dependencies]
+robusta_jni = { version = "0.2.2" }
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = []
+test-feature = []

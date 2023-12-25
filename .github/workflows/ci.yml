@@ -25,7 +25,7 @@ jobs:
     steps:
       - id: data
         run: |
-          curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
+          curl -s https://raw.githubusercontent.com/uvlad7/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
           echo "minimum-supported-rust-version=$(jq -r '.policy["minimum-supported-rust-version"]' toolchains.json)" >> $GITHUB_OUTPUT
   build_and_test:
     name: 🧪 Test
@@ -34,7 +34,18 @@ jobs:
       fail-fast: false
       matrix:
         # Test against all versions supported by rubygems
-        ruby_version: ["2.4", "2.5", "2.6", "2.7", "3.0", "3.1", "3.2", "head"]
+        ruby_version:
+          [
+            "2.4",
+            "2.5",
+            "2.6",
+            "2.7",
+            "3.0",
+            "3.1",
+            "3.2",
+            "head",
+            "jruby-9.4.3.0",
+          ]
         sys:
           - os: ubuntu-latest
             rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
@@ -44,6 +55,16 @@ jobs:
             rust_toolchain: stable
           - os: windows-2022
             rust_toolchain: stable
+        exclude:
+          - ruby_version: "jruby-9.4.3.0"
+            sys:
+              os: ubuntu-latest
+              rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
+          # Should re-include this after build on windows is fixed
+          - ruby_version: "jruby-9.4.3.0"
+            sys:
+              os: windows-2022
+              rust_toolchain: stable
         include:
           - ruby_version: mswin
             sys:
@@ -53,9 +74,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Patch examples
+        shell: bash
+        run: |
+          if [[ "${{ startsWith( matrix.ruby_version, 'jruby') }}" == "true" ]]; then
+            rm -r examples/rust_reverse/
+            mv examples/rust_reverse_jruby/ examples/rust_reverse/
+          else
+            rm -r examples/rust_reverse_jruby/
+          fi
+
       - name: Setup debug info
         shell: bash
         run: script/ci/set-debug-env.sh
+
+      - uses: actions/setup-java@v4
+        if: startsWith( matrix.ruby_version, 'jruby')
+        with:
+          distribution: "temurin"
+          java-version: "17"
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
@@ -87,6 +124,7 @@ jobs:
         run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
+        if: startsWith( matrix.ruby_version, 'jruby') != true
         shell: bash
         run: bundle exec rake test:cargo
 
@@ -107,6 +145,7 @@ jobs:
           popd
 
       - name: ✂️ Run clippy
+        if: startsWith( matrix.ruby_version, 'jruby') != true
         run: cargo clippy
 
       - name: 📃 Run cargo fmt
@@ -118,7 +157,7 @@ jobs:
         run: bundle exec standardrb --format github
 
       - name: "🧱 Generate bindings"
-        if: env.ACTIONS_STEP_DEBUG == 'true'
+        if: env.ACTIONS_STEP_DEBUG == 'true' && startsWith( matrix.ruby_version, 'jruby') != true
         run: bundle exec rake bindings:generate
 
       - uses: actions/upload-artifact@v4
@@ -143,6 +182,11 @@ jobs:
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Patch examples
+        shell: bash
+        run: |
+          rm -r examples/rust_reverse_jruby/
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:

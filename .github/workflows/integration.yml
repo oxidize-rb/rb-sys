@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         repo:
-          - name: "oxidize-rb/oxi-test"
+          - name: "uvlad7/oxi-test"
             slug: oxi-test
             ref: main
             run: rake
@@ -32,6 +32,23 @@ jobs:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
         ruby: ["2.7", "3.2", "ruby-head"]
+        include:
+          - repo:
+              name: "uvlad7/oxi-test"
+              slug: oxi-test
+              ref: main
+              run: rake
+            os: "ubuntu-latest"
+            rust: "stable"
+            ruby: jruby-9.4.3.0
+          - repo:
+              name: "uvlad7/oxi-test"
+              slug: oxi-test
+              ref: main
+              run: rake
+            os: "macos-latest"
+            rust: "stable"
+            ruby: jruby-9.4.3.0
         # Should re-include these after unstable-api is enabled
         exclude:
           - os: windows-latest
@@ -48,6 +65,15 @@ jobs:
               slug: magnus-0.5
               ref: "0.5.4"
               run: cargo test
+          # Should re-include this after build on windows is fixed
+          - repo:
+              name: "uvlad7/oxi-test"
+              slug: oxi-test
+              ref: main
+              run: rake
+            os: "windows-latest"
+            rust: "stable"
+            ruby: jruby-9.4.3.0
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -65,6 +91,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: rb-sys
+      - uses: actions/setup-java@v4
+        if: startsWith( matrix.ruby, 'jruby')
+        with:
+          distribution: "temurin"
+          java-version: "17"
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         id: setup
         with:
