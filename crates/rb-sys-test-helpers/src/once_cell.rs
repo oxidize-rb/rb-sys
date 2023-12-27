@@ -30,6 +30,7 @@ impl<T> OnceCell<T> {
             }
         });
 
+        #[allow(useless_ptr_null_checks)]
         while !self.ready.load(Ordering::Acquire) && !self.value_ptr.get().is_null() {
             std::thread::yield_now();
         }

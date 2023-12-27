@@ -5,8 +5,8 @@ use crate::{
 };
 use std::os::raw::{c_char, c_long};
 
-#[cfg(not(ruby_eq_3_2))]
-compile_error!("This file should only be included in Ruby 3.2 builds");
+#[cfg(not(ruby_eq_3_3))]
+compile_error!("This file should only be included in Ruby 3.3 builds");
 
 pub struct Definition;
 
@@ -16,14 +16,7 @@ impl StableApiDefinition for Definition {
         assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
 
         let rstring: &RString = &*(obj as *const RString);
-        let flags = rstring.basic.flags;
-        let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
-
-        if !is_heap {
-            rstring.as_.embed.len as _
-        } else {
-            rstring.as_.heap.len
-        }
+        rstring.len
     }
 
     #[inline]

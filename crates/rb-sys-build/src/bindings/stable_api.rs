@@ -1,10 +1,30 @@
+use std::vec;
+
 use quote::ToTokens;
+
+use crate::RbConfig;
 
 const OPAQUE_STRUCTS: [&str; 2] = ["RString", "RArray"];
 
+const OPAQUE_STRUCTS_RUBY_3_3: [&str; 3] = [
+    "rb_matchext_struct",
+    "rb_internal_thread_event_data",
+    "rb_io_internal_buffer",
+];
+
 /// Generate opaque structs for the given bindings.
-pub fn opaqueify_bindings(bindings: bindgen::Builder, wrapper_h: &mut String) -> bindgen::Builder {
-    OPAQUE_STRUCTS.iter().fold(bindings, |bindings, name| {
+pub fn opaqueify_bindings(
+    rbconfig: &RbConfig,
+    bindings: bindgen::Builder,
+    wrapper_h: &mut String,
+) -> bindgen::Builder {
+    let version_specific_opaque_structs =
+        get_version_specific_opaque_structs(rbconfig.major_minor());
+    let structs_to_opaque = OPAQUE_STRUCTS
+        .iter()
+        .chain(&version_specific_opaque_structs);
+
+    structs_to_opaque.fold(bindings, |bindings, name| {
         gen_opaque_struct(bindings, name, wrapper_h)
     })
 }
@@ -29,12 +49,23 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
             } else {
                 normal_items.push(item.clone());
             }
+        } else if let syn::Item::Type(t) = item {
+            if t.ident.to_string().contains("rb_sys__Opaque__") {
+                let new_name = t.ident.to_string().replace("rb_sys__Opaque__", "");
+                t.ident = syn::Ident::new(&new_name, t.ident.span());
+                opaque_idents_to_swap.push(new_name);
+
+                opaque_items.push(item.clone());
+            } else {
+                normal_items.push(item.clone());
+            }
         } else {
             if let syn::Item::Fn(ref mut f) = item {
                 if f.sig.ident.to_string().contains("bindgen_test_") {
                     let body = &mut f.block;
                     let code = body.clone().to_token_stream().to_string();
                     let new_code = code.replace("rb_sys__Opaque__", "super::stable::");
+                    let new_code = syn::parse_str::<syn::Block>(&new_code).unwrap();
 
                     *body = syn::parse_quote! {
                         {
@@ -50,11 +81,37 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
         }
     }
 
+    for item in normal_items.iter_mut() {
+        if let syn::Item::Type(ref mut t) = item {
+            if let Ok(syn::Type::Path(ref mut type_path)) =
+                syn::parse2::<syn::Type>(t.ty.to_token_stream())
+            {
+                if opaque_idents_to_swap.contains(&type_path.path.segments[0].ident.to_string()) {
+                    let new_ident = syn::Ident::new(
+                        &type_path.path.segments[0].ident.to_string(),
+                        type_path.path.segments[0].ident.span(),
+                    );
+                    t.ty = syn::parse_quote! { crate::internal::#new_ident };
+                }
+            }
+        }
+    }
+
     for mut item in normal_items {
         if let syn::Item::Struct(s) = &mut item {
             if opaque_idents_to_swap.contains(&s.ident.to_string()) {
-                internal_items.push(s.clone());
+                internal_items.push(syn::Item::Struct(s.clone()));
                 s.attrs.push(syn::parse_quote! {
+                    #[deprecated(note = "To improve API stability with ruby-head, direct usage of Ruby internal structs has been deprecated. To migrate, please replace the usage of this internal struct with its counterpart in the `rb_sys::stable` module. For example, instead of `use rb_sys::rb_sys__Opaque__ExampleStruct;`, use `use rb_sys::stable::ExampleStruct;`. If you need to access the internals of these items, you can use the provided `rb-sys::macros` instead.")]
+                });
+                unstable_items.push(item);
+            } else {
+                excluded_items.push(item);
+            }
+        } else if let syn::Item::Type(t) = &mut item {
+            if opaque_idents_to_swap.contains(&t.ident.to_string()) {
+                internal_items.push(syn::Item::Type(t.clone()));
+                t.attrs.push(syn::parse_quote! {
                     #[deprecated(note = "To improve API stability with ruby-head, direct usage of Ruby internal structs has been deprecated. To migrate, please replace the usage of this internal struct with its counterpart in the `rb_sys::stable` module. For example, instead of `use rb_sys::rb_sys__Opaque__ExampleStruct;`, use `use rb_sys::stable::ExampleStruct;`. If you need to access the internals of these items, you can use the provided `rb-sys::macros` instead.")]
                 });
                 unstable_items.push(item);
@@ -65,7 +122,6 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
             excluded_items.push(item);
         }
     }
-
     *syntax = syn::parse_quote! {
         /// Contains all items that are not yet categorized by ABI stability.
         /// These items are candidates for promotion to `stable` or `unstable`
@@ -116,4 +172,15 @@ fn gen_opaque_struct(
     bindings
         .opaque_type(&struct_name)
         .allowlist_type(struct_name)
+}
+
+fn get_version_specific_opaque_structs(major_minor: (u32, u32)) -> Vec<&'static str> {
+    let mut result = vec![];
+    let (major, minor) = major_minor;
+
+    if major == 3 && minor >= 3 {
+        result.extend(OPAQUE_STRUCTS_RUBY_3_3)
+    }
+
+    result
 }

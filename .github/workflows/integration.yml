@@ -23,7 +23,7 @@ jobs:
             run: rake
           - name: "matsadler/magnus"
             slug: magnus-0.5
-            ref: "0.5.4"
+            ref: "0.5.5"
             run: cargo test
           - name: "matsadler/magnus"
             slug: magnus-head
@@ -31,22 +31,21 @@ jobs:
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
-        ruby: ["2.7", "3.2", "ruby-head"]
-        # Should re-include these after unstable-api is enabled
+        ruby: ["2.7", "3.2", "3.3", "ruby-head"]
         exclude:
           - os: windows-latest
-            ruby: ruby-head
+            ruby: '3.3' # remove this once 3.3 binaries are available for windows
             repo:
               name: "matsadler/magnus"
               slug: magnus-head
               ref: "05359fcd2369f014570f1e417c7c2d462625af5e"
               run: cargo test
           - os: windows-latest
-            ruby: ruby-head
+            ruby: '3.3' # remove this once 3.3 binaries are available for windows
             repo:
               name: "matsadler/magnus"
               slug: magnus-0.5
-              ref: "0.5.4"
+              ref: "0.5.5"
               run: cargo test
 
     runs-on: ${{ matrix.os }}
