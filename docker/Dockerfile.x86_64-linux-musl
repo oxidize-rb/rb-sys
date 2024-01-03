@@ -51,9 +51,9 @@ RUN mkdir ~/.gnupg && \
 RUN gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB && \
     (curl -L http://get.rvm.io | sudo bash) && \
     bash -c " \
-        source /etc/rubybashrc && \
-        rvm autolibs disable && \
-        rvmsudo rvm cleanup all "
+    source /etc/rubybashrc && \
+    rvm autolibs disable && \
+    rvmsudo rvm cleanup all "
 
 # Import patch files for ruby and gems
 COPY setup/musl/patches /home/rvm/patches/
@@ -63,7 +63,7 @@ ENV RVM_RUBIES 3.1.3
 RUN bash -c " \
     export CFLAGS='-s -O3 -fno-fast-math -fPIC' && \
     for v in ${RVM_RUBIES} ; do \
-        rvm install \$v --patch \$(echo ~/patches/ruby-\$v/* | tr ' ' ','); \
+    rvm install \$v --patch \$(echo ~/patches/ruby-\$v/* | tr ' ' ','); \
     done && \
     rvm cleanup all && \
     find /usr/local/rvm -type d -print0 | sudo xargs -0 chmod g+sw "
@@ -72,9 +72,9 @@ RUN bash -c " \
 # do not generate documentation for gems
 RUN echo "gem: --no-ri --no-rdoc" >> ~/.gemrc && \
     bash -c " \
-        rvm all do gem update --system --no-document && \
-        rvm all do gem install --no-document bundler 'bundler:~>1.16' 'rake-compiler:1.2.1' hoe mini_portile rubygems-tasks mini_portile2 && \
-        find /usr/local/rvm -type d -print0 | sudo xargs -0 chmod g+sw "
+    rvm all do gem update --system --no-document && \
+    rvm all do gem install --no-document bundler 'bundler:~>1.16' 'rake-compiler:1.2.1' hoe mini_portile rubygems-tasks mini_portile2 && \
+    find /usr/local/rvm -type d -print0 | sudo xargs -0 chmod g+sw "
 
 # Install rake-compiler's cross rubies in global dir instead of /root
 RUN sudo mkdir -p /usr/local/rake-compiler && \
@@ -92,13 +92,13 @@ USER rvm
 COPY setup/musl/patches2 /home/rvm/patches/
 RUN bash -c " \
     for v in ${RVM_RUBIES} ; do \
-      cd /usr/local/rvm/gems/ruby-\$v/gems/rake-compiler-1.2.1 && \
-      echo applying patches to ruby-\$v /home/rvm/patches/rake-compiler-1.2.1/*.patch && \
-      ( git apply /home/rvm/patches/rake-compiler-1.2.1/*.patch || true ) \
+    cd /usr/local/rvm/gems/ruby-\$v/gems/rake-compiler-1.2.1 && \
+    echo applying patches to ruby-\$v /home/rvm/patches/rake-compiler-1.2.1/*.patch && \
+    ( git apply /home/rvm/patches/rake-compiler-1.2.1/*.patch || true ) \
     done "
 
 # Build xruby versions with ruby2_keywords in parallel using ruby-3.x
-ENV XRUBIES "3.2.0:3.1.0:3.0.0:2.7.0"
+ENV XRUBIES "3.3.0-rc1:3.2.0:3.1.0:3.0.0:2.7.0"
 # Build xruby versions in parallel
 # Then cleanup all build artifacts
 RUN bash -c " \
@@ -138,7 +138,7 @@ RUN echo "source /etc/profile.d/rcd-env.sh" >> /etc/rubybashrc
 # Install sudoers configuration
 COPY setup/musl/sudoers /etc/sudoers.d/rake-compiler-dock
 
-ENV RUBY_CC_VERSION 3.2.0:3.1.0:3.0.0:2.7.0
+ENV RUBY_CC_VERSION 3.3.0:3.2.0:3.1.0:3.0.0:2.7.0
 
 CMD bash
 
