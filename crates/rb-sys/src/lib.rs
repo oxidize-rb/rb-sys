@@ -8,6 +8,7 @@ pub mod memory;
 pub mod special_consts;
 #[cfg(feature = "stable-api")]
 pub mod stable_api;
+pub mod symbol;
 pub mod tracking_allocator;
 pub mod value_type;
 

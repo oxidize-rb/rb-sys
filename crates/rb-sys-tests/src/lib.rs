@@ -25,3 +25,6 @@ mod memory_test;
 
 #[cfg(test)]
 mod stable_api_test;
+
+#[cfg(test)]
+mod symbol_test;
