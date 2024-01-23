@@ -82,6 +82,9 @@ impl RbConfig {
                     .arg("print RbConfig::CONFIG.map {|kv| kv.join(\"\x1F\")}.join(\"\x1E\")")
                     .output()
                     .unwrap_or_else(|e| panic!("ruby not found: {}", e));
+                if !config.status.success() {
+                    panic!("non-zero exit status while dumping RbConfig: {:?}", config);
+                }
                 String::from_utf8(config.stdout).expect("RbConfig value not UTF-8!")
             });
 
