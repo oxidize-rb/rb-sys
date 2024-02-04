@@ -6,6 +6,8 @@ require "rb_sys"
 require "pathname"
 require "minitest/autorun"
 
+ENV["RB_SYS_TEST"] = "1"
+
 module TestHelpers
   def win_target?
     target_platform = RbConfig::CONFIG["target_os"]

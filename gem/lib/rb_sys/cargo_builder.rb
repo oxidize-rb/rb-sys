@@ -328,6 +328,8 @@ module RbSys
     end
 
     def rubygems_invoked?
+      return false if ENV["RB_SYS_TEST"] == "1"
+
       ENV.key?("SOURCE_DATE_EPOCH")
     end
 
