@@ -19,9 +19,17 @@
       {
         devShells.default = mkShell {
           buildInputs = [
+            fastmod
             ruby_3_3.devEnv
             rust-bin.stable.latest.default
+            bundler
+            zsh
           ];
+
+          # Make is so nix develop --impure uses zsh config
+          shellHook = ''
+            exec zsh
+          '';
         };
       }
     );
