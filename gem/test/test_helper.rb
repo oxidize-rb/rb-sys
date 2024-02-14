@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+ENV["RB_SYS_TEST"] ||= "1"
+
 require "rb_sys"
 
 require "pathname"

@@ -328,7 +328,7 @@ module RbSys
     end
 
     def rubygems_invoked?
-      ENV.key?("SOURCE_DATE_EPOCH")
+      ENV.key?("SOURCE_DATE_EPOCH") && !ENV["RB_SYS_TEST"] == "1"
     end
 
     # Error raised when no cdylib artifact was created
