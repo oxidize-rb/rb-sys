@@ -58,6 +58,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: oxidize-rb/actions/upload-core-dumps@v1
+
       - name: Setup debug info
         shell: bash
         run: script/ci/set-debug-env.sh
@@ -89,11 +91,15 @@ jobs:
         shell: bash
         env:
           RB_SYS_CARGO_PROFILE: "release"
-        run: script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
+        run: |
+          ulimit -c unlimited
+          script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
 
       - name: 🧪 Cargo test
         shell: bash
-        run: bundle exec rake test:cargo
+        run: |
+          ulimit -c unlimited
+          bundle exec rake test:cargo
 
       - name: 💎 Gem test
         run: bundle exec rake test:gem
@@ -102,6 +108,7 @@ jobs:
         shell: bash
         run: |
           set -ex
+          ulimit -c unlimited
           gem update --system 3.3.22 > /dev/null
           export RUBYOPT="-I$PWD/gem/lib"
           pushd examples/rust_reverse
@@ -149,6 +156,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: oxidize-rb/actions/upload-core-dumps@v1
+
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: none
@@ -185,4 +194,7 @@ jobs:
         run: bundle install -j3
 
       - name: 🧪 Run tests
-        run: bundle exec rake test
+        shell: bash
+        run: |
+          ulimit -c unlimited
+          bundle exec rake test
