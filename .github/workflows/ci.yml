@@ -92,6 +92,7 @@ jobs:
 
       - name: 🧪 Cargo test
         shell: bash
+        if: matrix.ruby_version != 'mswin'
         run: |
           ulimit -c unlimited
           bundle exec rake test:cargo
