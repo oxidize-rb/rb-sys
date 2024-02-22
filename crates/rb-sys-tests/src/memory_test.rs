@@ -26,26 +26,26 @@ fn test_rb_gc_guarded_ptr_vec() {
             let mut vec_of_values: Vec<VALUE> = Default::default();
 
             let s1 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            let s1 = rb_gc_guard!(s1);
             vec_of_values.push(s1);
 
             let s2 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            let s2 = rb_gc_guard!(s2);
             vec_of_values.push(s2);
 
             let s3 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            let s3 = rb_gc_guard!(s3);
             vec_of_values.push(s3);
 
             let ptr = &vec_of_values.as_ptr();
             let len = &vec_of_values.len();
 
             let rarray = rb_sys::rb_ary_new_from_values(*len as _, *ptr);
-            let mut inspected = rb_sys::rb_inspect(rarray);
-            let result = rstring_to_string!(inspected);
+            let rarray = rb_gc_guard!(rarray);
 
-            let _ = rb_gc_guard!(s1);
-            let _ = rb_gc_guard!(s2);
-            let _ = rb_gc_guard!(s3);
-            let _ = rb_gc_guard!(rarray);
-            let _ = rb_gc_guard!(inspected);
+            let inspected = rb_sys::rb_inspect(rarray);
+            let mut inspected = rb_gc_guard!(inspected);
+            let result = rstring_to_string!(inspected);
 
             assert_eq!(
                 result,
