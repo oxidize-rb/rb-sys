@@ -49,11 +49,6 @@ jobs:
             sys:
               os: windows-2022
               rust_toolchain: stable-x86_64-pc-windows-msvc
-        exclude:
-          - ruby_version: 3.3 # remove this once Ruby 3.3 binaries are available for windows
-            sys:
-              os: windows-2022
-              rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v4
