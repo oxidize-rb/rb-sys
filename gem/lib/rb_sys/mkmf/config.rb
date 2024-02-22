@@ -55,7 +55,7 @@ module RbSys
       # install, to remove bloat.
       # @api private
       def rubygems_invoked?
-        ENV.key?("SOURCE_DATE_EPOCH") && !ENV["RB_SYS_TEST"] == "1"
+        ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
       end
 
       def use_stable_api_compiled_fallback?
