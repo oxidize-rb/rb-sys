@@ -17,7 +17,8 @@ it's not easy, it's a bug.
 
 ## New to `rb-sys`?
 
-- [Ruby on Rust Book 📖](https://oxidize-rb.github.io/rb-sys/) to describe how to build, test, and deploy a Rusty Ruby Gem
+- [Ruby on Rust Book 📖](https://oxidize-rb.github.io/rb-sys/) to describe how to build, test, and deploy a Rusty Ruby
+  Gem
 - [Contributing Docs 💻](./CONTRIBUTING.md) to get started in making your first contributions to rb-sys
 - [`rb-sys` gem 💎](./gem/README.md) to learn more about the `rb-sys` gem for **compiling extensions**
 
@@ -58,14 +59,14 @@ directory for automation purposes):
 
 | Platform          | Supported | Docker Image                                   |
 | ----------------- | --------- | ---------------------------------------------- |
-| x86_64-linux      | ✅         | [`rbsys/x86_64-linux:0.9.89`][docker-hub]      |
-| x86_64-linux-musl | ✅         | [`rbsys/x86_64-linux-musl:0.9.89`][docker-hub] |
-| aarch64-linux     | ✅         | [`rbsys/aarch64-linux:0.9.89`][docker-hub]     |
-| arm-linux         | ✅         | [`rbsys/arm-linux:0.9.89`][docker-hub]         |
-| arm64-darwin      | ✅         | [`rbsys/arm64-darwin:0.9.89`][docker-hub]      |
-| x64-mingw32       | ✅         | [`rbsys/x64-mingw32:0.9.89`][docker-hub]       |
-| x64-mingw-ucrt    | ✅         | [`rbsys/x64-mingw-ucrt:0.9.89`][docker-hub]    |
-| mswin             | ✅         | not available on Docker                        |
+| x86_64-linux      | ✅        | [`rbsys/x86_64-linux:0.9.89`][docker-hub]      |
+| x86_64-linux-musl | ✅        | [`rbsys/x86_64-linux-musl:0.9.89`][docker-hub] |
+| aarch64-linux     | ✅        | [`rbsys/aarch64-linux:0.9.89`][docker-hub]     |
+| arm-linux         | ✅        | [`rbsys/arm-linux:0.9.89`][docker-hub]         |
+| arm64-darwin      | ✅        | [`rbsys/arm64-darwin:0.9.89`][docker-hub]      |
+| x64-mingw32       | ✅        | [`rbsys/x64-mingw32:0.9.89`][docker-hub]       |
+| x64-mingw-ucrt    | ✅        | [`rbsys/x64-mingw-ucrt:0.9.89`][docker-hub]    |
+| mswin             | ✅        | not available on Docker                        |
 
 ## Getting Help
 

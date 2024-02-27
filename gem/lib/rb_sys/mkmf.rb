@@ -10,9 +10,6 @@ require_relative "mkmf/config"
 module RbSys
   # Helper class for creating Rust Makefiles
   module Mkmf
-    # @api private
-    GLOBAL_RUSTFLAGS = ["--cfg=rb_sys_gem"]
-
     # Helper for building Rust extensions by creating a Ruby compatible makefile
     # for Rust. By using this class, your rust extension will be 100% compatible
     # with the rake-compiler gem, which allows for easy cross compilation.
@@ -53,7 +50,9 @@ module RbSys
       RbConfig.expand(srcdir = srcprefix.dup)
 
       full_cargo_command = cargo_command(srcdir, builder)
-      global_rustflags = GLOBAL_RUSTFLAGS.dup
+
+      global_rustflags = []
+      global_rustflags << "--cfg=rb_sys_gem" unless builder.use_cargo_build
       global_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback" if builder.use_stable_api_compiled_fallback?
 
       make_install = +<<~MAKE
@@ -169,7 +168,11 @@ module RbSys
       cargo_cmd = builder.cargo_command(dest_path, args)
       cmd = Shellwords.join(cargo_cmd)
       cmd.gsub!("\\=", "=")
-      cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS) --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml")
+      if builder.use_cargo_build
+        cmd.gsub!(/\Acargo rustc/, "$(CARGO) build $(RB_SYS_EXTRA_CARGO_ARGS) --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml")
+      else
+        cmd.gsub!(/\Acargo rustc/, "$(CARGO) rustc $(RB_SYS_EXTRA_CARGO_ARGS) --manifest-path $(RB_SYS_CARGO_MANIFEST_DIR)/Cargo.toml")
+      end
       cmd.gsub!(/-v=\d/, "")
       cmd
     end

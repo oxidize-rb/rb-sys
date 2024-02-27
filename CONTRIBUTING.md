@@ -31,8 +31,7 @@ make contribution easier. Here are the steps to use it:
 
 ## Running benchmarks
 
-To run the benchmarks, make sure your dev environment, then run `cargo bench`.
-This will run the `criterion` benchmarks and print the results to the console.
+To run the benchmarks, make sure your dev environment, then run `cargo bench`. This will run the `criterion` benchmarks
+and print the results to the console.
 
-To see see plots of the results, you can open
-`target/criterion/report/index.html` in your browser.
+To see see plots of the results, you can open `target/criterion/report/index.html` in your browser.
