@@ -66,10 +66,10 @@ module RbSys
 
     def cargo_command(dest_path, args = [])
       cmd = []
-      if config.use_cargo_build
-        cmd += ["cargo", "build"]
+      cmd += if config.use_cargo_build
+        ["cargo", "build"]
       else
-        cmd += ["cargo", "rustc"]
+        ["cargo", "rustc"]
       end
       cmd += ["--target", target] if target
       cmd += ["--target-dir", dest_path]
