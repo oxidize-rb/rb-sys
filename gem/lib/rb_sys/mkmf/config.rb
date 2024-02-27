@@ -25,8 +25,13 @@ module RbSys
       # Use compiled C code fallback for stable API for ruby-head (default: false)
       attr_accessor :use_stable_api_compiled_fallback
 
+      # Instead of the default `cargo rustc` behaviour, just call `cargo build`.
+      # Requires manually setting relevant rb-sys environment (default: false)
+      attr_accessor :use_cargo_build
+
       def initialize(builder)
         @builder = builder
+        @builder.config = self
         @force_install_rust_toolchain = false
         @auto_install_rust_toolchain = true
         @use_stable_api_compiled_fallback = false

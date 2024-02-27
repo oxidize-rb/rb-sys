@@ -9,7 +9,7 @@ module RbSys
     WELL_KNOWN_WRAPPERS = %w[sccache cachepot].freeze
 
     attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags,
-      :extra_cargo_args
+      :extra_cargo_args, :config
     attr_writer :profile
 
     def initialize(spec)
@@ -66,7 +66,11 @@ module RbSys
 
     def cargo_command(dest_path, args = [])
       cmd = []
-      cmd += ["cargo", "rustc"]
+      if config.use_cargo_build
+        cmd += ["cargo", "build"]
+      else
+        cmd += ["cargo", "rustc"]
+      end
       cmd += ["--target", target] if target
       cmd += ["--target-dir", dest_path]
       cmd += ["--features", features.join(",")] unless features.empty?
@@ -74,9 +78,11 @@ module RbSys
       cmd += ["--profile", profile.to_s]
       cmd += Gem::Command.build_args
       cmd += args
-      cmd += ["--"]
-      cmd += [*rustc_args(dest_path)]
-      cmd += extra_rustc_args
+      if !config.use_cargo_build
+        cmd += ["--"]
+        cmd += [*rustc_args(dest_path)]
+        cmd += extra_rustc_args
+      end
       cmd
     end
 
