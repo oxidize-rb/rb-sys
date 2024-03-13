@@ -9,6 +9,10 @@
       "rust-target": "aarch64-unknown-linux-gnu"
     },
     {
+      "ruby-platform": "aarch64-linux-musl",
+      "rust-target": "aarch64-unknown-linux-musl"
+    },
+    {
       "ruby-platform": "arm64-darwin",
       "rust-target": "aarch64-apple-darwin"
     },

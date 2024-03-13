@@ -25,6 +25,16 @@
       "supported": true
     },
     {
+      "ruby-platform": "aarch64-linux-musl",
+      "rust-target": "aarch64-unknown-linux-musl",
+      "dockerfile": "docker/Dockerfile.aarch64-linux-musl",
+      "rake-compiler-dock": {
+        "cc": "aarch64-linux-musl-gcc"
+      },
+      "docker-platform": "linux/arm64/v8",
+      "supported": true
+    },
+    {
       "ruby-platform": "arm64-darwin",
       "rust-target": "aarch64-apple-darwin",
       "dockerfile": "docker/Dockerfile.arm64-darwin",
