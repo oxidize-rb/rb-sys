@@ -7,6 +7,7 @@ ENV RUBY_TARGET="aarch64-linux-musl" \
     CARGO_HOME="/usr/local/cargo" \
     CARGO_BUILD_TARGET="aarch64-unknown-linux-musl" \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C target-feature=-crt-static" \
+    RUSTFLAGS="-C target-feature=-crt-static" \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER="aarch64-linux-musl-gcc" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     PATH="/usr/local/cargo/bin:/usr/local/musl/bin:$PATH" \
