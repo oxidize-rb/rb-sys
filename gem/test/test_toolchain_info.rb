@@ -5,6 +5,7 @@ require "test_helper"
 class TestRbSys < Minitest::Test
   def test_equality
     refute_equal RbSys::ToolchainInfo.new("aarch64-linux"), RbSys::ToolchainInfo.new("arm64-darwin")
+    refute_equal RbSys::ToolchainInfo.new("aarch64-linux-musl"), RbSys::ToolchainInfo.new("aarch64-linux")
     assert_equal RbSys::ToolchainInfo.new("arm64-darwin"), RbSys::ToolchainInfo.new("arm64-darwin")
   end
 

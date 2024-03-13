@@ -28,6 +28,13 @@ module RbSys
         @supported ||= all.select(&:supported?)
       end
 
+      # Get all supported toolchain names, as strings.
+      #
+      # @return [Array<String>]
+      def supported_ruby_platforms
+        supported.map(&:platform)
+      end
+
       # Get the toolchain for the current platform.
       #
       # @return [RbSys::ToolchainInfo]
