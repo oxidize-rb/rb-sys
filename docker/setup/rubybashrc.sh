@@ -46,7 +46,7 @@ main() {
   set_target_env_for_key_matching "^AR_" true
   set_target_env_for_key_matching "^CMAKE_" true
   set_target_env_for_key_matching "^CARGO_TARGET_.*_LINKER" true
-  set_target_env_for_key_matching "^CARGO_TARGET_.*_RUSTFLAGS" true
+  set_target_env_for_key_matching "^CARGO_TARGET_.*_RUSTFLAGS" false
 
   # shellcheck disable=SC2129
   echo "export PATH=\"/usr/local/cargo/bin:\$PATH\"" >> "$OUTFILE"
