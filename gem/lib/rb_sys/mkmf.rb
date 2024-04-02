@@ -29,7 +29,7 @@ module RbSys
     #     r.env = { 'FOO' => 'bar' }
     #     r.profile = ENV.fetch('RB_SYS_CARGO_PROFILE', :dev).to_sym
     #     r.features = %w[some_cargo_feature]
-    #     r.rustflags = %w[--cfg=foo]
+    #     r.extra_rustflags = %w[--cfg=foo]
     #     r.target_dir = "some/target/dir"
     #   end
     def create_rust_makefile(target, &blk)
