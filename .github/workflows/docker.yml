@@ -27,6 +27,7 @@ jobs:
           - ruby_target: x86_64-linux
           - ruby_target: x86_64-linux-musl
           - ruby_target: aarch64-linux
+          - ruby_target: aarch64-linux-musl
           - ruby_target: arm-linux
           - ruby_target: x86_64-darwin
           - ruby_target: arm64-darwin
@@ -111,7 +112,7 @@ jobs:
           export RB_SYS_DOCK_GID=$(id -g)
           export RCD_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-${{ github.sha }}
 
-          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build || true
+          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build
 
       - name: Docker push
         uses: docker/build-push-action@v5

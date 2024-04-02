@@ -46,6 +46,7 @@ main() {
   set_target_env_for_key_matching "^AR_" true
   set_target_env_for_key_matching "^CMAKE_" true
   set_target_env_for_key_matching "^CARGO_TARGET_.*_LINKER" true
+  set_target_env_for_key_matching "^CARGO_TARGET_.*_RUSTFLAGS" true
 
   # shellcheck disable=SC2129
   echo "export PATH=\"/usr/local/cargo/bin:\$PATH\"" >> "$OUTFILE"
@@ -60,15 +61,6 @@ main() {
   echo "export CARGO_BUILD_TARGET=\"$RUST_TARGET\"" >> "$OUTFILE"
   echo "export CARGO=\"/usr/local/cargo/bin/cargo\"" >> "$OUTFILE"
   echo "export RB_SYS_CARGO_PROFILE=\"release\"" >> "$OUTFILE"
-
-  # add musl path if exists
-  if [ -d "/usr/local/musl/bin/" ]
-  then
-    # https://github.com/rust-lang/cargo/issues/10143
-    # https://github.com/rust-lang/cargo/blob/master/src/cargo/core/compiler/build_context/target_info.rs#L612
-    echo "export RUSTFLAGS=\"-C target-feature=-crt-static \$RUSTFLAGS\"" >> "$OUTFILE"
-    echo "export PATH=\"/usr/local/musl/bin:\$PATH\"" >> "$OUTFILE"
-  fi
 
   cat "$OUTFILE"
   validate
