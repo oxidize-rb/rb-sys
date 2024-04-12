@@ -148,6 +148,10 @@ module RbSys
         flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
       end
 
+      if musl?
+        flags += ["-C", "target-feature=-crt-static"]
+      end
+
       flags
     end
 
@@ -335,6 +339,10 @@ module RbSys
 
     def rubygems_invoked?
       ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
+    end
+
+    def musl?
+      RbConfig::CONFIG["target_os"] == "linux-musl" || RbConfig::CONFIG["CC"]&.include?("musl-gcc")
     end
 
     # Error raised when no cdylib artifact was created
