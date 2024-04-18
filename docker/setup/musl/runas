@@ -1,7 +1,0 @@
-#!/bin/bash
-
-groupadd -o -g "$GID" "$GROUP"
-mkdir -p /tmp/home
-useradd -o -g "$GID" -u "$UID" -G rvm,sudo -p "" -b /tmp/home -m "$USER"
-
-/usr/bin/sudo -u "$USER" -H BASH_ENV=/etc/rubybashrc -- "$@"
