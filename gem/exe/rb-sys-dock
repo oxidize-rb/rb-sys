@@ -172,9 +172,9 @@ end
 
 def determine_cache_dir
   return ENV["RB_SYS_DOCK_CACHE_DIR"] if ENV["RB_SYS_DOCK_CACHE_DIR"]
-  return File.join(ENV["XDG_CACHE_HOME"], "rb-sys-dock") if ENV["XDG_CACHE_HOME"]
+  return File.join(ENV["XDG_CACHE_HOME"], "rb-sys") if ENV["XDG_CACHE_HOME"]
 
-  File.join(ENV["HOME"], ".cache", "rb-sys-dock")
+  File.join(ENV["HOME"], ".cache", "rb-sys")
 end
 
 def docker_tmp
