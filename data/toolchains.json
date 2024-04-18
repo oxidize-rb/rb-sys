@@ -1,7 +1,7 @@
 {
   "policy": {
-    "minimum-supported-ruby-version": "2.4",
-    "minimum-supported-rust-version": "1.60"
+    "minimum-supported-ruby-version": "2.5",
+    "minimum-supported-rust-version": "1.63"
   },
   "toolchains": [
     {

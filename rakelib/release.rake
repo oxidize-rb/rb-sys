@@ -1,6 +1,33 @@
 namespace :release do
+  desc "Update docs and such with the current toolchain info"
+  task :toolchain_info do
+    puts "Updating toolchain info in README and Cargo.toml files"
+    readme_old_contents = File.read("readme.md")
+    toolchains = JSON.parse(File.read("data/toolchains.json"))
+    msrv = toolchains["policy"]["minimum-supported-rust-version"]
+
+    readme_new_contents = readme_old_contents.gsub(/<!--\s*toolchains\s*([^>]+)\s*-->([^<]+)<!--\s*\/toolchains\s*-->/) do
+      path = $1.strip
+      parts = path.split(".").compact.reject(&:empty?)
+      value = toolchains.dig(*parts) || raise("No value for path: #{parts}")
+
+      "<!-- toolchains #{path} -->#{value}<!-- /toolchains -->"
+    end
+
+    File.write("readme.md", readme_new_contents)
+
+    Dir["crates/*/Cargo.toml"].each do |path|
+      old_content = File.read(path)
+      new_content = old_content.gsub(/^rust-version = "[^"]+"$/, "rust-version = \"#{msrv}\"")
+      File.write(path, new_content)
+    end
+  end
+
+  desc "Prepare the release"
+  task prepare: ["data:derive", "release:toolchain_info"]
+
   desc "Bump the gem version"
-  task bump: ["readme", "data:derive"] do
+  task bump: "release:prepare" do
     require_relative "./../gem/lib/rb_sys/version"
     old_version = RbSys::VERSION
 

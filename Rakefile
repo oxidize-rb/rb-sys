@@ -91,6 +91,8 @@ end
 namespace :data do
   desc "Derive useful data from data/toolchains.json"
   task :derive do
+    puts "Deriving data from data/toolchains.json"
+
     require "json"
 
     gen = ->(name, value) { File.write(File.join("data/derived", name), JSON.pretty_generate(value)) }
