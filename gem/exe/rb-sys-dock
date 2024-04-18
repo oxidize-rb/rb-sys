@@ -18,7 +18,13 @@ OPTIONS = {
 }
 
 def cargo_metadata
-  @cargo_metadata ||= RbSys::Cargo::Metadata.new("rb-sys-dock", deps: true)
+  return @cargo_metadata if defined?(@cargo_metadata)
+
+  @cargo_metadata = begin
+    RbSys::Cargo::Metadata.inferred(deps: true)
+  rescue
+    nil
+  end
 end
 
 def logger
@@ -421,7 +427,7 @@ def set_env
 end
 
 def lint_rb_sys
-  cargo_version = cargo_metadata.rb_sys_version
+  cargo_version = cargo_metadata&.rb_sys_version || RbSys::VERSION
   return if cargo_version == RbSys::VERSION
   logger.warn("Cargo rb-sys version (#{cargo_version}) does not match Ruby gem version (#{RbSys::VERSION})")
 rescue => e

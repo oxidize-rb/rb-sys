@@ -9,6 +9,26 @@ module RbSys
     class Metadata
       attr_reader :name
 
+      class << self
+        # Infers the Cargo project's name from the Cargo.toml file.
+        #
+        # @return [RbSys::Cargo::Metadata]
+        def inferred(deps: false)
+          new(File.read("Cargo.toml").match(/^name = "(.*)"/)[1], deps: deps)
+        rescue
+          new(File.basename(Dir.pwd), deps: deps)
+        end
+
+        # Initializes a new Cargo::Metadata instance or infers the Cargo project's name.
+        #
+        # @param name [String] the name of the Cargo project
+        def new_or_inferred(name, deps: false)
+          new(name, deps: deps).load!
+        rescue CargoMetadataError
+          inferred
+        end
+      end
+
       # Initializes a new Cargo::Metadata instance.
       #
       # @param name [String] the name of the Cargo project
@@ -92,10 +112,20 @@ module RbSys
       end
 
       # Returns the rb-sys version, if any.
+      #
+      # @return [String]
       def rb_sys_version
         pkg = packages.find { |p| p.fetch("name") == "rb-sys" }
         return unless pkg
         pkg["version"]
+      end
+
+      # Eagerly run `cargo metadata`, raising a RbSys::CargoCargoMetadataError` if it fails.
+      #
+      # @return [RbSys::Cargo::Metadata]
+      def load!
+        cargo_metadata
+        self
       end
 
       private
