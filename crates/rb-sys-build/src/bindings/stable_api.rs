@@ -122,6 +122,22 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
             excluded_items.push(item);
         }
     }
+
+    // Perform a pass on all std::fmt::Debug implementations to fully qualify opaque structs
+    for item in excluded_items.iter_mut() {
+        if let syn::Item::Impl(ref mut impl_item) = item {
+            if let Some((_, syn::Path { segments, .. }, _)) = impl_item.trait_.as_ref() {
+                if segments.iter().any(|segment| segment.ident == "Debug") {
+                    if let syn::Type::Path(ref mut path) = *impl_item.self_ty {
+                        if opaque_idents_to_swap.contains(&path.to_token_stream().to_string()) {
+                            *impl_item.self_ty = syn::parse_quote! { crate::internal::#path };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     *syntax = syn::parse_quote! {
         /// Contains all items that are not yet categorized by ABI stability.
         /// These items are candidates for promotion to `stable` or `unstable`
