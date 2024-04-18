@@ -57,7 +57,7 @@ module RbSys
     end
 
     def cargo_metadata
-      @cargo_metadata ||= Cargo::Metadata.new(@name)
+      @cargo_metadata ||= Cargo::Metadata.new_or_inferred(@name)
     end
 
     def extconf
