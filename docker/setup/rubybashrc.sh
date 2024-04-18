@@ -62,6 +62,10 @@ main() {
   echo "export CARGO=\"/usr/local/cargo/bin/cargo\"" >> "$OUTFILE"
   echo "export RB_SYS_CARGO_PROFILE=\"release\"" >> "$OUTFILE"
 
+  # Don't default to using local .ruby-version because it might not be installed
+  rbenv_global_version="$(cat /usr/local/rbenv/version)"
+  echo "export RBENV_VERSION=\"$rbenv_global_version\"" >> "$OUTFILE"
+
   # https://github.com/rust-lang/cargo/issues/10143
   # https://github.com/rust-lang/cargo/blob/master/src/cargo/core/compiler/build_context/target_info.rs#L612
   if [[ "$RUBY_TARGET" == *-musl ]]; then
