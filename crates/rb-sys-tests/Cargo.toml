@@ -4,7 +4,7 @@ version = "0.9.96"
 edition = "2018"
 autotests = false
 publish = false
-rust-version = "1.60"
+rust-version = "1.63"
 
 [lib]
 bench = false
