@@ -4,10 +4,6 @@ name: Build and push docker images
 on:
   workflow_dispatch:
   push:
-    tags:
-      - "v*"
-    branches:
-      - "main"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -33,7 +29,6 @@ jobs:
           - ruby_target: arm64-darwin
           - ruby_target: x64-mingw32
           - ruby_target: x64-mingw-ucrt
-          # - ruby_target: x86-mingw32
           # - ruby_target: x86-linux
     steps:
       - uses: actions/checkout@v4
@@ -100,19 +95,65 @@ jobs:
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Run tests
+        shell: bash
         run: |
+          echo "::group::Install deps"
+          rb_sys_dock_cache_dir="$HOME/.cache/rb-sys-dock"
           sudo chmod 777 tmp/oxi-test
           cd tmp/oxi-test
+          sed -i "s|gem 'rb_sys', '.*'|gem 'rb_sys', path: '$rb_sys_gem_path/gem'|" Gemfile
 
-          gem install rb_sys
-          cargo update -p rb-sys
-          cargo update -p rb-sys-build
-          cargo update -p rb-sys-env
-          export RB_SYS_DOCK_UID=$(id -u)
-          export RB_SYS_DOCK_GID=$(id -g)
-          export RCD_IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-${{ github.sha }}
+          mkdir .cargo
+          echo "[patch.crates-io]"      >> .cargo/config.toml
+          for package in rb-sys rb-sys-build rb-sys-env; do
+            echo "$package = { git = 'https://github.com/oxidize-rb/rb-sys', rev = '$GITHUB_SHA' }" >> .cargo/config.toml
+            cargo update -p "$package"
+          done
 
-          rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build --version "sha-$GITHUB_SHA"
+          mkdir -p "$rb_sys_dock_cache_dir"
+          export RB_SYS_DOCK_UID="$(id -u)"
+          export RB_SYS_DOCK_GID="$(id -g)"
+          export RB_SYS_DOCK_CACHE_DIR="$rb_sys_dock_cache_dir"
+          bundle install --jobs 4 --retry 3
+          echo "::endgroup::"
+
+          echo "::group::Cross build oxi-test gem (sha-$GITHUB_SHA)"
+          bundle exec rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build --tag "sha-$GITHUB_SHA" --verbose
+          echo "::endgroup::"
+
+          if [ -f pkg/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}.gem ]; then
+            echo "::group::Unpack oxi-test gem for testing"
+            gem unpack pkg/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}.gem --target=tmp
+            tree tmp/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}
+            echo "::endgroup::"
+            echo "✅ oxi-test gem built successfully"
+          else
+            echo "::group::Debug directory"
+            tree .
+            echo "::endgroup::"
+            echo "❌ oxi-test gem build failed"
+            exit 1
+          fi
+
+      - name: Analyze image bloat
+        run: |
+          image="${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-$GITHUB_SHA"
+          lowest_efficiency="0.95"
+          highest_user_wasted_percent="0.05"
+
+          case "${{ matrix.platform.ruby_target }}" in
+            x86_64-linux)
+              lowest_efficiency="0.82"
+              highest_user_wasted_percent="0.27"
+              ;;
+          esac
+
+          echo "Running dive on $image with max wasted percent of $lowest_efficiency"
+
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive "$image" \
+            --ci \
+            --lowestEfficiency "$lowest_efficiency" \
+            --highestUserWastedPercent "$highest_user_wasted_percent"
 
       - name: Docker push
         uses: docker/build-push-action@v5

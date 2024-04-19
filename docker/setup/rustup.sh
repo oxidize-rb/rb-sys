@@ -24,9 +24,6 @@ main() {
   # Use git CLI to fetch crates (avoid memory issues in QEMU environments)
   printf "[net]\ngit-fetch-with-cli = true" >> "$CARGO_HOME/config.toml"
 
-  # Pre-fetch the registry index
-  cargo init --name tmp .
-  cargo fetch
   chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"
 
   echo "export RUSTUP_PERMIT_COPY_RENAME=\"true\"" >> "/etc/rubybashrc"

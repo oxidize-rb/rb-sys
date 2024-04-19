@@ -15,21 +15,12 @@ ENV RUBY_TARGET="x64-mingw32" \
     PKG_CONFIG_PATH_x86_64_pc_windows_gnu="/usr/x86_64-w64-mingw32/pkgconfig" \
     CMAKE_x86_64_pc_windows_gnu="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh /lib.sh
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
-COPY setup/rustup.sh /
-RUN /rustup.sh
+RUN bash -c "source /lib.sh && install_packages libclang-dev" && \
+    /rustup.sh && \
+    /rubygems.sh && \
+    /cmake.sh && \
+    /rubybashrc.sh && \
+    /rb-sys-dock.sh
 
-COPY setup/rubygems.sh /
-RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
-
-RUN bash -c "source /lib.sh && install_packages libclang-dev"
-
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
-COPY setup/rb-sys-dock.sh /
-RUN /rb-sys-dock.sh

@@ -15,21 +15,11 @@ ENV RUBY_TARGET="arm-linux" \
     PKG_CONFIG_PATH="/usr/lib/arm-linux-gnueabihf/pkgconfig" \
     CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh /lib.sh
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
-COPY setup/rustup.sh /
-RUN /rustup.sh
-
-COPY setup/rubygems.sh /
-RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
-
-RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-armhf-cross libc6-dev-armhf-cross"
-
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
-COPY setup/rb-sys-dock.sh /
-RUN /rb-sys-dock.sh
+RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-armhf-cross libc6-dev-armhf-cross" && \
+    /rustup.sh && \
+    /rubygems.sh && \
+    /cmake.sh && \
+    /rubybashrc.sh && \
+    /rb-sys-dock.sh
