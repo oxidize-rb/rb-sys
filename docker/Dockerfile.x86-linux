@@ -16,29 +16,20 @@ ENV RUBY_TARGET="x86-linux" \
     BINDGEN_EXTRA_CLANG_ARGS_i686_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/i686-redhat-linux/4.8.2/include" \
     CMAKE_i686_unknown_linux_gnu="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh /lib.sh
-
-RUN source /lib.sh && install_packages libedit libedit-devel g++-multilib
-
-COPY setup/rustup.sh /
-RUN /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
 RUN set -ex; \
     wget https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/clang-libs-12.0.1-4.module_el8.5.0+1025+93159d6c.i686.rpm \
     https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/llvm-libs-12.0.1-2.module_el8.5.0+918+ed335b90.i686.rpm \
     https://vault.centos.org/centos/8/BaseOS/x86_64/os/Packages/ncurses-libs-6.1-9.20180224.el8.i686.rpm; \
-    rpm -Uvh --nodeps *.rpm; \
-    ln -s /usr/lib/libtinfo.so.6 /usr/lib/libtinfo.so.5; \
-    rm *.rpm;
-
-COPY setup/rubygems.sh /
-RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
-
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
-COPY setup/rb-sys-dock.sh /
-RUN /rb-sys-dock.sh
+    rpm -Uvh --nodeps *.rpm && \
+    ln -s /usr/lib/libtinfo.so.6 /usr/lib/libtinfo.so.5 && \
+    dnf clean all && \
+    bash -c "source /lib.sh && install_packages libedit libedit-devel g++-multilib" && \
+    /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN && \
+    /rubygems.sh && \
+    /cmake.sh && \
+    /rubybashrc.sh && \
+    /rb-sys-dock.sh && \
+    rm *.rpm && \
+    rm -rf /var/cache/yum;

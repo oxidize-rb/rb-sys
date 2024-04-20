@@ -19,7 +19,7 @@ install_packages() {
     for pkg in "${@}"; do
       if ! yum list installed "${pkg}" > /dev/null 2> /dev/null; then
         yum install -y "${pkg}"
-        yum clean all
+        rm -rf /var/cache/yum
 
         purge_list+=("${pkg}")
       fi

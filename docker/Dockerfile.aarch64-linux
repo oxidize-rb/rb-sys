@@ -16,21 +16,11 @@ ENV RUBY_TARGET="aarch64-linux" \
     CMAKE_aarch64_unknown_linux_gnu="/opt/cmake/bin/cmake" \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="/usr/bin/aarch64-linux-gnu-gcc"
 
-COPY setup/lib.sh /lib.sh
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
-COPY setup/rubygems.sh /
-RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
-
-RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-arm64-cross libc6-dev-arm64-cross"
-
-COPY setup/rustup.sh /
-RUN /rustup.sh
-
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
-COPY setup/rb-sys-dock.sh /
-RUN /rb-sys-dock.sh
+RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-arm64-cross libc6-dev-arm64-cross" && \
+    /rustup.sh && \
+    /rubygems.sh && \
+    /cmake.sh && \
+    /rubybashrc.sh && \
+    /rb-sys-dock.sh

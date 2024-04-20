@@ -1,5 +1,9 @@
 FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.5.0-mri-x86-mingw32
 
+ARG LLVM_MINGW_VERSION=20231128 \
+    LLVM_MINGW_SHA256=2d532648bfd202bfe5edfa8b7f6c55970f65639779f34115a9a8bfa6f7d87f0b \
+    LLVM_MINGW_LIBCLANG_VERSION=14.0.0
+
 ENV RUBY_TARGET="x86-mingw32" \
     RUST_TARGET="i686-pc-windows-gnu" \
     RUSTUP_DEFAULT_TOOLCHAIN="stable" \
@@ -7,7 +11,7 @@ ENV RUBY_TARGET="x86-mingw32" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
     PATH="/usr/local/cargo/bin:$PATH" \
-    BINDGEN_EXTRA_CLANG_ARGS_i686_pc_windows_gnu="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-20220323-msvcrt-i686/lib/clang/14.0.0/include" \
+    BINDGEN_EXTRA_CLANG_ARGS_i686_pc_windows_gnu="--sysroot=/usr/i686-w64-mingw32 -I/llvm-mingw/llvm-mingw-${LLVM_MINGW_VERSION}-msvcrt-i686/include -I/llvm-mingw/llvm-mingw-${LLVM_MINGW_VERSION}-msvcrt-i686/lib/clang/${LLVM_MINGW_LIBCLANG_VERSION}/include" \
     LIBCLANG_PATH="/usr/lib/llvm-10/lib/" \
     CC_i686_pc_windows_gnu="i686-w64-mingw32-gcc" \
     CXX_i686_pc_windows_gnu="i686-w64-mingw32-g++" \
@@ -15,27 +19,17 @@ ENV RUBY_TARGET="x86-mingw32" \
     PKG_CONFIG_PATH_i686_pc_windows_gnu="/usr/i686-w64-mingw32/pkgconfig" \
     CMAKE_i686_pc_windows_gnu="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh /lib.sh
-
-COPY setup/rustup.sh /
-RUN /rustup.sh
-
-COPY setup/rubygems.sh /
-RUN /rubygems.sh
-
-COPY setup/cmake.sh /
-RUN /cmake.sh
-
-RUN bash -c "source /lib.sh && install_packages libclang-dev"
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
 RUN set -ex; \
-    curl -Lo /llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-msvcrt-i686.zip; \
-    mkdir /llvm-mingw; \
-    unzip /llvm-mingw.zip -d /llvm-mingw; \
-    rm /llvm-mingw.zip;
-
-COPY setup/rubybashrc.sh /
-RUN /rubybashrc.sh
-
-COPY setup/rb-sys-dock.sh /
-RUN /rb-sys-dock.sh
+    curl -Lo /llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-msvcrt-i686.zip; \
+    echo "${LLVM_MINGW_SHA256} /llvm-mingw.zip" | sha256sum -c - && \
+    mkdir /llvm-mingw && \
+    unzip /llvm-mingw.zip -d /llvm-mingw && \
+    rm /llvm-mingw.zip && \
+    bash -c "source /lib.sh && install_packages libclang-dev" && \
+    /rustup.sh && \
+    /rubygems.sh && \
+    /cmake.sh && \
+    /rubybashrc.sh && \
+    /rb-sys-dock.sh

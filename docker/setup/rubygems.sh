@@ -12,6 +12,7 @@ main() {
 
   gem update --no-document --system $rubygems_version
   gem install bundler:$bundler_version --no-document
+  gem install rb_sys --no-document
 
   # prevent bundler from trampolining itself to a higher version
   echo "export BUNDLER_VERSION=\"$bundler_version\"" >> /etc/rubybashrc
