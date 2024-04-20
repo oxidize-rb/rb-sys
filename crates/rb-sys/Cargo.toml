@@ -1,7 +1,7 @@
 [package]
 build = "build/main.rs"
 name = "rb-sys"
-version = "0.9.96"
+version = "0.9.97"
 edition = "2018"
 readme = "readme.md"
 categories = ["external-ffi-bindings"]
@@ -14,7 +14,7 @@ repository = "https://github.com/oxidize-rb/rb-sys"
 rust-version = "1.63"
 
 [build-dependencies]
-rb-sys-build = { version = "0.9.96", path = "../rb-sys-build" }
+rb-sys-build = { version = "0.9.97", path = "../rb-sys-build" }
 
 [dev-dependencies]
 rb-sys = { path = ".", features = [
