@@ -1,6 +1,7 @@
 # Summary
 
-[Introduction](./introduction.md) [Getting Started](./getting-started.md)
+[Introduction](./introduction.md)
+[Getting Started](./getting-started.md)
 [Background and Concepts](./background-and-concepts.md)
 
 ---
