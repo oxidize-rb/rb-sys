@@ -37,7 +37,7 @@ The default Rake task is configured to compile the Rust code and run tests. Simp
 $ bundle exec rake
 ```
 
-At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is design to be
+At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is designed to be
 a safe and idiomatic wrapper around the Ruby C API.
 
 ## Next steps
