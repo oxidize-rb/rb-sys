@@ -136,9 +136,9 @@
                     <main>
                         <h1 id="cross-compilation"><a class="header" href="#cross-compilation">Cross-Compilation</a></h1>
 <p>Publishing native gem binaries is incredibly important for Ruby on Rust gems. No one likes seeing the infamous
-<code>Compiling native extensions. This could take a while...</code> message when they install a gem. An in Rust, we all know that
+<code>Compiling native extensions. This could take a while...</code> message when they install a gem. And in Rust, we all know that
 compiling can take a while...</p>
-<p>It's important to make sure that your gem is as fast as possible to install, that why <code>rb-sys</code> is built from the ground
+<p>It's important to make sure that your gem is as fast as possible to install, that's why <code>rb-sys</code> is built from the ground
 up to support this use-case. <code>rb-sys</code> integrates seamlessly with <a href="https://github.com/rake-compiler/rake-compiler"><code>rake-compiler</code></a> and
 <a href="https://github.com/rake-compiler/rake-compiler-dock"><code>rake-compiler-dock</code></a>. By leveraging the hard-work of others, cross-compilation for Ruby gems is as simple and
 reliable as it would be for a C extension.</p>
@@ -147,12 +147,12 @@ reliable as it would be for a C extension.</p>
 </blockquote>
 <h2 id="using-the-rb-sys-dock-helper"><a class="header" href="#using-the-rb-sys-dock-helper">Using the <code>rb-sys-dock</code> helper</a></h2>
 <p>The <code>rb-sys-dock</code> executable allows you to easily enter the Docker container used to cross compile your gem. You can use
-you tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
+your tool to build your gem, and then exit the container. The gem will be available in the <code>pkg</code> directory.</p>
 <pre><code class="language-bash">$ bundle exec rb-sys-dock -p aarch64-linux --build
 $ ls pkg # =&gt; my_gem_name-0.1.0-aarch64-linux.gem
 </code></pre>
-<h2 id="github-actions"><a class="header" href="#github-actions">Github Actions</a></h2>
-<p>The [<code>oxi-test</code>][oxi-text] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
+<h2 id="github-actions"><a class="header" href="#github-actions">GitHub Actions</a></h2>
+<p>The <a href="https://github.com/oxidize-rb/oxi-test"><code>oxi-test</code></a> gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
 a walkthrough of the important files to reference:</p>
 <ol>
 <li>Setup the <code>Rake::ExtensionTask</code> in the <a href="https://github.com/oxidize-rb/oxi-test/blob/main/Rakefile"><code>Rakefile</code></a></li>

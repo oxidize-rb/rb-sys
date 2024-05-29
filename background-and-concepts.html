@@ -137,7 +137,7 @@
                         <h1 id="background-and-concepts"><a class="header" href="#background-and-concepts">Background and Concepts</a></h1>
 <h2 id="worlds-simplest-rust-extension"><a class="header" href="#worlds-simplest-rust-extension">World's Simplest Rust Extension</a></h2>
 <p>To illustrate how native extensions work, we are going to create the simplest possible native extension for Ruby. This
-is only to shows the core concepts of how native extensions work under the hood.</p>
+is only to show the core concepts of how native extensions work under the hood.</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -160,7 +160,7 @@ unsafe extern &quot;C&quot; fn Init_simplest_rust_extension() {
 }
 <span class="boring">}
 </span></code></pre></pre>
-<p>Then, its a matter of compiling and running like so:</p>
+<p>Then, it's a matter of compiling and running like so:</p>
 <pre><code class="language-sh">$ rustc --crate-type=cdylib simplest_rust_extension.rs -o simplest_rust_extension.bundle -C link-arg=&quot;-Wl,-undefined,dynamic_lookup&quot;
 
 $ ruby -r ./simplest_rust_extension -e &quot;puts hello_from_rust&quot; #=&gt; &quot;Hello, world!&quot;
@@ -176,7 +176,7 @@ see what these instructions look like by running:</p>
 0006 leave
 </code></pre>
 <p>In this example, <code>2</code> and <code>3</code> are pushed onto the stack, and then <code>opt_plus</code> performs the addition.</p>
-<p>For a native gem, we bypass this mechanism entirely and instead exposes native machine code to Ruby. In our native code,
+<p>For a native gem, we bypass this mechanism entirely and instead expose native machine code to Ruby. In our native code,
 we can use the <a href="https://docs.ruby-lang.org/en/3.1/extension_rdoc.html">Ruby C API</a> to interact with the Ruby VM.</p>
 <h2 id="how-are-native-gems-loaded"><a class="header" href="#how-are-native-gems-loaded">How are native Gems loaded?</a></h2>
 <p>Under the hood, native extensions are compiled as shared libraries (<code>.so</code>, <code>.bundle</code>, etc.). When you
@@ -185,7 +185,7 @@ the system equivalent). After that, Ruby will call <code>Init_some_gem</code> so
 <h2 id="why-does-it-work-with-rust-and-not-other-languages"><a class="header" href="#why-does-it-work-with-rust-and-not-other-languages">Why does it work with Rust and not other languages?</a></h2>
 <p>C is often referred to as the &quot;lingua franca&quot; of the programming language world, and Rust is fluent. Rust can compile
 functions to be compatible with the C calling conventions, and align items in memory in a way that C understands. Rust
-also does not have a garbage collector, which makes integration signifcantly easier.</p>
+also does not have a garbage collector, which makes integration significantly easier.</p>
 <p>When Ruby loads a gem extension written in Rust, it has no idea the gem is actually written in Rust. Due to Rust's
 robust C FFI, you can code anything in Rust that you could with C.</p>
 
