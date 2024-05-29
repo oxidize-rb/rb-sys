@@ -6,7 +6,7 @@ To illustrate how native extensions work, we are going to create the simplest po
 is only to shows the core concepts of how native extensions work under the hood.
 
 ```rust
-// simplest_rust_extenion.rs
+// simplest_rust_extension.rs
 
 // Define the libruby functions we need so we can use them (in a real gem, rb-sys would do this for you)
 extern "C" {
