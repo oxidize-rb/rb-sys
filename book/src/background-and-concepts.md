@@ -55,7 +55,7 @@ we can use the [Ruby C API] to interact with the Ruby VM.
 ## How are native Gems loaded?
 
 Under the hood, native extensions are compiled as shared libraries (`.so`, `.bundle`, etc.). When you
-`require 'some_gem'`, if Ruby finds a `some_gem.(so|bundle|lib)`, the shared library loaded on demand using [dlopen] (or
+`require 'some_gem'`, if Ruby finds a `some_gem.(so|bundle|lib)`, the shared library is loaded on demand using [dlopen] (or
 the system equivalent). After that, Ruby will call `Init_some_gem` so the native library can do its magic.
 
 ## Why does it work with Rust and not other languages?
