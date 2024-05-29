@@ -6,7 +6,7 @@ To illustrate how native extensions work, we are going to create the simplest po
 is only to show the core concepts of how native extensions work under the hood.
 
 ```rust
-// simplest_rust_extenion.rs
+// simplest_rust_extension.rs
 
 // Define the libruby functions we need so we can use them (in a real gem, rb-sys would do this for you)
 extern "C" {
@@ -55,7 +55,7 @@ we can use the [Ruby C API] to interact with the Ruby VM.
 ## How are native Gems loaded?
 
 Under the hood, native extensions are compiled as shared libraries (`.so`, `.bundle`, etc.). When you
-`require 'some_gem'`, if Ruby finds a `some_gem.(so|bundle|lib)`, the shared library loaded on demand using [dlopen] (or
+`require 'some_gem'`, if Ruby finds a `some_gem.(so|bundle|lib)`, the shared library is loaded on demand using [dlopen] (or
 the system equivalent). After that, Ruby will call `Init_some_gem` so the native library can do its magic.
 
 ## Why does it work with Rust and not other languages?
