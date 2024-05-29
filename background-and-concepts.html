@@ -141,7 +141,7 @@ is only to show the core concepts of how native extensions work under the hood.<
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// simplest_rust_extenion.rs
+</span>// simplest_rust_extension.rs
 
 // Define the libruby functions we need so we can use them (in a real gem, rb-sys would do this for you)
 extern &quot;C&quot; {
@@ -180,7 +180,7 @@ see what these instructions look like by running:</p>
 we can use the <a href="https://docs.ruby-lang.org/en/3.1/extension_rdoc.html">Ruby C API</a> to interact with the Ruby VM.</p>
 <h2 id="how-are-native-gems-loaded"><a class="header" href="#how-are-native-gems-loaded">How are native Gems loaded?</a></h2>
 <p>Under the hood, native extensions are compiled as shared libraries (<code>.so</code>, <code>.bundle</code>, etc.). When you
-<code>require 'some_gem'</code>, if Ruby finds a <code>some_gem.(so|bundle|lib)</code>, the shared library loaded on demand using <a href="https://man7.org/linux/man-pages/man3/dlopen.3.html">dlopen</a> (or
+<code>require 'some_gem'</code>, if Ruby finds a <code>some_gem.(so|bundle|lib)</code>, the shared library is loaded on demand using <a href="https://man7.org/linux/man-pages/man3/dlopen.3.html">dlopen</a> (or
 the system equivalent). After that, Ruby will call <code>Init_some_gem</code> so the native library can do its magic.</p>
 <h2 id="why-does-it-work-with-rust-and-not-other-languages"><a class="header" href="#why-does-it-work-with-rust-and-not-other-languages">Why does it work with Rust and not other languages?</a></h2>
 <p>C is often referred to as the &quot;lingua franca&quot; of the programming language world, and Rust is fluent. Rust can compile
