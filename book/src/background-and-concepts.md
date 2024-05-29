@@ -3,7 +3,7 @@
 ## World's Simplest Rust Extension
 
 To illustrate how native extensions work, we are going to create the simplest possible native extension for Ruby. This
-is only to shows the core concepts of how native extensions work under the hood.
+is only to show the core concepts of how native extensions work under the hood.
 
 ```rust
 // simplest_rust_extenion.rs
@@ -25,7 +25,7 @@ unsafe extern "C" fn Init_simplest_rust_extension() {
 }
 ```
 
-Then, its a matter of compiling and running like so:
+Then, it's a matter of compiling and running like so:
 
 ```sh
 $ rustc --crate-type=cdylib simplest_rust_extension.rs -o simplest_rust_extension.bundle -C link-arg="-Wl,-undefined,dynamic_lookup"
@@ -49,7 +49,7 @@ $ ruby --dump=insns -e '2 + 3'
 
 In this example, `2` and `3` are pushed onto the stack, and then `opt_plus` performs the addition.
 
-For a native gem, we bypass this mechanism entirely and instead exposes native machine code to Ruby. In our native code,
+For a native gem, we bypass this mechanism entirely and instead expose native machine code to Ruby. In our native code,
 we can use the [Ruby C API] to interact with the Ruby VM.
 
 ## How are native Gems loaded?
@@ -62,7 +62,7 @@ the system equivalent). After that, Ruby will call `Init_some_gem` so the native
 
 C is often referred to as the "lingua franca" of the programming language world, and Rust is fluent. Rust can compile
 functions to be compatible with the C calling conventions, and align items in memory in a way that C understands. Rust
-also does not have a garbage collector, which makes integration signifcantly easier.
+also does not have a garbage collector, which makes integration significantly easier.
 
 When Ruby loads a gem extension written in Rust, it has no idea the gem is actually written in Rust. Due to Rust's
 robust C FFI, you can code anything in Rust that you could with C.

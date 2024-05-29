@@ -1,10 +1,10 @@
 # Cross-Compilation
 
 Publishing native gem binaries is incredibly important for Ruby on Rust gems. No one likes seeing the infamous
-`Compiling native extensions. This could take a while...` message when they install a gem. An in Rust, we all know that
+`Compiling native extensions. This could take a while...` message when they install a gem. And in Rust, we all know that
 compiling can take a while...
 
-It's important to make sure that your gem is as fast as possible to install, that why `rb-sys` is built from the ground
+It's important to make sure that your gem is as fast as possible to install, that's why `rb-sys` is built from the ground
 up to support this use-case. `rb-sys` integrates seamlessly with [`rake-compiler`][rake-compiler] and
 [`rake-compiler-dock`][rcd]. By leveraging the hard-work of others, cross-compilation for Ruby gems is as simple and
 reliable as it would be for a C extension.
@@ -14,16 +14,16 @@ reliable as it would be for a C extension.
 ## Using the `rb-sys-dock` helper
 
 The `rb-sys-dock` executable allows you to easily enter the Docker container used to cross compile your gem. You can use
-you tool to build your gem, and then exit the container. The gem will be available in the `pkg` directory.
+your tool to build your gem, and then exit the container. The gem will be available in the `pkg` directory.
 
 ```bash
 $ bundle exec rb-sys-dock -p aarch64-linux --build
 $ ls pkg # => my_gem_name-0.1.0-aarch64-linux.gem
 ```
 
-## Github Actions
+## GitHub Actions
 
-The [`oxi-test`][oxi-text] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
+The [`oxi-test`][oxi-test] gem is meant to serve as the canonical example of how to setup cross gem compilation. Here's
 a walkthrough of the important files to reference:
 
 1. Setup the `Rake::ExtensionTask` in the [`Rakefile`](https://github.com/oxidize-rb/oxi-test/blob/main/Rakefile)
@@ -48,5 +48,5 @@ a walkthrough of the important files to reference:
 
 [rake-compiler]: https://github.com/rake-compiler/rake-compiler
 [rcd]: https://github.com/rake-compiler/rake-compiler-dock
-[oxi-test]: htttps://github.com/oxidize-rb/oxi-test
+[oxi-test]: https://github.com/oxidize-rb/oxi-test
 [slack]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw

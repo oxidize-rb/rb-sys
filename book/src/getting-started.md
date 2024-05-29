@@ -24,7 +24,7 @@ and `magnus`.
    ```
 
 This will create a new gem in the `my_gem_name` directory. Firstly, open up `my_gem_name.gemspec` in your text editor
-and make sure you update all fields that contain `TODO`. Inside the directly, you should now have a fully working Rust
+and make sure you update all fields that contain `TODO`. Inside the directory, you should now have a fully working Rust
 gem.
 
 > **💡 Tip:** [Join the Slack channel][slack] to ask questions and get help from the community!
@@ -37,7 +37,7 @@ The default Rake task is configured to compile the Rust code and run tests. Simp
 $ bundle exec rake
 ```
 
-At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is design to be
+At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is designed to be
 a safe and idiomatic wrapper around the Ruby C API.
 
 ## Next steps
