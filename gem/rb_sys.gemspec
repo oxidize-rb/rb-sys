@@ -23,7 +23,9 @@ Gem::Specification.new do |spec|
 
   # Security
   spec.cert_chain = ["certs/ianks.pem"]
-  spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
+  unless ENV["RUBYGEMS_FORCE_DISABLE_GEM_SIGNING"] == "true"
+    spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
+  end
 
   spec.metadata["rubygems_mfa_required"] = "true"
 end
