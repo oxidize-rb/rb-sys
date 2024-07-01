@@ -61,7 +61,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     #[cfg(feature = "stable-api")]
-    stable_api_config::setup(Version::current(&rbconfig)).unwrap();
+    stable_api_config::setup(Version::current(&rbconfig)).expect("could not setup stable API");
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);

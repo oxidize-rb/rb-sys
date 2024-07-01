@@ -52,9 +52,12 @@ impl Build {
         let rb = rb_config();
 
         let object_files = self.compile_each_file(compiler, &rb, &out_dir)?;
+        debug_log!("INFO: compiled object files: {:?}", object_files);
         let (lib_path, lib_name) =
             self.archive_object_files(archiver.copied(), name, &out_dir, object_files)?;
-        self.strip_archived_objects(archiver, &lib_path)?;
+        if let Err(e) = self.strip_archived_objects(archiver, &lib_path) {
+            debug_log!("WARN: failed to strip archived objects: {:?}", e);
+        }
 
         println!("cargo:rustc-link-search=native={}", out_dir.display());
         println!("cargo:rustc-link-lib=static={}", lib_name);
@@ -270,7 +273,13 @@ fn get_tool(env_var: &str, default: &str) -> Command {
     let mut tool_args = shellsplit(tool_args).into_iter();
     let tool = tool_args.next().unwrap_or_else(|| default.to_string());
 
-    let mut cmd = new_command(&tool);
+    let mut cmd = if !Path::new(&tool).is_file() {
+        debug_log!("[WARN] {tool} tool not found, falling back to {default}");
+        new_command(default)
+    } else {
+        new_command(&tool)
+    };
+
     cmd.args(tool_args.clone());
 
     debug_log!("INFO: found {:?} tool ({:?})", env_var, &cmd);

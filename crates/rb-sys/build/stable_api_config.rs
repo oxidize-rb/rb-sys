@@ -124,9 +124,11 @@ fn maybe_warn_old_ruby_version(current_ruby_version: Version) {
 }
 
 fn compile() -> Result<(), Box<dyn Error>> {
+    eprintln!("INFO: Compiling the stable API compiled module");
     let mut build = rb_sys_build::cc::Build::new();
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let path = crate_dir.join("src").join("stable_api").join("compiled.c");
+    eprintln!("cargo:rerun-if-changed={}", path.display());
 
     build.file(path);
     build.try_compile("compiled")

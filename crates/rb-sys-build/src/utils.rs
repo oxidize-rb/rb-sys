@@ -24,7 +24,7 @@ pub fn shellsplit<S: AsRef<str>>(s: S) -> Vec<String> {
     match shell_words::split(s) {
         Ok(v) => v,
         Err(e) => {
-            debug_log!("shellsplit failed: {}", e);
+            debug_log!("WARN: shellsplit failed: {}", e);
             s.split_whitespace().map(Into::into).collect()
         }
     }
