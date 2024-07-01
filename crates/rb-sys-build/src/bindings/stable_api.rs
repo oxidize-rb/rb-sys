@@ -166,6 +166,7 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
         }
 
         /// Unstable items for usage internally in rb_sys to avoid deprecated warnings.
+        #[allow(dead_code)]
         pub (crate) mod internal {
             use super::uncategorized::*;
 
