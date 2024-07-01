@@ -273,11 +273,11 @@ fn get_tool(env_var: &str, default: &str) -> Command {
     let mut tool_args = shellsplit(tool_args).into_iter();
     let tool = tool_args.next().unwrap_or_else(|| default.to_string());
 
-    let mut cmd = if !Path::new(&tool).is_file() {
+    let mut cmd = if Path::new(&tool).is_file() {
+        new_command(&tool)
+    } else {
         debug_log!("[WARN] {tool} tool not found, falling back to {default}");
         new_command(default)
-    } else {
-        new_command(&tool)
     };
 
     cmd.args(tool_args.clone());
