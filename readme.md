@@ -48,7 +48,7 @@ building your own gem.
 
 ## Supported Toolchains
 
-- Ruby: <!-- toolchains .policy.minimum-supported-ruby-version -->2.5<!-- /toolchains -->+ (for full compatibility with
+- Ruby: <!-- toolchains .policy.minimum-supported-ruby-version -->2.6<!-- /toolchains -->+ (for full compatibility with
   Rubygems)
 - Rust: <!-- toolchains .policy.minimum-supported-rust-version -->1.63<!-- /toolchains -->+
 
@@ -59,14 +59,14 @@ directory for automation purposes):
 
 | Platform           | Supported | Docker Image                                    |
 | ------------------ | --------- | ----------------------------------------------- |
-| x86_64-linux       | ✅        | [`rbsys/x86_64-linux:0.9.97`][docker-hub]       |
-| x86_64-linux-musl  | ✅        | [`rbsys/x86_64-linux-musl:0.9.97`][docker-hub]  |
-| aarch64-linux      | ✅        | [`rbsys/aarch64-linux:0.9.97`][docker-hub]      |
-| aarch64-linux-musl | ✅        | [`rbsys/aarch64-linux-musl:0.9.97`][docker-hub] |
-| arm-linux          | ✅        | [`rbsys/arm-linux:0.9.97`][docker-hub]          |
-| arm64-darwin       | ✅        | [`rbsys/arm64-darwin:0.9.97`][docker-hub]       |
-| x64-mingw32        | ✅        | [`rbsys/x64-mingw32:0.9.97`][docker-hub]        |
-| x64-mingw-ucrt     | ✅        | [`rbsys/x64-mingw-ucrt:0.9.97`][docker-hub]     |
+| x86_64-linux       | ✅        | [`rbsys/x86_64-linux:0.9.98`][docker-hub]       |
+| x86_64-linux-musl  | ✅        | [`rbsys/x86_64-linux-musl:0.9.98`][docker-hub]  |
+| aarch64-linux      | ✅        | [`rbsys/aarch64-linux:0.9.98`][docker-hub]      |
+| aarch64-linux-musl | ✅        | [`rbsys/aarch64-linux-musl:0.9.98`][docker-hub] |
+| arm-linux          | ✅        | [`rbsys/arm-linux:0.9.98`][docker-hub]          |
+| arm64-darwin       | ✅        | [`rbsys/arm64-darwin:0.9.98`][docker-hub]       |
+| x64-mingw32        | ✅        | [`rbsys/x64-mingw32:0.9.98`][docker-hub]        |
+| x64-mingw-ucrt     | ✅        | [`rbsys/x64-mingw-ucrt:0.9.98`][docker-hub]     |
 | mswin              | ✅        | not available on Docker                         |
 
 ## Getting Help
