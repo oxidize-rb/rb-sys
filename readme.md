@@ -50,7 +50,7 @@ building your own gem.
 
 - Ruby: <!-- toolchains .policy.minimum-supported-ruby-version -->2.6<!-- /toolchains -->+ (for full compatibility with
   Rubygems)
-- Rust: <!-- toolchains .policy.minimum-supported-rust-version -->1.63<!-- /toolchains -->+
+- Rust: <!-- toolchains .policy.minimum-supported-rust-version -->1.65<!-- /toolchains -->+
 
 ## Supported Platforms
 
