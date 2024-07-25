@@ -82,7 +82,7 @@ jobs:
             org.oxidize-rb.ruby.platform=${{ matrix.platform.ruby_target }}
 
       - name: Docker build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
@@ -156,7 +156,7 @@ jobs:
             --highestUserWastedPercent "$highest_user_wasted_percent"
 
       - name: Docker push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
