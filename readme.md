@@ -46,6 +46,16 @@ building your own gem.
 - This [PR for the `yrb` gem][yrb] shows how to integrate `rb-sys` and [`magnus`][magnus] into an existing gem.
 - A [guide for setting debug breakpoints in VSCode][debugging-guide] is available.
 
+## FAQ
+
+### What dependencies do I need to build a Ruby extension in Rust?
+
+`rb-sys` will handle most of the dependencies for you, but you will need to have libclang installed on your system.
+
+On MacOS, you can install it with `brew install llvm`.
+
+On Linux, you can install it with `apt-get install libclang-dev`.
+
 ## Supported Toolchains
 
 - Ruby: <!-- toolchains .policy.minimum-supported-ruby-version -->2.6<!-- /toolchains -->+ (for full compatibility with
