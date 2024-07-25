@@ -1,11 +1,11 @@
 [package]
 name = "rust_reverse"
-version = "0.9.98"
+version = "0.9.99"
 autotests = true      # set true if you want to use "cargo test"
 edition = "2018"
 
 [dependencies]
-rb-sys = { version = "0.9.98", path = "./../../../../crates/rb-sys", features = [
+rb-sys = { version = "0.9.99", path = "./../../../../crates/rb-sys", features = [
   "global-allocator",
 ] }
 
