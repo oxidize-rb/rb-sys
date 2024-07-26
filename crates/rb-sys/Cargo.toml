@@ -51,3 +51,10 @@ bindgen-enable-function-attribute-detection = [
 
 [lib]
 doctest = false
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  "cfg(rb_sys_gem)",
+  "cfg(rb_sys_use_stable_api_compiled_fallback)",
+  "cfg(rb_sys_force_stable_api_compiled)",
+] }

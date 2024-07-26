@@ -122,14 +122,17 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     rustc_cfg(rbconfig, "ruby_patchlevel", "PATCHLEVEL");
     rustc_cfg(rbconfig, "ruby_api_version", "RUBY_API_VERSION");
 
+    println!("cargo:rustc-check-cfg=cfg(use_global_allocator)");
     if is_global_allocator_enabled(rbconfig) {
         println!("cargo:rustc-cfg=use_global_allocator");
     }
 
+    println!("cargo:rustc-check-cfg=cfg(use_ruby_abi_version)");
     if is_gem_enabled() {
         println!("cargo:rustc-cfg=use_ruby_abi_version");
     }
 
+    println!("cargo:rustc-check-cfg=cfg(has_ruby_abi_version)");
     if rbconfig.has_ruby_dln_check_abi() {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
@@ -139,6 +142,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     for v in SUPPORTED_RUBY_VERSIONS.iter() {
         let v = v.to_owned();
 
+        println!(
+            "cargo:rustc-check-cfg=cfg(ruby_lt_{}_{})",
+            v.major(),
+            v.minor()
+        );
         if version < v {
             println!(r#"cargo:rustc-cfg=ruby_lt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=true"#, v.major(), v.minor());
@@ -146,6 +154,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             cfg_capture!(cap, r#"cargo:version_lt_{}_{}=false"#, v.major(), v.minor());
         }
 
+        println!(
+            "cargo:rustc-check-cfg=cfg(ruby_lte_{}_{})",
+            v.major(),
+            v.minor()
+        );
         if version <= v {
             println!(r#"cargo:rustc-cfg=ruby_lte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_lte_{}_{}=true"#, v.major(), v.minor());
@@ -158,6 +171,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
+        println!(
+            "cargo:rustc-check-cfg=cfg(ruby_eq_{}_{})",
+            v.major(),
+            v.minor()
+        );
         if version == v {
             println!(r#"cargo:rustc-cfg=ruby_eq_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=true"#, v.major(), v.minor());
@@ -165,6 +183,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             cfg_capture!(cap, r#"cargo:version_eq_{}_{}=false"#, v.major(), v.minor());
         }
 
+        println!(
+            "cargo:rustc-check-cfg=cfg(ruby_gte_{}_{})",
+            v.major(),
+            v.minor()
+        );
         if version >= v {
             println!(r#"cargo:rustc-cfg=ruby_gte_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gte_{}_{}=true"#, v.major(), v.minor());
@@ -177,6 +200,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
             );
         }
 
+        println!(
+            "cargo:rustc-check-cfg=cfg(ruby_gt_{}_{})",
+            v.major(),
+            v.minor()
+        );
         if version > v {
             println!(r#"cargo:rustc-cfg=ruby_gt_{}_{}"#, v.major(), v.minor());
             cfg_capture!(cap, r#"cargo:version_gt_{}_{}=true"#, v.major(), v.minor());
@@ -209,6 +237,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
+    println!("cargo:rustc-check-cfg=cfg({})", name);
     if let Some(k) = rbconfig.get_optional(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
     }

@@ -50,46 +50,26 @@ impl RubyVersion {
     }
 
     pub fn print_cargo_rustc_cfg(&self) {
-        rustc_cfg!("ruby_{}", self.major);
-        rustc_cfg!("ruby_{}_{}", self.major, self.minor);
-        rustc_cfg!("ruby_{}_{}_{}", self.major, self.minor, self.teeny);
+        rustc_cfg!(true, "ruby_{}", self.major);
+        rustc_cfg!(true, "ruby_{}_{}", self.major, self.minor);
+        rustc_cfg!(true, "ruby_{}_{}_{}", self.major, self.minor, self.teeny);
 
         for v in &COMPARABLE_RUBY_MINORS {
-            if self.major_minor() < *v {
-                rustc_cfg!(r#"ruby_lt_{}_{}"#, v.0, v.1);
-            }
-            if self.major_minor() <= *v {
-                rustc_cfg!(r#"ruby_lte_{}_{}"#, v.0, v.1);
-            }
-            if self.major_minor() == *v {
-                rustc_cfg!(r#"ruby_{}_{}"#, v.0, v.1);
-                rustc_cfg!(r#"ruby_eq_{}_{}"#, v.0, v.1);
-            }
-            if self.major_minor() >= *v {
-                rustc_cfg!(r#"ruby_gte_{}_{}"#, v.0, v.1);
-            }
-            if self.major_minor() > *v {
-                rustc_cfg!(r#"ruby_gt_{}_{}"#, v.0, v.1);
-            }
+            rustc_cfg!(self.major_minor() < *v, r#"ruby_lt_{}_{}"#, v.0, v.1);
+            rustc_cfg!(self.major_minor() <= *v, r#"ruby_lte_{}_{}"#, v.0, v.1);
+            rustc_cfg!(self.major_minor() == *v, r#"ruby_{}_{}"#, v.0, v.1);
+            rustc_cfg!(self.major_minor() == *v, r#"ruby_eq_{}_{}"#, v.0, v.1);
+            rustc_cfg!(self.major_minor() >= *v, r#"ruby_gte_{}_{}"#, v.0, v.1);
+            rustc_cfg!(self.major_minor() > *v, r#"ruby_gt_{}_{}"#, v.0, v.1);
         }
 
         for v in &COMPARABLE_RUBY_MAJORS {
-            if self.major() < *v {
-                rustc_cfg!(r#"ruby_lt_{}"#, v);
-            }
-            if self.major() <= *v {
-                rustc_cfg!(r#"ruby_lte_{}"#, v);
-            }
-            if self.major() == *v {
-                rustc_cfg!(r#"ruby_{}"#, v);
-                rustc_cfg!(r#"ruby_eq_{}"#, v);
-            }
-            if self.major() >= *v {
-                rustc_cfg!(r#"ruby_gte_{}"#, v);
-            }
-            if self.major() > *v {
-                rustc_cfg!(r#"ruby_gt_{}"#, v);
-            }
+            rustc_cfg!(self.major() < *v, r#"ruby_lt_{}"#, v);
+            rustc_cfg!(self.major() <= *v, r#"ruby_lte_{}"#, v);
+            rustc_cfg!(self.major() == *v, r#"ruby_{}"#, v);
+            rustc_cfg!(self.major() == *v, r#"ruby_eq_{}"#, v);
+            rustc_cfg!(self.major() >= *v, r#"ruby_gte_{}"#, v);
+            rustc_cfg!(self.major() > *v, r#"ruby_gt_{}"#, v);
         }
     }
 }

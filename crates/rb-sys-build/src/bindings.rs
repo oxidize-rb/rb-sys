@@ -192,6 +192,10 @@ fn push_cargo_cfg_from_bindings(
             if is_defines(&conf_name) {
                 let name = conf_name.to_lowercase();
                 let val = conf.value_bool().to_string();
+                println!(
+                    r#"cargo:rustc-check-cfg=cfg(ruby_{}, values("true", "false"))"#,
+                    name
+                );
                 println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
                 println!("cargo:defines_{}={}", name, val);
                 writeln!(cfg_out, "cargo:defines_{}={}", name, val)?;

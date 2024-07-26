@@ -54,6 +54,10 @@ impl TryFrom<Version> for Strategy {
 
 impl Strategy {
     fn apply(self) -> Result<(), Box<dyn Error>> {
+        println!("cargo:rustc-check-cfg=cfg(stable_api_include_rust_impl)");
+        println!("cargo:rustc-check-cfg=cfg(stable_api_enable_compiled_mod)");
+        println!("cargo:rustc-check-cfg=cfg(stable_api_export_compiled_as_api)");
+        println!("cargo:rustc-check-cfg=cfg(stable_api_has_rust_impl)");
         match self {
             Strategy::RustOnly(current_ruby_version) => {
                 if current_ruby_version.is_stable() {
