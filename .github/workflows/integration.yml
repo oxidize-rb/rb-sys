@@ -20,7 +20,9 @@ jobs:
           - name: "oxidize-rb/oxi-test"
             slug: oxi-test
             ref: main
-            run: rake
+            run: |
+              bundle install --jobs 3 --retry 3
+              bundle exec rake
           - name: "matsadler/magnus"
             slug: magnus-0.5
             ref: "0.5.5"
