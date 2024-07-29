@@ -28,10 +28,11 @@ impl Defines {
 
     pub(crate) fn print_cargo_rustc_cfg(&self) {
         for (key, val) in self.raw_environment.iter() {
-            if key.starts_with("DEFINES_") && val == "true" {
-                let key = key.trim_start_matches("DEFINES_");
-                rustc_cfg!("ruby_{}", key.to_lowercase());
-            }
+            rustc_cfg!(
+                key.starts_with("DEFINES_") && val == "true",
+                "ruby_{}",
+                key.trim_start_matches("DEFINES_").to_lowercase()
+            );
         }
     }
 }
