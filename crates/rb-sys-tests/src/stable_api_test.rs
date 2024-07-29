@@ -1,4 +1,6 @@
-use rb_sys::StableApiDefinition;
+use std::ffi::{c_int, c_long};
+
+use rb_sys::{StableApiDefinition, RUBY_FIXNUM_MAX, RUBY_FIXNUM_MIN};
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
@@ -27,24 +29,25 @@ macro_rules! parity_test {
 }
 
 macro_rules! ruby_eval {
-    ($expr:literal) => {{
-        unsafe {
-            let mut state = 0;
-            let ret =
-                rb_sys::rb_eval_string_protect(concat!($expr, "\0").as_ptr() as _, &mut state as _);
+  ($expr:literal $(, $arg:expr)*) => {{
+      unsafe {
+          let mut state = 0;
+          let formatted_expr = format!($expr $(, $arg)*);
+          let c_string = std::ffi::CString::new(formatted_expr).unwrap();
+          let ret = rb_sys::rb_eval_string_protect(c_string.as_ptr(), &mut state as _);
 
-            if state != 0 {
-                let mut err_string = rb_sys::rb_inspect(rb_sys::rb_errinfo());
-                rb_sys::rb_set_errinfo(rb_sys::Qnil as _);
-                let err_string = rb_sys::rb_string_value_cstr(&mut err_string);
-                let err_string = std::ffi::CStr::from_ptr(err_string);
-                let err_string = err_string.to_str().unwrap();
-                panic!("Ruby error: {}", err_string);
-            }
+          if state != 0 {
+              let mut err_string = rb_sys::rb_inspect(rb_sys::rb_errinfo());
+              rb_sys::rb_set_errinfo(rb_sys::Qnil as _);
+              let err_string = rb_sys::rb_string_value_cstr(&mut err_string);
+              let err_string = std::ffi::CStr::from_ptr(err_string);
+              let err_string = err_string.to_str().unwrap();
+              panic!("Ruby error: {}", err_string);
+          }
 
-            ret
-        }
-    }};
+          ret
+      }
+  }};
 }
 
 parity_test!(
@@ -231,7 +234,7 @@ parity_test!(
     name: test_builtin_type_for_hash,
     func: builtin_type,
     data_factory: {
-      ruby_eval!("{foo: 'bar'}")
+      ruby_eval!("{{foo: 'bar'}}")
     }
 );
 
@@ -474,7 +477,7 @@ parity_test! (
     name: test_rb_type_for_hash,
     func: rb_type,
     data_factory: {
-      ruby_eval!("{foo: 'bar'}")
+      ruby_eval!("{{foo: 'bar'}}")
     },
     expected: rb_sys::ruby_value_type::RUBY_T_HASH
 );
@@ -532,4 +535,172 @@ parity_test!(
       ruby_eval!("1.0")
     },
     expected: false
+);
+
+parity_test!(
+  name: test_int2fix_positive,
+  func: int2fix,
+  data_factory: { 42 },
+  expected: ruby_eval!("42")
+);
+
+parity_test!(
+  name: test_int2fix_negative,
+  func: int2fix,
+  data_factory: { -42 },
+  expected: ruby_eval!("-42")
+);
+
+parity_test!(
+  name: test_int2fix_zero,
+  func: int2fix,
+  data_factory: { 0 },
+  expected: ruby_eval!("0")
+);
+
+parity_test!(
+  name: test_int2num_fixnum,
+  func: int2num,
+  data_factory: { 42 },
+  expected: ruby_eval!("42")
+);
+
+parity_test!(
+  name: test_int2num_bignum_positive,
+  func: int2num,
+  data_factory: { i32::MAX },
+  expected: ruby_eval!("2147483647")
+);
+
+parity_test!(
+  name: test_int2num_bignum_negative,
+  func: int2num,
+  data_factory: { i32::MIN },
+  expected: ruby_eval!("-2147483648")
+);
+
+parity_test!(
+  name: test_fix2long_positive,
+  func: fix2long,
+  data_factory: { ruby_eval!("42") },
+  expected: 42
+);
+
+parity_test!(
+  name: test_fix2long_negative,
+  func: fix2long,
+  data_factory: { ruby_eval!("-42") },
+  expected: -42
+);
+
+parity_test!(
+  name: test_fix2long_zero,
+  func: fix2long,
+  data_factory: { ruby_eval!("0") },
+  expected: 0
+);
+
+parity_test!(
+  name: test_num2long_fixnum,
+  func: num2long,
+  data_factory: { ruby_eval!("42") },
+  expected: 42
+);
+
+parity_test!(
+  name: test_num2long_bignum,
+  func: num2long,
+  data_factory: { ruby_eval!("9223372036854775807") },  // i64::MAX
+  expected: 9223372036854775807
+);
+
+parity_test!(
+  name: test_num2long_negative_bignum,
+  func: num2long,
+  data_factory: { ruby_eval!("-9223372036854775808") },  // i64::MIN
+  expected: -9223372036854775808
+);
+
+parity_test!(
+    name: test_int2fix_max,
+    func: int2fix,
+    data_factory: { RUBY_FIXNUM_MAX as c_int },
+    expected: ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MAX as c_int)
+);
+
+parity_test!(
+    name: test_int2fix_min,
+    func: int2fix,
+    data_factory: { RUBY_FIXNUM_MIN as c_int },
+    expected: ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MIN as c_int)
+);
+
+parity_test!(
+    name: test_int2num_max_fixnum,
+    func: int2num,
+    data_factory: { RUBY_FIXNUM_MAX as c_int },
+    expected: ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MAX as c_int)
+);
+
+parity_test!(
+    name: test_int2num_min_fixnum,
+    func: int2num,
+    data_factory: { RUBY_FIXNUM_MIN as c_int },
+    expected: ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MIN as c_int)
+);
+
+parity_test!(
+    name: test_int2num_max_int,
+    func: int2num,
+    data_factory: { c_int::MAX },
+    expected: ruby_eval!("2147483647")  // Assuming 32-bit int
+);
+
+parity_test!(
+    name: test_int2num_min_int,
+    func: int2num,
+    data_factory: { c_int::MIN },
+    expected: ruby_eval!("-2147483648")  // Assuming 32-bit int
+);
+
+parity_test!(
+    name: test_fix2long_max,
+    func: fix2long,
+    data_factory: { ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MAX) },
+    expected: RUBY_FIXNUM_MAX as c_long
+);
+
+parity_test!(
+    name: test_fix2long_min,
+    func: fix2long,
+    data_factory: { ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MIN) },
+    expected: RUBY_FIXNUM_MIN as c_long
+);
+
+parity_test!(
+    name: test_num2long_max_fixnum,
+    func: num2long,
+    data_factory: { ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MAX) },
+    expected: RUBY_FIXNUM_MAX as c_long
+);
+
+parity_test!(
+    name: test_num2long_min_fixnum,
+    func: num2long,
+    data_factory: { ruby_eval!("{}", rb_sys::RUBY_FIXNUM_MIN) },
+    expected: RUBY_FIXNUM_MIN as c_long
+);
+
+parity_test!(
+    name: test_num2long_max_long,
+    func: num2long,
+    data_factory: { ruby_eval!("9223372036854775807") },  // Assuming 64-bit long
+    expected: c_long::MAX
+);
+
+parity_test!(
+    name: test_num2long_min_long,
+    func: num2long,
+    data_factory: { ruby_eval!("-9223372036854775808") },  // Assuming 64-bit long
+    expected: c_long::MIN
 );

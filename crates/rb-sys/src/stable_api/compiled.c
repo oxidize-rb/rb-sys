@@ -87,3 +87,23 @@ int
 impl_integer_type_p(VALUE obj) {
   return RB_INTEGER_TYPE_P(obj);
 }
+
+VALUE
+impl_int2fix(int i) {
+  return INT2FIX(i);
+}
+
+VALUE
+impl_int2num(int i) {
+  return INT2NUM(i);
+}
+
+long
+impl_fix2long(VALUE val) {
+  return FIX2LONG(val);
+}
+
+long
+impl_num2long(VALUE val) {
+  return NUM2LONG(val);
+}

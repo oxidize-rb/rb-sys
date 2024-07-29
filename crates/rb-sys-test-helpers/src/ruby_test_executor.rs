@@ -121,6 +121,7 @@ impl Drop for RubyTestExecutor {
 }
 
 pub fn global_executor() -> &'static RubyTestExecutor {
+    #[allow(unknown_lints)]
     #[allow(static_mut_refs)]
     unsafe { &GLOBAL_EXECUTOR }.get_or_init(RubyTestExecutor::start)
 }

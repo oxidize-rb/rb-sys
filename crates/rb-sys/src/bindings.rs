@@ -16,5 +16,11 @@
 
 include!(env!("RB_SYS_BINDINGS_PATH"));
 
+pub const RUBY_LONG_MIN: isize = std::ffi::c_long::MIN as isize;
+pub const RUBY_LONG_MAX: isize = std::ffi::c_long::MAX as isize;
+
+pub const RUBY_FIXNUM_MIN: isize = RUBY_LONG_MIN / 2;
+pub const RUBY_FIXNUM_MAX: isize = RUBY_LONG_MAX / 2;
+
 pub use uncategorized::*;
 pub use unstable::*;
