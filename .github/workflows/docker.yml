@@ -101,7 +101,7 @@ jobs:
           rb_sys_dock_cache_dir="$HOME/.cache/rb-sys-dock"
           sudo chmod 777 tmp/oxi-test
           cd tmp/oxi-test
-          sed -i "s|gem 'rb_sys', '.*'|gem 'rb_sys', path: '$rb_sys_gem_path/gem'|" Gemfile
+          ruby -e "File.write('Gemfile', File.read('Gemfile').gsub(/gem .rb_sys.*$/, 'gem \"rb_sys\", git: \"https://github.com/oxidize-rb/rb-sys\", ref: \"$GITHUB_SHA\"'))"
 
           mkdir .cargo
           echo "[patch.crates-io]"      >> .cargo/config.toml
@@ -157,6 +157,8 @@ jobs:
 
       - name: Docker push
         uses: docker/build-push-action@v6
+        # check if secrets.DOCKER_HUB_USERNAME is set
+        if: ${{ secrets.DOCKER_HUB_USERNAME != '' }}
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
