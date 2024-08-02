@@ -27,7 +27,7 @@ jobs:
             run: cargo test
           - name: "matsadler/magnus"
             slug: magnus-head
-            ref: "627755429885eb1a84929e4d876f8cd8ec7303cf"
+            ref: "52a0817d4327cf78f91958f6b84f66946251fc9c"
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
