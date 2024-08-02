@@ -157,8 +157,6 @@ jobs:
 
       - name: Docker push
         uses: docker/build-push-action@v6
-        # check if secrets.DOCKER_HUB_USERNAME is set
-        if: ${{ secrets.DOCKER_HUB_USERNAME != '' }}
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
