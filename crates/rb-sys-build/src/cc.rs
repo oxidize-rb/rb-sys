@@ -92,7 +92,7 @@ impl Build {
             .with_extension("o");
 
         let mut cmd = compiler;
-        cmd.args(&get_include_args(rb))
+        cmd.args(get_include_args(rb))
             .arg("-c")
             .arg(f)
             .args(&rb.cflags)

@@ -22,3 +22,8 @@ rusty-fork = "0.3.0"
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  "cfg(ruby_has_ruby_abi_version,)",
+] }

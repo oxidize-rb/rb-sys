@@ -13,6 +13,7 @@
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::invalid_html_tags)]
 #![allow(deprecated)]
+#![allow(dead_code)]
 
 include!(env!("RB_SYS_BINDINGS_PATH"));
 
