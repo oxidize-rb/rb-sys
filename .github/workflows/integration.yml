@@ -31,7 +31,7 @@ jobs:
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
-        ruby: ["2.7", "3.2", "3.3"]
+        ruby: ["3.0", "3.2", "3.3"]
 
     runs-on: ${{ matrix.os }}
     steps:
