@@ -19,8 +19,8 @@ jobs:
         repo:
           - name: "oxidize-rb/oxi-test"
             slug: oxi-test
-            ref: main
-            run: rake
+            ref: ead2c358a6cde270863e686c7302fb56a333febc
+            run: bundle exec rake
           - name: "matsadler/magnus"
             slug: magnus-0.5
             ref: "0.5.5"
