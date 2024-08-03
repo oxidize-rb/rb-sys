@@ -17,6 +17,7 @@ use crate::ruby_value_type;
 use crate::stable_api::get_default as api;
 use crate::StableApiDefinition;
 use crate::VALUE;
+use std::ffi::c_int;
 use std::os::raw::{c_char, c_long};
 
 /// Emulates Ruby's "if" statement.
@@ -282,4 +283,46 @@ pub unsafe fn RB_TYPE_P(obj: VALUE, ty: ruby_value_type) -> bool {
 #[inline]
 pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
     api().float_type_p(obj)
+}
+
+/// Converts a C int to a Ruby Fixnum.
+///
+/// @param[in]  i  A C int to convert.
+/// @return     A Ruby Fixnum.
+#[inline]
+pub fn INT2FIX(i: c_int) -> VALUE {
+    api().int2fix(i)
+}
+
+/// Converts a C int to a Ruby Integer (Fixnum or Bignum).
+///
+/// @param[in]  i  A C int to convert.
+/// @return     A Ruby Integer.
+#[inline]
+pub fn INT2NUM(i: c_int) -> VALUE {
+    api().int2num(i)
+}
+
+/// Converts a Ruby Fixnum to a C long.
+///
+/// @param[in]  val  A Ruby Fixnum.
+/// @return     A C long.
+///
+/// # Safety
+/// This function is unsafe because it assumes the input is a valid Fixnum.
+#[inline]
+pub fn FIX2LONG(val: VALUE) -> c_long {
+    api().fix2long(val)
+}
+
+/// Converts a Ruby Integer (Fixnum or Bignum) to a C long.
+///
+/// @param[in]  val  A Ruby Integer.
+/// @return     A C long.
+///
+/// # Safety
+/// This function is unsafe because it may involve C-level operations.
+#[inline]
+pub unsafe fn NUM2LONG(val: VALUE) -> c_long {
+    api().num2long(val)
 }

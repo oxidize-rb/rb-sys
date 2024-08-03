@@ -11,8 +11,11 @@
 //!    to ensure Rust extensions don't prevent the Ruby core team from testing
 //!    changes in production.
 
-use crate::VALUE;
-use std::os::raw::{c_char, c_long};
+use crate::{rb_int2big, rb_num2long, ruby_special_consts, VALUE};
+use std::{
+    ffi::{c_int, c_ulong},
+    os::raw::{c_char, c_long},
+};
 
 pub trait StableApiDefinition {
     /// Get the length of a Ruby string (akin to `RSTRING_LEN`).
@@ -125,6 +128,49 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
+
+    /// Converts a `c_int` to a Ruby Fixnum.
+    fn int2fix(&self, i: c_int) -> VALUE {
+        let j = i as c_ulong;
+        let k = (j << 1) + ruby_special_consts::RUBY_FIXNUM_FLAG as c_ulong;
+        let l = k as c_long;
+        let m = l as isize;
+        m as VALUE
+    }
+
+    /// Converts a `c_int` to a Ruby number, either a Fixnum or a Bignum.
+    fn int2num(&self, i: c_int) -> VALUE {
+        let value = i as c_long;
+
+        let fixable_pos = value < (crate::RUBY_FIXNUM_MAX as c_long) + 1;
+        let fixable_neg = value >= (crate::RUBY_FIXNUM_MIN as c_long);
+
+        if fixable_pos && fixable_neg {
+            self.int2fix(i)
+        } else {
+            unsafe { rb_int2big(i as _) }
+        }
+    }
+
+    /// Converts a Fixnum to a `c_long`.
+    fn fix2long(&self, val: VALUE) -> c_long {
+        let y: isize = val as _;
+        let z = y >> 1;
+        z as c_long
+    }
+
+    /// Converts a Ruby number to a `c_long`. If the number is a Fixnum, it is
+    /// converted directly.
+    ///
+    /// # Safety
+    /// This function assumes a valid Ruby num value.
+    unsafe fn num2long(&self, val: VALUE) -> c_long {
+        if self.fixnum_p(val) {
+            self.fix2long(val)
+        } else {
+            rb_num2long(val)
+        }
+    }
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
