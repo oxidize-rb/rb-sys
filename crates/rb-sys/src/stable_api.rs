@@ -130,18 +130,20 @@ pub trait StableApiDefinition {
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
 
     /// Converts a `c_int` to a Ruby Fixnum.
+    #[inline]
     fn int2fix(&self, i: c_int) -> VALUE {
         let j = i as c_ulong;
         let k = (j << 1) + ruby_special_consts::RUBY_FIXNUM_FLAG as c_ulong;
         let l = k as c_long;
         let m = l as isize;
+
         m as VALUE
     }
 
     /// Converts a `c_int` to a Ruby number, either a Fixnum or a Bignum.
+    #[inline]
     fn int2num(&self, i: c_int) -> VALUE {
         let value = i as c_long;
-
         let fixable_pos = value < (crate::RUBY_FIXNUM_MAX as c_long) + 1;
         let fixable_neg = value >= (crate::RUBY_FIXNUM_MIN as c_long);
 
@@ -153,6 +155,7 @@ pub trait StableApiDefinition {
     }
 
     /// Converts a Fixnum to a `c_long`.
+    #[inline]
     fn fix2long(&self, val: VALUE) -> c_long {
         let y: isize = val as _;
         let z = y >> 1;
@@ -164,6 +167,7 @@ pub trait StableApiDefinition {
     ///
     /// # Safety
     /// This function assumes a valid Ruby num value.
+    #[inline]
     unsafe fn num2long(&self, val: VALUE) -> c_long {
         if self.fixnum_p(val) {
             self.fix2long(val)
