@@ -52,7 +52,8 @@ module RbSys
       full_cargo_command = cargo_command(srcdir, builder)
 
       global_rustflags = []
-      global_rustflags << "--cfg=rb_sys_gem" unless builder.use_cargo_build
+      # Re-enable if this causes issues, but it should be fine and it prevents unnecessary recompilation
+      # global_rustflags << "--cfg=rb_sys_gem" unless builder.use_cargo_build
       global_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback" if builder.use_stable_api_compiled_fallback?
 
       make_install = +<<~MAKE
@@ -134,6 +135,7 @@ module RbSys
 
         install-so: $(DLLIB) #{timestamp_file("sitearchdir")}
         \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
+        \t#{fixup_libnames}
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
@@ -276,6 +278,12 @@ module RbSys
       return false unless builder.rubygems_invoked? && builder.auto_install_rust_toolchain
 
       find_executable("cargo").nil?
+    end
+
+    def fixup_libnames
+      return unless find_executable("install_name_tool")
+
+      '$(Q) install_name_tool -id "" $(DLLIB)'
     end
 
     def if_eq_stmt(a, b)
