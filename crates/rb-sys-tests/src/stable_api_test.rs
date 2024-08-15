@@ -611,14 +611,14 @@ parity_test!(
   name: test_num2long_bignum,
   func: num2long,
   data_factory: { ruby_eval!("9223372036854775807") },  // i64::MAX
-  expected: 9223372036854775807
+  expected: 9223372036854775807 as c_long
 );
 
 parity_test!(
   name: test_num2long_negative_bignum,
   func: num2long,
   data_factory: { ruby_eval!("-9223372036854775808") },  // i64::MIN
-  expected: -9223372036854775808
+  expected: -9223372036854775808 as c_long
 );
 
 parity_test!(
