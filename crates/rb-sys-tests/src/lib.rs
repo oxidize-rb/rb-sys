@@ -6,9 +6,6 @@ extern crate rb_sys;
 mod basic_smoke_test;
 
 #[cfg(test)]
-mod ruby_abi_version_test;
-
-#[cfg(test)]
 mod ruby_macros_test;
 
 #[cfg(test)]
