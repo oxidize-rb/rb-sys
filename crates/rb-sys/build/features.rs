@@ -2,7 +2,7 @@ use rb_sys_build::{utils::is_mswin_or_mingw, RbConfig};
 
 use crate::version::Version;
 
-pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
+pub(crate) fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
     let (major, minor) = rb_config.major_minor();
     let current_version = Version::new(major, minor);
     let two_four = Version::new(2, 4);
@@ -18,15 +18,15 @@ pub fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
     }
 }
 
-pub fn is_gem_enabled() -> bool {
+pub(crate) fn is_gem_enabled() -> bool {
     cfg!(rb_sys_gem)
 }
 
-pub fn is_no_link_ruby_enabled() -> bool {
+pub(crate) fn is_no_link_ruby_enabled() -> bool {
     is_env_variable_defined("CARGO_FEATURE_NO_LINK_RUBY")
 }
 
-pub fn is_debug_build_enabled() -> bool {
+pub(crate) fn is_debug_build_enabled() -> bool {
     if is_linting() {
         return false;
     }
@@ -36,7 +36,7 @@ pub fn is_debug_build_enabled() -> bool {
     is_env_variable_defined("RB_SYS_DEBUG_BUILD")
 }
 
-pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
+pub(crate) fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
     println!("cargo:rerun-if-env-changed=RUBY_STATIC");
 
     match std::env::var("RUBY_STATIC") {
@@ -48,7 +48,7 @@ pub fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
     }
 }
 
-pub fn is_link_ruby_enabled() -> bool {
+pub(crate) fn is_link_ruby_enabled() -> bool {
     if is_linting() {
         return false;
     }
@@ -85,7 +85,7 @@ pub fn is_link_ruby_enabled() -> bool {
     }
 }
 
-pub fn is_env_variable_defined(name: &str) -> bool {
+pub(crate) fn is_env_variable_defined(name: &str) -> bool {
     std::env::var(name).is_ok()
 }
 
