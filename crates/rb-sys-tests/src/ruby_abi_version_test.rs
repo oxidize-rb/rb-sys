@@ -1,5 +1,3 @@
-rb_sys::ruby_abi_version!();
-
 #[cfg(all(ruby_has_ruby_abi_version, unix))]
 #[rb_sys_test_helpers::ruby_test]
 fn test_ruby_abi_version() {

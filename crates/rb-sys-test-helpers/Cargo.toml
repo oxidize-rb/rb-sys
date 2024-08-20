@@ -14,7 +14,7 @@ bench = false
 doctest = true
 
 [dependencies]
-rb-sys = { path = "../rb-sys", version = "~0.9.80", features = [
+rb-sys = { path = "../rb-sys", version = "0.9.101", features = [
   "link-ruby",
   "stable-api-compiled-testing",
 ] }

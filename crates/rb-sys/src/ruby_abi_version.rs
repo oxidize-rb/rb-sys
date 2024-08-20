@@ -13,14 +13,18 @@ pub const __RB_SYS_RUBY_ABI_VERSION: std::os::raw::c_ulonglong = 0;
 #[cfg(has_ruby_abi_version)]
 pub const __RB_SYS_RUBY_ABI_VERSION: std::os::raw::c_ulonglong = crate::RUBY_ABI_VERSION as _;
 
+#[doc(hidden)]
+#[no_mangle]
+#[allow(unused)]
+pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
+    __RB_SYS_RUBY_ABI_VERSION
+}
+
+#[deprecated(
+    since = "0.9.102",
+    note = "You no longer need to invoke this macro, the `ruby_abi_version` function is defined automatically."
+)]
 #[macro_export]
 macro_rules! ruby_abi_version {
-    () => {
-        /// Defines the `ruby_abi_version` function needed for Ruby extensions.
-        #[no_mangle]
-        #[allow(unused)]
-        pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
-            $crate::__RB_SYS_RUBY_ABI_VERSION
-        }
-    };
+    () => {};
 }

@@ -32,6 +32,3 @@ pub type RubyValue = VALUE;
 
 #[cfg(use_global_allocator)]
 set_global_tracking_allocator!();
-
-#[cfg(use_ruby_abi_version)]
-ruby_abi_version!();
