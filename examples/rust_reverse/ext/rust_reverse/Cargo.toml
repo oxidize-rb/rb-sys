@@ -16,3 +16,6 @@ crate-type = ["cdylib"]
 default = ["stable-api-compiled-testing"]
 test-feature = []
 stable-api-compiled-testing = ["rb-sys/stable-api-compiled-testing"]
+
+[profile.release]
+debug = true
