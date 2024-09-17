@@ -102,6 +102,7 @@ module RbSys
         RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
         TIMESTAMP_DIR = .
+        POSTLINK = #{RbConfig::CONFIG["POSTLINK"] || "$(ECHO) skipping postlink (not found)"}
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         CLEANLIBS = $(DLLIB) $(RUSTLIB)
@@ -132,6 +133,7 @@ module RbSys
 
         $(DLLIB): $(RUSTLIB)
         \t$(Q) $(COPY) "$(RUSTLIB)" $@
+        \t$(Q) $(POSTLINK)
 
         install-so: $(DLLIB) #{timestamp_file("sitearchdir")}
         \t$(ECHO) installing $(DLLIB) to $(RUBYARCHDIR)
