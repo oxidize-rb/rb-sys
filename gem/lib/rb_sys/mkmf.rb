@@ -167,8 +167,8 @@ module RbSys
     def cargo_command(cargo_dir, builder)
       builder.ext_dir = cargo_dir
       dest_path = builder.target_dir || File.join(Dir.pwd, "target")
-      args = ARGV.dup
-      args.shift if args.first == "--"
+      args = []
+      args = ARGV.dup.shift if args.first == "--"
       cargo_cmd = builder.cargo_command(dest_path, args)
       cmd = Shellwords.join(cargo_cmd)
       cmd.gsub!("\\=", "=")
