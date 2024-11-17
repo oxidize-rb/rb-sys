@@ -350,6 +350,20 @@ impl RbConfig {
         major >= 3 && minor >= 2 && patchlevel == -1 && !cfg!(target_family = "windows")
     }
 
+    /// The RUBY_ENGINE we are building for
+    pub fn ruby_engine(&self) -> RubyEngine {
+        if let Some(engine) = self.get_optional("ruby_install_name") {
+            match engine.as_str() {
+                "ruby" => RubyEngine::Mri,
+                "jruby" => RubyEngine::JRuby,
+                "truffleruby" => RubyEngine::TruffleRuby,
+                _ => RubyEngine::Mri, // not sure how stable this is, so default to MRI to avoid breaking things
+            }
+        } else {
+            RubyEngine::Mri
+        }
+    }
+
     // Examines the string from shell variables and expands them with values in the value_map
     fn subst_shell_variables(&self, input: &str) -> String {
         let mut result = String::new();
@@ -437,6 +451,13 @@ impl RbConfig {
         println!("cargo:rerun-if-env-changed={}", key);
         env::var(key).map(|v| v.trim_matches('\n').to_owned()).ok()
     }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum RubyEngine {
+    Mri,
+    TruffleRuby,
+    JRuby,
 }
 
 fn capture_name(regex: &Regex, arg: &str) -> Option<String> {
