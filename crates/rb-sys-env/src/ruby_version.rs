@@ -119,9 +119,11 @@ impl RubyVersion {
                 }
             }
             _ => {
-                let mut ruby_version = env
-                    .get("ruby_version")
-                    .expect("ruby_version is not set")
+                let env_ruby_version = env.get("ruby_version").cloned().unwrap_or_else(|| {
+                    std::env::var("RUBY_VERSION").expect("RUBY_VERSION is not set")
+                });
+
+                let mut ruby_version = env_ruby_version
                     .split('.')
                     .map(|s| s.parse().expect("version component is not a number"));
 
