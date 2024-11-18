@@ -49,6 +49,10 @@ jobs:
             sys:
               os: ubuntu-latest
               rust_toolchain: stable
+          - ruby_version: "truffleruby"
+            sys:
+              os: macos-latest
+              rust_toolchain: stable
         exclude:
           # Missing symbols for some reason, need to fix
           - ruby_version: "2.6"

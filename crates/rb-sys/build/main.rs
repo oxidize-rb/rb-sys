@@ -260,6 +260,8 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     // See https://github.com/oxidize-rb/rb-sys/issues/88
     if cfg!(target_os = "macos") {
         rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");
+    } else if matches!(rbconfig.ruby_engine(), RubyEngine::TruffleRuby) {
+        rbconfig.push_dldflags("-Wl,-z,lazy");
     }
 }
 
