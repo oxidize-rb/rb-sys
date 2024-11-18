@@ -5,6 +5,7 @@ use crate::cc::Build;
 use crate::utils::is_msvc;
 use crate::{debug_log, RbConfig};
 use quote::ToTokens;
+use stable_api::{categorize_bindings, opaqueify_bindings};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -70,7 +71,7 @@ pub fn generate(
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
-    let bindings = stable_api::opaqueify_bindings(rbconfig, bindings, &mut wrapper_h);
+    let bindings = opaqueify_bindings(rbconfig, bindings, &mut wrapper_h);
 
     let mut tokens = {
         write!(std::io::stderr(), "{}", wrapper_h)?;
@@ -96,7 +97,7 @@ pub fn generate(
         }
 
         push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
-        stable_api::categorize_bindings(&mut tokens);
+        categorize_bindings(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 
