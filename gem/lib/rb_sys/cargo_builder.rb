@@ -146,6 +146,9 @@ module RbSys
         # See https://github.com/oxidize-rb/rb-sys/issues/88
         dl_flag = "-Wl,-undefined,dynamic_lookup"
         flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
+      elsif RUBY_ENGINE == "truffleruby"
+        dl_flag = "-Wl,-z,lazy"
+        flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
       end
 
       if musl?
