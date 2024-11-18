@@ -24,11 +24,11 @@ enum Strategy {
     Testing(Version),
 }
 
-impl TryFrom<(RubyEngine, Option<Version>)> for Strategy {
+impl TryFrom<(RubyEngine, Version)> for Strategy {
     type Error = Box<dyn Error>;
 
     fn try_from(
-        (engine, current_ruby_version): (RubyEngine, Option<Version>),
+        (engine, current_ruby_version): (RubyEngine, Version),
     ) -> Result<Self, Self::Error> {
         let mut strategy = None;
 
@@ -41,10 +41,6 @@ impl TryFrom<(RubyEngine, Option<Version>)> for Strategy {
             }
             RubyEngine::Mri => {}
         }
-
-        let Some(current_ruby_version) = current_ruby_version else {
-            return Err("Could not determine the Ruby version".into());
-        };
 
         if current_ruby_version.is_stable() {
             strategy = Some(Strategy::RustOnly(current_ruby_version));

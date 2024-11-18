@@ -15,6 +15,11 @@ def cargo_test_task(name, *args, crate: name)
 
   desc "Run cargo tests for #{name.inspect} against current Ruby"
   task task_name do
+    if RUBY_ENGINE != "ruby"
+      puts "Skipping #{task_name} because it only works with MRI Ruby"
+      next
+    end
+
     default_args = ENV["CI"] || extra_args.include?("--verbose") ? [] : ["--quiet"]
     test_args = ENV["CI"] || extra_args.include?("--verbose") ? ["--", "--nocapture"] : []
     sh "cargo", "test", *default_args, *extra_args, *args, "-p", crate, *test_args

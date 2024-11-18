@@ -4,7 +4,7 @@ mod stable_api_config;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, RbConfig};
+use rb_sys_build::{bindings, RbConfig, RubyEngine};
 use std::io::Write;
 use std::{
     env,
@@ -134,14 +134,21 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
+    println!("cargo:rustc-check-cfg=cfg(ruby_engine, values(\"mri\", \"truffleruby\"))");
+    match rbconfig.ruby_engine() {
+        RubyEngine::Mri => {
+            println!("cargo:rustc-cfg=ruby_engine=\"mri\"");
+        }
+        RubyEngine::TruffleRuby => {
+            println!("cargo:rustc-cfg=ruby_engine=\"truffleruby\"");
+        }
+        _ => panic!("unsupported ruby engine"),
+    }
+
     let version = Version::current(rbconfig);
 
     for v in SUPPORTED_RUBY_VERSIONS.iter() {
         let v = v.to_owned();
-
-        let Some(version) = version else {
-            continue;
-        };
 
         println!(
             "cargo:rustc-check-cfg=cfg(ruby_lt_{}_{})",
@@ -223,6 +230,7 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     cfg_capture_opt!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
     cfg_capture_opt!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
     cfg_capture_opt!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
+    cfg_capture!(cap, "cargo:engine={}", rbconfig.ruby_engine());
 
     for key in rbconfig.all_keys() {
         cfg_capture!(

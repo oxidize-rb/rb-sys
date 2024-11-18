@@ -51,8 +51,10 @@ pub fn generate(
     let bindings = default_bindgen(clang_args)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
+        .blocklist_function("rb_tr_abi_version")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
+        .blocklist_function("rb_tr_rdata")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     let bindings = if cfg!(feature = "bindgen-rbimpls") {
@@ -80,13 +82,9 @@ pub fn generate(
         syn::parse_file(&code_string)?
     };
 
-    let ruby_version = rbconfig.ruby_version_slug();
-    let ruby_platform = rbconfig.platform();
+    let slug = rbconfig.ruby_version_slug();
     let crate_version = env!("CARGO_PKG_VERSION");
-    let out_path = out_dir.join(format!(
-        "bindings-{}-{}-{}.rs",
-        crate_version, ruby_platform, ruby_version
-    ));
+    let out_path = out_dir.join(format!("bindings-{}-{}.rs", crate_version, slug));
 
     let code = {
         sanitizer::ensure_backwards_compatible_encoding_pointers(&mut tokens);
