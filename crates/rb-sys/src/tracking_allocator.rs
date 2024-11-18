@@ -210,7 +210,7 @@ impl MemsizeDelta {
         }
 
         let delta = TrackingAllocator::adjust_memory_usage(-(delta as isize));
-        self.0.fetch_sub(delta, Ordering::SeqCst);
+        self.0.fetch_add(delta, Ordering::SeqCst);
     }
 
     fn get(&self) -> isize {
