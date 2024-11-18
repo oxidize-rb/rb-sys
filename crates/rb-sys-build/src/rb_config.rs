@@ -194,8 +194,8 @@ impl RbConfig {
     }
 
     /// Returns the current ruby program version.
-    pub fn ruby_program_version(&self) -> String {
-        if let Some(progv) = self.get("RUBY_PROGRAM_VERSION") {
+    pub fn ruby_version_slug(&self) -> String {
+        let ver = if let Some(progv) = self.get("RUBY_PROGRAM_VERSION") {
             progv
         } else if let Some(major_minor) = self.major_minor() {
             format!(
@@ -204,9 +204,13 @@ impl RbConfig {
                 major_minor.1,
                 self.get("TEENY").unwrap_or_else(|| "0".to_string())
             )
+        } else if let Some(fallback) = self.get("ruby_version") {
+            fallback
         } else {
             panic!("RUBY_PROGRAM_VERSION not found")
-        }
+        };
+
+        format!("{}-{}-{}", self.ruby_engine(), self.platform(), ver)
     }
 
     /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
@@ -477,6 +481,16 @@ pub enum RubyEngine {
     Mri,
     TruffleRuby,
     JRuby,
+}
+
+impl std::fmt::Display for RubyEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RubyEngine::Mri => write!(f, "mri"),
+            RubyEngine::TruffleRuby => write!(f, "truffleruby"),
+            RubyEngine::JRuby => write!(f, "jruby"),
+        }
+    }
 }
 
 fn capture_name(regex: &Regex, arg: &str) -> Option<String> {

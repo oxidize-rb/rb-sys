@@ -80,7 +80,7 @@ pub fn generate(
         syn::parse_file(&code_string)?
     };
 
-    let ruby_version = rbconfig.ruby_program_version();
+    let ruby_version = rbconfig.ruby_version_slug();
     let ruby_platform = rbconfig.platform();
     let crate_version = env!("CARGO_PKG_VERSION");
     let out_path = out_dir.join(format!(
@@ -125,7 +125,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
         return;
     }
 
-    let ver = rbconfig.ruby_program_version();
+    let ver = rbconfig.ruby_version_slug();
 
     sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
         debug_log!("WARN: failed to clean up docs, skipping: {}", e);
