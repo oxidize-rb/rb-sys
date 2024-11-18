@@ -86,6 +86,14 @@ macro_rules! cfg_capture {
     };
 }
 
+macro_rules! cfg_capture_opt {
+    ($file:expr, $fmt:expr, $opt:expr) => {
+        if let Some(val) = $opt {
+            cfg_capture!($file, $fmt, val);
+        }
+    };
+}
+
 fn add_unsupported_link_args_to_blocklist(rbconfig: &mut RbConfig) {
     rbconfig.blocklist_link_arg("-Wl,--compress-debug-sections=zlib");
     rbconfig.blocklist_link_arg("-s");
@@ -136,6 +144,10 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
 
     for v in SUPPORTED_RUBY_VERSIONS.iter() {
         let v = v.to_owned();
+
+        let Some(version) = version else {
+            continue;
+        };
 
         println!(
             "cargo:rustc-check-cfg=cfg(ruby_lt_{}_{})",
@@ -208,17 +220,23 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
         }
     }
 
-    cfg_capture!(cap, "cargo:root={}", rbconfig.get("prefix"));
-    cfg_capture!(cap, "cargo:include={}", rbconfig.get("includedir"));
-    cfg_capture!(cap, "cargo:archinclude={}", rbconfig.get("archincludedir"));
-    cfg_capture!(cap, "cargo:version={}", rbconfig.get("ruby_version"));
-    cfg_capture!(cap, "cargo:major={}", rbconfig.get("MAJOR"));
-    cfg_capture!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
-    cfg_capture!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
-    cfg_capture!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
+    cfg_capture_opt!(cap, "cargo:root={}", rbconfig.get("prefix"));
+    cfg_capture_opt!(cap, "cargo:include={}", rbconfig.get("includedir"));
+    cfg_capture_opt!(cap, "cargo:archinclude={}", rbconfig.get("archincludedir"));
+    cfg_capture_opt!(cap, "cargo:libdir={}", rbconfig.get("libdir"));
+    cfg_capture_opt!(cap, "cargo:version={}", rbconfig.get("ruby_version"));
+    cfg_capture_opt!(cap, "cargo:major={}", rbconfig.get("MAJOR"));
+    cfg_capture_opt!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
+    cfg_capture_opt!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
+    cfg_capture_opt!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
 
     for key in rbconfig.all_keys() {
-        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, rbconfig.get(key));
+        cfg_capture!(
+            cap,
+            "cargo:rbconfig_{}={}",
+            key,
+            rbconfig.get(key).expect("key")
+        );
     }
 
     if is_ruby_static_enabled(rbconfig) {
@@ -227,13 +245,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     } else {
         cfg_capture!(cap, "cargo:lib={}", rbconfig.libruby_so_name());
     }
-
-    cfg_capture!(cap, "cargo:libdir={}", rbconfig.get("libdir"));
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     println!("cargo:rustc-check-cfg=cfg({})", name);
-    if let Some(k) = rbconfig.get_optional(key) {
+    if let Some(k) = rbconfig.get(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
     }
 }

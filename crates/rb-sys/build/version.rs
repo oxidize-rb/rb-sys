@@ -21,11 +21,14 @@ impl Version {
         self.1
     }
 
-    pub fn current(rbconfig: &RbConfig) -> Version {
-        Self(
-            rbconfig.get("MAJOR").parse::<i32>().unwrap() as _,
-            rbconfig.get("MINOR").parse::<i32>().unwrap() as _,
-        )
+    pub fn current(rbconfig: &RbConfig) -> Option<Version> {
+        match (rbconfig.get("MAJOR"), rbconfig.get("MINOR")) {
+            (Some(major), Some(minor)) => Some(Version::new(
+                major.parse::<u32>().unwrap(),
+                minor.parse::<u32>().unwrap(),
+            )),
+            _ => None,
+        }
     }
 
     #[allow(dead_code)]

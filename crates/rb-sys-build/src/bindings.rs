@@ -21,10 +21,13 @@ pub fn generate(
 ) -> Result<PathBuf, Box<dyn Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
-    let mut clang_args = vec![
-        format!("-I{}", rbconfig.get("rubyhdrdir")),
-        format!("-I{}", rbconfig.get("rubyarchhdrdir")),
-    ];
+    let mut clang_args = vec![];
+    if let Some(ruby_include_dir) = rbconfig.get("rubyhdrdir") {
+        clang_args.push(format!("-I{}", ruby_include_dir));
+    }
+    if let Some(ruby_arch_include_dir) = rbconfig.get("rubyarchhdrdir") {
+        clang_args.push(format!("-I{}", ruby_arch_include_dir));
+    }
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
