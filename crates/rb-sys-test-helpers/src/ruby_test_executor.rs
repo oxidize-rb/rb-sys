@@ -150,7 +150,7 @@ pub unsafe fn setup_ruby_unguarded() {
         let mut argv: [*mut i8; 3] = [
             "ruby\0".as_ptr() as _,
             "-e\0".as_ptr() as _,
-            "\0".as_ptr() as _,
+            "nil\0".as_ptr() as _,
         ];
 
         ruby_process_options(argv.len() as _, argv.as_mut_ptr() as _) as _

@@ -3,7 +3,9 @@ use rb_sys_build::{utils::is_mswin_or_mingw, RbConfig};
 use crate::version::Version;
 
 pub(crate) fn is_global_allocator_enabled(rb_config: &RbConfig) -> bool {
-    let (major, minor) = rb_config.major_minor();
+    let Some((major, minor)) = rb_config.major_minor() else {
+        return false;
+    };
     let current_version = Version::new(major, minor);
     let two_four = Version::new(2, 4);
     let is_enabled = is_env_variable_defined("CARGO_FEATURE_GLOBAL_ALLOCATOR");
@@ -43,7 +45,10 @@ pub(crate) fn is_ruby_static_enabled(rbconfig: &RbConfig) -> bool {
         Ok(val) => val == "true" || val == "1",
         _ => {
             is_env_variable_defined("CARGO_FEATURE_RUBY_STATIC")
-                || rbconfig.get("ENABLE_SHARED") == "no"
+                || rbconfig
+                    .get("ENABLE_SHARED")
+                    .map(|v| v == "no")
+                    .unwrap_or(false)
         }
     }
 }

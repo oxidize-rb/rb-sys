@@ -1,11 +1,15 @@
+use rb_sys_build::{RbConfig, RubyEngine};
+
 use crate::{
     features::is_env_variable_defined,
     version::{Version, MIN_SUPPORTED_STABLE_VERSION},
 };
 use std::{convert::TryFrom, error::Error, path::Path};
 
-pub fn setup(current_ruby_version: Version) -> Result<(), Box<dyn Error>> {
-    let strategy = Strategy::try_from(current_ruby_version)?;
+pub fn setup(rb_config: &RbConfig) -> Result<(), Box<dyn Error>> {
+    let ruby_version = Version::current(rb_config);
+    let ruby_engine = rb_config.ruby_engine();
+    let strategy = Strategy::try_from((ruby_engine, ruby_version))?;
 
     strategy.apply()?;
 
@@ -20,11 +24,23 @@ enum Strategy {
     Testing(Version),
 }
 
-impl TryFrom<Version> for Strategy {
+impl TryFrom<(RubyEngine, Version)> for Strategy {
     type Error = Box<dyn Error>;
 
-    fn try_from(current_ruby_version: Version) -> Result<Self, Self::Error> {
+    fn try_from(
+        (engine, current_ruby_version): (RubyEngine, Version),
+    ) -> Result<Self, Self::Error> {
         let mut strategy = None;
+
+        match engine {
+            RubyEngine::TruffleRuby => {
+                return Ok(Strategy::CompiledOnly);
+            }
+            RubyEngine::JRuby => {
+                return Err("JRuby is not supported".into());
+            }
+            RubyEngine::Mri => {}
+        }
 
         if current_ruby_version.is_stable() {
             strategy = Some(Strategy::RustOnly(current_ruby_version));

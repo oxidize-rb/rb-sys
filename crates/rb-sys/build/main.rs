@@ -4,7 +4,7 @@ mod stable_api_config;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, RbConfig};
+use rb_sys_build::{bindings, RbConfig, RubyEngine};
 use std::io::Write;
 use std::{
     env,
@@ -30,14 +30,8 @@ fn main() {
 
     let mut rbconfig = RbConfig::current();
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let ruby_version = rbconfig.ruby_program_version();
-    let ruby_platform = rbconfig.platform();
-    let crate_version = env!("CARGO_PKG_VERSION");
-    let cfg_capture_path = out_dir.join(format!(
-        "cfg-capture-{}-{}-{}",
-        crate_version, ruby_platform, ruby_version
-    ));
-    let mut cfg_capture_file = File::create(cfg_capture_path).unwrap();
+    let cfg_capture_path = out_dir.join(format!("cfg-capture-{}", rbconfig.ruby_version_slug()));
+    let mut cfg_capture_file = File::create(cfg_capture_path).expect("create cfg capture file");
 
     println!("cargo:rerun-if-env-changed=RUBY_ROOT");
     println!("cargo:rerun-if-env-changed=RUBY_VERSION");
@@ -61,7 +55,7 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     #[cfg(feature = "stable-api")]
-    stable_api_config::setup(Version::current(&rbconfig)).expect("could not setup stable API");
+    stable_api_config::setup(&rbconfig).expect("could not setup stable API");
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);
@@ -83,6 +77,14 @@ macro_rules! cfg_capture {
     ($file:expr, $fmt:expr, $($arg:tt)*) => {
         println!($fmt, $($arg)*);
         writeln!($file, $fmt, $($arg)*).unwrap();
+    };
+}
+
+macro_rules! cfg_capture_opt {
+    ($file:expr, $fmt:expr, $opt:expr) => {
+        if let Some(val) = $opt {
+            cfg_capture!($file, $fmt, val);
+        }
     };
 }
 
@@ -130,6 +132,17 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     println!("cargo:rustc-check-cfg=cfg(has_ruby_abi_version)");
     if rbconfig.has_ruby_dln_check_abi() {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
+    }
+
+    println!("cargo:rustc-check-cfg=cfg(ruby_engine, values(\"mri\", \"truffleruby\"))");
+    match rbconfig.ruby_engine() {
+        RubyEngine::Mri => {
+            println!("cargo:rustc-cfg=ruby_engine=\"mri\"");
+        }
+        RubyEngine::TruffleRuby => {
+            println!("cargo:rustc-cfg=ruby_engine=\"truffleruby\"");
+        }
+        _ => panic!("unsupported ruby engine"),
     }
 
     let version = Version::current(rbconfig);
@@ -208,17 +221,24 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
         }
     }
 
-    cfg_capture!(cap, "cargo:root={}", rbconfig.get("prefix"));
-    cfg_capture!(cap, "cargo:include={}", rbconfig.get("includedir"));
-    cfg_capture!(cap, "cargo:archinclude={}", rbconfig.get("archincludedir"));
-    cfg_capture!(cap, "cargo:version={}", rbconfig.get("ruby_version"));
-    cfg_capture!(cap, "cargo:major={}", rbconfig.get("MAJOR"));
-    cfg_capture!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
-    cfg_capture!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
-    cfg_capture!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
+    cfg_capture_opt!(cap, "cargo:root={}", rbconfig.get("prefix"));
+    cfg_capture_opt!(cap, "cargo:include={}", rbconfig.get("includedir"));
+    cfg_capture_opt!(cap, "cargo:archinclude={}", rbconfig.get("archincludedir"));
+    cfg_capture_opt!(cap, "cargo:libdir={}", rbconfig.get("libdir"));
+    cfg_capture_opt!(cap, "cargo:version={}", rbconfig.get("ruby_version"));
+    cfg_capture_opt!(cap, "cargo:major={}", rbconfig.get("MAJOR"));
+    cfg_capture_opt!(cap, "cargo:minor={}", rbconfig.get("MINOR"));
+    cfg_capture_opt!(cap, "cargo:teeny={}", rbconfig.get("TEENY"));
+    cfg_capture_opt!(cap, "cargo:patchlevel={}", rbconfig.get("PATCHLEVEL"));
+    cfg_capture!(cap, "cargo:engine={}", rbconfig.ruby_engine());
 
     for key in rbconfig.all_keys() {
-        cfg_capture!(cap, "cargo:rbconfig_{}={}", key, rbconfig.get(key));
+        cfg_capture!(
+            cap,
+            "cargo:rbconfig_{}={}",
+            key,
+            rbconfig.get(key).expect("key")
+        );
     }
 
     if is_ruby_static_enabled(rbconfig) {
@@ -227,13 +247,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     } else {
         cfg_capture!(cap, "cargo:lib={}", rbconfig.libruby_so_name());
     }
-
-    cfg_capture!(cap, "cargo:libdir={}", rbconfig.get("libdir"));
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
     println!("cargo:rustc-check-cfg=cfg({})", name);
-    if let Some(k) = rbconfig.get_optional(key) {
+    if let Some(k) = rbconfig.get(key) {
         println!("cargo:rustc-cfg={}=\"{}\"", name, k);
     }
 }
@@ -242,6 +260,8 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     // See https://github.com/oxidize-rb/rb-sys/issues/88
     if cfg!(target_os = "macos") {
         rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");
+    } else if matches!(rbconfig.ruby_engine(), RubyEngine::TruffleRuby) {
+        rbconfig.push_dldflags("-Wl,-z,lazy");
     }
 }
 

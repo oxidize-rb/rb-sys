@@ -104,16 +104,35 @@ impl From<(u8, u8, u8)> for RubyVersion {
     }
 }
 
-fn verpart(env: &HashMap<String, String>, key: &str) -> u8 {
-    env.get(key).unwrap().parse().unwrap()
-}
-
 impl RubyVersion {
     pub(crate) fn from_raw_environment(env: &HashMap<String, String>) -> Self {
-        Self {
-            major: verpart(env, "MAJOR"),
-            minor: verpart(env, "MINOR"),
-            teeny: verpart(env, "TEENY"),
+        match (env.get("MAJOR"), env.get("MINOR"), env.get("TEENY")) {
+            (Some(major), Some(minor), Some(teeny)) => {
+                let major = major.parse().expect("MAJOR is not a number");
+                let minor = minor.parse().expect("MINOR is not a number");
+                let teeny = teeny.parse().expect("TEENY is not a number");
+
+                Self {
+                    major,
+                    minor,
+                    teeny,
+                }
+            }
+            _ => {
+                let env_ruby_version = env.get("ruby_version").cloned().unwrap_or_else(|| {
+                    std::env::var("RUBY_VERSION").expect("RUBY_VERSION is not set")
+                });
+
+                let mut ruby_version = env_ruby_version
+                    .split('.')
+                    .map(|s| s.parse().expect("version component is not a number"));
+
+                Self {
+                    major: ruby_version.next().expect("major"),
+                    minor: ruby_version.next().expect("minor"),
+                    teeny: ruby_version.next().expect("teeny"),
+                }
+            }
         }
     }
 }

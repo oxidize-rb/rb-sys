@@ -19,11 +19,20 @@
 /// ensure the VM hasn't stopped, which makes the function name a bit of a
 /// misnomer... but in actuality this function can only guarantee that the
 /// VM is started, not that it's still running.
+#[allow(dead_code)]
 pub(crate) unsafe fn is_ruby_vm_started() -> bool {
-    #[cfg(all(ruby_gt_2_4, ruby_lte_3_2))]
-    let ret = !crate::hidden::ruby_current_vm_ptr.is_null();
+    #[cfg(ruby_engine = "mri")]
+    let ret = {
+        #[cfg(all(ruby_gt_2_4, ruby_lte_3_2))]
+        let ret = !crate::hidden::ruby_current_vm_ptr.is_null();
 
-    #[cfg(any(ruby_lte_2_4, ruby_gt_3_2))]
+        #[cfg(any(ruby_lte_2_4, ruby_gt_3_2))]
+        let ret = crate::rb_cBasicObject != 0;
+
+        ret
+    };
+
+    #[cfg(ruby_engine = "truffleruby")]
     let ret = crate::rb_cBasicObject != 0;
 
     ret

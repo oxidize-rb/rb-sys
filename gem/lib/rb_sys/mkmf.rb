@@ -102,7 +102,7 @@ module RbSys
         RUSTLIBDIR = $(RB_SYS_FULL_TARGET_DIR)/$(RB_SYS_CARGO_PROFILE_DIR)
         RUSTLIB = $(RUSTLIBDIR)/$(SOEXT_PREFIX)$(TARGET_NAME).$(SOEXT)
         TIMESTAMP_DIR = .
-        POSTLINK = #{RbConfig::CONFIG["POSTLINK"] || "$(ECHO) skipping postlink (not found)"}
+        POSTLINK = #{RbConfig::CONFIG["POSTLINK"] || "$(ECHO) skipping postlink"}
 
         CLEANOBJS = $(RUSTLIBDIR) $(RB_SYS_BUILD_DIR)
         CLEANLIBS = $(DLLIB) $(RUSTLIB)

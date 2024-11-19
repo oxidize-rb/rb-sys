@@ -20,6 +20,14 @@ pub extern "C" fn ruby_abi_version() -> std::os::raw::c_ulonglong {
     __RB_SYS_RUBY_ABI_VERSION
 }
 
+#[doc(hidden)]
+#[no_mangle]
+#[allow(unused)]
+#[cfg(ruby_engine = "truffleruby")]
+pub extern "C" fn rb_tr_abi_version() -> *const std::os::raw::c_char {
+    crate::TRUFFLERUBY_ABI_VERSION.as_ptr() as *const _
+}
+
 #[deprecated(
     since = "0.9.102",
     note = "You no longer need to invoke this macro, the `ruby_abi_version` function is defined automatically."

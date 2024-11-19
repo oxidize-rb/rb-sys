@@ -191,7 +191,10 @@ fn gen_opaque_struct(
         .allowlist_type(struct_name)
 }
 
-fn get_version_specific_opaque_structs(major_minor: (u32, u32)) -> Vec<&'static str> {
+fn get_version_specific_opaque_structs(major_minor: Option<(u32, u32)>) -> Vec<&'static str> {
+    let Some(major_minor) = major_minor else {
+        return vec![];
+    };
     let mut result = vec![];
     let (major, minor) = major_minor;
 

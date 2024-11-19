@@ -67,8 +67,8 @@ On Linux, you can install it with `apt-get install libclang-dev`.
 We support cross compilation to the following platforms (this information is also available in the [`./data`](./data)
 directory for automation purposes):
 
-| Platform           | Supported | Docker Image                                    |
-| ------------------ | --------- | ----------------------------------------------- |
+| Platform           | Supported | Docker Image                                     |
+| ------------------ | --------- | ------------------------------------------------ |
 | x86_64-linux       | ✅        | [`rbsys/x86_64-linux:0.9.102`][docker-hub]       |
 | x86_64-linux-musl  | ✅        | [`rbsys/x86_64-linux-musl:0.9.102`][docker-hub]  |
 | aarch64-linux      | ✅        | [`rbsys/aarch64-linux:0.9.102`][docker-hub]      |
@@ -77,7 +77,8 @@ directory for automation purposes):
 | arm64-darwin       | ✅        | [`rbsys/arm64-darwin:0.9.102`][docker-hub]       |
 | x64-mingw32        | ✅        | [`rbsys/x64-mingw32:0.9.102`][docker-hub]        |
 | x64-mingw-ucrt     | ✅        | [`rbsys/x64-mingw-ucrt:0.9.102`][docker-hub]     |
-| mswin              | ✅        | not available on Docker                         |
+| mswin              | ✅        | not available on Docker                          |
+| truffleruby        | ✅        | not available on Docker                          |
 
 ## Getting Help
 

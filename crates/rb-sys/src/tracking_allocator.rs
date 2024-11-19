@@ -1,8 +1,6 @@
 //! Support for reporting Rust memory usage to the Ruby GC.
 
-use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_started};
 use std::{
-    alloc::{GlobalAlloc, Layout, System},
     fmt::Formatter,
     sync::{
         atomic::{AtomicIsize, Ordering},
@@ -10,103 +8,165 @@ use std::{
     },
 };
 
-/// A simple wrapper over [`std::alloc::System`] which reports memory usage to
-/// the Ruby GC. This gives the GC a more accurate picture of the process'
-/// memory usage so it can make better decisions about when to run.
-#[derive(Debug)]
-pub struct TrackingAllocator;
+#[cfg(ruby_engine = "mri")]
+mod mri {
+    use crate::{rb_gc_adjust_memory_usage, utils::is_ruby_vm_started};
+    use std::alloc::{GlobalAlloc, Layout, System};
 
-impl TrackingAllocator {
-    /// Create a new [`TrackingAllocator`].
-    #[allow(clippy::new_without_default)]
-    pub const fn new() -> Self {
-        Self
-    }
+    /// A simple wrapper over [`System`] which reports memory usage to
+    /// the Ruby GC. This gives the GC a more accurate picture of the process'
+    /// memory usage so it can make better decisions about when to run.
+    #[derive(Debug)]
+    pub struct TrackingAllocator;
 
-    /// Create a new [`TrackingAllocator`] with default values.
-    pub const fn default() -> Self {
-        Self::new()
-    }
-
-    /// Adjust the memory usage reported to the Ruby GC by `delta`. Useful for
-    /// tracking allocations invisible to the Rust allocator, such as `mmap` or
-    /// direct `malloc` calls.
-    ///
-    /// # Example
-    /// ```
-    /// use rb_sys::TrackingAllocator;
-    ///
-    /// // Allocate 1024 bytes of memory using `mmap` or `malloc`...
-    /// TrackingAllocator::adjust_memory_usage(1024);
-    ///
-    /// // ...and then after the memory is freed, adjust the memory usage again.
-    /// TrackingAllocator::adjust_memory_usage(-1024);
-    /// ```
-    pub fn adjust_memory_usage(delta: isize) -> isize {
-        if delta == 0 {
-            return 0;
+    impl TrackingAllocator {
+        /// Create a new [`TrackingAllocator`].
+        #[allow(clippy::new_without_default)]
+        pub const fn new() -> Self {
+            Self
         }
 
-        #[cfg(target_pointer_width = "32")]
-        let delta = delta as i32;
+        /// Create a new [`TrackingAllocator`] with default values.
+        pub const fn default() -> Self {
+            Self::new()
+        }
 
-        #[cfg(target_pointer_width = "64")]
-        let delta = delta as i64;
+        /// Adjust the memory usage reported to the Ruby GC by `delta`. Useful for
+        /// tracking allocations invisible to the Rust allocator, such as `mmap` or
+        /// direct `malloc` calls.
+        ///
+        /// # Example
+        /// ```
+        /// use rb_sys::TrackingAllocator;
+        ///
+        /// // Allocate 1024 bytes of memory using `mmap` or `malloc`...
+        /// TrackingAllocator::adjust_memory_usage(1024);
+        ///
+        /// // ...and then after the memory is freed, adjust the memory usage again.
+        /// TrackingAllocator::adjust_memory_usage(-1024);
+        /// ```
+        #[inline]
+        pub fn adjust_memory_usage(delta: isize) -> isize {
+            if delta == 0 {
+                return 0;
+            }
 
-        unsafe {
-            if is_ruby_vm_started() {
-                rb_gc_adjust_memory_usage(delta);
-                delta as isize
-            } else {
-                0
+            #[cfg(target_pointer_width = "32")]
+            let delta = delta as i32;
+
+            #[cfg(target_pointer_width = "64")]
+            let delta = delta as i64;
+
+            unsafe {
+                if is_ruby_vm_started() {
+                    rb_gc_adjust_memory_usage(delta);
+                    delta as isize
+                } else {
+                    0
+                }
             }
         }
     }
+
+    unsafe impl GlobalAlloc for TrackingAllocator {
+        #[inline]
+        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+            let ret = System.alloc(layout);
+            let delta = layout.size() as isize;
+
+            if !ret.is_null() && delta != 0 {
+                Self::adjust_memory_usage(delta);
+            }
+
+            ret
+        }
+
+        #[inline]
+        unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+            let ret = System.alloc_zeroed(layout);
+            let delta = layout.size() as isize;
+
+            if !ret.is_null() && delta != 0 {
+                Self::adjust_memory_usage(delta);
+            }
+
+            ret
+        }
+
+        #[inline]
+        unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+            System.dealloc(ptr, layout);
+            let delta = -(layout.size() as isize);
+
+            if delta != 0 {
+                Self::adjust_memory_usage(delta);
+            }
+        }
+
+        #[inline]
+        unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+            let ret = System.realloc(ptr, layout, new_size);
+            let delta = new_size as isize - layout.size() as isize;
+
+            if !ret.is_null() && delta != 0 {
+                Self::adjust_memory_usage(delta);
+            }
+
+            ret
+        }
+    }
 }
 
-unsafe impl GlobalAlloc for TrackingAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        let ret = System.alloc(layout);
-        let delta = layout.size() as isize;
+#[cfg(not(ruby_engine = "mri"))]
+mod non_mri {
+    use std::alloc::{GlobalAlloc, Layout, System};
 
-        if !ret.is_null() && delta != 0 {
-            Self::adjust_memory_usage(delta);
+    /// A simple wrapper over [`System`] as a fallback for non-MRI Ruby engines.
+    pub struct TrackingAllocator;
+
+    impl TrackingAllocator {
+        #[allow(clippy::new_without_default)]
+        pub const fn new() -> Self {
+            Self
         }
 
-        ret
-    }
-
-    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-        let ret = System.alloc_zeroed(layout);
-        let delta = layout.size() as isize;
-
-        if !ret.is_null() && delta != 0 {
-            Self::adjust_memory_usage(delta);
+        pub const fn default() -> Self {
+            Self::new()
         }
 
-        ret
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout);
-        let delta = -(layout.size() as isize);
-
-        if delta != 0 {
-            Self::adjust_memory_usage(delta);
+        pub fn adjust_memory_usage(_delta: isize) -> isize {
+            0
         }
     }
 
-    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
-        let ret = System.realloc(ptr, layout, new_size);
-        let delta = new_size as isize - layout.size() as isize;
-
-        if !ret.is_null() && delta != 0 {
-            Self::adjust_memory_usage(delta);
+    unsafe impl GlobalAlloc for TrackingAllocator {
+        #[inline]
+        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+            System.alloc(layout)
         }
 
-        ret
+        #[inline]
+        unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+            System.alloc_zeroed(layout)
+        }
+
+        #[inline]
+        unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+            System.dealloc(ptr, layout)
+        }
+
+        #[inline]
+        unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+            System.realloc(ptr, layout, new_size)
+        }
     }
 }
+
+#[cfg(ruby_engine = "mri")]
+pub use mri::*;
+
+#[cfg(not(ruby_engine = "mri"))]
+pub use non_mri::*;
 
 /// Set the global allocator to [`TrackingAllocator`].
 ///
@@ -132,7 +192,7 @@ struct MemsizeDelta(Arc<AtomicIsize>);
 
 impl MemsizeDelta {
     fn new(delta: isize) -> Self {
-        TrackingAllocator::adjust_memory_usage(delta);
+        let delta = TrackingAllocator::adjust_memory_usage(delta);
         Self(Arc::new(AtomicIsize::new(delta)))
     }
 
@@ -141,8 +201,8 @@ impl MemsizeDelta {
             return;
         }
 
+        let delta = TrackingAllocator::adjust_memory_usage(delta as _);
         self.0.fetch_add(delta as _, Ordering::SeqCst);
-        TrackingAllocator::adjust_memory_usage(delta as _);
     }
 
     fn sub(&self, delta: usize) {
@@ -150,8 +210,8 @@ impl MemsizeDelta {
             return;
         }
 
-        self.0.fetch_sub(delta as isize, Ordering::SeqCst);
-        TrackingAllocator::adjust_memory_usage(-(delta as isize));
+        let delta = TrackingAllocator::adjust_memory_usage(-(delta as isize));
+        self.0.fetch_add(delta, Ordering::SeqCst);
     }
 
     fn get(&self) -> isize {

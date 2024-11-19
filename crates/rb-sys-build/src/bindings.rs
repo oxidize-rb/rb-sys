@@ -5,6 +5,7 @@ use crate::cc::Build;
 use crate::utils::is_msvc;
 use crate::{debug_log, RbConfig};
 use quote::ToTokens;
+use stable_api::{categorize_bindings, opaqueify_bindings};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -21,10 +22,13 @@ pub fn generate(
 ) -> Result<PathBuf, Box<dyn Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
-    let mut clang_args = vec![
-        format!("-I{}", rbconfig.get("rubyhdrdir")),
-        format!("-I{}", rbconfig.get("rubyarchhdrdir")),
-    ];
+    let mut clang_args = vec![];
+    if let Some(ruby_include_dir) = rbconfig.get("rubyhdrdir") {
+        clang_args.push(format!("-I{}", ruby_include_dir));
+    }
+    if let Some(ruby_arch_include_dir) = rbconfig.get("rubyarchhdrdir") {
+        clang_args.push(format!("-I{}", ruby_arch_include_dir));
+    }
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
@@ -47,8 +51,10 @@ pub fn generate(
     let bindings = default_bindgen(clang_args)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
+        .blocklist_function("rb_tr_abi_version")
         .blocklist_function("^__.*")
         .blocklist_item("RData")
+        .blocklist_function("rb_tr_rdata")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     let bindings = if cfg!(feature = "bindgen-rbimpls") {
@@ -67,7 +73,7 @@ pub fn generate(
             .blocklist_item("^_bindgen_ty_9.*")
     };
 
-    let bindings = stable_api::opaqueify_bindings(rbconfig, bindings, &mut wrapper_h);
+    let bindings = opaqueify_bindings(rbconfig, bindings, &mut wrapper_h);
 
     let mut tokens = {
         write!(std::io::stderr(), "{}", wrapper_h)?;
@@ -76,13 +82,9 @@ pub fn generate(
         syn::parse_file(&code_string)?
     };
 
-    let ruby_version = rbconfig.ruby_program_version();
-    let ruby_platform = rbconfig.platform();
+    let slug = rbconfig.ruby_version_slug();
     let crate_version = env!("CARGO_PKG_VERSION");
-    let out_path = out_dir.join(format!(
-        "bindings-{}-{}-{}.rs",
-        crate_version, ruby_platform, ruby_version
-    ));
+    let out_path = out_dir.join(format!("bindings-{}-{}.rs", crate_version, slug));
 
     let code = {
         sanitizer::ensure_backwards_compatible_encoding_pointers(&mut tokens);
@@ -93,7 +95,7 @@ pub fn generate(
         }
 
         push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
-        stable_api::categorize_bindings(&mut tokens);
+        categorize_bindings(&mut tokens);
         tokens.into_token_stream().to_string()
     };
 
@@ -121,7 +123,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
         return;
     }
 
-    let ver = rbconfig.ruby_program_version();
+    let ver = rbconfig.ruby_version_slug();
 
     sanitizer::cleanup_docs(syntax, &ver).unwrap_or_else(|e| {
         debug_log!("WARN: failed to clean up docs, skipping: {}", e);

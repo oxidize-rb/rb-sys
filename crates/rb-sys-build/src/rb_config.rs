@@ -108,14 +108,25 @@ impl RbConfig {
 
     /// Pushes the `LIBRUBYARG` flags so Ruby will be linked.
     pub fn link_ruby(&mut self, is_static: bool) -> &mut Self {
-        let libdir = self.get("libdir");
+        let Some(libdir) = self.get("libdir") else {
+            return self;
+        };
+
         self.push_search_path(libdir.as_str());
-        self.push_dldflags(&format!("-L{}", &self.get("libdir")));
+        self.push_dldflags(&format!("-L{}", libdir));
 
         let librubyarg = if is_static {
             self.get("LIBRUBYARG_STATIC")
         } else {
             self.get("LIBRUBYARG_SHARED")
+        };
+
+        let librubyarg = match librubyarg {
+            Some(lib) => lib,
+            None => {
+                debug_log!("WARN: LIBRUBYARG not found in RbConfig, skipping linking Ruby");
+                return self;
+            }
         };
 
         if is_msvc() {
@@ -125,11 +136,11 @@ impl RbConfig {
 
             let mut to_link: Vec<String> = vec![];
 
-            if let Some(libs) = self.get_optional("LIBS") {
+            if let Some(libs) = self.get("LIBS") {
                 to_link.extend(libs.split_whitespace().map(|s| s.to_string()));
             }
 
-            if let Some(libs) = self.get_optional("LOCAL_LIBS") {
+            if let Some(libs) = self.get("LOCAL_LIBS") {
                 to_link.extend(libs.split_whitespace().map(|s| s.to_string()));
             }
 
@@ -149,8 +160,11 @@ impl RbConfig {
 
     /// Get the name for libruby-static (i.e. `ruby.3.1-static`).
     pub fn libruby_static_name(&self) -> String {
-        self.get("LIBRUBY_A")
-            .trim_start_matches("lib")
+        let Some(lib) = self.get("LIBRUBY_A") else {
+            return format!("{}-static", self.libruby_so_name());
+        };
+
+        lib.trim_start_matches("lib")
             .trim_end_matches(".a")
             .to_string()
     }
@@ -158,12 +172,13 @@ impl RbConfig {
     /// Get the name for libruby (i.e. `ruby.3.1`)
     pub fn libruby_so_name(&self) -> String {
         self.get("RUBY_SO_NAME")
+            .unwrap_or_else(|| "ruby".to_string())
     }
 
     /// Get the platform for the current ruby.
     pub fn platform(&self) -> String {
-        self.get_optional("platform")
-            .unwrap_or_else(|| self.get("arch"))
+        self.get("platform")
+            .unwrap_or_else(|| self.get("arch").expect("arch not found"))
     }
 
     /// Filter the libs, removing the ones that are not needed.
@@ -179,22 +194,28 @@ impl RbConfig {
     }
 
     /// Returns the current ruby program version.
-    pub fn ruby_program_version(&self) -> String {
-        if let Some(progv) = self.get_optional("RUBY_PROGRAM_VERSION") {
+    pub fn ruby_version_slug(&self) -> String {
+        let ver = if let Some(progv) = self.get("RUBY_PROGRAM_VERSION") {
             progv
-        } else {
+        } else if let Some(major_minor) = self.major_minor() {
             format!(
                 "{}.{}.{}",
-                self.get("MAJOR"),
-                self.get("MINOR"),
-                self.get("TEENY")
+                major_minor.0,
+                major_minor.1,
+                self.get("TEENY").unwrap_or_else(|| "0".to_string())
             )
-        }
+        } else if let Some(fallback) = self.get("ruby_version") {
+            fallback
+        } else {
+            panic!("RUBY_PROGRAM_VERSION not found")
+        };
+
+        format!("{}-{}-{}", self.ruby_engine(), self.platform(), ver)
     }
 
     /// Get the CPPFLAGS from the RbConfig, making sure to subsitute variables.
     pub fn cppflags(&self) -> Vec<String> {
-        if let Some(cppflags) = self.get_optional("CPPFLAGS") {
+        if let Some(cppflags) = self.get("CPPFLAGS") {
             let flags = self.subst_shell_variables(&cppflags);
             shellsplit(flags)
         } else {
@@ -202,16 +223,9 @@ impl RbConfig {
         }
     }
 
-    /// Returns the value of the given key from the either the matching
-    /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
-    pub fn get(&self, key: &str) -> String {
-        self.get_optional(key)
-            .unwrap_or_else(|| panic!("Key not found: {}", key))
-    }
-
     /// Returns true if the current Ruby is cross compiling.
     pub fn is_cross_compiling(&self) -> bool {
-        if let Some(cross) = self.get_optional("CROSS_COMPILING") {
+        if let Some(cross) = self.get("CROSS_COMPILING") {
             cross == "yes" || cross == "1"
         } else {
             false
@@ -220,7 +234,7 @@ impl RbConfig {
 
     /// Returns the value of the given key from the either the matching
     /// `RBCONFIG_{key}` environment variable or `RbConfig::CONFIG[{key}]` hash.
-    pub fn get_optional(&self, key: &str) -> Option<String> {
+    pub fn get(&self, key: &str) -> Option<String> {
         self.try_rbconfig_env(key)
             .or_else(|| self.try_value_map(key))
     }
@@ -243,10 +257,10 @@ impl RbConfig {
     }
 
     /// Get major/minor version tuple of Ruby
-    pub fn major_minor(&self) -> (u32, u32) {
-        let major = self.get("MAJOR").parse::<u32>().unwrap();
-        let minor = self.get("MINOR").parse::<u32>().unwrap();
-        (major, minor)
+    pub fn major_minor(&self) -> Option<(u32, u32)> {
+        let major = self.get("MAJOR").map(|v| v.parse::<u32>())?.ok()?;
+        let minor = self.get("MINOR").map(|v| v.parse::<u32>())?.ok()?;
+        Some((major, minor))
     }
 
     /// Get the rb_config output for cargo
@@ -341,13 +355,32 @@ impl RbConfig {
 
     // Check if has ABI version
     pub fn has_ruby_dln_check_abi(&self) -> bool {
-        let major = self.get("MAJOR").parse::<i32>().unwrap();
-        let minor = self.get("MINOR").parse::<i32>().unwrap();
-        let patchlevel = self.get("PATCHLEVEL").parse::<i32>().unwrap();
+        let Some((major, minor)) = self.major_minor() else {
+            return false;
+        };
+
+        let patchlevel = self
+            .get("PATCHLEVEL")
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or(-1);
 
         // Ruby has ABI version on verion 3.2 and later only on development
         // versions
         major >= 3 && minor >= 2 && patchlevel == -1 && !cfg!(target_family = "windows")
+    }
+
+    /// The RUBY_ENGINE we are building for
+    pub fn ruby_engine(&self) -> RubyEngine {
+        if let Some(engine) = self.get("ruby_install_name") {
+            match engine.as_str() {
+                "ruby" => RubyEngine::Mri,
+                "jruby" => RubyEngine::JRuby,
+                "truffleruby" => RubyEngine::TruffleRuby,
+                _ => RubyEngine::Mri, // not sure how stable this is, so default to MRI to avoid breaking things
+            }
+        } else {
+            RubyEngine::Mri
+        }
     }
 
     // Examines the string from shell variables and expands them with values in the value_map
@@ -371,7 +404,7 @@ impl RbConfig {
 
                         let key = &input[start..end];
 
-                        if let Some(val) = self.get_optional(key) {
+                        if let Some(val) = self.get(key) {
                             result.push_str(&val);
                         } else if let Some(val) = env::var_os(key) {
                             result.push_str(&val.to_string_lossy());
@@ -392,8 +425,12 @@ impl RbConfig {
     }
 
     pub fn have_ruby_header<T: AsRef<str>>(&self, header: T) -> bool {
-        let ruby_include_dir: PathBuf = self.get("rubyhdrdir").into();
-        ruby_include_dir.join(header.as_ref()).exists()
+        let Some(ruby_include_dir) = self.get("rubyhdrdir") else {
+            return false;
+        };
+        PathBuf::from(ruby_include_dir)
+            .join(header.as_ref())
+            .exists()
     }
 
     fn push_search_path<T: Into<SearchPath>>(&mut self, path: T) -> &mut Self {
@@ -436,6 +473,23 @@ impl RbConfig {
         let key = format!("RBCONFIG_{}", key);
         println!("cargo:rerun-if-env-changed={}", key);
         env::var(key).map(|v| v.trim_matches('\n').to_owned()).ok()
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum RubyEngine {
+    Mri,
+    TruffleRuby,
+    JRuby,
+}
+
+impl std::fmt::Display for RubyEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RubyEngine::Mri => write!(f, "mri"),
+            RubyEngine::TruffleRuby => write!(f, "truffleruby"),
+            RubyEngine::JRuby => write!(f, "jruby"),
+        }
     }
 }
 
@@ -753,8 +807,7 @@ mod tests {
             env::set_var("RBCONFIG_libdir", "/foo");
             let rb_config = RbConfig::new();
 
-            assert_eq!(rb_config.get("libdir"), "/foo");
-            assert_eq!(rb_config.get_optional("libdir"), Some("/foo".into()));
+            assert_eq!(rb_config.get("libdir"), Some("/foo".into()));
 
             env::remove_var("RBCONFIG_libdir");
         });

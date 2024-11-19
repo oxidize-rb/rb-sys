@@ -170,12 +170,21 @@ impl Build {
 }
 
 fn get_include_args(rb: &rb_config::RbConfig) -> Vec<String> {
-    vec![
-        format!("-I{}", rb.get("rubyhdrdir")),
-        format!("-I{}", rb.get("rubyarchhdrdir")),
-        format!("-I{}/include/internal", rb.get("rubyhdrdir")),
-        format!("-I{}/include/impl", rb.get("rubyhdrdir")),
-    ]
+    let mut args = vec![];
+    if let Some(include_dir) = rb.get("rubyhdrdir") {
+        args.push(format!("-I{}", include_dir));
+    }
+    if let Some(arch_include_dir) = rb.get("rubyarchhdrdir") {
+        args.push(format!("-I{}", arch_include_dir));
+    }
+    if let Some(internal_include_dir) = rb.get("rubyhdrdir") {
+        args.push(format!("-I{}/include/internal", internal_include_dir));
+    }
+    if let Some(impl_include_dir) = rb.get("rubyhdrdir") {
+        args.push(format!("-I{}/include/impl", impl_include_dir));
+    }
+
+    args
 }
 
 fn get_common_args() -> Vec<String> {
@@ -292,7 +301,7 @@ fn get_tool_from_rb_config_or_env(env_var: &str) -> Option<String> {
 
     get_tool_from_env(env_var)
         .filter(|s| !s.is_empty())
-        .or_else(|| rb.get_optional(env_var))
+        .or_else(|| rb.get(env_var))
 }
 
 fn get_tool_from_env(env_var: &str) -> Option<String> {

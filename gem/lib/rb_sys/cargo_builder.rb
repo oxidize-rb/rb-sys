@@ -146,6 +146,11 @@ module RbSys
         # See https://github.com/oxidize-rb/rb-sys/issues/88
         dl_flag = "-Wl,-undefined,dynamic_lookup"
         flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
+      elsif RUBY_ENGINE == "truffleruby"
+        dl_flag = "-Wl,-z,lazy"
+        flags += ["-C", "link-arg=#{dl_flag}"] unless makefile_config("DLDFLAGS")&.include?(dl_flag)
+        # lazy binding requires RELRO to be off, see https://users.rust-lang.org/t/linux-executable-lazy-loading/65621/2
+        flags += ["-C", "relro-level=off"]
       end
 
       if musl?
