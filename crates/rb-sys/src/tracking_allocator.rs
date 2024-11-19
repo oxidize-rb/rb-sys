@@ -125,6 +125,7 @@ mod non_mri {
     pub struct TrackingAllocator;
 
     impl TrackingAllocator {
+        #[allow(clippy::new_without_default)]
         pub const fn new() -> Self {
             Self
         }
