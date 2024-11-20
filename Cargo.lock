@@ -210,11 +210,11 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-env"
-version = "0.1.2"
+version = "0.2.1"
 
 [[package]]
 name = "rb-sys-test-helpers"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-test-helpers-macros"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "quote",
  "syn",

@@ -13,3 +13,6 @@ exclude = [
     "./fuzz",
     "./bench",
 ]
+
+[profile.dev]
+strip = false
