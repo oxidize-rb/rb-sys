@@ -8,6 +8,8 @@ macro_rules! parity_test {
           use rb_sys::stable_api;
           let data = $data_factory;
 
+          assert_ne!(stable_api::get_default().version(), (0, 0));
+
           #[allow(unused)]
           let rust_result = unsafe { stable_api::get_default().$func(data) };
           #[allow(unused_unsafe)]

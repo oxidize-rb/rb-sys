@@ -15,6 +15,13 @@ use crate::VALUE;
 use std::os::raw::{c_char, c_long};
 
 pub trait StableApiDefinition {
+    const VERSION_MAJOR: u32;
+    const VERSION_MINOR: u32;
+
+    fn version(&self) -> (u32, u32) {
+        (Self::VERSION_MAJOR, Self::VERSION_MINOR)
+    }
+
     /// Get the length of a Ruby string (akin to `RSTRING_LEN`).
     ///
     /// # Safety
@@ -139,9 +146,19 @@ use compiled as api;
 #[cfg_attr(ruby_eq_3_1, path = "stable_api/ruby_3_1.rs")]
 #[cfg_attr(ruby_eq_3_2, path = "stable_api/ruby_3_2.rs")]
 #[cfg_attr(ruby_eq_3_3, path = "stable_api/ruby_3_3.rs")]
+#[cfg_attr(ruby_eq_3_4, path = "stable_api/ruby_3_4.rs")]
 mod rust;
 #[cfg(not(stable_api_export_compiled_as_api))]
 use rust as api;
+
+impl std::fmt::Debug for api::Definition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StableApiDefinition")
+            .field("VERSION_MAJOR", &api::Definition::VERSION_MAJOR)
+            .field("VERSION_MINOR", &api::Definition::VERSION_MINOR)
+            .finish()
+    }
+}
 
 /// Get the default stable API definition for the current Ruby version.
 pub const fn get_default() -> &'static api::Definition {

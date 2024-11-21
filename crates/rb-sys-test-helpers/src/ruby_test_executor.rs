@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::panic;
+use std::ptr::addr_of_mut;
 use std::sync::mpsc::{self, SyncSender};
 use std::sync::Once;
 use std::thread::{self, JoinHandle};
@@ -10,7 +11,7 @@ use crate::once_cell::OnceCell;
 use rb_sys::rb_ext_ractor_safe;
 use rb_sys::{
     rb_errinfo, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr, ruby_exec_node,
-    ruby_process_options, ruby_setup, Qnil, VALUE,
+    ruby_init_stack, ruby_process_options, ruby_setup, Qnil, VALUE,
 };
 
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
@@ -141,6 +142,9 @@ pub unsafe fn setup_ruby_unguarded() {
         rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
     }
 
+    let mut stack_marker: VALUE = 0;
+    ruby_init_stack(addr_of_mut!(stack_marker) as *mut _);
+
     match ruby_setup() {
         0 => {}
         code => panic!("Failed to setup Ruby (error code: {})", code),
@@ -150,7 +154,7 @@ pub unsafe fn setup_ruby_unguarded() {
         let mut argv: [*mut i8; 3] = [
             "ruby\0".as_ptr() as _,
             "-e\0".as_ptr() as _,
-            "nil\0".as_ptr() as _,
+            "\0".as_ptr() as _,
         ];
 
         ruby_process_options(argv.len() as _, argv.as_mut_ptr() as _) as _
