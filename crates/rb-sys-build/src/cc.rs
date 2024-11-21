@@ -282,7 +282,8 @@ fn get_tool(env_var: &str, default: &str) -> Command {
     let mut tool_args = shellsplit(tool_args).into_iter();
     let tool = tool_args.next().unwrap_or_else(|| default.to_string());
 
-    let mut cmd = if Path::new(&tool).is_file() {
+    let mut cmd = if tool.starts_with('/') && Path::new(&tool).is_file() {
+        debug_log!("[INFO] using {tool} for {env_var}");
         new_command(&tool)
     } else {
         debug_log!("[WARN] {tool} tool not found, falling back to {default}");
