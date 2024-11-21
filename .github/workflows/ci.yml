@@ -53,10 +53,14 @@ jobs:
             sys:
               os: macos-latest
               rust_toolchain: stable
-          - ruby_version: "ruby-asan"
+          - ruby_version: "ruby-debug"
             sys:
               os: ubuntu-24.04
               rust_toolchain: stable
+          - ruby_version: mswin
+            sys:
+              os: windows-2022
+              rust_toolchain: stable-x86_64-pc-windows-msvc
         exclude:
           # Missing symbols for some reason, need to fix
           - ruby_version: "2.6"
@@ -71,12 +75,10 @@ jobs:
             sys:
               os: macos-latest
               rust_toolchain: stable
-        # MSC version mismatch, need to fix
-        # include:
-        #   - ruby_version: mswin
-        #     sys:
-        #       os: windows-2022
-        #       rust_toolchain: stable-x86_64-pc-windows-msvc
+          - ruby_version: "3.4.0-preview2"
+            sys:
+              os: windows-2022
+              rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
       - uses: actions/checkout@v4

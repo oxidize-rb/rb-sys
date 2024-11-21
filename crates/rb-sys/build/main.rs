@@ -56,7 +56,10 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     #[cfg(feature = "stable-api")]
-    stable_api_config::setup(&rbconfig).expect("could not setup stable API");
+    if let Err(e) = stable_api_config::setup(&rbconfig) {
+        eprintln!("Failed to setup stable API: {}", e);
+        std::process::exit(1);
+    }
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);
