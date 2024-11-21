@@ -1,6 +1,9 @@
 use super::StableApiDefinition;
 use crate::{ruby_value_type, VALUE};
-use std::os::raw::{c_char, c_long};
+use std::{
+    ffi::c_int,
+    os::raw::{c_char, c_long},
+};
 
 #[allow(dead_code)]
 extern "C" {
@@ -57,6 +60,18 @@ extern "C" {
 
     #[link_name = "impl_integer_type_p"]
     fn impl_integer_type_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_int2fix"]
+    fn impl_int2fix(i: c_int) -> VALUE;
+
+    #[link_name = "impl_int2num"]
+    fn impl_int2num(i: c_int) -> VALUE;
+
+    #[link_name = "impl_fix2long"]
+    fn impl_fix2long(val: VALUE) -> c_long;
+
+    #[link_name = "impl_num2long"]
+    fn impl_num2long(val: VALUE) -> c_long;
 }
 
 pub struct Definition;
@@ -150,5 +165,29 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn integer_type_p(&self, obj: VALUE) -> bool {
         impl_integer_type_p(obj)
+    }
+
+    #[cfg(feature = "stable-api-compiled-testing")]
+    #[inline]
+    fn int2fix(&self, i: c_int) -> VALUE {
+        unsafe { impl_int2fix(i) }
+    }
+
+    #[cfg(feature = "stable-api-compiled-testing")]
+    #[inline]
+    fn int2num(&self, i: c_int) -> VALUE {
+        unsafe { impl_int2num(i) }
+    }
+
+    #[cfg(feature = "stable-api-compiled-testing")]
+    #[inline]
+    fn fix2long(&self, val: VALUE) -> c_long {
+        unsafe { impl_fix2long(val) }
+    }
+
+    #[cfg(feature = "stable-api-compiled-testing")]
+    #[inline]
+    unsafe fn num2long(&self, val: VALUE) -> c_long {
+        impl_num2long(val)
     }
 }
