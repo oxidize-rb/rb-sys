@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         # Test against all versions supported by rubygems
-        ruby_version: ["2.6", "2.7", "3.0", "3.1", "3.2", "3.3"]
+        ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4.0-preview2"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
@@ -52,6 +52,10 @@ jobs:
           - ruby_version: "truffleruby"
             sys:
               os: macos-latest
+              rust_toolchain: stable
+          - ruby_version: "ruby-asan"
+            sys:
+              os: ubuntu-24.04
               rust_toolchain: stable
         exclude:
           # Missing symbols for some reason, need to fix
