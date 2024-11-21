@@ -129,7 +129,10 @@ mod tests {
             assert_eq!("RuntimeError", exception.classname());
             assert_eq!("oh no", exception.message().unwrap());
             #[cfg(ruby_gt_2_4)]
-            assert!(exception.full_message().unwrap().contains("eval:1:in `"),);
+            {
+                let message = exception.full_message().unwrap();
+                assert!(message.contains("eval:1:in "), "message: {}", message);
+            }
         })
     }
 }

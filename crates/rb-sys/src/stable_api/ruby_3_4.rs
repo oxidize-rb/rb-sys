@@ -1,37 +1,25 @@
 use super::StableApiDefinition;
-
-use crate::ruby_rarray_flags::*;
-use crate::ruby_rstring_flags::*;
 use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
 use std::os::raw::{c_char, c_long};
 
-#[cfg(not(ruby_eq_2_6))]
-compile_error!("This file should only be included in Ruby 2.6 builds");
+#[cfg(not(ruby_eq_3_4))]
+compile_error!("This file should only be included in Ruby 3.3 builds");
 
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
-    const VERSION_MAJOR: u32 = 2;
-    const VERSION_MINOR: u32 = 6;
+    const VERSION_MAJOR: u32 = 3;
+    const VERSION_MINOR: u32 = 4;
 
     #[inline]
     unsafe fn rstring_len(&self, obj: VALUE) -> c_long {
         assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
-        let rstring: &RString = &*(obj as *const RString);
-        let flags = rstring.basic.flags;
-        let is_heap = (flags & RSTRING_NOEMBED as VALUE) != 0;
 
-        if !is_heap {
-            let mut f = rstring.basic.flags;
-            f &= RSTRING_EMBED_LEN_MASK as VALUE;
-            f >>= RSTRING_EMBED_LEN_SHIFT as VALUE;
-            f as c_long
-        } else {
-            rstring.as_.heap.len
-        }
+        let rstring: &RString = &*(obj as *const RString);
+        rstring.len
     }
 
     #[inline]
@@ -40,9 +28,9 @@ impl StableApiDefinition for Definition {
 
         let rstring: &RString = &*(obj as *const RString);
         let flags = rstring.basic.flags;
-        let is_heap = (flags & RSTRING_NOEMBED as VALUE) != 0;
+        let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
         let ptr = if !is_heap {
-            std::ptr::addr_of!(rstring.as_.ary) as *const _
+            std::ptr::addr_of!(rstring.as_.embed.ary) as *const _
         } else {
             rstring.as_.heap.ptr
         };
@@ -58,12 +46,12 @@ impl StableApiDefinition for Definition {
 
         let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
-        let is_embedded = (flags & RARRAY_EMBED_FLAG as VALUE) != 0;
+        let is_embedded = (flags & crate::ruby_rarray_flags::RARRAY_EMBED_FLAG as VALUE) != 0;
 
         if is_embedded {
             let mut f = rarray.basic.flags;
-            f &= RARRAY_EMBED_LEN_MASK as VALUE;
-            f >>= RARRAY_EMBED_LEN_SHIFT as VALUE;
+            f &= crate::ruby_rarray_flags::RARRAY_EMBED_LEN_MASK as VALUE;
+            f >>= crate::ruby_rarray_consts::RARRAY_EMBED_LEN_SHIFT as VALUE;
             f as c_long
         } else {
             rarray.as_.heap.len
@@ -76,9 +64,9 @@ impl StableApiDefinition for Definition {
 
         let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
-        let is_embedded = (flags & RARRAY_EMBED_FLAG as VALUE) != 0;
+        let is_embedded = (flags & crate::ruby_rarray_flags::RARRAY_EMBED_FLAG as VALUE) != 0;
         let ptr = if is_embedded {
-            rarray.as_.ary.as_ptr()
+            std::ptr::addr_of!(rarray.as_.ary) as *const _
         } else {
             rarray.as_.heap.ptr
         };
@@ -90,7 +78,7 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     fn special_const_p(&self, value: VALUE) -> bool {
-        let is_immediate = value & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
+        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
         let test = (value & !(crate::Qnil as VALUE)) != 0;
 
         is_immediate || !test
@@ -169,10 +157,12 @@ impl StableApiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn symbol_p(&self, obj: VALUE) -> bool {
         self.static_sym_p(obj) || self.dynamic_sym_p(obj)
     }
 
+    #[inline]
     unsafe fn float_type_p(&self, obj: VALUE) -> bool {
         if self.flonum_p(obj) {
             true
@@ -183,6 +173,7 @@ impl StableApiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type {
         use crate::ruby_special_consts::*;
         use crate::ruby_value_type::*;
@@ -207,6 +198,7 @@ impl StableApiDefinition for Definition {
         }
     }
 
+    #[inline]
     unsafe fn dynamic_sym_p(&self, obj: VALUE) -> bool {
         if self.special_const_p(obj) {
             false

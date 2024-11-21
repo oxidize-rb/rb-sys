@@ -13,7 +13,7 @@ use std::{
 };
 use version::Version;
 
-const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
+const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
     Version::new(2, 3),
     Version::new(2, 4),
     Version::new(2, 5),
@@ -23,6 +23,7 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 9] = [
     Version::new(3, 1),
     Version::new(3, 2),
     Version::new(3, 3),
+    Version::new(3, 4),
 ];
 
 fn main() {
@@ -55,7 +56,10 @@ fn main() {
     export_cargo_cfg(&mut rbconfig, &mut cfg_capture_file);
 
     #[cfg(feature = "stable-api")]
-    stable_api_config::setup(&rbconfig).expect("could not setup stable API");
+    if let Err(e) = stable_api_config::setup(&rbconfig) {
+        eprintln!("Failed to setup stable API: {}", e);
+        std::process::exit(1);
+    }
 
     if is_link_ruby_enabled() {
         link_libruby(&mut rbconfig);

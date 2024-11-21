@@ -62,6 +62,9 @@ extern "C" {
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
+    const VERSION_MAJOR: u32 = 0;
+    const VERSION_MINOR: u32 = 0;
+
     #[inline]
     unsafe fn rstring_len(&self, obj: VALUE) -> std::os::raw::c_long {
         impl_rstring_len(obj)

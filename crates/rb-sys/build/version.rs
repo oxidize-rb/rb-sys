@@ -1,7 +1,7 @@
 use crate::RbConfig;
 
 #[allow(dead_code)]
-pub const LATEST_STABLE_VERSION: Version = Version::new(3, 3);
+pub const LATEST_STABLE_VERSION: Version = Version::new(3, 4);
 #[allow(dead_code)]
 pub const MIN_SUPPORTED_STABLE_VERSION: Version = Version::new(2, 6);
 

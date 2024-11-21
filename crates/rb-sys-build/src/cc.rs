@@ -282,7 +282,27 @@ fn get_tool(env_var: &str, default: &str) -> Command {
     let mut tool_args = shellsplit(tool_args).into_iter();
     let tool = tool_args.next().unwrap_or_else(|| default.to_string());
 
-    let mut cmd = if Path::new(&tool).is_file() {
+    fn tool_exists(tool_name: &str) -> std::io::Result<bool> {
+        let path = PathBuf::from(tool_name);
+
+        if path.is_file() {
+            return Ok(true);
+        }
+
+        match Command::new(tool_name).spawn() {
+            Ok(_) => Ok(true),
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    Ok(false)
+                } else {
+                    Err(e)
+                }
+            }
+        }
+    }
+
+    let mut cmd = if tool_exists(&tool).unwrap_or(false) {
+        debug_log!("[INFO] using {tool} for {env_var}");
         new_command(&tool)
     } else {
         debug_log!("[WARN] {tool} tool not found, falling back to {default}");

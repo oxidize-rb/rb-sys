@@ -11,6 +11,9 @@ compile_error!("This file should only be included in Ruby 2.7 builds");
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
+    const VERSION_MAJOR: u32 = 2;
+    const VERSION_MINOR: u32 = 7;
+
     #[inline]
     unsafe fn rstring_len(&self, obj: VALUE) -> c_long {
         assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
