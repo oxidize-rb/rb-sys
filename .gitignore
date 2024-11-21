@@ -3,3 +3,4 @@ Gemfile.lock
 tmp/
 gem/docs
 .yardoc/
+.DS_Store
