@@ -87,3 +87,8 @@ int
 impl_integer_type_p(VALUE obj) {
   return RB_INTEGER_TYPE_P(obj);
 }
+
+int
+impl_rstring_interned_p(VALUE obj) {
+  return FL_TEST(obj, RSTRING_FSTR);
+}

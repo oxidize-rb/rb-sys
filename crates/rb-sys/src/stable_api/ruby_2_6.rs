@@ -225,4 +225,14 @@ impl StableApiDefinition for Definition {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
         }
     }
+
+    #[inline]
+    unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool {
+        assert!(self.type_p(obj, value_type::RUBY_T_STRING));
+
+        let rstring: &RString = &*(obj as *const RString);
+        let flags = rstring.basic.flags;
+
+        (flags & crate::ruby_rstring_flags::RSTRING_FSTR as VALUE) != 0
+    }
 }
