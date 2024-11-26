@@ -1,4 +1,5 @@
 #include "ruby.h"
+#include "ruby/internal/value_type.h"
 
 long
 impl_rstring_len(VALUE obj) {
@@ -90,5 +91,11 @@ impl_integer_type_p(VALUE obj) {
 
 int
 impl_rstring_interned_p(VALUE obj) {
-  return FL_TEST(obj, RSTRING_FSTR);
+  Check_Type(obj, T_STRING);
+
+  if (FL_TEST(obj, RSTRING_FSTR) == 0) {
+    return false;
+  } 
+
+  return true;
 }
