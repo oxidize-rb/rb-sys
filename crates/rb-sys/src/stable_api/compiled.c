@@ -93,9 +93,5 @@ int
 impl_rstring_interned_p(VALUE obj) {
   Check_Type(obj, T_STRING);
 
-  if (FL_TEST(obj, RSTRING_FSTR) == 0) {
-    return false;
-  } 
-
-  return true;
+  return (FL_TEST(obj, RSTRING_FSTR) ? true : false);
 }
