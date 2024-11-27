@@ -132,6 +132,14 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
+
+    /// Check if a Ruby string is interned (akin to `RSTRING_FSTR`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying flags of the RString. The caller must ensure that
+    /// the `VALUE` is a valid pointer to an RString.
+    unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

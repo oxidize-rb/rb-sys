@@ -535,3 +535,21 @@ parity_test!(
     },
     expected: false
 );
+
+parity_test!(
+    name: test_rb_string_interned_p,
+    func: rstring_interned_p,
+    data_factory: {
+        ruby_eval!("'foo'")
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_rb_string_interned_p_frozen_str,
+    func: rstring_interned_p,
+    data_factory: {
+        ruby_eval!("'foo'.freeze")
+    },
+    expected: true
+);
