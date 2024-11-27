@@ -225,4 +225,9 @@ impl StableApiDefinition for Definition {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
         }
     }
+
+    #[inline]
+    fn thread_sleep(&self, duration: std::time::Duration) {
+        unsafe { rb_thread_sleep(duration.as_secs() as i32) };
+    }
 }

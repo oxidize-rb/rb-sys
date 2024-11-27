@@ -1,6 +1,9 @@
 use super::StableApiDefinition;
 use crate::{ruby_value_type, VALUE};
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    time::Duration,
+};
 
 #[allow(dead_code)]
 extern "C" {
@@ -57,6 +60,9 @@ extern "C" {
 
     #[link_name = "impl_integer_type_p"]
     fn impl_integer_type_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rb_thread_sleep"]
+    fn impl_rb_thead_sleep(secs: u64);
 }
 
 pub struct Definition;
@@ -153,5 +159,10 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn integer_type_p(&self, obj: VALUE) -> bool {
         impl_integer_type_p(obj)
+    }
+
+    #[inline]
+    fn thread_sleep(&self, duration: std::time::Duration) {
+        unsafe { impl_rb_thead_sleep(duration.as_secs()) }
     }
 }

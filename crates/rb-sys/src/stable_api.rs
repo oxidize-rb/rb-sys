@@ -12,7 +12,10 @@
 //!    changes in production.
 
 use crate::VALUE;
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    time::Duration,
+};
 
 pub trait StableApiDefinition {
     const VERSION_MAJOR: u32;
@@ -132,6 +135,9 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
+
+    /// Blocks the current thread until the given duration has passed.
+    fn thread_sleep(&self, duration: Duration);
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
