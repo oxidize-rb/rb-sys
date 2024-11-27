@@ -1,7 +1,7 @@
 use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
-    value_type, VALUE,
+    rb_thread_sleep, value_type, VALUE,
 };
 use std::os::raw::{c_char, c_long};
 
@@ -216,5 +216,10 @@ impl StableApiDefinition for Definition {
         } else {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
         }
+    }
+
+    #[inline]
+    fn thread_sleep(&self, duration: std::time::Duration) {
+        unsafe { rb_thread_sleep(duration.as_secs() as i32) };
     }
 }

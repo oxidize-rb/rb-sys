@@ -535,3 +535,10 @@ parity_test!(
     },
     expected: false
 );
+// parity_test!(
+//     name: test_rb_thread_sleep,
+//     func: thread_sleep,
+//     data_factory: {
+//         std::time::Duration::from_secs(1)
+//     }
+// );

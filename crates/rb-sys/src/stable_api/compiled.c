@@ -87,3 +87,8 @@ int
 impl_integer_type_p(VALUE obj) {
   return RB_INTEGER_TYPE_P(obj);
 }
+
+void
+impl_rb_thread_sleep(int secs) {
+   rb_thread_sleep(secs);
+}
