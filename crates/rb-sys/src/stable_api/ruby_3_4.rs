@@ -1,7 +1,7 @@
 use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
-    value_type, VALUE,
+    rb_obj_frozen_p, value_type, VALUE,
 };
 use std::os::raw::{c_char, c_long};
 
@@ -38,6 +38,23 @@ impl StableApiDefinition for Definition {
         assert!(!ptr.is_null());
 
         ptr
+    }
+
+    #[inline]
+    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE {
+        let rbasic = obj as *const crate::RBasic;
+
+        (*rbasic).klass
+    }
+
+    #[inline]
+    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool {
+        if self.special_const_p(obj) {
+            true
+        } else {
+            let rbasic = obj as *const crate::RBasic;
+            ((*rbasic).flags & crate::fl_type_::RUBY_FL_FREEZE as VALUE) != 0
+        }
     }
 
     #[inline]

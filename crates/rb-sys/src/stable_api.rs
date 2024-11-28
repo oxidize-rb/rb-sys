@@ -54,6 +54,16 @@ pub trait StableApiDefinition {
     /// is valid.
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
 
+    /// Get the class from a VALUE which contains an RBasic struct.
+    ///
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE;
+
+    /// Checks if the given object is frozen.
+    ///
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool;
+
     /// Tests if a bignum is positive.
     ///
     /// # Safety
