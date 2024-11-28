@@ -54,6 +54,22 @@ pub trait StableApiDefinition {
     /// is valid.
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
 
+    /// Get the class from a VALUE which contains an RBasic struct.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE;
+
+    /// Checks if the given object is frozen.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool;
+
     /// Tests if the given value is a special constant.
     fn special_const_p(&self, value: VALUE) -> bool;
 

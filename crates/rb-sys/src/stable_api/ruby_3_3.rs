@@ -77,6 +77,23 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE {
+        let rbasic = obj as *const crate::RBasic;
+
+        (*rbasic).klass
+    }
+
+    #[inline]
+    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool {
+        if self.special_const_p(obj) {
+            true
+        } else {
+            let rbasic = obj as *const crate::RBasic;
+            ((*rbasic).flags & crate::ruby_value_type::FL_FREEZE as VALUE) != 0
+        }
+    }
+
+    #[inline]
     fn special_const_p(&self, value: VALUE) -> bool {
         let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
         let test = (value & !(crate::Qnil as VALUE)) != 0;
