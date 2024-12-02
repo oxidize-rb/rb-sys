@@ -57,6 +57,9 @@ extern "C" {
 
     #[link_name = "impl_integer_type_p"]
     fn impl_integer_type_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rstring_interned_p"]
+    fn impl_rstring_interned_p(obj: VALUE) -> bool;
 }
 
 pub struct Definition;
@@ -153,5 +156,9 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn integer_type_p(&self, obj: VALUE) -> bool {
         impl_integer_type_p(obj)
+    }
+
+    unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool {
+        impl_rstring_interned_p(obj)
     }
 }
