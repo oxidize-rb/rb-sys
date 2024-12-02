@@ -132,6 +132,22 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it could dereference a raw pointer when
     /// attemping to access the underlying [`RBasic`] struct.
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type;
+
+    /// Tests if a bignum is positive.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a bignum.
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool;
+
+    /// Tests if a bignum is negative.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a bignum.
+    unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
