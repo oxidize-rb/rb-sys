@@ -1,5 +1,4 @@
 #include "ruby.h"
-#include "ruby/internal/value_type.h"
 
 long
 impl_rstring_len(VALUE obj) {
