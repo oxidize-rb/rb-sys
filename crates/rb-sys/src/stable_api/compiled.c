@@ -25,6 +25,17 @@ impl_special_const_p(VALUE obj) {
   return SPECIAL_CONST_P(obj);
 }
 
+int
+impl_bignum_positive_p(VALUE obj) {
+  return RBIGNUM_POSITIVE_P(obj);
+}
+
+int
+impl_bignum_negative_p(VALUE obj) {
+  return RBIGNUM_NEGATIVE_P(obj);
+}
+
+
 enum ruby_value_type
 impl_builtin_type(VALUE obj) {
   return RB_BUILTIN_TYPE(obj);

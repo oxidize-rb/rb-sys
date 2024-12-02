@@ -214,6 +214,60 @@ parity_test!(
 );
 
 parity_test!(
+    name: test_bignum_positive_p_evaled,
+    func: bignum_positive_p,
+    data_factory: {
+      ruby_eval!("2 ** 64")
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_bignum_negative_p_evaled,
+    func: bignum_negative_p,
+    data_factory: {
+      ruby_eval!("-(2 ** 64)")
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_bignum_positive_p_for_zero,
+    func: bignum_positive_p,
+    data_factory: {
+      unsafe { rb_sys::rb_int2big(0) }
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_bignum_negative_p_for_zero,
+    func: bignum_negative_p,
+    data_factory: {
+      unsafe { rb_sys::rb_int2big(0) }
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_bignum_positive_p,
+    func: bignum_positive_p,
+    data_factory: {
+      unsafe { rb_sys::rb_int2big(64) }
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_bignum_negative_p,
+    func: bignum_negative_p,
+    data_factory: {
+      unsafe { rb_sys::rb_int2big(-1) }
+    },
+    expected: true
+);
+
+parity_test!(
     name: test_builtin_type_for_string,
     func: builtin_type,
     data_factory: {

@@ -54,6 +54,22 @@ pub trait StableApiDefinition {
     /// is valid.
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
 
+    /// Tests if a bignum is positive.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a bignum.
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool;
+
+    /// Tests if a bignum is negative.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a bignum.
+    unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool;
+
     /// Tests if the given value is a special constant.
     fn special_const_p(&self, value: VALUE) -> bool;
 
