@@ -105,7 +105,7 @@ impl StableApiDefinition for Definition {
         //     ((*rbasic).flags & crate::ruby_value_type::FL_FREEZE as VALUE) != 0
         // }
 
-        !(rb_obj_frozen_p(obj) == 0)
+        !(crate::rb_obj_frozen_p(obj) == 0)
     }
 
     #[inline]

@@ -182,6 +182,44 @@ parity_test!(
 );
 
 parity_test!(
+    name: test_rbasic_class_of_array,
+    func: rbasic_class,
+    data_factory: {
+        unsafe { rb_sys::rb_ary_new() }
+    },
+    expected: {
+        unsafe { rb_sys::rb_cArray }
+    }
+);
+
+parity_test!(
+    name: test_rbasic_class_of_array_evaled,
+    func: rbasic_class,
+    data_factory: {
+      ruby_eval!("[]")
+    },
+    expected: ruby_eval!("Array")
+);
+
+parity_test!(
+    name: test_rbasic_frozen_p_not_frozen_obj,
+    func: rbasic_frozen_p,
+    data_factory: {
+      ruby_eval!("[1]")
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_rbasic_frozen_p_frozen_obj,
+    func: rbasic_frozen_p,
+    data_factory: {
+      ruby_eval!("[1].freeze")
+    },
+    expected: true
+);
+
+parity_test!(
     name: test_special_const_p_for_bool,
     func: special_const_p,
     data_factory: {
