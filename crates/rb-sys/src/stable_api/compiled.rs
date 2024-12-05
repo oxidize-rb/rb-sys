@@ -19,8 +19,8 @@ extern "C" {
     #[link_name = "impl_rbasic_class"]
     fn impl_rbasic_class(obj: VALUE) -> VALUE;
 
-    #[link_name = "impl_rbasic_frozen_p"]
-    fn impl_rbasic_frozen_p(obj: VALUE) -> bool;
+    #[link_name = "impl_frozen_p"]
+    fn impl_frozen_p(obj: VALUE) -> bool;
 
     #[link_name = "impl_special_const_p"]
     fn impl_special_const_p(value: VALUE) -> bool;
@@ -104,8 +104,8 @@ impl StableApiDefinition for Definition {
         impl_rbasic_class(obj)
     }
 
-    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool {
-        impl_rbasic_frozen_p(obj)
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
+        impl_frozen_p(obj)
     }
 
     #[inline]

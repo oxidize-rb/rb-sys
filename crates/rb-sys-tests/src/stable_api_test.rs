@@ -203,7 +203,7 @@ parity_test!(
 
 parity_test!(
     name: test_rbasic_frozen_p_not_frozen_obj,
-    func: rbasic_frozen_p,
+    func: frozen_p,
     data_factory: {
       ruby_eval!("[1]")
     },
@@ -212,7 +212,7 @@ parity_test!(
 
 parity_test!(
     name: test_rbasic_frozen_p_frozen_obj,
-    func: rbasic_frozen_p,
+    func: frozen_p,
     data_factory: {
       ruby_eval!("[1].freeze")
     },

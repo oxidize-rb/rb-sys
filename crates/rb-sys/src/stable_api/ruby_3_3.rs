@@ -84,7 +84,7 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool {
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
         if self.special_const_p(obj) {
             true
         } else {

@@ -26,7 +26,7 @@ impl_rbasic_class(VALUE obj) {
 }
 
 int
-impl_rbasic_frozen_p(VALUE obj) {
+impl_frozen_p(VALUE obj) {
   return RB_OBJ_FROZEN(obj);
 }
 

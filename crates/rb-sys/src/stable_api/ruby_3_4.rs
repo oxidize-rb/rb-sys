@@ -48,12 +48,12 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool {
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
         if self.special_const_p(obj) {
             true
         } else {
             let rbasic = obj as *const crate::RBasic;
-            ((*rbasic).flags & crate::fl_type_::RUBY_FL_FREEZE as VALUE) != 0
+            ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
         }
     }
 

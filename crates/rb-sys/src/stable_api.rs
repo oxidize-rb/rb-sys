@@ -62,7 +62,7 @@ pub trait StableApiDefinition {
     /// Checks if the given object is frozen.
     ///
     /// `VALUE` is a valid pointer to a non-immediate object.
-    unsafe fn rbasic_frozen_p(&self, obj: VALUE) -> bool;
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool;
 
     /// Tests if a bignum is positive.
     ///
