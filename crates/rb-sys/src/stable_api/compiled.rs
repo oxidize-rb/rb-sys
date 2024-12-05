@@ -19,6 +19,12 @@ extern "C" {
     #[link_name = "impl_special_const_p"]
     fn impl_special_const_p(value: VALUE) -> bool;
 
+    #[link_name = "impl_bignum_positive_p"]
+    fn impl_bignum_positive_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_bignum_negative_p"]
+    fn impl_bignum_negative_p(obj: VALUE) -> bool;
+
     #[link_name = "impl_builtin_type"]
     fn impl_builtin_type(obj: VALUE) -> ruby_value_type;
 
@@ -91,6 +97,16 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn special_const_p(&self, value: VALUE) -> bool {
         unsafe { impl_special_const_p(value) }
+    }
+
+    #[inline]
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
+        impl_bignum_positive_p(obj)
+    }
+
+    #[inline]
+    unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool {
+        impl_bignum_negative_p(obj)
     }
 
     #[inline]

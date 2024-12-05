@@ -84,6 +84,13 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
+        let rbasic = obj as *const crate::RBasic;
+
+        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
+    }
+
+    #[inline]
     fn special_const_p(&self, value: VALUE) -> bool {
         let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
         let test = (value & !(crate::Qnil as VALUE)) != 0;

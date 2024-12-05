@@ -85,6 +85,13 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
+        let rbasic = obj as *const crate::RBasic;
+
+        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
+    }
+
+    #[inline]
     unsafe fn builtin_type(&self, obj: VALUE) -> crate::ruby_value_type {
         let rbasic = obj as *const crate::RBasic;
         let ret: u32 = ((*rbasic).flags & crate::ruby_value_type::RUBY_T_MASK as VALUE) as _;
