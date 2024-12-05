@@ -1,7 +1,7 @@
 use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
-    value_type, RBasic, VALUE,
+    value_type, VALUE,
 };
 use std::os::raw::{c_char, c_long};
 
@@ -89,13 +89,6 @@ impl StableApiDefinition for Definition {
         let rbasic = obj as *const crate::RBasic;
 
         ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
-    }
-
-    #[inline]
-    unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool {
-        let rbasic = obj as *const crate::RBasic;
-
-        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) == 0
     }
 
     #[inline]

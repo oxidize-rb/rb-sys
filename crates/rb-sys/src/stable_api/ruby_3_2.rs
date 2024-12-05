@@ -92,11 +92,6 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
-        crate::rb_big_sign(obj) == 1
-    }
-
-    #[inline]
     unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool {
         crate::rb_big_sign(obj) == 0
     }
