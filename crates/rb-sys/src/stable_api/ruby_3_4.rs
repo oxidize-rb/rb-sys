@@ -1,9 +1,12 @@
 use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
-    rb_obj_frozen_p, value_type, VALUE,
+    value_type, VALUE,
 };
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 #[cfg(not(ruby_eq_3_4))]
 compile_error!("This file should only be included in Ruby 3.3 builds");
@@ -77,14 +80,6 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    fn special_const_p(&self, value: VALUE) -> bool {
-        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
-        let test = (value & !(crate::Qnil as VALUE)) != 0;
-
-        is_immediate || !test
-    }
-
-    #[inline]
     unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 
@@ -99,6 +94,14 @@ impl StableApiDefinition for Definition {
             let rbasic = obj as *const crate::RBasic;
             ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
         }
+    }
+
+    #[inline]
+    fn special_const_p(&self, value: VALUE) -> bool {
+        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
+        let test = (value & !(crate::Qnil as VALUE)) != 0;
+
+        is_immediate || !test
     }
 
     #[inline]

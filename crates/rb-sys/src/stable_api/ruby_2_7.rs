@@ -3,7 +3,10 @@ use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 #[cfg(not(ruby_eq_2_7))]
 compile_error!("This file should only be included in Ruby 2.7 builds");
@@ -89,10 +92,10 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 
-        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
+        NonNull::<VALUE>::new((*rbasic).klass as _)
     }
 
     #[inline]
@@ -103,6 +106,13 @@ impl StableApiDefinition for Definition {
             let rbasic = obj as *const crate::RBasic;
             ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
         }
+    }
+
+    #[inline]
+    unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
+        let rbasic = obj as *const crate::RBasic;
+
+        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
     }
 
     #[inline]
