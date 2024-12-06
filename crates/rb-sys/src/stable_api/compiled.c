@@ -20,6 +20,16 @@ impl_rarray_const_ptr(VALUE obj) {
   return RARRAY_CONST_PTR(obj);
 }
 
+VALUE
+impl_rbasic_class(VALUE obj) {
+  return RBASIC_CLASS(obj);
+}
+
+int
+impl_frozen_p(VALUE obj) {
+  return RB_OBJ_FROZEN(obj);
+}
+
 int
 impl_special_const_p(VALUE obj) {
   return SPECIAL_CONST_P(obj);

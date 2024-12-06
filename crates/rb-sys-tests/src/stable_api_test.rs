@@ -1,4 +1,4 @@
-use rb_sys::StableApiDefinition;
+use rb_sys::{StableApiDefinition, VALUE};
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
@@ -179,6 +179,46 @@ parity_test!(
       }
       ary
     }
+);
+
+parity_test!(
+    name: test_rbasic_class_of_array,
+    func: rbasic_class,
+    data_factory: {
+        unsafe { rb_sys::rb_ary_new() as VALUE }
+    },
+    expected: {
+        unsafe { Some(std::ptr::NonNull::new_unchecked(rb_sys::rb_cArray as _)) }
+    }
+);
+
+parity_test!(
+    name: test_rbasic_class_of_array_evaled,
+    func: rbasic_class,
+    data_factory: {
+      ruby_eval!("[]")
+    },
+    expected: {
+      unsafe { Some(std::ptr::NonNull::new_unchecked(ruby_eval!("Array") as *mut VALUE)) }
+    }
+);
+
+parity_test!(
+    name: test_rbasic_frozen_p_not_frozen_obj,
+    func: frozen_p,
+    data_factory: {
+      ruby_eval!("[1]")
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_rbasic_frozen_p_frozen_obj,
+    func: frozen_p,
+    data_factory: {
+      ruby_eval!("[1].freeze")
+    },
+    expected: true
 );
 
 parity_test!(

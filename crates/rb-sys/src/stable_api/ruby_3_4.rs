@@ -3,7 +3,10 @@ use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 #[cfg(not(ruby_eq_3_4))]
 compile_error!("This file should only be included in Ruby 3.3 builds");
@@ -74,6 +77,23 @@ impl StableApiDefinition for Definition {
         assert!(!ptr.is_null());
 
         ptr
+    }
+
+    #[inline]
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
+        let rbasic = obj as *const crate::RBasic;
+
+        NonNull::<VALUE>::new((*rbasic).klass as _)
+    }
+
+    #[inline]
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
+        if self.special_const_p(obj) {
+            true
+        } else {
+            let rbasic = obj as *const crate::RBasic;
+            ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
+        }
     }
 
     #[inline]
