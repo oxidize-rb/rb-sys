@@ -3,7 +3,10 @@ use crate::{
     internal::{RArray, RString},
     value_type, VALUE,
 };
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 #[cfg(not(ruby_eq_3_3))]
 compile_error!("This file should only be included in Ruby 3.3 builds");
@@ -77,10 +80,10 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE {
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 
-        (*rbasic).klass
+        NonNull::<VALUE>::new((*rbasic).klass as _)
     }
 
     #[inline]

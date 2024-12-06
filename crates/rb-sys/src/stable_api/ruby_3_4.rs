@@ -41,23 +41,6 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE {
-        let rbasic = obj as *const crate::RBasic;
-
-        (*rbasic).klass
-    }
-
-    #[inline]
-    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
-        if self.special_const_p(obj) {
-            true
-        } else {
-            let rbasic = obj as *const crate::RBasic;
-            ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
-        }
-    }
-
-    #[inline]
     unsafe fn rarray_len(&self, obj: VALUE) -> c_long {
         assert!(self.type_p(obj, value_type::RUBY_T_ARRAY));
 
@@ -99,6 +82,23 @@ impl StableApiDefinition for Definition {
         let test = (value & !(crate::Qnil as VALUE)) != 0;
 
         is_immediate || !test
+    }
+
+    #[inline]
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
+        let rbasic = obj as *const crate::RBasic;
+
+        NonNull::<VALUE>::new((*rbasic).klass as _)
+    }
+
+    #[inline]
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool {
+        if self.special_const_p(obj) {
+            true
+        } else {
+            let rbasic = obj as *const crate::RBasic;
+            ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
+        }
     }
 
     #[inline]

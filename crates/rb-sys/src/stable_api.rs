@@ -12,7 +12,10 @@
 //!    changes in production.
 
 use crate::VALUE;
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 pub trait StableApiDefinition {
     const VERSION_MAJOR: u32;
@@ -57,7 +60,7 @@ pub trait StableApiDefinition {
     /// Get the class from a VALUE which contains an RBasic struct.
     ///
     /// `VALUE` is a valid pointer to a non-immediate object.
-    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE;
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>>;
 
     /// Checks if the given object is frozen.
     ///

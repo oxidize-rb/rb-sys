@@ -1,6 +1,9 @@
 use super::StableApiDefinition;
 use crate::{ruby_value_type, VALUE};
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 #[allow(dead_code)]
 extern "C" {
@@ -100,8 +103,9 @@ impl StableApiDefinition for Definition {
         impl_rarray_const_ptr(obj)
     }
 
-    unsafe fn rbasic_class(&self, obj: VALUE) -> VALUE {
-        impl_rbasic_class(obj)
+    #[inline]
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
+        NonNull::<VALUE>::new(impl_rbasic_class(obj) as _)
     }
 
     unsafe fn frozen_p(&self, obj: VALUE) -> bool {
