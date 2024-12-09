@@ -12,7 +12,10 @@
 //!    changes in production.
 
 use crate::VALUE;
-use std::os::raw::{c_char, c_long};
+use std::{
+    os::raw::{c_char, c_long},
+    ptr::NonNull,
+};
 
 pub trait StableApiDefinition {
     const VERSION_MAJOR: u32;
@@ -53,6 +56,16 @@ pub trait StableApiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid.
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
+
+    /// Get the class from a VALUE which contains an RBasic struct.
+    ///
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>>;
+
+    /// Checks if the given object is frozen.
+    ///
+    /// `VALUE` is a valid pointer to a non-immediate object.
+    unsafe fn frozen_p(&self, obj: VALUE) -> bool;
 
     /// Tests if a bignum is positive.
     ///
