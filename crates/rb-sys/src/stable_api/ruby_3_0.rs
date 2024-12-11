@@ -6,6 +6,7 @@ use crate::{
 use std::{
     os::raw::{c_char, c_long},
     ptr::NonNull,
+    time::Duration,
 };
 
 #[cfg(not(ruby_eq_3_0))]
@@ -269,5 +270,18 @@ impl StableApiDefinition for Definition {
         let flags = rstring.basic.flags;
 
         (flags & crate::ruby_rstring_flags::RSTRING_FSTR as VALUE) != 0
+    }
+
+    #[inline]
+    fn thread_sleep(&self, duration: Duration) {
+        let seconds = duration.as_secs() as i64;
+        let microseconds = duration.subsec_micros() as i64;
+
+        let time = crate::timeval {
+            tv_sec: seconds,
+            tv_usec: microseconds,
+        };
+
+        unsafe { crate::rb_thread_wait_for(time) }
     }
 }
