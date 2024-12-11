@@ -15,6 +15,7 @@ use crate::VALUE;
 use std::{
     os::raw::{c_char, c_long},
     ptr::NonNull,
+    time::Duration,
 };
 
 pub trait StableApiDefinition {
@@ -171,6 +172,9 @@ pub trait StableApiDefinition {
     /// access to underlying flags of the RString. The caller must ensure that
     /// the `VALUE` is a valid pointer to an RString.
     unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool;
+
+    /// Blocks the current thread until the given duration has passed.
+    fn thread_sleep(&self, duration: Duration);
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

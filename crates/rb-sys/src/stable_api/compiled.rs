@@ -1,8 +1,9 @@
 use super::StableApiDefinition;
-use crate::{ruby_value_type, VALUE};
+use crate::{ruby_value_type, timeval, VALUE};
 use std::{
     os::raw::{c_char, c_long},
     ptr::NonNull,
+    time::Duration,
 };
 
 #[allow(dead_code)]
@@ -75,6 +76,9 @@ extern "C" {
 
     #[link_name = "impl_rstring_interned_p"]
     fn impl_rstring_interned_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_thread_sleep"]
+    fn impl_thread_sleep(interval: timeval);
 }
 
 pub struct Definition;
@@ -192,7 +196,21 @@ impl StableApiDefinition for Definition {
         impl_integer_type_p(obj)
     }
 
+    #[inline]
     unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool {
         impl_rstring_interned_p(obj)
+    }
+
+    #[inline]
+    fn thread_sleep(&self, duration: Duration) {
+        let seconds = duration.as_secs() as _;
+        let microseconds = duration.subsec_micros() as _;
+
+        let time = crate::timeval {
+            tv_sec: seconds,
+            tv_usec: microseconds,
+        };
+
+        unsafe { impl_thread_sleep(time) }
     }
 }

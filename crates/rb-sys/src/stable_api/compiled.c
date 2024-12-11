@@ -115,3 +115,9 @@ impl_rstring_interned_p(VALUE obj) {
 
   return !(FL_TEST(obj, RSTRING_FSTR) == 0);
 }
+
+void
+impl_thread_sleep(struct timeval time) {
+  rb_thread_wait_for(time);
+}
+

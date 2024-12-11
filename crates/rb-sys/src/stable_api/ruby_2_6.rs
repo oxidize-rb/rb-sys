@@ -9,6 +9,7 @@ use crate::{
 use std::{
     os::raw::{c_char, c_long},
     ptr::NonNull,
+    time::Duration,
 };
 
 #[cfg(not(ruby_eq_2_6))]
@@ -103,7 +104,7 @@ impl StableApiDefinition for Definition {
         if self.special_const_p(obj) {
             true
         } else {
-            let rbasic = obj as *const crate::Rbasic;
+            let rbasic = obj as *const crate::RBasic;
             ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
         }
     }
@@ -261,5 +262,18 @@ impl StableApiDefinition for Definition {
         let flags = rstring.basic.flags;
 
         (flags & crate::ruby_rstring_flags::RSTRING_FSTR as VALUE) != 0
+    }
+
+    #[inline]
+    fn thread_sleep(&self, duration: Duration) {
+        let seconds = duration.as_secs() as _;
+        let microseconds = duration.subsec_micros() as _;
+
+        let time = crate::timeval {
+            tv_sec: seconds,
+            tv_usec: microseconds,
+        };
+
+        unsafe { crate::rb_thread_wait_for(time) }
     }
 }
