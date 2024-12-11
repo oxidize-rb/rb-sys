@@ -265,8 +265,8 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     fn thread_sleep(&self, duration: Duration) {
-        let seconds = duration.as_secs() as i64;
-        let microseconds = duration.subsec_micros() as i64;
+        let seconds = duration.as_secs() as _;
+        let microseconds = duration.subsec_micros() as _;
 
         let time = crate::timeval {
             tv_sec: seconds,

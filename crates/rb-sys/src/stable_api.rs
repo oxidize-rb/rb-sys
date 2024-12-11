@@ -14,7 +14,8 @@
 use crate::VALUE;
 use std::{
     os::raw::{c_char, c_long},
-    ptr::NonNull, time::Duration,
+    ptr::NonNull,
+    time::Duration,
 };
 
 pub trait StableApiDefinition {

@@ -104,7 +104,7 @@ impl StableApiDefinition for Definition {
         if self.special_const_p(obj) {
             true
         } else {
-            let rbasic = obj as *const crate::Rbasic;
+            let rbasic = obj as *const crate::RBasic;
             ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_FREEZE as VALUE) != 0
         }
     }
@@ -266,8 +266,8 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     fn thread_sleep(&self, duration: Duration) {
-        let seconds = duration.as_secs() as i64;
-        let microseconds = duration.subsec_micros() as i64;
+        let seconds = duration.as_secs() as _;
+        let microseconds = duration.subsec_micros() as _;
 
         let time = crate::timeval {
             tv_sec: seconds,
