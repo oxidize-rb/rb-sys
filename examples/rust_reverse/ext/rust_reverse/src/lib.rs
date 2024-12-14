@@ -1,3 +1,5 @@
+#![allow(clippy::manual_c_str_literals)]
+
 use rb_sys::tracking_allocator::ManuallyTracked;
 use rb_sys::*;
 use std::os::raw::c_long;

@@ -61,11 +61,21 @@ pub trait StableApiDefinition {
     /// Get the class from a VALUE which contains an RBasic struct.
     ///
     /// `VALUE` is a valid pointer to a non-immediate object.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to an RBasic struct.
     unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>>;
 
     /// Checks if the given object is frozen.
     ///
     /// `VALUE` is a valid pointer to a non-immediate object.
+    ///
+    /// # Safety
+    /// This function is unsafe because it may dereference a raw pointer to get
+    /// access to underlying RBasic struct. The caller must ensure that the
+    /// `VALUE` is a valid pointer to an RBasic struct.
     unsafe fn frozen_p(&self, obj: VALUE) -> bool;
 
     /// Tests if a bignum is positive.
@@ -82,6 +92,7 @@ pub trait StableApiDefinition {
     /// This function is unsafe because it dereferences a raw pointer to get
     /// access to underlying RBasic struct. The caller must ensure that the
     /// `VALUE` is a valid pointer to a bignum.
+    #[inline]
     unsafe fn bignum_negative_p(&self, obj: VALUE) -> bool {
         !self.bignum_positive_p(obj)
     }

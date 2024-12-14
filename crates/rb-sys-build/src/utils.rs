@@ -35,6 +35,7 @@ macro_rules! memoize {
     ($type:ty: $val:expr) => {{
         static INIT: std::sync::Once = std::sync::Once::new();
         static mut VALUE: Option<$type> = None;
+        #[allow(static_mut_refs)]
         unsafe {
             INIT.call_once(|| {
                 VALUE = Some($val);
