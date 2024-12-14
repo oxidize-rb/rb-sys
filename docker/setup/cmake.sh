@@ -7,7 +7,7 @@ set -eo pipefail
 source /lib.sh
 
 main() {
-    local version=3.24.2
+    local version=3.28.3
 
     if ! command -v curl &> /dev/null; then
         install_packages curl
