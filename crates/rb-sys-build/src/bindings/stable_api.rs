@@ -4,7 +4,7 @@ use quote::ToTokens;
 
 use crate::RbConfig;
 
-const OPAQUE_STRUCTS: [&str; 2] = ["RString", "RArray"];
+const OPAQUE_STRUCTS: [&str; 3] = ["RString", "RArray", "RStruct"];
 
 const OPAQUE_STRUCTS_RUBY_3_3: [&str; 3] = [
     "rb_matchext_struct",

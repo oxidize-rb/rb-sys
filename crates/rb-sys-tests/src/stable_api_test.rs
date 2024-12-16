@@ -1,3 +1,5 @@
+use std::ffi::{CStr, CString};
+
 use rb_sys::{StableApiDefinition, VALUE};
 use rb_sys_test_helpers::rstring as gen_rstring;
 
@@ -654,4 +656,13 @@ parity_test!(
     data_factory: {
         std::time::Duration::from_millis(100)
     }
+);
+
+parity_test!(
+    name: test_rb_rstruct_len,
+    func: rstruct_len,
+    data_factory: {
+        ruby_eval!("Person = Struct.new(:name, :age); Person.new('Matz', 59)")
+    },
+    expected: 2
 );
