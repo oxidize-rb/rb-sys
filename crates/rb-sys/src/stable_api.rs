@@ -13,6 +13,7 @@
 
 use crate::VALUE;
 use std::{
+    ffi::{c_int, CStr},
     os::raw::{c_char, c_long},
     ptr::NonNull,
     time::Duration,
@@ -175,6 +176,36 @@ pub trait StableApiDefinition {
 
     /// Blocks the current thread until the given duration has passed.
     fn thread_sleep(&self, duration: Duration);
+
+    /// Defines a struct type with the given name and members.
+    ///
+    /// # Example
+    ///
+    fn rstruct_define(&self, name: &CStr, members: &[&CStr]) -> VALUE;
+
+    /// Accesses an indexed member of the struct.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying struct data. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a struct.
+    unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE;
+
+    /// Sets an indexed member of the struct.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying struct data. The caller must ensure that the
+    /// `VALUE` is a valid pointer to a struct.
+    unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE);
+
+    /// Returns the number of struct members.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying struct data. The caller must ensure that the
+    /// `VALUE` is a valid pointer to an RStruct.
+    unsafe fn rstruct_len(&self, obj: VALUE) -> c_long;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
