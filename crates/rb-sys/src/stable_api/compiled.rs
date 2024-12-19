@@ -82,7 +82,7 @@ extern "C" {
     fn impl_thread_sleep(interval: timeval);
 
     #[link_name = "impl_rstruct_define"]
-    fn impl_rstruct_define(name: &CStr, members: Vec<*const c_char>) -> VALUE;
+    fn impl_rstruct_define(name: &CStr, members: &[*const c_char]) -> VALUE;
 
     #[link_name = "impl_rstruct_get"]
     fn impl_rstruct_get(st: VALUE, idx: c_int) -> VALUE;
@@ -235,7 +235,7 @@ impl StableApiDefinition for Definition {
             .map(|m| m.as_ptr() as *const c_char)
             .collect();
         members.push(std::ptr::null());
-        unsafe { impl_rstruct_define(name, members) }
+        unsafe { impl_rstruct_define(name, members.as_ref()) }
     }
 
     #[inline]

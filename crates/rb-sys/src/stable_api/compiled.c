@@ -133,11 +133,11 @@ impl_rstruct_define(char* name, ...) {
 
 VALUE
 impl_rstruct_get(VALUE st, int idx) {
-  return Qnil;
+  return RSTRUCT_GET(st, idx);
 }
 
 VALUE
 impl_rstruct_set(VALUE st, int idx, VALUE value) {
-  return Qnil;
+  return RSTRUCT_SET(st, idx, value);
 }
 

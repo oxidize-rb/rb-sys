@@ -314,7 +314,17 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
-        crate::rb_struct_getmember(st, idx as _)
+        let rbasic = st as *const crate::RBasic;
+        let rstruct = st as *const RStruct;
+        let slice: &[VALUE] = if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
+            (*rstruct).as_.ary.as_slice()
+        } else {
+            let ptr = (*rstruct).as_.heap.ptr;
+            let len = (*rstruct).as_.heap.len as _;
+            std::slice::from_raw_parts(ptr, len)
+        };
+
+        slice[idx as usize]
     }
 
     #[inline]
