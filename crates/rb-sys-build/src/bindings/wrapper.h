@@ -69,19 +69,3 @@
 #ifdef HAVE_RUBY_IO_BUFFER_H
 #include "ruby/io/buffer.h"
 #endif
-
-struct RStruct {
-  struct RBasic basic;
-  union {
-    struct {
-      long len;
-      const VALUE *ptr;
-    } heap;
-    /* This is a length 1 array because:
-     *   1. GCC has a bug that does not optimize C flexible array members
-     *      (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=102452)
-     *   2. Zero length arrays are not supported by all compilers
-     */
-    const VALUE ary[1];
-  } as;
-};
