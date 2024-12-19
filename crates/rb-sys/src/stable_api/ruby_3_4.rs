@@ -30,7 +30,6 @@ pub(crate) struct HeapStructData {
 #[repr(C)]
 pub(crate) union RStructUnion {
     pub(crate) heap: HeapStructData,
-    // Match the C array[1] layout
     pub(crate) ary: [VALUE; 1],
 }
 
@@ -312,18 +311,23 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
-        let rbasic = st as *const crate::RBasic;
-        let rstruct = st as *const RStruct;
-        let slice: &[VALUE] = if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
-            (*rstruct).as_.ary.as_slice()
-        } else {
-            let ptr = (*rstruct).as_.heap.ptr;
-            let len = (*rstruct).as_.heap.len as _;
-            std::slice::from_raw_parts(ptr, len)
-        };
-
-        slice[idx as usize]
+        crate::rb_struct_getmember(st, idx as _)
     }
+
+    // #[inline]
+    // unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
+    //     let rbasic = st as *const crate::RBasic;
+    //     let rstruct = st as *const RStruct;
+    //     let slice: &[VALUE] = if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
+    //         (*rstruct).as_.ary.as_slice()
+    //     } else {
+    //         let ptr = (*rstruct).as_.heap.ptr;
+    //         let len = (*rstruct).as_.heap.len as _;
+    //         std::slice::from_raw_parts(ptr, len)
+    //     };
+    //
+    //     slice[idx as usize]
+    // }
 
     #[inline]
     unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE) {
