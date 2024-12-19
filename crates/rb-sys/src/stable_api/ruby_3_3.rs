@@ -1,7 +1,7 @@
 use super::StableApiDefinition;
 use crate::{
     internal::{RArray, RString},
-    ruby_fl_type, value_type, VALUE,
+    ruby_fl_type, ruby_fl_ushift, value_type, VALUE,
 };
 use std::{
     ffi::{c_int, CStr},
@@ -10,15 +10,35 @@ use std::{
     time::Duration,
 };
 
-const RSTRUCT_EMBED_LEN_MASK: i64 = (ruby_fl_type::RUBY_FL_USER7 as i64)
-    | (ruby_fl_type::RUBY_FL_USER6 as i64)
-    | (ruby_fl_type::RUBY_FL_USER5 as i64)
-    | (ruby_fl_type::RUBY_FL_USER4 as i64)
-    | (ruby_fl_type::RUBY_FL_USER3 as i64)
-    | (ruby_fl_type::RUBY_FL_USER2 as i64)
-    | (ruby_fl_type::RUBY_FL_USER1 as i64);
+const RSTRUCT_EMBED_LEN_MASK: VALUE = (ruby_fl_type::RUBY_FL_USER7 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER6 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER5 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER4 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER3 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER2 as VALUE)
+    | (ruby_fl_type::RUBY_FL_USER1 as VALUE);
 
-const RSTRUCT_EMBED_LEN_SHIFT: i64 = (crate::ruby_fl_ushift::RUBY_FL_USHIFT as i64) + 1;
+const RSTRUCT_EMBED_LEN_SHIFT: VALUE = (ruby_fl_ushift::RUBY_FL_USHIFT as VALUE) + 1;
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub(crate) struct HeapStructData {
+    pub(crate) len: std::ffi::c_long,
+    pub(crate) ptr: *const VALUE,
+}
+
+#[repr(C)]
+pub(crate) union RStructUnion {
+    pub(crate) heap: HeapStructData,
+    // Match the C array[1] layout
+    pub(crate) ary: [VALUE; 1],
+}
+
+#[repr(C)]
+pub struct RStruct {
+    pub(crate) basic: crate::RBasic,
+    pub(crate) as_: RStructUnion,
+}
 
 #[cfg(not(ruby_eq_3_3))]
 compile_error!("This file should only be included in Ruby 3.3 builds");
@@ -280,6 +300,7 @@ impl StableApiDefinition for Definition {
         unsafe { crate::rb_thread_wait_for(time) }
     }
 
+    #[inline]
     fn rstruct_define(&self, name: &CStr, members: &[&CStr]) -> VALUE {
         let mut members: Vec<*const c_char> = members
             .iter()
@@ -289,18 +310,17 @@ impl StableApiDefinition for Definition {
         unsafe { crate::rb_struct_define(name.as_ptr(), members) }
     }
 
+    #[inline]
     unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
         crate::rb_struct_getmember(st, idx as _)
     }
 
+    #[inline]
     unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE) {
         crate::rb_struct_aset(st, idx as _, value);
     }
 
-    // unsafe fn rstruct_len(&self, st: VALUE) -> c_long {
-    //     crate::rb_num2long(crate::rb_struct_size(st))
-    // }
-
+    #[inline]
     unsafe fn rstruct_len(&self, st: VALUE) -> c_long {
         let rbasic = st as *const crate::RBasic;
         if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
@@ -308,8 +328,8 @@ impl StableApiDefinition for Definition {
             ret >>= RSTRUCT_EMBED_LEN_SHIFT;
             ret
         } else {
-            let rstruct = st as *const crate::RStruct;
-            (*rstruct).as_.heap.len as c_long
+            let rstruct = st as *const RStruct;
+            (*rstruct).as_.heap.len
         }
     }
 }

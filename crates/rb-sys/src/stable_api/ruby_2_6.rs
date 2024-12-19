@@ -4,13 +4,38 @@ use crate::ruby_rarray_flags::*;
 use crate::ruby_rstring_flags::*;
 use crate::{
     internal::{RArray, RString},
-    value_type, VALUE,
+    ruby_fl_type, value_type, VALUE,
 };
 use std::{
+    ffi::{c_int, CStr},
     os::raw::{c_char, c_long},
     ptr::NonNull,
     time::Duration,
 };
+
+const RSTRUCT_EMBED_LEN_MASK: VALUE =
+    (ruby_fl_type::RUBY_FL_USER2 as VALUE) | (ruby_fl_type::RUBY_FL_USER1 as VALUE);
+const RSTRUCT_EMBED_LEN_SHIFT: VALUE = (ruby_fl_type::RUBY_FL_USHIFT as VALUE) + 1;
+const RSTRUCT_EMBED_LEN_MAX: usize = 3;
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub(crate) struct HeapStructData {
+    pub(crate) len: std::ffi::c_long,
+    pub(crate) ptr: *const VALUE,
+}
+
+#[repr(C)]
+pub(crate) union RStructUnion {
+    pub(crate) heap: HeapStructData,
+    pub(crate) ary: [VALUE; RSTRUCT_EMBED_LEN_MAX],
+}
+
+#[repr(C)]
+pub struct RStruct {
+    pub(crate) basic: crate::RBasic,
+    pub(crate) as_: RStructUnion,
+}
 
 #[cfg(not(ruby_eq_2_6))]
 compile_error!("This file should only be included in Ruby 2.6 builds");
@@ -275,5 +300,38 @@ impl StableApiDefinition for Definition {
         };
 
         unsafe { crate::rb_thread_wait_for(time) }
+    }
+
+    #[inline]
+    fn rstruct_define(&self, name: &CStr, members: &[&CStr]) -> VALUE {
+        let mut members: Vec<*const c_char> = members
+            .iter()
+            .map(|m| m.as_ptr() as *const c_char)
+            .collect();
+        members.push(std::ptr::null());
+        unsafe { crate::rb_struct_define(name.as_ptr(), members) }
+    }
+
+    #[inline]
+    unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
+        crate::rb_struct_getmember(st, idx as _)
+    }
+
+    #[inline]
+    unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE) {
+        crate::rb_struct_aset(st, idx as _, value);
+    }
+
+    #[inline]
+    unsafe fn rstruct_len(&self, st: VALUE) -> c_long {
+        let rbasic = st as *const crate::RBasic;
+        if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
+            let mut ret = ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) as c_long;
+            ret >>= RSTRUCT_EMBED_LEN_SHIFT;
+            ret
+        } else {
+            let rstruct = st as *const RStruct;
+            (*rstruct).as_.heap.len
+        }
     }
 }
