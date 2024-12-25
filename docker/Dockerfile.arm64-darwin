@@ -1,4 +1,4 @@
-FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.6.0-mri-arm64-darwin
+FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.7.0-mri-arm64-darwin
 
 ENV RUBY_CC_VERSION="3.4.0:3.3.0:3.2.0:3.1.0:3.0.0:2.7.0:2.6.0" \
     RUBY_TARGET="arm64-darwin" \
