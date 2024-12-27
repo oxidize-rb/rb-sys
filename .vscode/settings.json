@@ -6,5 +6,6 @@
     "Cargo.toml",
     "./crates/rb-sys/Cargo.toml"
   ],
-  "rust-analyzer.showUnlinkedFileNotification": false
+  "rust-analyzer.showUnlinkedFileNotification": false,
+  "nixEnvSelector.suggestion": false
 }

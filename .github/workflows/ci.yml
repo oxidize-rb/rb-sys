@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         # Test against all versions supported by rubygems
-        ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4.0-preview2"]
+        ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4"]
         sys:
           - os: ubuntu-latest
             rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
@@ -53,29 +53,16 @@ jobs:
             sys:
               os: macos-latest
               rust_toolchain: stable
-          - ruby_version: "ruby-debug"
-            sys:
-              os: ubuntu-24.04
-              rust_toolchain: stable
           - ruby_version: mswin
             sys:
               os: windows-2022
               rust_toolchain: stable-x86_64-pc-windows-msvc
         exclude:
-          # Missing symbols for some reason, need to fix
-          - ruby_version: "2.6"
-            sys:
-              os: macos-latest
-              rust_toolchain: stable
-          - ruby_version: "2.7"
-            sys:
-              os: macos-latest
-              rust_toolchain: stable
           - ruby_version: "3.1"
             sys:
               os: macos-latest
               rust_toolchain: stable
-          - ruby_version: "3.4.0-preview2"
+          - ruby_version: "3.4"
             sys:
               os: windows-2022
               rust_toolchain: stable
