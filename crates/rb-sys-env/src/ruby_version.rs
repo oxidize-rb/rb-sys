@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 const COMPARABLE_RUBY_MAJORS: [u8; 4] = [1, 2, 3, 4];
 
-const COMPARABLE_RUBY_MINORS: [(u8, u8); 10] = [
+const COMPARABLE_RUBY_MINORS: [(u8, u8); 11] = [
     (2, 2),
     (2, 3),
     (2, 4),
@@ -13,6 +13,7 @@ const COMPARABLE_RUBY_MINORS: [(u8, u8); 10] = [
     (3, 1),
     (3, 2),
     (3, 3),
+    (3, 4),
 ];
 
 /// The current Ruby version.
