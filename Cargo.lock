@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.104"
+version = "0.9.105"
 dependencies = [
  "rb-sys",
  "rb-sys-build",
@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.104"
+version = "0.9.105"
 dependencies = [
  "bindgen",
  "lazy_static",
@@ -210,11 +210,11 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-env"
-version = "0.2.1"
+version = "0.2.2"
 
 [[package]]
 name = "rb-sys-test-helpers"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-test-helpers-macros"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "quote",
  "syn",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.104"
+version = "0.9.105"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
