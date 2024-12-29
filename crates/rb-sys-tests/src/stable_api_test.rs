@@ -743,3 +743,71 @@ fn test_rb_rstruct_get_heap() {
         compiled_c_result, rust_result
     );
 }
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_rstruct_set_embedded() {
+    use rb_sys::stable_api;
+    let data = {
+        ruby_eval!(
+            "
+            Person = Struct.new(:name, :age); 
+            Person.new('Matz', 59);
+        "
+        )
+    };
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+    #[allow(unused)]
+    let rust_result = unsafe {
+        stable_api::get_default().rstruct_set(data, 0, rb_sys::Qfalse as VALUE);
+        stable_api::get_default().rstruct_get(data, 0)
+    };
+    #[allow(unused_unsafe)]
+    let compiled_c_result = unsafe {
+        stable_api::get_compiled().rstruct_set(data, 0, rb_sys::Qfalse as VALUE);
+        stable_api::get_compiled().rstruct_get(data, 0)
+    };
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_rstruct_set_heap() {
+    use rb_sys::stable_api;
+    let data = {
+        ruby_eval!(
+            "
+            field_names = (0..80).map { |i| \"field#{i}\" };
+            LargeStruct = Struct.new(*field_names.map(&:to_sym)) do
+              def initialize(*)
+                super
+                members.each do |field|
+                  self[field] = 0 if self[field].nil?
+                end
+              end
+            end;
+
+            st = LargeStruct.new;
+            st
+        "
+        )
+    };
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+    #[allow(unused)]
+    let rust_result = unsafe {
+        stable_api::get_default().rstruct_set(data, 79, rb_sys::Qfalse as VALUE);
+        stable_api::get_default().rstruct_get(data, 79)
+    };
+    #[allow(unused_unsafe)]
+    let compiled_c_result = unsafe {
+        stable_api::get_compiled().rstruct_set(data, 79, rb_sys::Qfalse as VALUE);
+        stable_api::get_compiled().rstruct_get(data, 79)
+    };
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}

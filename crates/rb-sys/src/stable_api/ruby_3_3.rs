@@ -325,9 +325,20 @@ impl StableApiDefinition for Definition {
         slice[idx as usize]
     }
 
+    // TODO: In CRuby this method has a write barrier. What do we do?
     #[inline]
     unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE) {
-        crate::rb_struct_aset(st, idx as _, value);
+        let rbasic = st as *const crate::RBasic;
+        let rstruct = st as *mut RStruct;
+        let slice: &mut [VALUE] = if ((*rbasic).flags & RSTRUCT_EMBED_LEN_MASK as VALUE) != 0 {
+            (*rstruct).as_.ary.as_mut_slice()
+        } else {
+            let ptr = (*rstruct).as_.heap.ptr as *mut _;
+            let len = (*rstruct).as_.heap.len as _;
+            std::slice::from_raw_parts_mut(ptr, len)
+        };
+
+        slice[idx as usize] = value;
     }
 
     #[inline]
