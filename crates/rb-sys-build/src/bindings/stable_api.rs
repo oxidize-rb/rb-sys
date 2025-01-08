@@ -75,6 +75,21 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
                         }
                     };
                 }
+            } else if let syn::Item::Const(ref mut c) = item {
+                if c.ident == syn::Ident::new("_", c.ident.span()) {
+                    let body = &mut c.expr;
+                    let code = body.clone().to_token_stream().to_string();
+                    let new_code = code.replace("rb_sys__Opaque__", "");
+                    let new_code = syn::parse_str::<syn::Expr>(&new_code).unwrap();
+
+                    *body = syn::parse_quote! {
+                        {
+                            #[allow(unused_imports)]
+                            use crate::internal::*;
+                            #new_code
+                        }
+                    };
+                }
             }
 
             normal_items.push(item.clone());
