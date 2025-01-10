@@ -17,6 +17,10 @@ OPTIONS = {
   directory: Dir.pwd
 }
 
+PATCH_RELEASE_OVERRIDES = {
+  "3.3" => "3.3.5"
+}
+
 def cargo_metadata
   return @cargo_metadata if defined?(@cargo_metadata)
 
@@ -100,6 +104,10 @@ OptionParser.new do |opts|
 
   opts.on("-r", "--ruby-versions LIST", "List all supported Ruby versions") do |arg|
     vers = arg.split(/[^0-9.]+/).map do |v|
+      override = PATCH_RELEASE_OVERRIDES[v]
+
+      next override if override
+
       parts = v.split(".")
       parts[2] = "0" if parts[2].nil?
       parts.join(".")
