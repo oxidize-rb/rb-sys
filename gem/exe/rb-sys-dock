@@ -367,7 +367,7 @@ def rcd(input_args)
   wrapper_command << "sigfw" unless interactive?(input_args)
   wrapper_command << "runas"
 
-  docker_options = []
+  docker_options = ["--pid=host"]
   docker_options << "--tty" if interactive?(input_args)
 
   cmd = <<~SH
