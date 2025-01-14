@@ -34,6 +34,7 @@ it's not easy, it's a bug.
 Below are some examples of how to use `rb-sys` to build native Rust extensions. Use these as a starting point for your
 building your own gem.
 
+- The [`lz4_flex`][lz4_flex] gem uses `rb-sys` and [`magnus`][magnus] to package the rust [`wasmtime`][wasmtime]
 - The [`wasmtime-rb`][wasmtime-rb] gem uses `rb-sys` and [`magnus`][magnus] to package the rust [`wasmtime`][wasmtime]
   library as a Ruby gem.
 - The [`oxi-test` gem][oxi-test] is the canonical example of how to use `rb-sys`. It is a minimal, fully tested with
@@ -122,3 +123,4 @@ defined in the Apache-2.0 license, shall be dual licensed as above, without any 
 [wasmtime-rb]: https://github.com/bytecodealliance/wasmtime-rb
 [wasmtime]: https://github.com/bytecodealliance/wasmtime
 [test-helpers]: ./crates/rb-sys-test-helpers/readme.md
+[lz4_flex]: https://github.com/Shopify/lz4-flex-rb
