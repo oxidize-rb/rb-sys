@@ -100,7 +100,7 @@ jobs:
           else
             combined_tags="${{ steps.meta.outputs.tags }}"
           fi
-          echo 'combined_tags="$combined_tags"' >> $GITHUB_ENV
+          echo combined_tags="$combined_tags" >> $GITHUB_ENV
 
       - name: Docker build
         uses: docker/build-push-action@v6
