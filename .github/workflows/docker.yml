@@ -80,7 +80,7 @@ jobs:
           aliases="${{ env.aliases }}"
           images="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}"
 
-          for alias in "${{ env.aliases }}"; do
+          for alias in ${{ env.aliases }}; do
             images+=",${{ secrets.DOCKER_HUB_USERNAME }}/$alias"
           done
 
