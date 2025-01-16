@@ -46,7 +46,7 @@ jobs:
         id: setup_platform
         run: |
           ruby_platform=$(echo '${{ matrix.toolchain.ruby-platform }}')
-          aliases=$(echo '${{ matrix.toolchain.aliases }}')
+          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'if . == null then "" else join(" ") end')
           echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
           echo "aliases=$aliases" >> $GITHUB_ENV
 
@@ -80,8 +80,8 @@ jobs:
           aliases="${{ env.aliases }}"
           images="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}"
 
-          for alias in ${{ env.aliases }}; do
-            images+="${{ secrets.DOCKER_HUB_USERNAME }}/$alias"$'\n'
+          for alias in "${{ env.aliases }}"; do
+            images+=",${{ secrets.DOCKER_HUB_USERNAME }}/$alias"
           done
 
           printf "images=%s\n" "$images" >> $GITHUB_ENV
