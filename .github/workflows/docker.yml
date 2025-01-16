@@ -92,6 +92,16 @@ jobs:
             org.opencontainers.image.vendor=oxidize-rb
             org.oxidize-rb.ruby.platform=${{ env.ruby_platform }}
 
+      - name: Prepare tags
+        id: prepare_tags
+        run: |
+          if [ -n "${{ env.aliases }}" ]; then
+            combined_tags="${{ steps.meta.outputs.tags }},${{ env.aliases }}"
+          else
+            combined_tags="${{ steps.meta.outputs.tags }}"
+          fi
+          echo "combined_tags=$combined_tags" >> $GITHUB_ENV
+
       - name: Docker build
         uses: docker/build-push-action@v6
         with:
@@ -100,7 +110,7 @@ jobs:
           file: ./docker/Dockerfile.${{ env.ruby_platform }}
           platforms: linux/amd64
           load: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.combined_tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
@@ -174,21 +184,7 @@ jobs:
           file: ./docker/Dockerfile.${{ env.ruby_platform }}
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
-          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
-
-      - name: Docker push aliases
-        if: env.aliases != '' && env.aliases != null
-        uses: docker/build-push-action@v6
-        with:
-          builder: ${{ steps.buildx.outputs.name }}
-          context: ./docker
-          file: ./docker/Dockerfile.${{ env.ruby_platform }}
-          platforms: linux/amd64
-          push: true
-          tags: ${{ env.aliases }}
+          tags: ${{ env.combined_tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
