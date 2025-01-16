@@ -46,7 +46,7 @@ jobs:
         id: setup_platform
         run: |
           ruby_platform=$(echo '${{ matrix.toolchain.ruby-platform }}')
-          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'if . == null then "" else join(",") end')
+          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'if . == null then "" else join("\n") end')
           echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
           echo "aliases=$aliases" >> $GITHUB_ENV
 
@@ -96,11 +96,11 @@ jobs:
         id: prepare_tags
         run: |
           if [ -n "${{ env.aliases }}" ]; then
-            combined_tags="${{ steps.meta.outputs.tags }},${{ env.aliases }}"
+            combined_tags="${{ steps.meta.outputs.tags }}\n${{ env.aliases }}"
           else
             combined_tags="${{ steps.meta.outputs.tags }}"
           fi
-          echo "combined_tags=$combined_tags" >> $GITHUB_ENV
+          echo 'combined_tags="$combined_tags"' >> $GITHUB_ENV
 
       - name: Docker build
         uses: docker/build-push-action@v6
