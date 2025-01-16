@@ -2,12 +2,10 @@
 name: Build and push docker images
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-    tags:
-      - v*
+  pull_request: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
