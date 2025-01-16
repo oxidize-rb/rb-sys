@@ -46,7 +46,7 @@ jobs:
         id: setup_platform
         run: |
           ruby_platform=$(echo '${{ matrix.toolchain.ruby-platform }}')
-          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'join(",")')
+          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'if . == null then "" else join(",") end')
           echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
           echo "aliases=$aliases" >> $GITHUB_ENV
 
