@@ -25,7 +25,7 @@ jobs:
       - id: data
         run: |
           curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
-          echo "toolchains-data=$(cat toolchains.json | jq -c '.toolchains')" >> $GITHUB_OUTPUT
+          echo "toolchains-data=$(jq -c '.toolchains' toolchains.json)" >> $GITHUB_OUTPUT
   docker_images:
     needs: fetch_ci_data
     runs-on: ubuntu-latest
@@ -45,8 +45,8 @@ jobs:
       - name: Set platform and aliases
         id: setup_platform
         run: |
-          ruby_platform=$(echo '${{ matrix.toolchain }}' | jq -r '.["ruby-platform"]')
-          aliases=$(echo '${{ matrix.toolchain }}' | jq -r '.aliases | join(",")')
+          ruby_platform=$(echo '${{ matrix.toolchain.ruby-platform }}')
+          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'join(",")')
           echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
           echo "aliases=$aliases" >> $GITHUB_ENV
 
