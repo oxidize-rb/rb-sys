@@ -18,22 +18,23 @@ permissions:
   packages: write
 
 jobs:
+  fetch_ci_data:
+    name: 📥 Fetch CI data
+    runs-on: ubuntu-latest
+    outputs:
+      toolchains-data: ${{ steps.data.outputs.toolchains-data }}
+    steps:
+      - id: data
+        run: |
+          curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
+          echo "toolchains-data=$(cat toolchains.json | jq -c '.toolchains')" >> $GITHUB_OUTPUT
   docker_images:
+    needs: fetch_ci_data
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - ruby_target: x86_64-linux
-          - ruby_target: x86_64-linux-musl
-          - ruby_target: aarch64-linux
-          - ruby_target: aarch64-linux-musl
-          - ruby_target: arm-linux
-          - ruby_target: x86_64-darwin
-          - ruby_target: arm64-darwin
-          - ruby_target: x64-mingw32
-          - ruby_target: x64-mingw-ucrt
-          # - ruby_target: x86-linux
+        toolchain: ${{ fromJSON(needs.fetch_ci_data.outputs.toolchains-data) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +43,14 @@ jobs:
         run: |
           version="$(ruby -r $PWD/gem/lib/rb_sys/version.rb -e 'puts RbSys::VERSION')"
           echo "rb-sys-version=$version" >> $GITHUB_OUTPUT
+
+      - name: Set platform and aliases
+        id: setup_platform
+        run: |
+          ruby_platform=$(echo '${{ matrix.toolchain }}' | jq -r '.["ruby-platform"]')
+          aliases=$(echo '${{ matrix.toolchain }}' | jq -r '.aliases | join(",")')
+          echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
+          echo "aliases=$aliases" >> $GITHUB_ENV
 
       # Test the container
       - uses: actions/checkout@v4
@@ -72,7 +81,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}
+            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}
           flavor: |
             latest=auto
           tags: |
@@ -81,22 +90,22 @@ jobs:
             type=semver,pattern={{version}}
             type=sha,format=long
           labels:
-            org.opencontainers.image.description=Image for building native Rust extensions for Ruby on ${{ matrix.platform.ruby_target }}
+            org.opencontainers.image.description=Image for building native Rust extensions for Ruby on ${{ env.ruby_platform }}
             org.opencontainers.image.vendor=oxidize-rb
-            org.oxidize-rb.ruby.platform=${{ matrix.platform.ruby_target }}
+            org.oxidize-rb.ruby.platform=${{ env.ruby_platform }}
 
       - name: Docker build
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
-          file: ./docker/Dockerfile.${{ matrix.platform.ruby_target }}
+          file: ./docker/Dockerfile.${{ env.ruby_platform }}
           platforms: linux/amd64
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
-          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Run tests
         shell: bash
@@ -122,7 +131,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Cross build oxi-test gem (sha-$GITHUB_SHA)"
-          bundle exec rb-sys-dock --platform ${{ matrix.platform.ruby_target }} --build --tag "sha-$GITHUB_SHA" --verbose
+          bundle exec rb-sys-dock --platform ${{ env.ruby_platform }} --build --tag "sha-$GITHUB_SHA" --verbose
           echo "::endgroup::"
 
           if [ -f pkg/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}.gem ]; then
@@ -164,20 +173,33 @@ jobs:
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
-          file: ./docker/Dockerfile.${{ matrix.platform.ruby_target }}
+          file: ./docker/Dockerfile.${{ env.ruby_platform }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
-          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+
+      - name: Docker push aliases
+        uses: docker/build-push-action@v6
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: ./docker
+          file: ./docker/Dockerfile.${{ env.ruby_platform }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.aliases }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
+          cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          repository: rbsys/${{ matrix.platform.ruby_target }}
+          repository: rbsys/${{ env.ruby_platform }}
           readme-filepath: ./readme.md
 
       - name: Slack Noti on Failure

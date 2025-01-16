@@ -16,6 +16,7 @@
     },
     {
       "ruby-platform": "aarch64-linux",
+      "aliases": ["aarch64-linux-gnu", "aarch64-unknown-linux-gnu"],
       "rust-target": "aarch64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.aarch64-linux",
       "rake-compiler-dock": {
@@ -96,6 +97,7 @@
     },
     {
       "ruby-platform": "x86_64-linux",
+      "aliases": ["x86-linux-gnu", "x86-unknown-linux-gnu"],
       "rust-target": "x86_64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.x86_64-linux",
       "rake-compiler-dock": {
