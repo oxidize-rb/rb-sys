@@ -180,6 +180,7 @@ jobs:
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Docker push aliases
+        if: env.aliases != '' && env.aliases != null
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
