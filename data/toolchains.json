@@ -25,6 +25,16 @@
       "supported": true
     },
     {
+      "ruby-platform": "aarch64-linux-gnu",
+      "rust-target": "aarch64-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.aarch64-linux",
+      "rake-compiler-dock": {
+        "cc": "aarch64-linux-gnu-gcc"
+      },
+      "docker-platform": "linux/arm64/v8",
+      "supported": true
+    },
+    {
       "ruby-platform": "aarch64-linux-musl",
       "rust-target": "aarch64-unknown-linux-musl",
       "dockerfile": "docker/Dockerfile.aarch64-linux-musl",
@@ -96,6 +106,16 @@
     },
     {
       "ruby-platform": "x86_64-linux",
+      "rust-target": "x86_64-unknown-linux-gnu",
+      "dockerfile": "docker/Dockerfile.x86_64-linux",
+      "rake-compiler-dock": {
+        "cc": "x86_64-redhat-linux-gcc"
+      },
+      "docker-platform": "linux/amd64",
+      "supported": true
+    },
+    {
+      "ruby-platform": "x86_64-linux-gnu",
       "rust-target": "x86_64-unknown-linux-gnu",
       "dockerfile": "docker/Dockerfile.x86_64-linux",
       "rake-compiler-dock": {

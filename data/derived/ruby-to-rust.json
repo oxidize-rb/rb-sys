@@ -1,6 +1,7 @@
 {
   "arm-linux": "arm-unknown-linux-gnueabihf",
   "aarch64-linux": "aarch64-unknown-linux-gnu",
+  "aarch64-linux-gnu": "aarch64-unknown-linux-gnu",
   "aarch64-linux-musl": "aarch64-unknown-linux-musl",
   "arm64-darwin": "aarch64-apple-darwin",
   "x64-mingw-ucrt": "x86_64-pc-windows-gnu",
@@ -9,5 +10,6 @@
   "x86-mingw32": "i686-pc-windows-gnu",
   "x86_64-darwin": "x86_64-apple-darwin",
   "x86_64-linux": "x86_64-unknown-linux-gnu",
+  "x86_64-linux-gnu": "x86_64-unknown-linux-gnu",
   "x86_64-linux-musl": "x86_64-unknown-linux-musl"
 }
