@@ -1,6 +1,6 @@
-FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.7.0-mri-x64-mingw-ucrt
+FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.8.0-mri-x64-mingw-ucrt
 
-ENV RUBY_CC_VERSION="3.4.0:3.3.5:3.2.0:3.1.0:3.0.0:2.7.0:2.6.0" \
+ENV RUBY_CC_VERSION="3.4.1:3.3.5:3.2.6:3.1.6:3.0.7:2.7.8:2.6.10" \
     RUBY_TARGET="x64-mingw-ucrt" \
     RUST_TARGET="x86_64-pc-windows-gnu" \
     RUSTUP_DEFAULT_TOOLCHAIN="stable" \
