@@ -46,7 +46,7 @@ jobs:
         id: setup_platform
         run: |
           ruby_platform=$(echo '${{ matrix.toolchain.ruby-platform }}')
-          aliases=$(echo '${{ toJSON(matrix.toolchain.aliases) }}' | jq -r 'if . == null then "" else join(",") end')
+          aliases=$(echo '${{ matrix.toolchain.aliases }}')
           echo "ruby_platform=$ruby_platform" >> $GITHUB_ENV
           echo "aliases=$aliases" >> $GITHUB_ENV
 
@@ -74,15 +74,26 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare Docker images list
+        id: prepare_images
+        run: |
+          aliases="${{ env.aliases }}"
+          images="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}"
+
+          for alias in ${{ env.aliases }}; do
+            images+="${{ secrets.DOCKER_HUB_USERNAME }}/$alias"$'\n'
+          done
+
+          printf "images=%s\n" "$images" >> $GITHUB_ENV
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}
+            ${{ env.images }}
           flavor: |
             latest=auto
-          sep-tags: ','
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -93,16 +104,6 @@ jobs:
             org.opencontainers.image.vendor=oxidize-rb
             org.oxidize-rb.ruby.platform=${{ env.ruby_platform }}
 
-      - name: Prepare tags
-        id: prepare_tags
-        run: |
-          if [ -n "${{ env.aliases }}" ]; then
-            combined_tags="${{ steps.meta.outputs.tags }},${{ env.aliases }}"
-          else
-            combined_tags="${{ steps.meta.outputs.tags }}"
-          fi
-          echo "combined_tags=$combined_tags" >> $GITHUB_ENV
-
       - name: Docker build
         uses: docker/build-push-action@v6
         with:
@@ -111,7 +112,7 @@ jobs:
           file: ./docker/Dockerfile.${{ env.ruby_platform }}
           platforms: linux/amd64
           load: true
-          tags: ${{ env.combined_tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
