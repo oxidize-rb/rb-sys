@@ -171,7 +171,7 @@ jobs:
 
       - uses: oxidize-rb/actions/upload-core-dumps@v1
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@50c22e098940b3e773ee8bbc1be80beba580a3c3
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
