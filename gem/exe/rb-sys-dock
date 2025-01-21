@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "optparse"
 require "open3"
+require "rake_compiler_dock"
 require "rb_sys/version"
 require "rb_sys/toolchain_info"
 require "rb_sys/cargo/metadata"
@@ -15,16 +16,6 @@ OPTIONS = {
   docker_platform: "linux/amd64",
   version: RbSys::VERSION,
   directory: Dir.pwd
-}
-
-PATCH_RELEASE_OVERRIDES = {
-  "2.6" => "2.6.10",
-  "2.7" => "2.7.8",
-  "3.0" => "3.0.7",
-  "3.1" => "3.1.6",
-  "3.2" => "3.2.6",
-  "3.3" => "3.3.5",
-  "3.4" => "3.4.1"
 }
 
 def cargo_metadata
@@ -110,7 +101,7 @@ OptionParser.new do |opts|
 
   opts.on("-r", "--ruby-versions LIST", "List all supported Ruby versions") do |arg|
     vers = arg.split(/[^0-9.]+/).map do |v|
-      override = PATCH_RELEASE_OVERRIDES[v]
+      override = RakeCompilerDock.cross_rubies[v]
 
       next override if override
 
