@@ -77,7 +77,6 @@ jobs:
       - name: Prepare Docker images list
         id: prepare_images
         run: |
-          aliases="${{ env.aliases }}"
           images="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}"
 
           for alias in ${{ env.aliases }}; do
