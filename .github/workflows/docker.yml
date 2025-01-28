@@ -140,6 +140,10 @@ jobs:
           export RB_SYS_DOCK_CACHE_DIR="$rb_sys_dock_cache_dir"
           bundle install --jobs 4 --retry 3
           echo "::endgroup::"
+          
+          echo "::group::Pushing ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
+          docker push "${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
+          echo "::endgroup::"
 
           echo "::group::Cross build oxi-test gem (sha-$GITHUB_SHA)"
           bundle exec rb-sys-dock --platform ${{ env.ruby_platform }} --build --tag "sha-$GITHUB_SHA" --verbose
@@ -154,8 +158,6 @@ jobs:
           else
             echo "::group::Debug directory"
             tree .
-            echo "Pushing debug image (${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA)"
-            docker push "${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
             echo "::endgroup::"
             echo "❌ oxi-test gem build failed"
             exit 1
