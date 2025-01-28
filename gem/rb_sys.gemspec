@@ -27,5 +27,8 @@ Gem::Specification.new do |spec|
     spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
   end
 
+  # Needed for `RakeCompilerDock.cross_rubies`
+  spec.add_dependency("rake-compiler-dock", ">= 1.9.1")
+
   spec.metadata["rubygems_mfa_required"] = "true"
 end
