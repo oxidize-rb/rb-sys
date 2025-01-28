@@ -141,8 +141,8 @@ jobs:
           bundle install --jobs 4 --retry 3
           echo "::endgroup::"
           
-          echo "::group::Pushing ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
-          docker push "${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
+          echo "::group::Pushing ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:dbg-$GITHUB_SHA"
+          docker push "${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:dbg-$GITHUB_SHA"
           echo "::endgroup::"
 
           echo "::group::Cross build oxi-test gem (sha-$GITHUB_SHA)"
