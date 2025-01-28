@@ -28,4 +28,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.metadata["rubygems_mfa_required"] = "true"
+
+  # This should match the versions used in docker/Dockerfile.*
+  spec.add_runtime_dependency("rake-compiler-dock", "~> 1.9")
 end
