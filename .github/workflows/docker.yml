@@ -154,6 +154,8 @@ jobs:
           else
             echo "::group::Debug directory"
             tree .
+            echo "Pushing debug image (${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA)"
+            docker push "${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:dbg-$GITHUB_SHA"
             echo "::endgroup::"
             echo "❌ oxi-test gem build failed"
             exit 1
