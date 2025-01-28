@@ -367,6 +367,8 @@ def rcd(input_args)
   docker_options = ["--pid=host"]
   docker_options << "--tty" if interactive?(input_args)
 
+  ruby_versions = ENV["RUBY_CC_VERSION"] || RakeCompilerDock.cross_rubies.values.join(":")
+
   cmd = <<~SH
     #{default_docker_command} run \
       --platform #{OPTIONS.fetch(:docker_platform)} \
@@ -388,7 +390,7 @@ def rcd(input_args)
       -e RCD_IMAGE \
       -e RB_SYS_DOCK_TMPDIR="/tmp/rb-sys-dock" \
       -e RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir.inspect} \
-      #{ENV["RUBY_CC_VERSION"] ? "-e RUBY_CC_VERSION=#{ENV["RUBY_CC_VERSION"]}" : ""} \
+      -e RUBY_CC_VERSION="#{ruby_versions}" \
       -e RAKEOPT \
       -e TERM \
       -w #{working_directory} \
