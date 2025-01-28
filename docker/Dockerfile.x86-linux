@@ -8,30 +8,22 @@ ENV RUBY_CC_VERSION="3.4:3.3:3.2:3.1:3.0:2.7:2.6" \
     PKG_CONFIG_ALLOW_CROSS="1" \
     RUSTUP_HOME="/usr/local/rustup" \
     CARGO_HOME="/usr/local/cargo" \
+    PATH="/usr/local/cargo/bin:$PATH" \
+    LIBCLANG_PATH="/usr/lib/llvm-12/lib" \
     RUSTUP_UNPACK_RAM="63554432" \
     RUSTUP_IO_THREADS="1" \
     PATH="/usr/local/cargo/bin:$PATH" \
-    LIBCLANG_PATH="/usr/lib" \
-    CC_i686_unknown_linux_gnu="i686-redhat-linux-gcc" \
-    CXX_i686_unknown_linux_gnu="i686-redhat-linux-g++" \
+    CC_i686_unknown_linux_gnu="i686-linux-gnu-gcc" \
+    CXX_i686_unknown_linux_gnu="i686-linux-gnu-g++" \
     AR_i686_unknown_linux_gnu="ar" \
-    BINDGEN_EXTRA_CLANG_ARGS_i686_unknown_linux_gnu="--sysroot=/usr -I/usr/lib/gcc/i686-redhat-linux/4.8.2/include" \
+    BINDGEN_EXTRA_CLANG_ARGS_i686_unknown_linux_gnu="--sysroot=/usr -I/usr/i686-linux-gnu/include -I/usr/lib/gcc-cross/i686-linux-gnu/9/include" \
     CMAKE_i686_unknown_linux_gnu="/opt/cmake/bin/cmake"
 
 COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
 
-RUN set -ex; \
-    wget https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/clang-libs-12.0.1-4.module_el8.5.0+1025+93159d6c.i686.rpm \
-    https://vault.centos.org/centos/8/AppStream/x86_64/os/Packages/llvm-libs-12.0.1-2.module_el8.5.0+918+ed335b90.i686.rpm \
-    https://vault.centos.org/centos/8/BaseOS/x86_64/os/Packages/ncurses-libs-6.1-9.20180224.el8.i686.rpm; \
-    rpm -Uvh --nodeps *.rpm && \
-    ln -s /usr/lib/libtinfo.so.6 /usr/lib/libtinfo.so.5 && \
-    dnf clean all && \
-    bash -c "source /lib.sh && install_packages libedit libedit-devel g++-multilib" && \
-    /rustup.sh i686-unknown-linux-gnu $RUST_TARGET $RUSTUP_DEFAULT_TOOLCHAIN && \
+RUN bash -c "source /lib.sh && install_packages libclang-12-dev llvm-12-dev clang-12 gcc-i686-linux-gnu g++-i686-linux-gnu gcc-multilib-i686-linux-gnu" && \
+    /rustup.sh && \
     /rubygems.sh && \
     /cmake.sh && \
     /rubybashrc.sh && \
-    /rb-sys-dock.sh && \
-    rm *.rpm && \
-    rm -rf /var/cache/yum;
+    /rb-sys-dock.sh
