@@ -27,7 +27,7 @@ jobs:
       - id: data
         run: |
           curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
-          echo "toolchains-data=$(jq -c '.toolchains' toolchains.json)" >> $GITHUB_OUTPUT
+          echo "toolchains-data=$(jq -c '.toolchains | [.[] | select(.supported == true)]' toolchains.json)" >> $GITHUB_OUTPUT
   docker_images:
     needs: fetch_ci_data
     runs-on: ubuntu-latest
