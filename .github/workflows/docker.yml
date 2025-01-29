@@ -145,10 +145,10 @@ jobs:
           bundle exec rb-sys-dock --platform ${{ env.ruby_platform }} --build --tag "sha-$GITHUB_SHA" --verbose
           echo "::endgroup::"
 
-          if [ -f pkg/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}.gem ]; then
+          if [ -f pkg/oxi-test-0.1.0-${{ env.ruby_platform }}.gem ]; then
             echo "::group::Unpack oxi-test gem for testing"
-            gem unpack pkg/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}.gem --target=tmp
-            tree tmp/oxi-test-0.1.0-${{ matrix.platform.ruby_target }}
+            gem unpack pkg/oxi-test-0.1.0-${{ env.ruby_platform }}.gem --target=tmp
+            tree tmp/oxi-test-0.1.0-${{ env.ruby_platform }}
             echo "::endgroup::"
             echo "✅ oxi-test gem built successfully"
           else
@@ -161,11 +161,11 @@ jobs:
 
       - name: Analyze image bloat
         run: |
-          image="${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.platform.ruby_target }}:sha-$GITHUB_SHA"
+          image="${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:sha-$GITHUB_SHA"
           lowest_efficiency="0.95"
           highest_user_wasted_percent="0.05"
 
-          case "${{ matrix.platform.ruby_target }}" in
+          case "${{ env.ruby_platform }}" in
             x86_64-linux)
               lowest_efficiency="0.82"
               highest_user_wasted_percent="0.27"
