@@ -1,7 +1,7 @@
 # Ensure this version matches the rack-compiler-version in Gemfile
 FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.9.1-mri-x86_64-linux
 
-ENV RUBY_TARGET="x86_64-linux-gnu" \
+ENV RUBY_TARGET="x86_64-linux" \
     RUST_TARGET="x86_64-unknown-linux-gnu" \
     RUSTUP_DEFAULT_TOOLCHAIN="stable" \
     PKG_CONFIG_ALLOW_CROSS="1" \
