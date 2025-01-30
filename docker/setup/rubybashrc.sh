@@ -52,7 +52,6 @@ main() {
   echo "export PATH=\"/usr/local/cargo/bin:\$PATH\"" >> "$OUTFILE"
   echo "export RUSTUP_HOME=\"$RUSTUP_HOME\"" >> "$OUTFILE"
   echo "export CARGO_HOME=\"$CARGO_HOME\"" >> "$OUTFILE"
-  echo "export RUBY_TARGET=\"$RUBY_TARGET\"" >> "$OUTFILE"
   echo "export RCD_PLATFORM=\"$RUBY_TARGET\"" >> "$OUTFILE"
   echo "export RUST_TARGET=\"$RUST_TARGET\"" >> "$OUTFILE"
   echo "export RUSTUP_DEFAULT_TOOLCHAIN=\"$RUSTUP_DEFAULT_TOOLCHAIN\"" >> "$OUTFILE"

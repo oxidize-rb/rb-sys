@@ -391,6 +391,7 @@ def rcd(input_args)
       -e RB_SYS_DOCK_TMPDIR="/tmp/rb-sys-dock" \
       -e RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir.inspect} \
       -e RUBY_CC_VERSION="#{ruby_versions}" \
+      -e RUBY_TARGET="#{OPTIONS.fetch(:platform)}" \
       -e RAKEOPT \
       -e TERM \
       -w #{working_directory} \
