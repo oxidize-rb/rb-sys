@@ -3,7 +3,7 @@
 set -e
 
 setup_sudoers() {
-  echo "Defaults        env_keep += \"BUNDLE_PATH RB_SYS_CARGO_TARGET_DIR RAKEOPT\"" >> /etc/sudoers.d/rb-sys-dock
+  echo "Defaults        env_keep += \"BUNDLE_PATH RB_SYS_CARGO_TARGET_DIR RAKEOPT RUBY_TARGET\"" >> /etc/sudoers.d/rb-sys-dock
 }
 
 main() {
