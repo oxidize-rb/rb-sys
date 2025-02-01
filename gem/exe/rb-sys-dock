@@ -392,6 +392,7 @@ def rcd(input_args)
       -e RB_SYS_CARGO_TARGET_DIR=#{tmp_target_dir.inspect} \
       -e RUBY_CC_VERSION="#{ruby_versions}" \
       -e RUBY_TARGET="#{OPTIONS.fetch(:platform)}" \
+      -e SOURCE_DATE_EPOCH="#{source_date_epoch}" \
       -e RAKEOPT \
       -e TERM \
       -w #{working_directory} \
@@ -408,6 +409,19 @@ def rcd(input_args)
   logger.trace("Running command:\n\t$ #{cmd}")
 
   exec(cmd)
+end
+
+def source_date_epoch
+  return ENV["SOURCE_DATE_EPOCH"] if ENV.key?("SOURCE_DATE_EPOCH")
+
+  stdout, status = Open3.capture2("git log -1 --pretty=%ct")
+
+  if status.success?
+    stdout.strip
+  else
+    logger.warn("Could not determine SOURCE_DATE_EPOCH from git log, using current time")
+    Time.now.to_i.to_s
+  end
 end
 
 def download_image
