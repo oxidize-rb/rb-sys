@@ -50,7 +50,16 @@ namespace :release do
     crates = ["rb-sys-build", "rb-sys"]
 
     crates.each do |crate|
-      sh "cargo publish -p #{crate}"
+      sh "cargo publish -p #{crate}" do |ok, res|
+        next if ok
+
+        already_published = res.exitstatus == 101
+        if already_published
+          puts "Skipping already published crate: #{crate}"
+        else
+          exit res.exitstatus
+        end
+      end
     end
 
     Dir.chdir("gem") do
