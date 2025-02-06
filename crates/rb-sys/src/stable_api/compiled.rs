@@ -47,6 +47,12 @@ extern "C" {
     #[link_name = "impl_gc_adjust_memory_usage"]
     fn impl_gc_adjust_memory_usage(diff: isize);
 
+    #[link_name = "impl_gc_writebarrier"]
+    fn impl_gc_writebarrier(old: VALUE, young: VALUE);
+
+    #[link_name = "impl_gc_writebarrier_unprotect"]
+    fn impl_gc_writebarrier_unprotect(obj: VALUE);
+
     #[link_name = "impl_static_sym_p"]
     fn impl_static_sym_p(obj: VALUE) -> bool;
 
@@ -152,6 +158,16 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn gc_adjust_memory_usage(&self, diff: isize) {
         unsafe { impl_gc_adjust_memory_usage(diff) }
+    }
+
+    #[inline]
+    fn gc_writebarrier(&self, old: VALUE, young: VALUE) {
+        unsafe { impl_gc_writebarrier(old, young) }
+    }
+
+    #[inline]
+    fn gc_writebarrier_unprotect(&self, obj: VALUE) {
+        unsafe { impl_gc_writebarrier_unprotect(obj) }
     }
 
     #[inline]

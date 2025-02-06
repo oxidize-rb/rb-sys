@@ -63,7 +63,17 @@ impl_fixnum_p(VALUE obj) {
 
 void
 impl_gc_adjust_memory_usage(size_t diff) {
-  return rb_gc_adjust_memory_usage(diff);
+  rb_gc_adjust_memory_usage(diff);
+}
+
+void
+impl_gc_writebarrier(VALUE old, VALUE young) {
+  rb_gc_writebarrier(old, young);
+}
+
+void
+impl_gc_writebarrier_unprotect(VALUE obj) {
+  rb_gc_writebarrier_unprotect(obj);
 }
 
 int

@@ -131,6 +131,21 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    fn gc_adjust_memory_usage(&self, diff: isize) {
+        unsafe { crate::rb_gc_adjust_memory_usage(diff as _) };
+    }
+
+    #[inline]
+    fn gc_writebarrier(&self, old: VALUE, young: VALUE) {
+        unsafe { crate::rb_gc_writebarrier(old, young) }
+    }
+
+    #[inline]
+    fn gc_writebarrier_unprotect(&self, obj: VALUE) {
+        unsafe { crate::rb_gc_writebarrier_unprotect(obj) }
+    }
+
+    #[inline]
     fn static_sym_p(&self, obj: VALUE) -> bool {
         let mask = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
         (obj & mask) == crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
@@ -244,11 +259,6 @@ impl StableApiDefinition for Definition {
         } else {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
         }
-    }
-
-    #[inline]
-    fn gc_adjust_memory_usage(&self, diff: isize) {
-        unsafe { crate::rb_gc_adjust_memory_usage(diff as _) };
     }
 
     #[inline]

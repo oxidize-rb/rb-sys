@@ -116,6 +116,13 @@ pub trait StableApiDefinition {
     /// often than it otherwise would if it was unaware of such allocations.
     fn gc_adjust_memory_usage(&self, diff: isize);
 
+    /// Informs the GC that `young` is a new reference to `old`, allowing the
+    /// the old object to participate in generational GC.
+    fn gc_writebarrier(&self, old: VALUE, young: VALUE);
+
+    /// Opts out of generational GC and write barrier protection.
+    fn gc_writebarrier_unprotect(&self, obj: VALUE);
+
     /// Checks if the given object is a dynamic symbol.
     ///
     /// # Safety
