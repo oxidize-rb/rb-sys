@@ -112,6 +112,10 @@ pub trait StableApiDefinition {
     /// Checks if the given object is a so-called Fixnum.
     fn fixnum_p(&self, obj: VALUE) -> bool;
 
+    /// Informs that there are external memory usages, so the GC can run more
+    /// often than it otherwise would if it was unaware of such allocations.
+    fn gc_adjust_memory_usage(&self, diff: isize);
+
     /// Checks if the given object is a dynamic symbol.
     ///
     /// # Safety

@@ -44,6 +44,9 @@ extern "C" {
     #[link_name = "impl_fixnum_p"]
     fn impl_fixnum_p(obj: VALUE) -> bool;
 
+    #[link_name = "impl_gc_adjust_memory_usage"]
+    fn impl_gc_adjust_memory_usage(diff: isize);
+
     #[link_name = "impl_static_sym_p"]
     fn impl_static_sym_p(obj: VALUE) -> bool;
 
@@ -144,6 +147,11 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn fixnum_p(&self, obj: VALUE) -> bool {
         unsafe { impl_fixnum_p(obj) }
+    }
+
+    #[inline]
+    fn gc_adjust_memory_usage(&self, diff: isize) {
+        unsafe { impl_gc_adjust_memory_usage(diff) }
     }
 
     #[inline]

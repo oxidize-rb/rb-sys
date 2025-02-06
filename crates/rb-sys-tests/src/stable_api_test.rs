@@ -390,6 +390,22 @@ parity_test! (
 );
 
 parity_test! (
+    name: test_rb_gc_adjust_memory_usage,
+    func: gc_adjust_memory_usage,
+    data_factory: {
+        64isize
+    }
+);
+
+parity_test! (
+    name: test_rb_gc_adjust_memory_usage_negative,
+    func: gc_adjust_memory_usage,
+    data_factory: {
+        -64isize
+    }
+);
+
+parity_test! (
     name: test_rb_static_sym_p_for_static_sym,
     func: static_sym_p,
     data_factory: {
