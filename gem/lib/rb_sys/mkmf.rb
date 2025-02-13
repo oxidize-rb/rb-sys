@@ -250,6 +250,9 @@ module RbSys
     end
 
     def optional_rust_toolchain(builder)
+      rustup_default_cmd = "$(Q) $(CARGO_HOME)/bin/rustup default $(RB_SYS_DEFAULT_TOOLCHAIN)"
+      rustup_toolchain_cmd = "$(Q) $(CARGO_HOME)/bin/rustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)"
+
       <<~MAKE
         #{conditional_assign("RB_SYS_FORCE_INSTALL_RUST_TOOLCHAIN", force_install_rust_toolchain?(builder))}
 
@@ -260,8 +263,8 @@ module RbSys
         $(CARGO):
         \t$(Q) $(MAKEDIRS) $(CARGO_HOME) $(RUSTUP_HOME)
         \t$(Q) curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --no-modify-path --profile $(RB_SYS_RUSTUP_PROFILE) --default-toolchain none -y
-        \t$(Q) $(CARGO_HOME)/bin/rustup toolchain install $(RB_SYS_DEFAULT_TOOLCHAIN) --profile $(RB_SYS_RUSTUP_PROFILE)
-        \t$(Q) $(CARGO_HOME)/bin/rustup default $(RB_SYS_DEFAULT_TOOLCHAIN)
+        \t#{rustup_toolchain_cmd} || (sleep 5; #{rustup_toolchain_cmd}) || (sleep 5; #{rustup_toolchain_cmd})
+        \t#{rustup_default_cmd} || (sleep 5; #{rustup_default_cmd}) || (sleep 5; #{rustup_default_cmd})
         #{install_extra_rustup_targets(builder)}
 
         $(RUSTLIB): $(CARGO)
