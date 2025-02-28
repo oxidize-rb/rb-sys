@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys"
-version = "0.9.110"
+version = "0.9.111"
 dependencies = [
  "rb-sys",
  "rb-sys-build",
@@ -197,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-build"
-version = "0.9.110"
+version = "0.9.111"
 dependencies = [
  "bindgen",
  "lazy_static",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-tests"
-version = "0.9.110"
+version = "0.9.111"
 dependencies = [
  "rb-sys",
  "rb-sys-env",
