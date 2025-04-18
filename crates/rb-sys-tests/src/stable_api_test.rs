@@ -390,6 +390,55 @@ parity_test! (
 );
 
 parity_test! (
+    name: test_rb_gc_adjust_memory_usage,
+    func: gc_adjust_memory_usage,
+    data_factory: {
+        64isize
+    }
+);
+
+parity_test! (
+    name: test_rb_gc_adjust_memory_usage_negative,
+    func: gc_adjust_memory_usage,
+    data_factory: {
+        -64isize
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_gc_writebarrier() {
+    use rb_sys::stable_api;
+    let old = ruby_eval!("String.new") as VALUE;
+    let young = ruby_eval!("42") as VALUE;
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+    #[allow(unused)]
+    let rust_result = unsafe { stable_api::get_default().gc_writebarrier(old, young) };
+    #[allow(unused_unsafe)]
+    let compiled_c_result = unsafe { stable_api::get_compiled().gc_writebarrier(old, young) };
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_gc_writebarrier_unprotect() {
+    use rb_sys::stable_api;
+    let obj = ruby_eval!("String.new") as VALUE;
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+    #[allow(unused)]
+    let rust_result = unsafe { stable_api::get_default().gc_writebarrier_unprotect(obj) };
+    #[allow(unused_unsafe)]
+    let compiled_c_result = unsafe { stable_api::get_compiled().gc_writebarrier_unprotect(obj) };
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+parity_test! (
     name: test_rb_static_sym_p_for_static_sym,
     func: static_sym_p,
     data_factory: {

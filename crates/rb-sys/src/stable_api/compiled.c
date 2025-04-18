@@ -61,6 +61,21 @@ impl_fixnum_p(VALUE obj) {
   return FIXNUM_P(obj);
 }
 
+void
+impl_gc_adjust_memory_usage(size_t diff) {
+  rb_gc_adjust_memory_usage(diff);
+}
+
+void
+impl_gc_writebarrier(VALUE old, VALUE young) {
+  rb_gc_writebarrier(old, young);
+}
+
+void
+impl_gc_writebarrier_unprotect(VALUE obj) {
+  rb_gc_writebarrier_unprotect(obj);
+}
+
 int
 impl_static_sym_p(VALUE obj) {
   return STATIC_SYM_P(obj);
