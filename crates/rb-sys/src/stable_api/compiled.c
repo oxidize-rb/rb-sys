@@ -121,3 +121,23 @@ impl_thread_sleep(struct timeval time) {
   rb_thread_wait_for(time);
 }
 
+long
+impl_rstruct_len(VALUE st) {
+  return RSTRUCT_LEN(st);
+}
+
+VALUE
+impl_rstruct_define(char* name, ...) {
+  return rb_struct_define(name, NULL);
+}
+
+VALUE
+impl_rstruct_get(VALUE st, int idx) {
+  return RSTRUCT_GET(st, idx);
+}
+
+VALUE
+impl_rstruct_set(VALUE st, int idx, VALUE value) {
+  return RSTRUCT_SET(st, idx, value);
+}
+

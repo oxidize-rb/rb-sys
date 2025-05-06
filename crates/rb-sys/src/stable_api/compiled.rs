@@ -1,6 +1,7 @@
 use super::StableApiDefinition;
 use crate::{ruby_value_type, timeval, VALUE};
 use std::{
+    ffi::{c_int, CStr},
     os::raw::{c_char, c_long},
     ptr::NonNull,
     time::Duration,
@@ -79,6 +80,18 @@ extern "C" {
 
     #[link_name = "impl_thread_sleep"]
     fn impl_thread_sleep(interval: timeval);
+
+    #[link_name = "impl_rstruct_define"]
+    fn impl_rstruct_define(name: &CStr, members: &[*const c_char]) -> VALUE;
+
+    #[link_name = "impl_rstruct_get"]
+    fn impl_rstruct_get(st: VALUE, idx: c_int) -> VALUE;
+
+    #[link_name = "impl_rstruct_set"]
+    fn impl_rstruct_set(st: VALUE, idx: c_int, value: VALUE);
+
+    #[link_name = "impl_rstruct_len"]
+    fn impl_rstruct_len(obj: VALUE) -> c_long;
 }
 
 pub struct Definition;
@@ -112,6 +125,7 @@ impl StableApiDefinition for Definition {
         NonNull::<VALUE>::new(impl_rbasic_class(obj) as _)
     }
 
+    #[inline]
     unsafe fn frozen_p(&self, obj: VALUE) -> bool {
         impl_frozen_p(obj)
     }
@@ -212,5 +226,30 @@ impl StableApiDefinition for Definition {
         };
 
         unsafe { impl_thread_sleep(time) }
+    }
+
+    #[inline]
+    fn rstruct_define(&self, name: &CStr, members: &[&CStr]) -> VALUE {
+        let mut members: Vec<*const c_char> = members
+            .iter()
+            .map(|m| m.as_ptr() as *const c_char)
+            .collect();
+        members.push(std::ptr::null());
+        unsafe { impl_rstruct_define(name, members.as_ref()) }
+    }
+
+    #[inline]
+    unsafe fn rstruct_get(&self, st: VALUE, idx: c_int) -> VALUE {
+        impl_rstruct_get(st, idx)
+    }
+
+    #[inline]
+    unsafe fn rstruct_set(&self, st: VALUE, idx: c_int, value: VALUE) {
+        impl_rstruct_set(st, idx, value)
+    }
+
+    #[inline]
+    unsafe fn rstruct_len(&self, st: VALUE) -> c_long {
+        impl_rstruct_len(st)
     }
 }
