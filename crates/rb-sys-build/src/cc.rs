@@ -252,14 +252,18 @@ fn get_compiler() -> Command {
     }
 }
 
-fn rustc_wrapper_fallback() -> Option<String> {
-    let rustc_wrapper = std::env::var_os("RUSTC_WRAPPER")?;
+pub fn rustc_wrapper_fallback() -> Option<String> {
+    let rustc_wrapper = std::env::var("RUSTC_WRAPPER").ok()?;
+    rustc_wrapper_fallback_detect(rustc_wrapper)
+}
+
+pub fn rustc_wrapper_fallback_detect(rustc_wrapper: String) -> Option<String> {
     let wrapper_path = Path::new(&rustc_wrapper);
     let wrapper_stem = wrapper_path.file_stem()?;
 
     if WELL_KNOWN_WRAPPERS.contains(&wrapper_stem.to_str()?) {
         debug_log!("INFO: using RUSTC_WRAPPER ({:?})", rustc_wrapper);
-        Some(rustc_wrapper.to_str()?.to_owned())
+        Some(rustc_wrapper)
     } else {
         None
     }
@@ -399,5 +403,19 @@ impl CommandExt for Command {
         }
 
         new_cmd
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rustc_wrapper_detect() {
+        let wrapper = "/usr/local/bin/sccache";
+        assert_eq!(
+            rustc_wrapper_fallback_detect(wrapper.to_owned()),
+            Some(wrapper.to_owned())
+        );
     }
 }
