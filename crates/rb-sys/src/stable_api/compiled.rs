@@ -1,5 +1,5 @@
 use super::StableApiDefinition;
-use crate::{ruby_value_type, timeval, VALUE};
+use crate::{ruby_value_type, timeval, RUBY_API_VERSION_MAJOR, RUBY_API_VERSION_MINOR, VALUE};
 use std::{
     ffi::c_void,
     os::raw::{c_char, c_long},
@@ -98,8 +98,8 @@ extern "C" {
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
-    const VERSION_MAJOR: u32 = 0;
-    const VERSION_MINOR: u32 = 0;
+    const VERSION_MAJOR: u32 = RUBY_API_VERSION_MAJOR;
+    const VERSION_MINOR: u32 = RUBY_API_VERSION_MINOR;
 
     #[inline]
     unsafe fn rstring_len(&self, obj: VALUE) -> std::os::raw::c_long {
