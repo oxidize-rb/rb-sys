@@ -186,6 +186,38 @@ pub trait StableApiDefinition {
 
     /// Blocks the current thread until the given duration has passed.
     fn thread_sleep(&self, duration: Duration);
+
+    /// Checks if the given object is an RTypedData.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to a T_DATA object.
+    unsafe fn rtypeddata_p(&self, obj: VALUE) -> bool;
+
+    /// Checks if the given RTypedData is embedded.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to an RTypedData object.
+    unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool;
+
+    /// Gets the data type from an RTypedData object.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to an RTypedData object.
+    unsafe fn rtypeddata_type(&self, obj: VALUE) -> *const crate::rb_data_type_t;
+
+    /// Gets the data pointer from an RTypedData object.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to an RTypedData object.
+    unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut std::ffi::c_void;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

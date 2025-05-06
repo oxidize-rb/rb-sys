@@ -13,10 +13,12 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
+use crate::rb_data_type_t;
 use crate::ruby_value_type;
 use crate::stable_api::get_default as api;
 use crate::StableApiDefinition;
 use crate::VALUE;
+use std::ffi::c_void;
 use std::os::raw::{c_char, c_long};
 
 /// Emulates Ruby's "if" statement.
@@ -61,8 +63,7 @@ pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @param[in]  obj    An arbitrary ruby object.
 /// - @retval     true   `obj` is a Fixnum.
 /// - @retval     false  Anything else.
-/// - @note       Fixnum was  a thing  in the  20th century, but  it is  rather an
-///             implementation detail today.
+/// - @note       Fixnum was  a thing  in the  20th century, but  it is  rather an implementation detail today.
 #[inline]
 pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
     api().fixnum_p(obj.into())
@@ -75,8 +76,7 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @retval     false  Anything else.
 /// - @see        RB_DYNAMIC_SYM_P()
 /// - @see        RB_SYMBOL_P()
-/// - @note       These days  there are static  and dynamic symbols, just  like we
-///             once had Fixnum/Bignum back in the old days.
+/// - @note       These days  there are static  and dynamic symbols, just  like we once had Fixnum/Bignum back in the old days.
 #[inline]
 pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
     api().static_sym_p(obj.into())
@@ -283,4 +283,61 @@ pub unsafe fn RB_TYPE_P(obj: VALUE, ty: ruby_value_type) -> bool {
 #[inline]
 pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
     api().float_type_p(obj)
+}
+
+/// Checks if the given object is an RTypedData.
+///
+/// @param[in]  obj    Object in question.
+/// @retval     true   It is an RTypedData.
+/// @retval     false  It isn't an RTypedData.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// accessing the underlying data structure.
+#[inline]
+pub unsafe fn RTYPEDDATA_P(obj: VALUE) -> bool {
+    api().rtypeddata_p(obj)
+}
+
+/// Checks if the given RTypedData is embedded.
+///
+/// @param[in]  obj    An RTypedData object.
+/// @retval     true   The data is embedded in the object itself.
+/// @retval     false  The data is stored separately.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// accessing the underlying data structure. The caller must ensure the object
+/// is a valid RTypedData.
+#[inline]
+pub unsafe fn RTYPEDDATA_EMBEDDED_P(obj: VALUE) -> bool {
+    api().rtypeddata_embedded_p(obj)
+}
+
+/// Gets the data type information from an RTypedData object.
+///
+/// @param[in]  obj    An RTypedData object.
+/// @return     Pointer to the rb_data_type_t structure for this object.
+///
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer to get
+/// access to the underlying data type. The caller must ensure the object
+/// is a valid RTypedData.
+#[inline]
+pub unsafe fn RTYPEDDATA_TYPE(obj: VALUE) -> *const rb_data_type_t {
+    api().rtypeddata_type(obj)
+}
+
+/// Gets the data pointer from an RTypedData object.
+///
+/// @param[in]  obj    An RTypedData object.
+/// @return     Pointer to the wrapped C struct.
+///
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer to get
+/// access to the underlying data. The caller must ensure the object
+/// is a valid RTypedData.
+#[inline]
+pub unsafe fn RTYPEDDATA_GET_DATA(obj: VALUE) -> *mut c_void {
+    api().rtypeddata_get_data(obj)
 }

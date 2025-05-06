@@ -1,4 +1,4 @@
-use rb_sys::{StableApiDefinition, VALUE};
+use rb_sys::{stable_api, StableApiDefinition, RTYPEDDATA_EMBEDDED_P, RTYPEDDATA_P, VALUE};
 use rb_sys_test_helpers::rstring as gen_rstring;
 
 macro_rules! parity_test {
@@ -47,6 +47,22 @@ macro_rules! ruby_eval {
             ret
         }
     }};
+}
+
+fn gen_typed_data() -> VALUE {
+    ruby_eval!("Time.now")
+}
+
+fn gen_embedded_typed_data() -> VALUE {
+    ruby_eval!("Time.at(0)")
+}
+
+fn gen_non_embedded_typed_data() -> VALUE {
+    ruby_eval!("require 'stringio'; StringIO.new('a' * 1000)")
+}
+
+fn gen_non_typed_data() -> VALUE {
+    ruby_eval!("Object.new")
 }
 
 parity_test!(
@@ -655,3 +671,119 @@ parity_test!(
         std::time::Duration::from_millis(100)
     }
 );
+
+parity_test! (
+    name: test_rtypeddata_p_for_typed_data,
+    func: rtypeddata_p,
+    data_factory: {
+        gen_typed_data()
+    },
+    expected: true
+);
+
+parity_test! (
+    name: test_rtypeddata_p_for_regular_data,
+    func: rtypeddata_p,
+    data_factory: {
+        gen_non_typed_data()
+    },
+    expected: false
+);
+
+parity_test! (
+    name: test_rtypeddata_p_for_string,
+    func: rtypeddata_p,
+    data_factory: {
+        gen_rstring!("not a typed data")
+    },
+    expected: false
+);
+
+parity_test! (
+    name: test_rtypeddata_embedded_p_for_typed_data,
+    func: rtypeddata_embedded_p,
+    data_factory: {
+        gen_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_type_for_typed_data,
+    func: rtypeddata_type,
+    data_factory: {
+        gen_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_get_data_for_typed_data,
+    func: rtypeddata_get_data,
+    data_factory: {
+        gen_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_p_for_large_typed_data,
+    func: rtypeddata_p,
+    data_factory: {
+        gen_non_embedded_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_embedded_p_for_small_data,
+    func: rtypeddata_embedded_p,
+    data_factory: {
+        gen_embedded_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_embedded_p_for_large_data,
+    func: rtypeddata_embedded_p,
+    data_factory: {
+        gen_non_embedded_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_get_data_for_small_data,
+    func: rtypeddata_get_data,
+    data_factory: {
+        gen_embedded_typed_data()
+    }
+);
+
+parity_test! (
+    name: test_rtypeddata_get_data_for_large_data,
+    func: rtypeddata_get_data,
+    data_factory: {
+        gen_non_embedded_typed_data()
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rtypeddata_functions_with_usage() {
+    let small_time = gen_embedded_typed_data();
+    let large_time = gen_non_embedded_typed_data();
+
+    unsafe {
+        for obj in [small_time, large_time].iter() {
+            assert!(RTYPEDDATA_P(*obj));
+
+            let type_ptr = stable_api::get_default().rtypeddata_type(*obj);
+            assert!(!type_ptr.is_null());
+
+            let data_ptr = stable_api::get_default().rtypeddata_get_data(*obj);
+            assert!(!data_ptr.is_null());
+        }
+
+        let small_embedded = RTYPEDDATA_EMBEDDED_P(small_time);
+        let large_embedded = RTYPEDDATA_EMBEDDED_P(large_time);
+
+        #[cfg(ruby_gte_3_3)]
+        assert!(small_embedded);
+        assert!(!large_embedded);
+    }
+}

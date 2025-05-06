@@ -55,6 +55,7 @@ pub fn generate(
         .blocklist_function("^__.*")
         .blocklist_item("RData")
         .blocklist_function("rb_tr_rdata")
+        .blocklist_function("rb_tr_rtypeddata")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     let bindings = if cfg!(feature = "bindgen-rbimpls") {
