@@ -10,6 +10,18 @@ Testing is particularly important for Ruby extensions because segmentation fault
 
 </div>
 
+## rb-sys-test-helpers Overview
+
+The `rb-sys-test-helpers` crate provides specialized utilities for testing Ruby extensions in Rust. It solves many of the challenges associated with testing code that interacts with the Ruby VM:
+
+- Automating Ruby VM initialization and teardown
+- Managing thread safety for Ruby VM operations
+- Handling Ruby exceptions in tests
+- Providing GC stress testing to catch memory issues
+- Offering conversion helpers for common Ruby types
+
+For detailed API documentation, see the [Test Helpers API Reference](./api-reference/test-helpers.md).
+
 ## Unit Testing Rust Code
 
 ### The Challenge of Testing Ruby Extensions

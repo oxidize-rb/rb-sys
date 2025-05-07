@@ -4,6 +4,25 @@
 
 One of rb-sys's greatest strengths is its support for cross-platform Ruby extensions. This chapter covers how to develop, test, and distribute extensions across multiple platforms.
 
+## Supported Platforms
+
+rb-sys supports cross-compilation to the following platforms:
+
+| Platform           | Supported | Docker Image                                     |
+| ------------------ | --------- | ------------------------------------------------ |
+| x86_64-linux       | ✅        | `rbsys/x86_64-linux`                             |
+| x86_64-linux-musl  | ✅        | `rbsys/x86_64-linux-musl`                        |
+| aarch64-linux      | ✅        | `rbsys/aarch64-linux`                            |
+| aarch64-linux-musl | ✅        | `rbsys/aarch64-linux-musl`                       |
+| arm-linux          | ✅        | `rbsys/arm-linux`                                |
+| arm64-darwin       | ✅        | `rbsys/arm64-darwin`                             |
+| x64-mingw32        | ✅        | `rbsys/x64-mingw32`                              |
+| x64-mingw-ucrt     | ✅        | `rbsys/x64-mingw-ucrt`                           |
+| mswin              | ✅        | not available on Docker                          |
+| truffleruby        | ✅        | not available on Docker                          |
+
+The Docker images are available on [Docker Hub](https://hub.docker.com/r/rbsys/rcd) and are automatically updated with each rb-sys release.
+
 ## Platform Considerations
 
 Ruby extensions face several cross-platform challenges:

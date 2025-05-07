@@ -1,25 +1,5 @@
 [book]
-title = "Ruby on Rust"
-description = "The definitive guide for using Rust in Ruby"
 authors = ["Ian Ker-Seymer"]
 language = "en"
-multilingual = false
 src = "src"
-
-[output.html]
-git-repository-url = "https://github.com/oxidize-rb/rb-sys"
-edit-url-template = "https://github.com/oxidize-rb/rb-sys/edit/main/book/{path}"
-site-url = "/rb-sys/"
-
-[output.html.playground]
-editable = true
-line-numbers = true
-
-[output.html.code]
-
-[output.html.code.hidelines]
-ruby = "#"
-bash = "#"
-
-[rust]
-edition = "2021"
+title = "The Ruby on Rust Book"

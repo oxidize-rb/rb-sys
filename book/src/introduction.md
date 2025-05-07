@@ -4,6 +4,17 @@
 
 Welcome to the rb-sys guide. This book will show you how to build Ruby extensions in Rust that are both powerful and reliable.
 
+The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If it's not easy, it's a bug.
+
+## Key Features
+
+- Battle-tested Rust bindings for the Ruby C API
+- Support for Ruby 2.6+
+- Support for all major platforms (Linux, macOS, Windows)
+- Cross-compilation support for gems
+- Integration with `rake-compiler`
+- Test helpers for Ruby extensions
+
 ## Why Rust for Ruby Extensions?
 
 Ruby extensions have traditionally been written in C, requiring manual memory management and careful handling of Ruby's internals. This approach is error-prone and often results in security vulnerabilities, memory leaks, and crashes.
@@ -36,6 +47,7 @@ rb-sys consists of several components working together:
 2. **rb_sys gem**: Handles the Ruby side of extension compilation
 3. **Magnus**: A higher-level, ergonomic API for Rust/Ruby interoperability
 4. **rb-sys-dock**: Docker-based cross-compilation tooling
+5. **GitHub Actions**: Setup and cross-compilation automation for CI workflows 
 
 <div class="tip">
 
@@ -89,9 +101,46 @@ Let's compare writing extensions in Rust versus C:
 
 While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience with improved safety guarantees and access to a rich ecosystem of libraries.
 
+## Real-World Examples
+
+These gems demonstrate rb-sys in action:
+
+- [lz4-ruby](https://github.com/yoshoku/lz4-ruby) - LZ4 compression library with rb-sys
+- [wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb) - WebAssembly runtime with rb-sys and Magnus
+- [oxi-test](https://github.com/oxidize-rb/oxi-test) - Canonical example of how to use rb-sys (minimal, fully tested, cross-compiled)
+- [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function with full cross-platform support
+
+## Supported Toolchains
+
+- Ruby: 2.6+ (for full compatibility with Rubygems)
+- Rust: 1.65+
+
+## Dependencies
+
+To build a Ruby extension in Rust, you'll need:
+
+- Ruby development headers (usually part of ruby-dev packages)
+- Rust (via rustup)
+- libclang (for bindgen)
+  - On macOS: `brew install llvm`
+  - On Linux: `apt-get install libclang-dev`
+
+## Getting Help
+
+If you have questions, please join our [Slack channel][chat] or [open an issue on GitHub][issues].
+
 ## Contributing to this book
 
 This book is open source! Find a typo? Did we overlook something? [**Send us a pull request!**][repo]. Help wanted!
+
+## License
+
+rb-sys is licensed under either:
+
+- Apache License, Version 2.0
+- MIT license
+
+at your option.
 
 ## Next Steps
 
@@ -102,3 +151,4 @@ This book is open source! Find a typo? Did we overlook something? [**Send us a p
 
 [repo]: https://github.com/oxidize-rb/rb-sys
 [chat]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw
+[issues]: https://github.com/oxidize-rb/rb-sys/issues

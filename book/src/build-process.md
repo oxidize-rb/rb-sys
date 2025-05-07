@@ -55,8 +55,16 @@ create_rust_makefile("my_gem/my_gem") do |config|
   
   # Clean up target directory after installation to reduce gem size
   config.clean_after_install = true
+  
+  # Force installation of Rust toolchain if not present
+  config.force_install_rust_toolchain = "stable"
+  
+  # Auto-install Rust toolchain during gem installation
+  config.auto_install_rust_toolchain = true
 end
 ```
+
+For a complete reference of all available configuration options, see the [rb_sys Gem Configuration](./api-reference/rb-sys-gem-config.md) documentation.
 
 ## Environment Variables
 

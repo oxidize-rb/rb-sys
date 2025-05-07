@@ -28,6 +28,16 @@
 - [Debugging & Troubleshooting](./debugging.md)
 - [Troubleshooting Guide](./troubleshooting.md)
 
+## API Reference
+
+- [rb-sys Crate Features](./api-reference/rb-sys-features.md)
+- [rb_sys Gem Configuration](./api-reference/rb-sys-gem-config.md)
+- [Test Helpers](./api-reference/test-helpers.md)
+
+## Community and Support
+
+- [Getting Help](./community-support.md)
+
 ---
 
 [Contributing to rb-sys](https://github.com/oxidize-rb/rb-sys/blob/main/CONTRIBUTING.md)

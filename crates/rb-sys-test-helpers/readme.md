@@ -2,7 +2,14 @@
 
 Helpers for testing Ruby extensions from Rust
 
-## Usage
+## Documentation
+
+For comprehensive documentation, please refer to the [Ruby on Rust Book](https://oxidize-rb.github.io/rb-sys/), which includes:
+
+- [Testing Extensions](https://oxidize-rb.github.io/rb-sys/testing.html)
+- [API Reference for Test Helpers](https://oxidize-rb.github.io/rb-sys/api-reference/test-helpers.html)
+
+## Basic Usage
 
 Add this to your `Cargo.toml`:
 
@@ -22,7 +29,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Then, you can use the `with_ruby_vm` function in your tests:
+Then, you can use the `ruby_test` macro to test your Ruby extensions:
 
 ```rust
 #[cfg(test)]
@@ -32,11 +39,7 @@ mod tests {
 
     #[ruby_test]
     fn test_something() {
-        // Your test code here will have a valid Ruby VM (hint: this works with
-        // the `magnus` crate, too!)
-        //
-        // ...
-
+        // Your test code here will have a valid Ruby VM
         let int = unsafe { rb_num2fix(1) };
         let big = unsafe { rb_int2big(9999999) };
 
@@ -57,5 +60,4 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as
-defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
