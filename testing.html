@@ -1,0 +1,1930 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Ruby on Rust: Testing Extensions</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        <meta name="keywords" content="ruby, rust, ffi, bindings, rb-sys, ruby on rust">
+        <meta name="author" content="">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="">
+        <meta property="og:title" content="Ruby on Rust: Testing Extensions">
+        <meta property="og:description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="">
+        <meta property="twitter:title" content="Ruby on Rust: Testing Extensions">
+        <meta property="twitter:description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        
+        <!-- Canonical URL -->
+        <link rel="canonical" href="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/css/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Ruby on Rust Book</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/oxidize-rb/rb-sys" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="testing-extensions"><a class="header" href="#testing-extensions">Testing Extensions</a></h1>
+<p>Testing is a critical part of developing Ruby extensions. This chapter covers strategies for testing your Rust code that
+interfaces with Ruby, from unit tests to integration tests and CI workflows.</p>
+<div class="warning">
+<p>Testing is particularly important for Ruby extensions because segmentation faults, memory leaks, and other low-level
+issues can crash the entire Ruby VM. Untested extensions can lead to hard-to-debug production crashes.</p>
+</div>
+<h2 id="rb-sys-test-helpers-overview"><a class="header" href="#rb-sys-test-helpers-overview">rb-sys-test-helpers Overview</a></h2>
+<p>The <code>rb-sys-test-helpers</code> crate provides specialized utilities for testing Ruby extensions in Rust. It solves many of
+the challenges associated with testing code that interacts with the Ruby VM:</p>
+<ul>
+<li>Automating Ruby VM initialization and teardown</li>
+<li>Managing thread safety for Ruby VM operations</li>
+<li>Handling Ruby exceptions in tests</li>
+<li>Providing GC stress testing to catch memory issues</li>
+<li>Offering conversion helpers for common Ruby types</li>
+</ul>
+<p>For detailed API documentation, see the <a href="./api-reference/test-helpers.html">Test Helpers API Reference</a>.</p>
+<h2 id="unit-testing-rust-code"><a class="header" href="#unit-testing-rust-code">Unit Testing Rust Code</a></h2>
+<h3 id="the-challenge-of-testing-ruby-extensions"><a class="header" href="#the-challenge-of-testing-ruby-extensions">The Challenge of Testing Ruby Extensions</a></h3>
+<p>Testing Rust code that interacts with Ruby presents unique challenges:</p>
+<ol>
+<li><strong>Ruby VM Initialization</strong>: The Ruby VM must be properly initialized before tests run.</li>
+<li><strong>Thread Safety</strong>: Ruby's VM has thread-specific state that must be managed.</li>
+<li><strong>Exception Handling</strong>: Ruby exceptions need to be properly caught and converted to Rust errors.</li>
+<li><strong>Memory Management</strong>: Memory allocated by Ruby needs to be protected from garbage collection during tests.</li>
+</ol>
+<div class="note">
+<p>rb-sys provides specialized tools to overcome these challenges, particularly the <code>#[ruby_test]</code> macro which handles Ruby
+VM initialization and thread management automatically.</p>
+</div>
+<h3 id="complete-test-setup-guide"><a class="header" href="#complete-test-setup-guide">Complete Test Setup Guide</a></h3>
+<p>Setting up proper testing for Ruby extensions requires several components working together. This guide provides a
+comprehensive setup that you can adapt to your project.</p>
+<h4 id="required-dependencies"><a class="header" href="#required-dependencies">Required Dependencies</a></h4>
+<p>Your <code>Cargo.toml</code> needs to be configured with the appropriate dependencies:</p>
+<pre><code class="language-toml">[package]
+name = "my_extension"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+# Main dependencies
+[dependencies]
+magnus = "0.6" # For high-level Ruby API
+rb-sys = "0.9"  # Required for rb_sys_test_helpers to work
+
+# Test dependencies
+[dev-dependencies]
+rb-sys-env = "0.1"          # For Ruby environment detection
+rb-sys-test-helpers = "0.2" # For Ruby VM test helpers
+</code></pre>
+<p>The key points:</p>
+<ul>
+<li>Include <code>rb-sys</code> as a regular dependency (not just a dev-dependency)</li>
+<li>Both <code>rb-sys-env</code> and <code>rb-sys-test-helpers</code> are needed for tests</li>
+</ul>
+<h4 id="setting-up-buildrs"><a class="header" href="#setting-up-buildrs">Setting Up build.rs</a></h4>
+<p>Create a <code>build.rs</code> file in your project root with the following content:</p>
+<pre><pre class="playground"><code class="language-rust">use std::error::Error;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+    // This activates rb-sys-env for both normal builds and tests
+    let _ = rb_sys_env::activate()?;
+
+    // Any additional build configuration can go here
+
+    Ok(())
+}</code></pre></pre>
+<p>The <code>rb_sys_env::activate()</code> function:</p>
+<ul>
+<li>Sets up Cargo configuration based on the detected Ruby environment</li>
+<li>Exposes Ruby version information as feature flags (e.g., <code>ruby_gte_3_0</code>, <code>ruby_use_flonum</code>)</li>
+<li>Ensures proper linking to the Ruby library</li>
+</ul>
+<h4 id="importing-test-helpers"><a class="header" href="#importing-test-helpers">Importing Test Helpers</a></h4>
+<p>In your test module, import the necessary components:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[cfg(test)]
+mod tests {
+    use super::*;
+    use rb_sys_test_helpers::ruby_test;
+    use magnus::{Ruby, Error};
+
+    // Your test functions go here...
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="the-ruby_test-macro"><a class="header" href="#the-ruby_test-macro">The #[ruby_test] Macro</a></h3>
+<div class="tip">
+<p>The <code>#[ruby_test]</code> macro is the simplest and most reliable way to test Ruby extensions in Rust. It handles all the
+complexities of VM initialization and thread management.</p>
+</div>
+<p>The simplest way to test Ruby extensions is with the <code>#[ruby_test]</code> macro, which wraps your test functions to ensure
+they run within a properly initialized Ruby VM:</p>
+<pre><pre class="playground"><code class="language-rust hidelines=#"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">// Complete example of using the ruby_test macro
+</span>use rb_sys::*;
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test]
+fn test_string_manipulation() {
+    unsafe {
+        // Create a Ruby string
+        let rb_str = rb_utf8_str_new_cstr("hello\0".as_ptr() as _);
+
+        // Append to the string
+        let rb_str = rb_str_cat(rb_str, " world\0".as_ptr() as _, 6);
+
+        // Convert to Rust string for assertion
+        let mut rb_str_val = rb_str;
+        let result_ptr = rb_string_value_cstr(&amp;mut rb_str_val);
+        let result = std::ffi::CStr::from_ptr(result_ptr)
+            .to_string_lossy()
+            .to_string();
+
+        assert_eq!(result, "hello world");
+    }
+}
+
+<span class="boring">// You can add options to the macro
+</span><span class="boring">#[ruby_test(gc_stress)]
+</span><span class="boring">fn test_with_gc_stress() {
+</span><span class="boring">    // This test will run with GC stress enabled
+</span><span class="boring">    // Ruby's garbage collector will run more frequently
+</span><span class="boring">    // to help catch memory management issues
+</span><span class="boring">    unsafe {
+</span><span class="boring">        let rb_str = rb_utf8_str_new_cstr("test\0".as_ptr() as _);
+</span><span class="boring">        rb_gc_guard!(rb_str); // Protect from GC
+</span><span class="boring">        rb_gc(); // Force garbage collection
+</span><span class="boring">        // If rb_str was not protected, it might be collected here
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">// Version-specific tests using rb-sys-env features
+</span><span class="boring">#[ruby_test]
+</span><span class="boring">fn test_with_version_conditionals() {
+</span><span class="boring">    // This block only runs on Ruby 3.0 or newer
+</span><span class="boring">    #[cfg(ruby_gte_3_0)]
+</span><span class="boring">    {
+</span><span class="boring">        // Test Ruby 3.0+ specific features
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // This block only runs on Ruby 2.7
+</span><span class="boring">    #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
+</span><span class="boring">    {
+</span><span class="boring">        // Test Ruby 2.7 specific features
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // This block runs if float values are stored
+</span><span class="boring">    // as immediate values (Ruby implementation detail)
+</span><span class="boring">    #[cfg(ruby_use_flonum)]
+</span><span class="boring">    {
+</span><span class="boring">        // Test flonum implementation
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">}</span></code></pre></pre>
+<div class="note">
+<p>The <code>#[ruby_test]</code> macro:</p>
+<ol>
+<li>Ensures the Ruby VM is initialized once and only once</li>
+<li>Runs all tests on the same OS thread</li>
+<li>Catches and propagates Ruby exceptions as Rust errors</li>
+<li>Performs GC after each test to catch memory management issues</li>
+</ol>
+<p>Click the eye icon (<i class="fa fa-eye"></i>) to view additional examples of the macro options and version-specific
+testing.</p>
+</div>
+<p>The <code>#[ruby_test]</code> macro:</p>
+<ol>
+<li>Ensures the Ruby VM is initialized once and only once</li>
+<li>Runs all tests on the same OS thread</li>
+<li>Catches and propagates Ruby exceptions as Rust errors</li>
+<li>Performs GC after each test to catch memory management issues</li>
+</ol>
+<h3 id="using-magnus-with-ruby_test"><a class="header" href="#using-magnus-with-ruby_test">Using Magnus with #[ruby_test]</a></h3>
+<div class="tip">
+<p>Magnus provides a much more ergonomic Rust API for working with Ruby. Combined with the <code>#[ruby_test]</code> macro, it makes
+testing Ruby extensions much simpler and safer.</p>
+</div>
+<p>One of the great advantages of the <code>#[ruby_test]</code> macro is that it works seamlessly with Magnus, providing a much more
+ergonomic way to test Ruby integrations:</p>
+<pre><pre class="playground"><code class="language-rust hidelines=#"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">// Complete example of using Magnus with ruby_test
+</span>use magnus::{RString, Ruby};
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test]
+fn test_with_magnus() {
+    // Get the Ruby interpreter - no unsafe required when using Magnus!
+    let ruby = Ruby::get().unwrap();
+
+    // Create a Ruby string with Magnus
+    let hello = RString::new(ruby, "Hello, ");
+
+    // Append to the string
+    let message = hello.concat(ruby, "World!");
+
+    // Convert to Rust string for assertion - easy with Magnus
+    let result = message.to_string().unwrap();
+
+    assert_eq!(result, "Hello, World!");
+}
+
+<span class="boring">// Testing more complex Ruby interactions
+</span><span class="boring">#[ruby_test]
+</span><span class="boring">fn test_ruby_class_interaction() {
+</span><span class="boring">    let ruby = Ruby::get().unwrap();
+</span><span class="boring">
+</span><span class="boring">    // Define a Ruby class for testing
+</span><span class="boring">    let test_class = ruby.define_class("TestClass", ruby.class_object()).unwrap();
+</span><span class="boring">
+</span><span class="boring">    // Define a method on the class
+</span><span class="boring">    test_class.define_method("double",
+</span><span class="boring">        magnus::method!(|_rb_self, num: i64| -&gt; i64 { num * 2 }, 1)
+</span><span class="boring">    ).unwrap();
+</span><span class="boring">
+</span><span class="boring">    // Use Ruby's eval to test the class
+</span><span class="boring">    let result: i64 = ruby.eval("TestClass.new.double(21)").unwrap();
+</span><span class="boring">
+</span><span class="boring">    assert_eq!(result, 42);
+</span><span class="boring">}
+</span><span class="boring">}</span></code></pre></pre>
+<div class="note">
+<p>Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the
+<code>#[ruby_test]</code> macro gives you the best of both worlds:</p>
+<ul>
+<li>Magnus's safe, high-level API</li>
+<li>The <code>#[ruby_test]</code> macro's robust Ruby VM management</li>
+</ul>
+<p>Click the eye icon (<i class="fa fa-eye"></i>) to see examples of more complex Ruby class interactions.</p>
+</div>
+<p>Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the
+<code>#[ruby_test]</code> macro gives you the best of both worlds:</p>
+<ul>
+<li>Magnus's safe, high-level API</li>
+<li>The <code>#[ruby_test]</code> macro's robust Ruby VM management</li>
+</ul>
+<p>Here's another example showing how to work with Ruby classes and methods using Magnus:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{class, eval, method, prelude::*, Module, RClass, Ruby};
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test]
+fn test_ruby_class_interaction() {
+    let ruby = Ruby::get().unwrap();
+
+    // Define a Ruby class for testing
+    let test_class = ruby.define_class("TestClass", ruby.class_object()).unwrap();
+
+    // Define a method on the class
+    test_class.define_method("double", method!(|ruby, num: i64| -&gt; i64 {
+        num * 2
+    })).unwrap();
+
+    // Create an instance and call the method
+    let result: i64 = eval!(ruby, "TestClass.new.double(21)").unwrap();
+
+    assert_eq!(result, 42);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="testing-with-gc-stress"><a class="header" href="#testing-with-gc-stress">Testing with GC Stress</a></h3>
+<p>To detect subtle memory management issues, you can enable GC stress testing:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test(gc_stress)]
+fn test_gc_interactions() {
+    unsafe {
+        // Create a Ruby string
+        let s = rb_str_new_cstr("hello world\0".as_ptr() as _);
+
+        // Get a pointer to the string's contents
+        let s_ptr = RSTRING_PTR(s);
+
+        // Protect s from garbage collection
+        rb_gc_guard!(s);
+
+        // Now we can safely use s_ptr, even though GC might run
+        let t = rb_str_new_cstr("prefix: \0".as_ptr() as _);
+        let result = rb_str_cat_cstr(t, s_ptr);
+
+        // More code...
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>With Magnus, the same test is more straightforward:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{RString, Ruby};
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test(gc_stress)]
+fn test_gc_interactions_with_magnus() {
+    let ruby = Ruby::get().unwrap();
+
+    // Create first string
+    let s = RString::new(ruby, "hello world");
+
+    // Magnus handles GC protection automatically!
+
+    // Create second string and concatenate
+    let t = RString::new(ruby, "prefix: ");
+    let result = t.concat(ruby, &amp;s);
+
+    assert_eq!(result.to_string().unwrap(), "prefix: hello world");
+}
+<span class="boring">}</span></code></pre></pre>
+<p>The <code>gc_stress</code> option forces Ruby's garbage collector to run frequently during the test, which helps expose bugs
+related to:</p>
+<ul>
+<li>Objects not being properly protected from GC</li>
+<li>Dangling pointers</li>
+<li>Invalid memory access</li>
+</ul>
+<h3 id="handling-ruby-exceptions"><a class="header" href="#handling-ruby-exceptions">Handling Ruby Exceptions</a></h3>
+<p>Ruby exceptions can be caught and converted to Rust errors using the <code>protect</code> function:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_exception_handling() {
+    use rb_sys_test_helpers::protect;
+
+    // This code will raise a Ruby exception
+    let result = unsafe {
+        protect(|| {
+            rb_sys::rb_raise(rb_sys::rb_eRuntimeError, "Test error\0".as_ptr() as _);
+            // This will never be reached
+            "success"
+        })
+    };
+
+    // Verify we got an error
+    assert!(result.is_err());
+
+    // Check the error message
+    let error = result.unwrap_err();
+    assert!(error.message().unwrap().contains("Test error"));
+}
+<span class="boring">}</span></code></pre></pre>
+<p>With Magnus, exception handling is more natural:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{eval, Ruby, Error};
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test]
+fn test_exception_handling_with_magnus() {
+    let ruby = Ruby::get().unwrap();
+
+    // Evaluate Ruby code that raises an exception
+    let result: Result&lt;String, Error&gt; = eval!(ruby, "raise 'Test error'");
+
+    // Verify we got an error
+    assert!(result.is_err());
+
+    // Magnus errors contain the Ruby exception
+    let error = result.unwrap_err();
+    assert!(error.to_string().contains("Test error"));
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="version-specific-tests"><a class="header" href="#version-specific-tests">Version-Specific Tests</a></h3>
+<p>rb-sys-env provides feature flags that allow you to write version-specific tests:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_version_specific_features() {
+    // This test will only run on Ruby 3.0 or higher
+    #[cfg(ruby_gte_3_0)]
+    {
+        // Test Ruby 3.0+ specific features
+        unsafe {
+            // Example: using Ractor API which is only available in Ruby 3.0+
+            #[cfg(ruby_have_ruby_ractor_h)]
+            let is_ractor_supported = rb_sys::rb_ractor_main_p() != 0;
+
+            // ...
+        }
+    }
+
+    // This block will only run on Ruby 2.7
+    #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
+    {
+        // Test Ruby 2.7 specific features
+        // ...
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>With Magnus:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Ruby, eval};
+use rb_sys_test_helpers::ruby_test;
+
+#[ruby_test]
+fn test_version_specific_features_with_magnus() {
+    let ruby = Ruby::get().unwrap();
+
+    // This test will only run on Ruby 3.0 or higher
+    #[cfg(ruby_gte_3_0)]
+    {
+        // Test Ruby 3.0+ specific features
+        #[cfg(ruby_have_ruby_ractor_h)]
+        let is_ractor_supported: bool = eval!(ruby, "defined?(Ractor) != nil").unwrap();
+
+        #[cfg(ruby_have_ruby_ractor_h)]
+        assert!(is_ractor_supported);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Available version flags include:</p>
+<ul>
+<li><code>ruby_gte_X_Y</code>: Ruby version &gt;= X.Y</li>
+<li><code>ruby_lt_X_Y</code>: Ruby version &lt; X.Y</li>
+<li><code>ruby_eq_X_Y</code>: Ruby version == X.Y</li>
+<li><code>ruby_have_FEATURE</code>: Specific Ruby API feature is available</li>
+</ul>
+<h3 id="test-helpers-and-macros"><a class="header" href="#test-helpers-and-macros">Test Helpers and Macros</a></h3>
+<p>rb-sys-test-helpers includes several macros to simplify common testing patterns:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Convert a Ruby string to a Rust String for testing
+#[ruby_test]
+fn test_with_helper_macros() {
+    use rb_sys_test_helpers::rstring_to_string;
+
+    unsafe {
+        let rb_str = rb_utf8_str_new_cstr("hello world\0".as_ptr() as _);
+        let rust_str = rstring_to_string!(rb_str);
+
+        assert_eq!(rust_str, "hello world");
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="manual-ruby-vm-setup"><a class="header" href="#manual-ruby-vm-setup">Manual Ruby VM Setup</a></h3>
+<p>For more complex test scenarios, you can manually initialize the Ruby VM:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rb_sys_test_helpers::{with_ruby_vm, protect};
+
+#[test]
+fn test_complex_scenario() {
+    with_ruby_vm(|| {
+        // Multiple operations that need a Ruby VM
+        let result1 = unsafe {
+            protect(|| {
+                // First operation...
+                42
+            })
+        };
+
+        let result2 = unsafe {
+            protect(|| {
+                // Second operation...
+                "success"
+            })
+        };
+
+        assert_eq!(result1.unwrap(), 42);
+        assert_eq!(result2.unwrap(), "success");
+    }).unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<p>With Magnus, the same approach but more ergonomically:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{eval, Ruby};
+use rb_sys_test_helpers::with_ruby_vm;
+
+#[test]
+fn test_complex_scenario_with_magnus() {
+    with_ruby_vm(|| {
+        let ruby = Ruby::get().unwrap();
+
+        // First operation
+        let result1: i64 = eval!(ruby, "21 * 2").unwrap();
+
+        // Second operation
+        let result2: String = eval!(ruby, "'suc' + 'cess'").unwrap();
+
+        assert_eq!(result1, 42);
+        assert_eq!(result2, "success");
+    }).unwrap();
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="debugging-failed-tests"><a class="header" href="#debugging-failed-tests">Debugging Failed Tests</a></h2>
+<p>When your tests fail, debugging tools can help identify the root cause. LLDB is particularly useful for debugging memory
+issues, segmentation faults, and other low-level problems.</p>
+<h3 id="using-lldb-to-debug-tests"><a class="header" href="#using-lldb-to-debug-tests">Using LLDB to Debug Tests</a></h3>
+<p>LLDB is a powerful debugger that works well with Rust and Ruby code. Here's how to use it with your tests:</p>
+<ol>
+<li>
+<p>First, compile your extension with debug symbols:</p>
+<pre><code class="language-bash">RUSTFLAGS="-g" bundle exec rake compile
+</code></pre>
+</li>
+<li>
+<p>Run your test with LLDB:</p>
+<pre><code class="language-bash">lldb -- ruby -Ilib -e "require 'my_extension'; require_relative 'test/test_my_extension.rb'"
+</code></pre>
+</li>
+<li>
+<p>At the LLDB prompt, set breakpoints in your Rust code:</p>
+<pre><code>(lldb) breakpoint set --name MutCalculator::divide
+</code></pre>
+</li>
+<li>
+<p>Run the program:</p>
+<pre><code>(lldb) run
+</code></pre>
+</li>
+<li>
+<p>When the breakpoint is hit, you can:</p>
+<ul>
+<li>Examine variables: <code>frame variable</code></li>
+<li>Print expressions: <code>p self</code> or <code>p val</code></li>
+<li>Step through code: <code>next</code> (over) or <code>step</code> (into)</li>
+<li>Continue execution: <code>continue</code></li>
+<li>Show backtrace: <code>bt</code></li>
+</ul>
+</li>
+</ol>
+<h3 id="lldb-commands-for-ruby-extensions"><a class="header" href="#lldb-commands-for-ruby-extensions">LLDB Commands for Ruby Extensions</a></h3>
+<p>Some LLDB commands that are particularly useful for Ruby extensions:</p>
+<pre><code># To print a Ruby string VALUE
+(lldb) p rb_string_value_cstr(&amp;my_rb_string_val)
+
+# To check if a VALUE is nil
+(lldb) p RB_NIL_P(my_value)
+
+# To get the Ruby class name of an object
+(lldb) p rb_class2name(rb_class_of(my_value))
+
+# To check Ruby exception information
+(lldb) p rb_errinfo()
+</code></pre>
+<h3 id="debugging-memory-issues"><a class="header" href="#debugging-memory-issues">Debugging Memory Issues</a></h3>
+<p>For memory-related issues:</p>
+<ol>
+<li>Set a breakpoint around where objects are created</li>
+<li>Set a breakpoint where the crash occurs</li>
+<li>When hitting the first breakpoint, note memory addresses</li>
+<li>When hitting the second breakpoint, check if those addresses are still valid</li>
+</ol>
+<pre><code class="language-bash"># Example debugging session for memory issues
+$ lldb -- ruby -Ilib -e "require 'my_extension'; MyExtension.test_method"
+(lldb) breakpoint set --name MutPoint::new
+(lldb) breakpoint set --name MutPoint::add_x
+(lldb) run
+
+# When first breakpoint hits
+(lldb) frame variable
+(lldb) p self
+(lldb) continue
+
+# When second breakpoint hits
+(lldb) frame variable
+(lldb) p self
+</code></pre>
+<h3 id="debugging-refcell-borrow-errors"><a class="header" href="#debugging-refcell-borrow-errors">Debugging RefCell Borrow Errors</a></h3>
+<p>For diagnosing <code>BorrowMutError</code> panics:</p>
+<ol>
+<li>
+<p>Set a breakpoint right before the borrow operation:</p>
+<pre><code>(lldb) breakpoint set --file lib.rs --line 123
+</code></pre>
+</li>
+<li>
+<p>When it hits, check the status of the RefCell:</p>
+<pre><code>(lldb) p self.0
+</code></pre>
+</li>
+<li>
+<p>Step through the code and watch when borrows occur:</p>
+<pre><code>(lldb) next
+</code></pre>
+</li>
+</ol>
+<h3 id="further-information"><a class="header" href="#further-information">Further Information</a></h3>
+<p>For more comprehensive debugging setup including VSCode integration and debugging the Ruby C API, see the
+<a href="debugging.html">Debugging &amp; Troubleshooting</a> chapter.</p>
+<h3 id="common-testing-patterns-and-anti-patterns"><a class="header" href="#common-testing-patterns-and-anti-patterns">Common Testing Patterns and Anti-Patterns</a></h3>
+<p>When testing Ruby extensions, several patterns emerge that can help you write more effective tests, along with
+anti-patterns to avoid.</p>
+<h4 id="pattern-proper-method-invocation"><a class="header" href="#pattern-proper-method-invocation">Pattern: Proper Method Invocation</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Using associated function syntax for methods with Ruby/self parameters
+let result = MutCalculator::divide(&amp;ruby, &amp;calc, 6.0, 2.0);
+
+// ❌ BAD: This won't compile - can't call as instance method
+// let result = calc.divide(&amp;ruby, 6.0, 2.0);
+<span class="boring">}</span></code></pre></pre>
+<h4 id="pattern-complete-refcell-borrows"><a class="header" href="#pattern-complete-refcell-borrows">Pattern: Complete RefCell Borrows</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Complete the borrow before attempting to borrow mutably
+let current_x = self.0.borrow().x;  // First borrow completes here
+if let Some(sum) = current_x.checked_add(val) {
+    self.0.borrow_mut().x = sum;    // Safe to borrow mutably now
+}
+
+// ❌ BAD: Will panic with "already borrowed: BorrowMutError"
+// if let Some(sum) = self.0.borrow().x.checked_add(val) {
+//     self.0.borrow_mut().x = sum;  // Error: still borrowed from the if condition
+// }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="pattern-ruby-error-checking"><a class="header" href="#pattern-ruby-error-checking">Pattern: Ruby Error Checking</a></h4>
+<p>Testing error handling is crucial for Ruby extensions. Here's how to properly test different exception scenarios:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Verify specific Ruby exception types
+let result = MutCalculator::divide(&amp;ruby, &amp;calc, 6.0, 0.0);
+assert!(result.is_err());
+let err = result.unwrap_err();
+assert!(err.is_kind_of(ruby, ruby.exception_zero_div_error()));
+assert!(err.message().unwrap().contains("Division by zero"));
+
+// ❌ BAD: Just checking for any error without specific type
+// assert!(result.is_err());
+<span class="boring">}</span></code></pre></pre>
+<h5 id="testing-different-ruby-exception-types"><a class="header" href="#testing-different-ruby-exception-types">Testing Different Ruby Exception Types</a></h5>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Testing for ArgumentError
+fn test_argument_error() -&gt; Result&lt;(), Error&gt; {
+    let ruby = Ruby::get()?;
+    let calc = Calculator::new();
+
+    // Function that raises ArgumentError on negative input
+    let result = Calculator::sqrt(&amp;ruby, &amp;calc, -1.0);
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+    assert!(err.is_kind_of(ruby, ruby.exception_arg_error()));
+    assert!(err.message().unwrap().contains("must be positive"));
+
+    Ok(())
+}
+
+// Testing for RangeError
+fn test_range_error() -&gt; Result&lt;(), Error&gt; {
+    let ruby = Ruby::get()?;
+    let calc = Calculator::new();
+
+    // Function that raises RangeError on large values
+    let result = Calculator::factorial(&amp;ruby, &amp;calc, 100);
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+    assert!(err.is_kind_of(ruby, ruby.exception_range_error()));
+
+    Ok(())
+}
+
+// Testing for TypeError
+fn test_type_error() -&gt; Result&lt;(), Error&gt; {
+    let ruby = Ruby::get()?;
+
+    // Use eval to create a type error situation
+    let result: Result&lt;i64, Error&gt; = ruby.eval("'string' + 5");
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+    assert!(err.is_kind_of(ruby, ruby.exception_type_error()));
+
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<h5 id="testing-ruby-exceptions-using-eval"><a class="header" href="#testing-ruby-exceptions-using-eval">Testing Ruby Exceptions Using eval</a></h5>
+<p>You can also test how Ruby exceptions are raised and handled using <code>eval</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_ruby_exceptions_with_eval() -&gt; Result&lt;(), Error&gt; {
+    let ruby = Ruby::get()?;
+
+    // Set up our extension
+    let module = ruby.define_module("MyModule")?;
+    let calc_class = module.define_class("Calculator", ruby.class_object())?;
+    calc_class.define_singleton_method("new", function!(Calculator::new, 0))?;
+    calc_class.define_method("divide", method!(Calculator::divide, 2))?;
+
+    // Test division by zero from Ruby code
+    let result: Result&lt;f64, Error&gt; = ruby.eval("MyModule::Calculator.new.divide(10, 0)");
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+    assert!(err.is_kind_of(ruby, ruby.exception_zero_div_error()));
+
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<h5 id="verifying-custom-exception-types"><a class="header" href="#verifying-custom-exception-types">Verifying Custom Exception Types</a></h5>
+<p>For custom exception classes:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_custom_exception() -&gt; Result&lt;(), Error&gt; {
+    let ruby = Ruby::get()?;
+
+    // Create a custom exception class
+    let module = ruby.define_module("MyModule")?;
+    let custom_error = module.define_class("CustomError", ruby.exception_standard_error())?;
+
+    // Define a method that raises our custom error
+    let obj = ruby.eval::&lt;Value&gt;("Object.new")?;
+    obj.define_singleton_method(ruby, "raise_custom",
+        function!(|ruby: &amp;Ruby| -&gt; Result&lt;(), Error&gt; {
+            Err(Error::new(
+                ruby.class_path_to_value("MyModule::CustomError"),
+                "Custom error message"
+            ))
+        }, 0)
+    )?;
+
+    // Call the method and verify the exception
+    let result: Result&lt;(), Error&gt; = ruby.eval("Object.new.raise_custom");
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+    assert!(err.is_kind_of(ruby, custom_error));
+    assert!(err.message().unwrap().contains("Custom error"));
+
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="pattern-proper-memory-management"><a class="header" href="#pattern-proper-memory-management">Pattern: Proper Memory Management</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Test with GC stress to catch memory issues
+#[ruby_test(gc_stress)]
+fn test_memory_management() {
+    // Test code here will run with GC stress enabled
+}
+
+// ✅ GOOD: Ensure objects used in raw C API are protected
+unsafe {
+    let rb_str = rb_utf8_str_new_cstr("hello\0".as_ptr() as _);
+    let rb_str = rb_gc_guard!(rb_str);  // Protected from GC
+}
+
+// ❌ BAD: Using raw pointers without protection
+// unsafe {
+//     let rb_str = rb_utf8_str_new_cstr("hello\0".as_ptr() as _);
+//     // rb_str could be collected here if GC runs
+// }
+<span class="boring">}</span></code></pre></pre>
+<h4 id="pattern-version-specific-testing"><a class="header" href="#pattern-version-specific-testing">Pattern: Version-Specific Testing</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Conditional tests based on Ruby version
+#[ruby_test]
+fn test_features() {
+    #[cfg(ruby_gte_3_0)]
+    {
+        // Test Ruby 3.0+ specific features
+    }
+
+    #[cfg(not(ruby_gte_3_0))]
+    {
+        // Test for older Ruby versions
+    }
+}
+
+// ❌ BAD: Runtime checks for version
+// if ruby_version() &gt;= (3, 0, 0) {
+//     // Test Ruby 3.0+ specific features
+// }
+<span class="boring">}</span></code></pre></pre>
+<h3 id="testing-best-practices"><a class="header" href="#testing-best-practices">Testing Best Practices</a></h3>
+<div class="warning">
+<p>Failing to follow these practices can result in segmentation faults, memory leaks, and other serious issues that may
+only appear in production environments with specific data or Ruby versions.</p>
+</div>
+<ol>
+<li><strong>Use <code>#[ruby_test]</code> for most tests</strong>: This macro handles Ruby VM setup automatically.</li>
+<li><strong>Consider Magnus for cleaner tests</strong>: Magnus offers a much more ergonomic API than raw rb-sys.</li>
+<li><strong>Enable <code>gc_stress</code> for memory management tests</strong>: This helps catch GC-related bugs early.</li>
+<li><strong>Always protect raw Ruby pointers</strong>: Use <code>rb_gc_guard!</code> when you need to use raw pointers.</li>
+<li><strong>Catch exceptions properly</strong>: Don't let Ruby exceptions crash your tests.</li>
+<li><strong>Use conditional compilation for version-specific tests</strong>: Leverage the version flags from rb-sys-env.</li>
+<li><strong>Test edge cases</strong>: Nil values, empty strings, large numbers, etc.</li>
+<li><strong>Use helper macros</strong>: Convert between Ruby and Rust types using provided helpers.</li>
+</ol>
+<div class="tip">
+<p><strong>Code Example: Testing With Best Practices</strong></p>
+<pre><pre class="playground"><code class="language-rust hidelines=#"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">use magnus::{class, eval, function, method, prelude::*, Error, Ruby, Value};
+</span><span class="boring">use rb_sys_test_helpers::ruby_test;
+</span><span class="boring">use std::cell::RefCell;
+</span><span class="boring">
+</span><span class="boring">// Define a struct with interior mutability
+</span><span class="boring">struct Counter {
+</span><span class="boring">    count: i64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[magnus::wrap(class = "MyExtension::Counter")]
+</span><span class="boring">struct MutCounter(RefCell&lt;Counter&gt;);
+</span><span class="boring">
+</span><span class="boring">impl MutCounter {
+</span><span class="boring">    fn new(initial: i64) -&gt; Self {
+</span><span class="boring">        Self(RefCell::new(Counter { count: initial }))
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn count(&amp;self) -&gt; i64 {
+</span><span class="boring">        self.0.borrow().count
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn increment(&amp;self) -&gt; i64 {
+</span><span class="boring">        let mut counter = self.0.borrow_mut();
+</span><span class="boring">        counter.count += 1;
+</span><span class="boring">        counter.count
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // Method that uses Ruby VM to potentially raise exceptions
+</span><span class="boring">    fn add_checked(ruby: &amp;Ruby, rb_self: &amp;Self, val: i64) -&gt; Result&lt;i64, Error&gt; {
+</span><span class="boring">        // ✅ GOOD: Complete borrow before starting a new one
+</span><span class="boring">        let current = rb_self.0.borrow().count;
+</span><span class="boring">
+</span><span class="boring">        if let Some(sum) = current.checked_add(val) {
+</span><span class="boring">            rb_self.0.borrow_mut().count = sum;
+</span><span class="boring">            Ok(sum)
+</span><span class="boring">        } else {
+</span><span class="boring">            Err(Error::new(
+</span><span class="boring">                ruby.exception_range_error(),
+</span><span class="boring">                "Addition would overflow"
+</span><span class="boring">            ))
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">// Comprehensive test suite following best practices
+</span><span class="boring">#[cfg(test)]
+</span><span class="boring">mod tests {
+</span><span class="boring">    use super::*;
+</span><span class="boring">
+</span><span class="boring">    // ✅ GOOD: Basic functionality test
+</span><span class="boring">    #[ruby_test]
+</span><span class="boring">    fn test_counter_basic() {
+</span><span class="boring">        let counter = MutCounter::new(0);
+</span><span class="boring">        assert_eq!(counter.count(), 0);
+</span><span class="boring">        assert_eq!(counter.increment(), 1);
+</span><span class="boring">        assert_eq!(counter.increment(), 2);
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // ✅ GOOD: Test with Ruby exceptions
+</span><span class="boring">    #[ruby_test]
+</span><span class="boring">    fn test_counter_overflow() {
+</span><span class="boring">        let ruby = Ruby::get().unwrap();
+</span><span class="boring">        let counter = MutCounter::new(i64::MAX);
+</span><span class="boring">
+</span><span class="boring">        // Test method that might raise Ruby exception
+</span><span class="boring">        let result = MutCounter::add_checked(&amp;ruby, &amp;counter, 1);
+</span><span class="boring">        assert!(result.is_err());
+</span><span class="boring">
+</span><span class="boring">        // ✅ GOOD: Check specific exception type
+</span><span class="boring">        let err = result.unwrap_err();
+</span><span class="boring">        assert!(err.is_kind_of(ruby, ruby.exception_range_error()));
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // ✅ GOOD: GC stress testing to catch memory issues
+</span><span class="boring">    #[ruby_test(gc_stress)]
+</span><span class="boring">    fn test_with_gc_stress() {
+</span><span class="boring">        let ruby = Ruby::get().unwrap();
+</span><span class="boring">        let counter = MutCounter::new(0);
+</span><span class="boring">
+</span><span class="boring">        // Register Ruby class for testing from Ruby
+</span><span class="boring">        let class = ruby.define_class("Counter", ruby.class_object()).unwrap();
+</span><span class="boring">        class.define_singleton_method("new", function!(MutCounter::new, 1)).unwrap();
+</span><span class="boring">        class.define_method("increment", method!(MutCounter::increment, 0)).unwrap();
+</span><span class="boring">
+</span><span class="boring">        // Access from Ruby (with GC stress active)
+</span><span class="boring">        let result: i64 = ruby.eval(
+</span><span class="boring">            "counter = Counter.new(5); counter.increment; counter.increment"
+</span><span class="boring">        ).unwrap();
+</span><span class="boring">
+</span><span class="boring">        assert_eq!(result, 7);
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    // ✅ GOOD: Version-specific tests
+</span><span class="boring">    #[ruby_test]
+</span><span class="boring">    fn test_version_specific() {
+</span><span class="boring">        #[cfg(ruby_gte_3_0)]
+</span><span class="boring">        {
+</span><span class="boring">            // Test Ruby 3.0+ specific features
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
+</span><span class="boring">        {
+</span><span class="boring">            // Test Ruby 2.7 specific features
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">}</span></code></pre></pre>
+<p>This example illustrates proper handling of RefCell borrowing, Ruby exceptions, GC stress testing, and version-specific
+tests.</p>
+</div>
+<h3 id="example-complete-test-module"><a class="header" href="#example-complete-test-module">Example: Complete Test Module</a></h3>
+<p>Here's a complete end-to-end example based on the rusty_calculator extension. This includes the project structure,
+required files, and comprehensive test module:</p>
+<h4 id="project-setup"><a class="header" href="#project-setup">Project Setup</a></h4>
+<p>First, ensure your project has the correct file structure:</p>
+<pre><code>my_extension/
+├── Cargo.toml
+├── build.rs
+├── src/
+│   └── lib.rs
+</code></pre>
+<h4 id="cargotoml"><a class="header" href="#cargotoml">Cargo.toml</a></h4>
+<pre><code class="language-toml">[package]
+name = "my_extension"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+magnus = "0.6"
+rb-sys = "0.9"
+
+[dev-dependencies]
+rb-sys-env = "0.1"
+rb-sys-test-helpers = "0.2"
+</code></pre>
+<h4 id="buildrs"><a class="header" href="#buildrs">build.rs</a></h4>
+<pre><pre class="playground"><code class="language-rust">use std::error::Error;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+    // Activate rb-sys-env to set up Ruby environment for both builds and tests
+    let _ = rb_sys_env::activate()?;
+
+    Ok(())
+}</code></pre></pre>
+<h4 id="librs"><a class="header" href="#librs">lib.rs</a></h4>
+<p>This example includes a calculator class with a method that can potentially raise a Ruby exception:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cell::RefCell;
+use magnus::{function, method, prelude::*, wrap, Error, Ruby};
+
+// Calculator struct with memory
+struct Calculator {
+    memory: f64,
+}
+
+#[wrap(class = "MyExtension::Calculator")]
+struct MutCalculator(RefCell&lt;Calculator&gt;);
+
+impl MutCalculator {
+    // Constructor
+    fn new() -&gt; Self {
+        Self(RefCell::new(Calculator { memory: 0.0 }))
+    }
+
+    // Basic arithmetic that returns a Result which can generate Ruby exceptions
+    fn divide(ruby: &amp;Ruby, _rb_self: &amp;Self, a: f64, b: f64) -&gt; Result&lt;f64, Error&gt; {
+        if b == 0.0 {
+            return Err(Error::new(
+                ruby.exception_zero_div_error(),
+                "Division by zero"
+            ));
+        }
+        Ok(a / b)
+    }
+
+    // Regular instance method
+    fn add(&amp;self, a: f64, b: f64) -&gt; f64 {
+        a + b
+    }
+
+    // Memory operations using RefCell
+    fn store(&amp;self, value: f64) -&gt; f64 {
+        self.0.borrow_mut().memory = value;
+        value
+    }
+
+    fn recall(&amp;self) -&gt; f64 {
+        self.0.borrow().memory
+    }
+}
+
+// Module initialization
+#[magnus::init]
+fn init(ruby: &amp;Ruby) -&gt; Result&lt;(), Error&gt; {
+    let module = ruby.define_module("MyExtension")?;
+
+    // Set up the Calculator class
+    let calc_class = module.define_class("Calculator", ruby.class_object())?;
+    calc_class.define_singleton_method("new", function!(MutCalculator::new, 0))?;
+    calc_class.define_method("divide", method!(MutCalculator::divide, 2))?;
+    calc_class.define_method("add", method!(MutCalculator::add, 2))?;
+    calc_class.define_method("store", method!(MutCalculator::store, 1))?;
+    calc_class.define_method("recall", method!(MutCalculator::recall, 0))?;
+
+    Ok(())
+}
+
+// Complete test module
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rb_sys_test_helpers::ruby_test;
+
+    // Basic functionality test
+    #[ruby_test]
+    fn test_calculator_basic_operations() {
+        let calc = MutCalculator::new();
+
+        // Test regular instance method
+        assert_eq!(calc.add(2.0, 3.0), 5.0);
+
+        // Test memory operations
+        assert_eq!(calc.store(42.0), 42.0);
+        assert_eq!(calc.recall(), 42.0);
+    }
+
+    // Test method that raises Ruby exceptions
+    #[ruby_test]
+    fn test_calculator_divide() {
+        let ruby = Ruby::get().unwrap();
+        let calc = MutCalculator::new();
+
+        // Test normal division - note the function syntax for methods
+        // that take ruby and rb_self parameters
+        let result = MutCalculator::divide(&amp;ruby, &amp;calc, 10.0, 2.0);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 5.0);
+
+        // Test division by zero
+        let result = MutCalculator::divide(&amp;ruby, &amp;calc, 10.0, 0.0);
+        assert!(result.is_err());
+
+        // Verify specific exception type
+        let err = result.unwrap_err();
+        assert!(err.is_kind_of(ruby, ruby.exception_zero_div_error()));
+        assert!(err.message().unwrap().contains("Division by zero"));
+    }
+
+    // Test with GC stress for memory issues
+    #[ruby_test(gc_stress)]
+    fn test_calculator_with_gc_stress() {
+        let calc = MutCalculator::new();
+
+        // Store and recall with GC stress active
+        for i in 0..100 {
+            calc.store(i as f64);
+            assert_eq!(calc.recall(), i as f64);
+        }
+
+        // No segfaults or panics means test passed
+    }
+
+    // Test for Ruby integration using eval
+    #[ruby_test]
+    fn test_ruby_integration() {
+        let ruby = Ruby::get().unwrap();
+
+        // Define the calculator class - this simulates what init() does
+        let module = ruby.define_module("MyExtension").unwrap();
+        let calc_class = module.define_class("Calculator", ruby.class_object()).unwrap();
+        calc_class.define_singleton_method("new", function!(MutCalculator::new, 0)).unwrap();
+        calc_class.define_method("add", method!(MutCalculator::add, 2)).unwrap();
+
+        // Call methods via Ruby's eval
+        let result: f64 = ruby.eval("MyExtension::Calculator.new.add(2, 3)").unwrap();
+        assert_eq!(result, 5.0);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>This complete example demonstrates:</p>
+<ol>
+<li>Proper project setup with required dependencies</li>
+<li>A realistic implementation with potential error conditions</li>
+<li>Testing various method types (regular instance methods and methods with Ruby state)</li>
+<li>Testing Ruby exceptions with proper type checking</li>
+<li>Memory safety testing with GC stress</li>
+<li>Ruby integration testing via eval</li>
+</ol>
+<p>You can adapt this template to your own extension, adding the specific functionality your project requires.</p>
+<pre><code>
+## Integration Testing Ruby API
+
+&lt;div class="tip"&gt;
+
+Integration tests verify that your extension works correctly when called from Ruby code. Testing both in Rust and Ruby provides the most complete coverage.
+
+&lt;/div&gt;
+
+Integration tests verify that your Ruby extension's API works correctly when called from Ruby code. These tests are typically written in Ruby and run using Ruby's test frameworks.
+
+### Setting Up Ruby Tests
+
+Most Ruby gems use Minitest or RSpec for testing. Here's how to set up integration tests with Minitest (which bundler creates by default):
+
+```ruby,hidelines=#
+# test/test_my_extension.rb
+require "test_helper"
+
+class TestMyExtension &lt; Minitest::Test
+  def setup
+    # Set up test fixtures
+    @calculator = MyExtension::Calculator.new
+  end
+
+  def test_basic_addition
+    assert_equal 5, @calculator.add(2, 3)
+  end
+
+  def test_division_by_zero
+    error = assert_raises(ZeroDivisionError) do
+      @calculator.divide(10, 0)
+    end
+    assert_match /division by zero/i, error.message
+  end
+
+  def test_nil_handling
+    # Test that nil values are properly handled
+    assert_nil @calculator.process(nil)
+  end
+
+# # Test memory management
+# def test_gc_safety
+#   # Create many objects and force garbage collection
+#   1000.times do |i|
+#     obj = MyExtension::Calculator.new
+#     obj.add(i, i)
+#
+#     # Force garbage collection periodically
+#     GC.start if i % 100 == 0
+#   end
+#
+#   # If we reach here without segfaults, the test passes
+#   assert true
+# end
+#
+# # Test edge cases
+# def test_edge_cases
+#   # Test with extreme values
+#   max = (2**60)
+#   assert_equal max * 2, @calculator.multiply(max, 2)
+#
+#   # Test with different types
+#   assert_raises(TypeError) do
+#     @calculator.add("string", 1)
+#   end
+# end
+end
+</code></pre>
+<div class="note">
+<p>Click the eye icon (<i class="fa fa-eye"></i>) to see additional tests for memory management and edge cases.</p>
+</div>
+<h3 id="testing-error-handling"><a class="header" href="#testing-error-handling">Testing Error Handling</a></h3>
+<p>It's particularly important to test how your extension handles error conditions:</p>
+<pre><code class="language-ruby">def test_error_propagation
+  # Test that Rust errors properly convert to Ruby exceptions
+  error = assert_raises(RangeError) do
+    @calculator.factorial(100) # Too large, should raise RangeError
+  end
+  assert_match /too large/i, error.message
+end
+
+def test_invalid_arguments
+  # Test type validation
+  error = assert_raises(TypeError) do
+    @calculator.add("string", 3) # Should raise TypeError
+  end
+  assert_match /expected numeric/i, error.message
+end
+</code></pre>
+<h3 id="testing-memory-management"><a class="header" href="#testing-memory-management">Testing Memory Management</a></h3>
+<p>Test memory management by creating objects and forcing garbage collection:</p>
+<pre><code class="language-ruby">def test_gc_safety
+  # Create many objects and force garbage collection
+  1000.times do |i|
+    obj = MyExtension::Point.new(i, i)
+
+    # Force garbage collection periodically
+    GC.start if i % 100 == 0
+  end
+
+  # If we reach here without segfaults or leaks, the test passes
+  assert true
+end
+
+def test_object_references
+  # Test that nested objects maintain correct references
+  parent = MyExtension::Node.new("parent")
+  child = MyExtension::Node.new("child")
+
+  # Create relationship
+  parent.add_child(child)
+
+  # Force garbage collection
+  GC.start
+
+  # Both objects should still be valid
+  assert_equal "parent", parent.name
+  assert_equal "child", parent.children.first.name
+end
+</code></pre>
+<h2 id="common-testing-patterns"><a class="header" href="#common-testing-patterns">Common Testing Patterns</a></h2>
+<p>When testing Ruby extensions written in Rust, several patterns emerge that can help ensure correctness and stability.</p>
+<h3 id="testing-type-conversions"><a class="header" href="#testing-type-conversions">Testing Type Conversions</a></h3>
+<p>Type conversions between Rust and Ruby are common sources of bugs:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_type_conversions() {
+    let ruby = Ruby::get().unwrap();
+
+    // Test Ruby to Rust conversions
+    let rb_str = RString::new(ruby, "test");
+    let rb_int = Integer::from_i64(42);
+    let rb_array = RArray::from_iter(ruby, vec![1, 2, 3]);
+
+    // Convert to Rust types
+    let rust_str: String = rb_str.to_string().unwrap();
+    let rust_int: i64 = rb_int.to_i64().unwrap();
+    let rust_vec: Vec&lt;i64&gt; = rb_array.to_vec().unwrap();
+
+    // Verify conversions
+    assert_eq!(rust_str, "test");
+    assert_eq!(rust_int, 42);
+    assert_eq!(rust_vec, vec![1, 2, 3]);
+
+    // Test Rust to Ruby conversions
+    let rust_str = "reverse";
+    let rb_str = RString::new(ruby, rust_str);
+    assert_eq!(rb_str.to_string().unwrap(), rust_str);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="method-invocation-syntax-in-tests"><a class="header" href="#method-invocation-syntax-in-tests">Method Invocation Syntax in Tests</a></h3>
+<p>When testing Rust methods exposed to Ruby, it's important to understand the different invocation patterns based on the
+method's signature:</p>
+<h4 id="regular-instance-methods"><a class="header" href="#regular-instance-methods">Regular Instance Methods</a></h4>
+<p>For methods that only take <code>&amp;self</code> and don't interact with the Ruby VM:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Method definition
+fn count(&amp;self) -&gt; isize {
+    self.0.borrow().count
+}
+
+// In tests - use instance method syntax
+#[ruby_test]
+fn test_count() {
+    let counter = MutCounter::new(0);
+    assert_eq!(counter.count(), 0);
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="methods-with-ruby-state"><a class="header" href="#methods-with-ruby-state">Methods with Ruby State</a></h4>
+<p>For methods that require the Ruby interpreter (to raise exceptions or interact with Ruby objects):</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Method definition
+fn divide(ruby: &amp;Ruby, _rb_self: &amp;Self, a: f64, b: f64) -&gt; Result&lt;f64, Error&gt; {
+    if b == 0.0 {
+        return Err(Error::new(
+            ruby.exception_zero_div_error(),
+            "Division by zero"
+        ));
+    }
+    Ok(a / b)
+}
+
+// In tests - use associated function syntax with explicit self parameter
+#[ruby_test]
+fn test_divide() {
+    let ruby = Ruby::get().unwrap();
+    let calc = MutCalculator::new();
+
+    // CORRECT: Associated function syntax with all parameters
+    let result = MutCalculator::divide(&amp;ruby, &amp;calc, 6.0, 2.0);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), 3.0);
+
+    // INCORRECT: This will not compile
+    // let result = calc.divide(&amp;ruby, 6.0, 2.0);
+}
+<span class="boring">}</span></code></pre></pre>
+<p>The key difference is that when a method takes <code>rb_self: &amp;Self</code> as a parameter (as many methods do that interact with
+Ruby), it's not a true instance method from Rust's perspective. In tests, you must call these using the associated
+function syntax, passing in the Ruby interpreter and the self reference explicitly.</p>
+<h3 id="testing-refcell-borrowing"><a class="header" href="#testing-refcell-borrowing">Testing RefCell Borrowing</a></h3>
+<p>For extensions that use <code>RefCell</code> for interior mutability, test these patterns thoroughly:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test]
+fn test_refcell_borrowing() {
+    let ruby = Ruby::get().unwrap();
+    let counter = MutCounter::new(0);
+
+    // Test regular instance methods
+    assert_eq!(counter.count(), 0);
+    assert_eq!(counter.increment(), 1);
+    assert_eq!(counter.increment(), 2);
+
+    // Test methods that use checked operations with the Ruby VM
+    // Note the use of associated function syntax here
+    let result = MutCounter::add_checked(&amp;ruby, &amp;counter, 10);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), 13);
+    assert_eq!(counter.count(), 13);
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="gc-stress-testing"><a class="header" href="#gc-stress-testing">GC Stress Testing</a></h3>
+<p>Testing with Ruby's garbage collector is essential to ensure your extension doesn't leak memory or access deallocated
+objects. The <code>#[ruby_test(gc_stress)]</code> option helps identify these issues early by running the garbage collector more
+frequently.</p>
+<h4 id="basic-gc-stress-testing"><a class="header" href="#basic-gc-stress-testing">Basic GC Stress Testing</a></h4>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test(gc_stress)]
+fn test_gc_integration() {
+    let ruby = Ruby::get().unwrap();
+
+    // Create objects that should be properly managed
+    for i in 0..100 {
+        let obj = SomeObject::new(i);
+        // obj goes out of scope here, should be collected
+    }
+
+    // Force garbage collection explicitly
+    ruby.gc_start();
+
+    // No panics or segfaults means the test passes
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="testing-with-typeddata-and-mark-methods"><a class="header" href="#testing-with-typeddata-and-mark-methods">Testing with TypedData and Mark Methods</a></h4>
+<p>For custom classes that hold Ruby object references, test the <code>mark</code> method implementation:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{gc::Marker, TypedData, DataTypeFunctions, Value};
+
+// A struct that holds references to Ruby objects
+#[derive(TypedData)]
+#[magnus(class = "MyExtension::Container", free_immediately, mark)]
+struct Container {
+    item: Value,
+    metadata: Value,
+}
+
+impl DataTypeFunctions for Container {
+    fn mark(&amp;self, marker: &amp;Marker) {
+        marker.mark(self.item);
+        marker.mark(self.metadata);
+    }
+}
+
+impl Container {
+    fn new(item: Value, metadata: Value) -&gt; Self {
+        Self { item, metadata }
+    }
+
+    fn item(&amp;self) -&gt; Value {
+        self.item
+    }
+}
+
+// Test with GC stress
+#[ruby_test(gc_stress)]
+fn test_container_mark_method() {
+    let ruby = Ruby::get().unwrap();
+
+    // Create Ruby strings
+    let item = RString::new(ruby, "Test Item");
+    let metadata = RString::new(ruby, "Item Description");
+
+    // Create our container
+    let container = Container::new(item.as_value(), metadata.as_value());
+
+    // Force garbage collection
+    ruby.gc_start();
+
+    // The items should still be accessible and not garbage collected
+    let retrieved_item = container.item();
+    let item_str: String = RString::from_value(retrieved_item).unwrap().to_string().unwrap();
+
+    assert_eq!(item_str, "Test Item");
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="testing-object-references-after-gc"><a class="header" href="#testing-object-references-after-gc">Testing Object References After GC</a></h4>
+<p>This test ensures objects referenced by your extension aren't prematurely collected:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[ruby_test(gc_stress)]
+fn test_object_references_survive_gc() {
+    let ruby = Ruby::get().unwrap();
+
+    // Create a struct holding references to other objects
+    #[derive(TypedData)]
+    #[magnus(class = "Node", free_immediately, mark)]
+    struct Node {
+        value: Value,
+        children: Vec&lt;Value&gt;,
+    }
+
+    impl DataTypeFunctions for Node {
+        fn mark(&amp;self, marker: &amp;Marker) {
+            marker.mark(self.value);
+            for child in &amp;self.children {
+                marker.mark(*child);
+            }
+        }
+    }
+
+    impl Node {
+        fn new(value: Value) -&gt; Self {
+            Self { value, children: Vec::new() }
+        }
+
+        fn add_child(&amp;mut self, child: Value) {
+            self.children.push(child);
+        }
+
+        fn child_values(&amp;self, ruby: &amp;Ruby) -&gt; Result&lt;Vec&lt;String&gt;, Error&gt; {
+            let mut result = Vec::new();
+            for child in &amp;self.children {
+                let str = RString::from_value(*child)?;
+                result.push(str.to_string()?);
+            }
+            Ok(result)
+        }
+    }
+
+    // Create the parent node
+    let parent_value = RString::new(ruby, "Parent");
+    let mut parent = Node::new(parent_value.as_value());
+
+    // Add many child nodes
+    for i in 0..20 {
+        let child = RString::new(ruby, format!("Child {}", i));
+        parent.add_child(child.as_value());
+    }
+
+    // Run garbage collection multiple times
+    for _ in 0..5 {
+        ruby.gc_start();
+    }
+
+    // Verify all children are still accessible
+    let child_values = parent.child_values(ruby).unwrap();
+    assert_eq!(child_values.len(), 20);
+    assert_eq!(child_values[0], "Child 0");
+    assert_eq!(child_values[19], "Child 19");
+}
+<span class="boring">}</span></code></pre></pre>
+<h4 id="testing-memory-safety-with-raw-pointers"><a class="header" href="#testing-memory-safety-with-raw-pointers">Testing Memory Safety with Raw Pointers</a></h4>
+<p>If your extension uses raw C API functions, test with gc_stress and use <code>rb_gc_guard!</code>:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rb_sys::*;
+
+#[ruby_test(gc_stress)]
+fn test_raw_pointer_safety() {
+    unsafe {
+        // Create Ruby values
+        let rb_ary = rb_ary_new();
+
+        // IMPORTANT: Protect from GC
+        let rb_ary = rb_gc_guard!(rb_ary);
+
+        // Add items to the array
+        for i in 0..10 {
+            let rb_str = rb_utf8_str_new_cstr(format!("item {}\0", i).as_ptr() as _);
+
+            // IMPORTANT: Protect each string from GC
+            let rb_str = rb_gc_guard!(rb_str);
+
+            rb_ary_push(rb_ary, rb_str);
+        }
+
+        // Force GC
+        rb_gc();
+
+        // Array should still have 10 elements
+        assert_eq!(rb_ary_len(rb_ary), 10);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="test-helpers-and-utilities"><a class="header" href="#test-helpers-and-utilities">Test Helpers and Utilities</a></h2>
+<p>rb-sys-test-helpers provides various utilities to make testing easier.</p>
+<h3 id="value-conversion-helpers"><a class="header" href="#value-conversion-helpers">Value Conversion Helpers</a></h3>
+<p>These macros help with common conversions when testing:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rb_sys_test_helpers::{rstring_to_string, rarray_to_vec};
+
+#[ruby_test]
+fn test_with_conversion_helpers() {
+    unsafe {
+        // Create Ruby objects
+        let rb_str = rb_utf8_str_new_cstr("hello\0".as_ptr() as _);
+        let rb_ary = rb_ary_new();
+        rb_ary_push(rb_ary, rb_utf8_str_new_cstr("one\0".as_ptr() as _));
+        rb_ary_push(rb_ary, rb_utf8_str_new_cstr("two\0".as_ptr() as _));
+
+        // Convert to Rust using helpers
+        let rust_str = rstring_to_string!(rb_str);
+        let rust_vec = rarray_to_vec!(rb_ary, String);
+
+        // Verify conversions
+        assert_eq!(rust_str, "hello");
+        assert_eq!(rust_vec, vec!["one".to_string(), "two".to_string()]);
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="exception-handling-helpers"><a class="header" href="#exception-handling-helpers">Exception Handling Helpers</a></h3>
+<p>The <code>protect</code> function simplifies handling Ruby exceptions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rb_sys_test_helpers::protect;
+
+#[ruby_test]
+fn test_exception_handling() {
+    // Try an operation that might raise an exception
+    let result = unsafe {
+        protect(|| {
+            // Ruby operation that might raise
+            rb_sys::rb_funcall(
+                rb_sys::rb_cObject,
+                rb_sys::rb_intern("nonexistent_method\0".as_ptr() as _),
+                0
+            )
+        })
+    };
+
+    // Verify we got an exception
+    assert!(result.is_err());
+    let error = result.unwrap_err();
+    assert!(error.message().unwrap().contains("undefined method"));
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="ci-testing-workflow"><a class="header" href="#ci-testing-workflow">CI Testing Workflow</a></h2>
+<div class="warning">
+<p>CI testing is essential for extensions that will be distributed as gems. Without it, you risk publishing binaries that
+crash on specific Ruby versions or platforms.</p>
+</div>
+<p>Setting up continuous integration (CI) testing is crucial for Ruby extension gems. This section covers best practices
+for testing your extensions in CI environments.</p>
+<h3 id="basic-github-actions-setup"><a class="header" href="#basic-github-actions-setup">Basic GitHub Actions Setup</a></h3>
+<p>A simple GitHub Actions workflow for a Rust Ruby extension typically includes:</p>
+<ol>
+<li>Setting up Ruby and Rust environments</li>
+<li>Running compilation</li>
+<li>Executing tests</li>
+<li>Linting the code</li>
+</ol>
+<pre><code class="language-yaml hidelines=#"><span class="boring"> .github/workflows/test.yml
+</span>name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ruby: ['3.0', '3.1', '3.2']
+
+    steps:
+    - uses: actions/checkout@v3
+
+<span class="boring">     Use the setup-ruby-and-rust action from oxidize-rb
+</span>    - name: Set up Ruby and Rust
+      uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+        cargo-cache: true
+
+<span class="boring">     Run tests
+</span>    - name: Compile and test
+      run: |
+        bundle exec rake compile
+        bundle exec rake test
+
+<span class="boring">     Run Rust tests
+</span>    - name: Run Rust tests
+      run: cargo test --workspace
+
+<span class="boring"> # Windows testing job
+</span><span class="boring"> windows:
+</span><span class="boring">   runs-on: windows-latest
+</span><span class="boring">   strategy:
+</span><span class="boring">     matrix:
+</span><span class="boring">       ruby: ['3.1']
+</span><span class="boring">   steps:
+</span><span class="boring">   - uses: actions/checkout@v3
+</span><span class="boring">   - name: Set up Ruby and Rust (Windows)
+</span><span class="boring">     uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+</span><span class="boring">     with:
+</span><span class="boring">       ruby-version: ${{ matrix.ruby }}
+</span><span class="boring">       bundler-cache: true
+</span><span class="boring">       cargo-cache: true
+</span><span class="boring">   - name: Run tests
+</span><span class="boring">     run: |
+</span><span class="boring">       bundle exec rake compile
+</span><span class="boring">       bundle exec rake test
+</span></code></pre>
+<div class="note">
+<p>Click the eye icon (<i class="fa fa-eye"></i>) to see a Windows-specific job configuration.</p>
+<p>The <a href="https://github.com/oxidize-rb/actions">oxidize-rb/actions</a> repository provides specialized GitHub Actions for Ruby
+extensions written in Rust, making setup much simpler.</p>
+</div>
+<h3 id="memory-testing-with-ruby_memcheck"><a class="header" href="#memory-testing-with-ruby_memcheck">Memory Testing with ruby_memcheck</a></h3>
+<div class="tip">
+<p>Memory leaks can be particularly difficult to detect in Ruby extensions. Tools like ruby_memcheck help catch these
+issues early.</p>
+</div>
+<p>The <a href="https://github.com/Shopify/ruby_memcheck">ruby_memcheck</a> gem provides a powerful way to detect memory leaks in Ruby
+extensions. It uses Valgrind under the hood but filters out false positives that are common when running Valgrind on
+Ruby code.</p>
+<p>To use ruby_memcheck, add it to your test workflow:</p>
+<pre><code class="language-ruby hidelines=#"><span class="boring"> Add to your Gemfile
+</span>gem 'ruby_memcheck', group: :development
+
+<span class="boring"> In your Rakefile:
+</span>require 'ruby_memcheck'
+
+test_config = lambda do |t|
+  t.libs &lt;&lt; "test"
+  t.test_files = FileList["test/**/*_test.rb"]
+end
+
+namespace :test do
+  RubyMemcheck::TestTask.new(valgrind: test_config)
+end
+
+<span class="boring"> # Advanced configuration
+</span><span class="boring"> RubyMemcheck.config do |config|
+</span><span class="boring">   # Adjust valgrind options
+</span><span class="boring">   config.valgrind_options += ["--leak-check=full", "--show-leak-kinds=all"]
+</span><span class="boring">
+</span><span class="boring">   # Specify custom suppression files
+</span><span class="boring">   config.valgrind_suppression_files &lt;&lt; "my_suppressions.supp"
+</span><span class="boring">
+</span><span class="boring">   # Skip specific Ruby functions
+</span><span class="boring">   config.skipped_ruby_functions &lt;&lt; /my_custom_allocator/
+</span><span class="boring"> end
+</span></code></pre>
+<p>To run memory tests:</p>
+<pre><code class="language-bash"># Install valgrind first if needed
+# sudo apt-get install valgrind  # On Debian/Ubuntu
+
+# Run the tests with memory checking
+bundle exec rake test:valgrind
+</code></pre>
+<div class="note">
+<p>Click the eye icon (<i class="fa fa-eye"></i>) to see advanced configuration options for ruby_memcheck.</p>
+<p>For more detailed instructions and configuration options, refer to the
+<a href="https://github.com/Shopify/ruby_memcheck">ruby_memcheck documentation</a>.</p>
+</div>
+<h3 id="cross-platform-testing-with-rb-sys-dock"><a class="header" href="#cross-platform-testing-with-rb-sys-dock">Cross-Platform Testing with rb-sys-dock</a></h3>
+<p>For testing across different platforms, <a href="https://github.com/oxidize-rb/rb-sys-dock">rb-sys-dock</a> provides Docker images
+pre-configured for cross-platform compilation and testing of Rust Ruby extensions.</p>
+<h3 id="best-practices-for-ci-testing"><a class="header" href="#best-practices-for-ci-testing">Best Practices for CI Testing</a></h3>
+<div class="warning">
+<p>Without thorough CI testing across all supported platforms and Ruby versions, your extension may work perfectly in your
+development environment but crash for users with different setups.</p>
+</div>
+<ol>
+<li><strong>Test Matrix</strong>: Test against multiple Ruby versions, Rust versions, and platforms</li>
+<li><strong>Memory Testing</strong>: Include memory leak detection with ruby_memcheck</li>
+<li><strong>Linting</strong>: Validate code formatting and catch Rust warnings</li>
+<li><strong>Cross-Platform</strong>: Test on all platforms you aim to support</li>
+<li><strong>Documentation Verification</strong>: Test code examples in documentation</li>
+</ol>
+<div class="tip">
+<p>The <a href="https://github.com/oxidize-rb/actions">oxidize-rb/actions</a> repository provides ready-to-use GitHub Actions for:</p>
+<ul>
+<li>Setting up Ruby and Rust environments</li>
+<li>Building native gems</li>
+<li>Cross-compiling for multiple platforms</li>
+<li>Running tests and linting checks</li>
+</ul>
+<p>Using these specialized actions will save you time and ensure your tests follow best practices.</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" style="margin-bottom: 0;" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="cross-platform.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="debugging.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                    
+                    <div class="footer-note" style="margin: 3rem 0 0 0; padding: 2rem; font-size: 1.1rem; color: #555; border-top: 1px solid #ddd; display: flex; justify-content: center; align-items: center; font-family: inherit;">
+                        <div style="max-width: 800px; text-align: center; line-height: 1.6;">
+                            This documentation was created with assistance from an LLM.<br>
+                            If you spot any issues, please <a href="https://github.com/oxidize-rb/rb-sys/issues" style="color: #3184a8; text-decoration: none; font-weight: bold;">submit a fix or report it</a>.<br>
+                            We appreciate your help in improving these docs!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="cross-platform.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="debugging.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/js/custom.js"></script>
+
+
+    </div>
+    </body>
+</html>

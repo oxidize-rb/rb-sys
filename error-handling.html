@@ -1,0 +1,664 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Ruby on Rust: Error Handling</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        <meta name="keywords" content="ruby, rust, ffi, bindings, rb-sys, ruby on rust">
+        <meta name="author" content="">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="">
+        <meta property="og:title" content="Ruby on Rust: Error Handling">
+        <meta property="og:description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="">
+        <meta property="twitter:title" content="Ruby on Rust: Error Handling">
+        <meta property="twitter:description" content="A comprehensive guide to building Ruby extensions with Rust using rb-sys">
+        
+        <!-- Canonical URL -->
+        <link rel="canonical" href="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/css/custom.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Ruby on Rust Book</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/oxidize-rb/rb-sys" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="error-handling-in-rust-ruby-extensions"><a class="header" href="#error-handling-in-rust-ruby-extensions">Error Handling in Rust Ruby Extensions</a></h1>
+<p>Proper error handling is critical for robust Ruby extensions. This guide covers how to handle errors in Rust and map
+them to appropriate Ruby exceptions.</p>
+<div class="warning">
+<p>Improper error handling can lead to crashes that take down the entire Ruby VM. This chapter shows you how to properly
+raise and handle exceptions in your Rust extensions.</p>
+</div>
+<h2 id="overview-of-error-handling-approaches"><a class="header" href="#overview-of-error-handling-approaches">Overview of Error Handling Approaches</a></h2>
+<p>When building Ruby extensions with Rust, you'll typically use one of these error handling patterns:</p>
+<ol>
+<li><strong>Result-based error handling</strong>: Using Rust's <code>Result&lt;T, E&gt;</code> type to return errors</li>
+<li><strong>Ruby exception raising</strong>: Converting Rust errors into Ruby exceptions</li>
+<li><strong>Panic catching</strong>: Handling unexpected Rust panics and converting them to Ruby exceptions</li>
+</ol>
+<div class="note">
+<p>The most common pattern in rb-sys extensions is to use Rust's <code>Result&lt;T, magnus::Error&gt;</code> type, where the <code>Error</code> type
+represents a Ruby exception that can be raised.</p>
+</div>
+<h2 id="the-result-type-and-magnuserror"><a class="header" href="#the-result-type-and-magnuserror">The Result Type and Magnus::Error</a></h2>
+<p>Magnus uses <code>Result&lt;T, Error&gt;</code> as the standard way to handle errors. The <code>Error</code> type represents a Ruby exception that
+can be raised:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Error, Ruby};
+
+fn might_fail(ruby: &amp;Ruby, value: i64) -&gt; Result&lt;i64, Error&gt; {
+    if value &lt; 0 {
+        return Err(Error::new(
+            ruby.exception_arg_error(),
+            "Value must be positive"
+        ));
+    }
+    Ok(value * 2)
+}
+<span class="boring">}</span></code></pre></pre>
+<p>The <code>Error</code> type:</p>
+<ul>
+<li>Contains a reference to a Ruby exception class</li>
+<li>Includes an error message</li>
+<li>Can be created from an existing Ruby exception</li>
+</ul>
+<h2 id="mapping-rust-errors-to-ruby-exceptions"><a class="header" href="#mapping-rust-errors-to-ruby-exceptions">Mapping Rust Errors to Ruby Exceptions</a></h2>
+<h3 id="standard-ruby-exception-types"><a class="header" href="#standard-ruby-exception-types">Standard Ruby Exception Types</a></h3>
+<p>Magnus provides access to all standard Ruby exception types:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Error, Ruby};
+
+fn divide(ruby: &amp;Ruby, a: f64, b: f64) -&gt; Result&lt;f64, Error&gt; {
+    if b == 0.0 {
+        return Err(Error::new(
+            ruby.exception_zero_div_error(),
+            "Division by zero"
+        ));
+    }
+    Ok(a / b)
+}
+
+fn process_array(ruby: &amp;Ruby, index: isize, array: RArray) -&gt; Result&lt;Value, Error&gt; {
+    if index &lt; 0 || index &gt;= array.len() as isize {
+        return Err(Error::new(
+            ruby.exception_index_error(),
+            format!("Index {} out of bounds (0..{})", index, array.len() - 1)
+        ));
+    }
+    array.get(index as usize)
+}
+
+fn parse_number(ruby: &amp;Ruby, input: &amp;str) -&gt; Result&lt;i64, Error&gt; {
+    match input.parse::&lt;i64&gt;() {
+        Ok(num) =&gt; Ok(num),
+        Err(_) =&gt; Err(Error::new(
+            ruby.exception_arg_error(),
+            format!("Cannot parse '{}' as a number", input)
+        )),
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<p>Common Ruby exception types available through the Ruby API:</p>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Exception Class</th><th>Typical Use Case</th></tr></thead><tbody>
+<tr><td><code>ruby.exception_arg_error()</code></td><td><code>ArgumentError</code></td><td>Invalid argument value or type</td></tr>
+<tr><td><code>ruby.exception_index_error()</code></td><td><code>IndexError</code></td><td>Array/string index out of bounds</td></tr>
+<tr><td><code>ruby.exception_key_error()</code></td><td><code>KeyError</code></td><td>Hash key not found</td></tr>
+<tr><td><code>ruby.exception_name_error()</code></td><td><code>NameError</code></td><td>Reference to undefined name</td></tr>
+<tr><td><code>ruby.exception_no_memory_error()</code></td><td><code>NoMemoryError</code></td><td>Memory allocation failure</td></tr>
+<tr><td><code>ruby.exception_not_imp_error()</code></td><td><code>NotImplementedError</code></td><td>Feature not implemented</td></tr>
+<tr><td><code>ruby.exception_range_error()</code></td><td><code>RangeError</code></td><td>Value outside valid range</td></tr>
+<tr><td><code>ruby.exception_regexp_error()</code></td><td><code>RegexpError</code></td><td>Invalid regular expression</td></tr>
+<tr><td><code>ruby.exception_runtime_error()</code></td><td><code>RuntimeError</code></td><td>General runtime error</td></tr>
+<tr><td><code>ruby.exception_script_error()</code></td><td><code>ScriptError</code></td><td>Problem in script execution</td></tr>
+<tr><td><code>ruby.exception_syntax_error()</code></td><td><code>SyntaxError</code></td><td>Invalid syntax</td></tr>
+<tr><td><code>ruby.exception_type_error()</code></td><td><code>TypeError</code></td><td>Type mismatch</td></tr>
+<tr><td><code>ruby.exception_zero_div_error()</code></td><td><code>ZeroDivisionError</code></td><td>Division by zero</td></tr>
+</tbody></table>
+</div>
+<h3 id="creating-custom-exception-classes"><a class="header" href="#creating-custom-exception-classes">Creating Custom Exception Classes</a></h3>
+<p>You can define custom exception classes for your extension:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{class, Error, Ruby};
+
+#[magnus::init]
+fn init(ruby: &amp;Ruby) -&gt; Result&lt;(), Error&gt; {
+    let module = ruby.define_module("MyExtension")?;
+
+    // Create custom exception classes
+    let std_error = ruby.exception_standard_error();
+    let custom_error = module.define_class("CustomError", std_error)?;
+    let validation_error = module.define_class("ValidationError", custom_error)?;
+
+    // Register them as constants for easier access
+    ruby.define_global_const("MY_CUSTOM_ERROR", custom_error)?;
+
+    Ok(())
+}
+
+// Using the custom exception
+fn validate(ruby: &amp;Ruby, value: &amp;str) -&gt; Result&lt;(), Error&gt; {
+    if value.is_empty() {
+        return Err(Error::new(
+            ruby.class_path_to_value("MyExtension::ValidationError"),
+            "Validation failed: value cannot be empty"
+        ));
+    }
+    Ok(())
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="passing-and-re-raising-ruby-exceptions"><a class="header" href="#passing-and-re-raising-ruby-exceptions">Passing and Re-raising Ruby Exceptions</a></h3>
+<p>You can pass along existing Ruby exceptions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Error, Ruby, Value};
+
+fn process_data(ruby: &amp;Ruby, input: Value) -&gt; Result&lt;Value, Error&gt; {
+    // Call a method that might raise
+    let result = match input.funcall(ruby, "process", ()) {
+        Ok(val) =&gt; val,
+        Err(err) =&gt; return Err(err), // Pass along the original error
+    };
+
+    // Or with the ? operator
+    let result = input.funcall(ruby, "process", ())?;
+
+    Ok(result)
+}
+<span class="boring">}</span></code></pre></pre>
+<p>For wrapping and adding context to errors:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn compute_with_context(ruby: &amp;Ruby, input: Value) -&gt; Result&lt;Value, Error&gt; {
+    match complex_operation(ruby, input) {
+        Ok(result) =&gt; Ok(result),
+        Err(err) =&gt; {
+            // Create a new error with additional context
+            Err(Error::new(
+                ruby.exception_runtime_error(),
+                format!("Computation failed: {}", err.message(ruby).unwrap_or_default())
+            ))
+        }
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="handling-rust-panics"><a class="header" href="#handling-rust-panics">Handling Rust Panics</a></h2>
+<p>Rust panics should be caught and converted to Ruby exceptions to prevent crashing the Ruby VM:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Error, Ruby};
+use std::panic::{self, catch_unwind};
+
+fn dangerous_operation(ruby: &amp;Ruby, input: i64) -&gt; Result&lt;i64, Error&gt; {
+    // Catch any potential panics
+    let result = catch_unwind(|| {
+        // Code that might panic
+        if input == 0 {
+            panic!("Unexpected zero value");
+        }
+        input * 2
+    });
+
+    match result {
+        Ok(value) =&gt; Ok(value),
+        Err(_) =&gt; Err(Error::new(
+            ruby.exception_runtime_error(),
+            "Internal error: Rust panic occurred"
+        )),
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="error-handling-patterns"><a class="header" href="#error-handling-patterns">Error Handling Patterns</a></h2>
+<h3 id="the-question-mark-operator"><a class="header" href="#the-question-mark-operator">The Question Mark Operator</a></h3>
+<p>The <code>?</code> operator simplifies error handling by automatically propagating errors:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn multi_step_operation(ruby: &amp;Ruby, value: i64) -&gt; Result&lt;i64, Error&gt; {
+    // Each operation can fail, ? will return early on error
+    let step1 = validate_input(ruby, value)?;
+    let step2 = transform_data(ruby, step1)?;
+    let step3 = final_calculation(ruby, step2)?;
+
+    Ok(step3)
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="pattern-matching-on-errors"><a class="header" href="#pattern-matching-on-errors">Pattern Matching on Errors</a></h3>
+<p>For more sophisticated error handling, pattern match on error types:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn handle_specific_errors(ruby: &amp;Ruby, value: Value) -&gt; Result&lt;Value, Error&gt; {
+    let result = value.funcall(ruby, "some_method", ());
+
+    match result {
+        Ok(val) =&gt; Ok(val),
+        Err(err) if err.is_kind_of(ruby, ruby.exception_zero_div_error()) =&gt; {
+            // Handle division by zero specially
+            Ok(ruby.integer_from_i64(0))
+        },
+        Err(err) if err.is_kind_of(ruby, ruby.exception_arg_error()) =&gt; {
+            // Convert ArgumentError to a different type
+            Err(Error::new(
+                ruby.exception_runtime_error(),
+                format!("Invalid argument: {}", err.message(ruby).unwrap_or_default())
+            ))
+        },
+        Err(err) =&gt; Err(err), // Pass through other errors
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="context-managers--raii-pattern"><a class="header" href="#context-managers--raii-pattern">Context Managers / RAII Pattern</a></h3>
+<p>Use Rust's RAII (Resource Acquisition Is Initialization) pattern for cleanup operations:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use magnus::{Error, Ruby};
+use std::fs::File;
+use std::io::{self, Read};
+
+struct TempResource {
+    data: Vec&lt;u8&gt;,
+}
+
+impl TempResource {
+    fn new() -&gt; Self {
+        // Allocate resource
+        TempResource { data: Vec::new() }
+    }
+}
+
+impl Drop for TempResource {
+    fn drop(&amp;mut self) {
+        // Clean up will happen automatically, even if an error occurs
+        println!("Cleaning up resource");
+    }
+}
+
+fn process_with_resource(ruby: &amp;Ruby) -&gt; Result&lt;Value, Error&gt; {
+    // Resource is created
+    let mut resource = TempResource::new();
+
+    // If an error occurs here, resource will still be cleaned up
+    let file_result = File::open("data.txt");
+    let mut file = match file_result {
+        Ok(f) =&gt; f,
+        Err(e) =&gt; return Err(Error::new(
+            ruby.exception_io_error(),
+            format!("Could not open file: {}", e)
+        )),
+    };
+
+    // Resource will be dropped at the end of this scope
+    Ok(ruby.ary_new_from_ary(&amp;[1, 2, 3]))
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="best-practices-for-error-handling"><a class="header" href="#best-practices-for-error-handling">Best Practices for Error Handling</a></h2>
+<div class="tip">
+<p>Following these practices will make your extensions more robust and provide a better experience for users.</p>
+</div>
+<h3 id="1-be-specific-with-exception-types"><a class="header" href="#1-be-specific-with-exception-types">1. Be Specific with Exception Types</a></h3>
+<p>Choose the most appropriate Ruby exception type:</p>
+<pre><pre class="playground"><code class="language-rust hidelines=#"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span><span class="boring">use magnus::{Error, Ruby};
+</span><span class="boring">
+</span><span class="boring">fn example(ruby: &amp;Ruby, index: usize, array: &amp;[i32]) -&gt; Result&lt;i32, Error&gt; {
+</span>// ✅ GOOD: Specific exception type
+if index &gt;= array.len() {
+    return Err(Error::new(
+        ruby.exception_index_error(),
+        format!("Index {} out of bounds (0..{})", index, array.len() - 1)
+    ));
+}
+<span class="boring">
+</span><span class="boring">// Example with bad practice commented out
+</span><span class="boring">/*
+</span><span class="boring">// ❌ BAD: Generic RuntimeError for specific issue
+</span><span class="boring">if index &gt;= array.len() {
+</span><span class="boring">    return Err(Error::new(
+</span><span class="boring">        ruby.exception_runtime_error(),
+</span><span class="boring">        "Invalid index"
+</span><span class="boring">    ));
+</span><span class="boring">}
+</span><span class="boring">*/
+</span><span class="boring">    Ok(array[index])
+</span><span class="boring">}
+</span><span class="boring">}</span></code></pre></pre>
+<div class="note">
+<p>Ruby has a rich hierarchy of exception types. Using the specific exception type helps users handle errors properly in
+their Ruby code.</p>
+</div>
+<h3 id="2-provide-clear-error-messages"><a class="header" href="#2-provide-clear-error-messages">2. Provide Clear Error Messages</a></h3>
+<p>Include relevant details in error messages:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Descriptive error with context
+let err_msg = format!(
+    "Cannot parse '{}' as a number in range {}-{}",
+    input, min, max
+);
+
+// ❌ BAD: Vague error message
+let err_msg = "Invalid input";
+<span class="boring">}</span></code></pre></pre>
+<h3 id="3-maintain-ruby-error-hierarchies"><a class="header" href="#3-maintain-ruby-error-hierarchies">3. Maintain Ruby Error Hierarchies</a></h3>
+<p>Respect Ruby's exception hierarchy:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Proper exception hierarchy
+let io_error = ruby.exception_io_error();
+let file_error = module.define_class("FileError", io_error)?;
+let format_error = module.define_class("FormatError", file_error)?;
+
+// ❌ BAD: Improper exception hierarchy
+let format_error = module.define_class("FormatError", ruby.class_object())?; // Not inheriting from StandardError
+<span class="boring">}</span></code></pre></pre>
+<h3 id="4-avoid-panicking"><a class="header" href="#4-avoid-panicking">4. Avoid Panicking</a></h3>
+<p>Use <code>Result</code> instead of panic:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Return Result for expected error conditions
+fn process(value: i64) -&gt; Result&lt;i64, Error&gt; {
+    if value &lt; 0 {
+        return Err(Error::new(
+            ruby.exception_arg_error(),
+            "Value must be positive"
+        ));
+    }
+    Ok(value * 2)
+}
+
+// ❌ BAD: Panicking on expected error condition
+fn process(value: i64) -&gt; i64 {
+    if value &lt; 0 {
+        panic!("Value must be positive"); // Will crash the Ruby VM!
+    }
+    value * 2
+}
+<span class="boring">}</span></code></pre></pre>
+<h3 id="5-catch-all-ruby-exceptions"><a class="header" href="#5-catch-all-ruby-exceptions">5. Catch All Ruby Exceptions</a></h3>
+<p>When calling Ruby methods, always handle exceptions:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// ✅ GOOD: Catch exceptions from Ruby method calls
+let result = match obj.funcall(ruby, "some_method", ()) {
+    Ok(val) =&gt; val,
+    Err(err) =&gt; {
+        // Handle or re-raise the error
+        return Err(err);
+    }
+};
+
+// ❌ BAD: Not handling potential Ruby exceptions
+let result = obj.funcall(ruby, "some_method", ()).unwrap(); // May panic!
+<span class="boring">}</span></code></pre></pre>
+<h2 id="error-handling-with-refcell"><a class="header" href="#error-handling-with-refcell">Error Handling with RefCell</a></h2>
+<p>When using <code>RefCell</code> for interior mutability, handle borrow errors gracefully:</p>
+<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::cell::RefCell;
+use magnus::{Error, Ruby};
+
+#[magnus::wrap(class = "Counter")]
+struct MutCounter(RefCell&lt;u64&gt;);
+
+impl MutCounter {
+    fn new() -&gt; Self {
+        MutCounter(RefCell::new(0))
+    }
+
+    fn increment(ruby: &amp;Ruby, self_: &amp;Self) -&gt; Result&lt;u64, Error&gt; {
+        match self_.0.try_borrow_mut() {
+            Ok(mut value) =&gt; {
+                *value += 1;
+                Ok(*value)
+            },
+            Err(_) =&gt; Err(Error::new(
+                ruby.exception_runtime_error(),
+                "Cannot modify counter: already borrowed"
+            )),
+        }
+    }
+
+    // Better approach: complete borrows before starting new ones
+    fn safe_increment(&amp;self) -&gt; u64 {
+        let mut value = self.0.borrow_mut();
+        *value += 1;
+        *value
+    }
+}
+<span class="boring">}</span></code></pre></pre>
+<h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
+<div class="warning">
+<p>Never use <code>unwrap()</code> or <code>expect()</code> in production code for your Ruby extensions. These can cause panics that will crash
+the Ruby VM. Always use proper error handling with <code>Result</code> and <code>Error</code> types.</p>
+</div>
+<p>Effective error handling makes your Ruby extensions more robust and user-friendly. By using the right exception types
+and providing clear error messages, you create a better experience for users of your extension.</p>
+<p>Remember these key points:</p>
+<ul>
+<li>Use <code>Result&lt;T, Error&gt;</code> for functions that can fail</li>
+<li>Choose appropriate Ruby exception types</li>
+<li>Provide clear, detailed error messages</li>
+<li>Handle Rust panics to prevent VM crashes</li>
+<li>Respect Ruby's exception hierarchy</li>
+</ul>
+<div class="tip">
+<p>After you've handled errors in your Rust code, try to test your extension with invalid inputs to ensure it fails
+gracefully with appropriate Ruby exceptions rather than crashing.</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" style="margin-bottom: 0;" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="classes-and-modules.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="memory-management.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                    
+                    <div class="footer-note" style="margin: 3rem 0 0 0; padding: 2rem; font-size: 1.1rem; color: #555; border-top: 1px solid #ddd; display: flex; justify-content: center; align-items: center; font-family: inherit;">
+                        <div style="max-width: 800px; text-align: center; line-height: 1.6;">
+                            This documentation was created with assistance from an LLM.<br>
+                            If you spot any issues, please <a href="https://github.com/oxidize-rb/rb-sys/issues" style="color: #3184a8; text-decoration: none; font-weight: bold;">submit a fix or report it</a>.<br>
+                            We appreciate your help in improving these docs!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="classes-and-modules.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="memory-management.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/js/custom.js"></script>
+
+
+    </div>
+    </body>
+</html>
