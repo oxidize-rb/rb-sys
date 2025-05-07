@@ -4,11 +4,13 @@
 [![Join the discussion](https://img.shields.io/badge/slack-chat-blue.svg)](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)
 ![Crates.io](https://img.shields.io/crates/v/rb-sys?style=flat) ![Gem](https://img.shields.io/gem/v/rb_sys?style=flat)
 
-The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If it's not easy, it's a bug.
+The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If
+it's not easy, it's a bug.
 
 ## Documentation
 
-For comprehensive documentation, please refer to the [Ruby on Rust Book](https://oxidize-rb.github.io/rb-sys/), which covers:
+For comprehensive documentation, please refer to the [Ruby on Rust Book](https://oxidize-rb.github.io/rb-sys/), which
+covers:
 
 - Getting started and quick start tutorials
 - Working with Ruby objects, classes, and modules
@@ -31,14 +33,16 @@ For comprehensive documentation, please refer to the [Ruby on Rust Book](https:/
 
 ## Real-World Examples
 
-- [oxi-test](https://github.com/oxidize-rb/oxi-test) - Canonical example of rb-sys usage (minimal, tested, cross-compiled)
+- [oxi-test](https://github.com/oxidize-rb/oxi-test) - Canonical example of rb-sys usage (minimal, tested,
+  cross-compiled)
 - [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function
 - [wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb) - WebAssembly runtime with rb-sys and Magnus
 - [lz4-ruby](https://github.com/yoshoku/lz4-ruby) - LZ4 compression library
 
 ## Getting Help
 
-- Join the [Oxidize Ruby Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) and post in the `#general` channel
+- Join the [Oxidize Ruby Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)
+  and post in the `#general` channel
 - [Open an issue](https://github.com/oxidize-rb/rb-sys/issues) on GitHub
 
 ## Contributing
@@ -48,6 +52,7 @@ See the [CONTRIBUTING.md](./CONTRIBUTING.md) file for information about setting 
 ## License
 
 Licensed under either of:
+
 - Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
 - MIT license ([LICENSE-MIT](LICENSE-MIT))
 

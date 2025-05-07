@@ -1,10 +1,13 @@
 # Anatomy of a Rusty Ruby Gem: hello_rusty
 
-This documentation provides a comprehensive walkthrough of the `hello_rusty` gem, a simple but complete Ruby gem that uses Rust for its native extension. This example demonstrates the key components of creating a Ruby gem with Rust using rb-sys and magnus.
+This documentation provides a comprehensive walkthrough of the `hello_rusty` gem, a simple but complete Ruby gem that
+uses Rust for its native extension. This example demonstrates the key components of creating a Ruby gem with Rust using
+rb-sys and magnus.
 
 ## Project Structure
 
-A properly structured Rusty Ruby Gem follows the standard Ruby gem conventions with the addition of Rust-specific elements. Here's the structure of the `hello_rusty` gem:
+A properly structured Rusty Ruby Gem follows the standard Ruby gem conventions with the addition of Rust-specific
+elements. Here's the structure of the `hello_rusty` gem:
 
 ```
 hello_rusty/
@@ -53,21 +56,22 @@ Gem::Specification.new do |spec|
   spec.email = ["hello@ianks.com"]
 
   # ... metadata ...
-  
+
   spec.required_ruby_version = ">= 3.0.0"
-  
+
   # Files to include in the gem
   spec.files = [...]
-  
+
   # IMPORTANT: This line tells RubyGems that this gem has a native extension
   # and where to find the build configuration
   spec.extensions = ["ext/hello_rusty/Cargo.toml"]
-  
+
   spec.require_paths = ["lib"]
 end
 ```
 
 Key points:
+
 - The `extensions` field points to the Cargo.toml file
 - Version is defined in a separate Ruby file
 - Required Ruby version is specified
@@ -87,6 +91,7 @@ end
 ```
 
 Key points:
+
 - Requires the version file
 - Requires the compiled native extension
 - Defines a module matching the Rust module
@@ -133,6 +138,7 @@ magnus = { version = "0.6.2" }  # High-level Ruby bindings
 ```
 
 Key points:
+
 - Uses `cdylib` crate type to build a dynamic library
 - Depends on `magnus` for high-level Ruby bindings
 - Version should match the Ruby gem version
@@ -147,11 +153,13 @@ Here's the actual implementation from our example code:
 
 <div class="note">
 
-This code is included directly from the example project file. When the source file is updated, this documentation will automatically reflect those changes.
+This code is included directly from the example project file. When the source file is updated, this documentation will
+automatically reflect those changes.
 
 </div>
 
 Key points:
+
 - Uses the `magnus` crate for Ruby integration
 - The `#[magnus::init]` macro marks the entry point for the extension
 - Defines a Ruby module matching the gem name
@@ -171,6 +179,7 @@ create_rust_makefile("hello_rusty/hello_rusty")
 ```
 
 Key points:
+
 - Uses `rb_sys/mkmf` to handle Rust compilation
 - Creates a makefile for the native extension
 
@@ -196,6 +205,7 @@ The eye icon (<i class="fa fa-eye"></i>) reveals additional configuration option
 </div>
 
 Key points:
+
 - Uses `RbSys::ExtensionTask` to manage Rust compilation
 - Sets the output directory to `lib/hello_rusty`
 - Defines standard tasks for building, testing, and linting
@@ -222,6 +232,7 @@ end
 ```
 
 Key points:
+
 - Tests basic functionality of the gem
 - Verifies the version is defined
 - Tests the Rust-implemented `hello` method
@@ -270,4 +281,5 @@ To expand this basic example, you could:
 5. Implement memory management through proper object marking
 6. Add benchmarks to demonstrate performance characteristics
 
-This example provides a solid foundation for understanding the structure and implementation of Rusty Ruby Gems with rb-sys.
+This example provides a solid foundation for understanding the structure and implementation of Rusty Ruby Gems with
+rb-sys.

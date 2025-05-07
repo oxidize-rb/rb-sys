@@ -48,7 +48,8 @@ table {
   border-collapse: collapse;
 }
 
-table th, table td {
+table th,
+table td {
   padding: 0.5em;
   border: 1px solid #ddd;
 }
@@ -75,15 +76,18 @@ img {
 
 /* Improve print layout */
 @media print {
-  .nav-chapters, .sidebar, #menu-bar, .footer-note {
+  .nav-chapters,
+  .sidebar,
+  #menu-bar,
+  .footer-note {
     display: none;
   }
-  
+
   .page {
     margin: 0;
     padding: 0;
   }
-  
+
   .content {
     max-width: 100%;
     margin: 0;

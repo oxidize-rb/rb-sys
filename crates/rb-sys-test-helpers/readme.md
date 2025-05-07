@@ -4,7 +4,8 @@ Helpers for testing Ruby extensions from Rust
 
 ## Documentation
 
-For comprehensive documentation, please refer to the [Ruby on Rust Book](https://oxidize-rb.github.io/rb-sys/), which includes:
+For comprehensive documentation, please refer to the [Ruby on Rust Book](https://oxidize-rb.github.io/rb-sys/), which
+includes:
 
 - [Testing Extensions](https://oxidize-rb.github.io/rb-sys/testing.html)
 - [API Reference for Test Helpers](https://oxidize-rb.github.io/rb-sys/api-reference/test-helpers.html)
@@ -60,4 +61,5 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as
+defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

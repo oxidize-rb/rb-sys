@@ -9,7 +9,8 @@ This chapter will help you understand when to use each approach and how to mix t
 
 ## Direct rb-sys Usage
 
-The rb-sys crate provides low-level bindings to Ruby's C API. This approach gives you complete control over how your Rust code interacts with Ruby.
+The rb-sys crate provides low-level bindings to Ruby's C API. This approach gives you complete control over how your
+Rust code interacts with Ruby.
 
 ### When to Use Direct rb-sys
 
@@ -24,7 +25,7 @@ Here's a simple example of a Ruby extension using direct rb-sys:
 
 ```rust
 use rb_sys::{
-    rb_define_module, rb_define_module_function, rb_str_new_cstr, 
+    rb_define_module, rb_define_module_function, rb_str_new_cstr,
     rb_string_value_cstr, VALUE
 };
 use std::ffi::CString;
@@ -42,7 +43,7 @@ unsafe extern "C" fn reverse(_: VALUE, s: VALUE) -> VALUE {
     let c_str = rb_string_value_cstr(&s);
     let rust_str = std::ffi::CStr::from_ptr(c_str).to_str().unwrap();
     let reversed = rust_str.chars().rev().collect::<String>();
-    
+
     let c_string = CString::new(reversed).unwrap();
     rb_str_new_cstr(c_string.as_ptr())
 }
@@ -52,7 +53,7 @@ unsafe extern "C" fn reverse(_: VALUE, s: VALUE) -> VALUE {
 pub extern "C" fn Init_string_utils() {
     unsafe {
         let module = rb_define_module(cstr!("StringUtils"));
-        
+
         rb_define_module_function(
             module,
             cstr!("reverse"),
@@ -65,7 +66,8 @@ pub extern "C" fn Init_string_utils() {
 
 ### Using rb_thread_call_without_gvl for Performance
 
-When performing computationally intensive operations, it's important to release Ruby's Global VM Lock (GVL) to allow other threads to run. The `rb_thread_call_without_gvl` function provides this capability:
+When performing computationally intensive operations, it's important to release Ruby's Global VM Lock (GVL) to allow
+other threads to run. The `rb_thread_call_without_gvl` function provides this capability:
 
 ```rust
 use magnus::{Error, Ruby, RString};
@@ -100,7 +102,7 @@ where
     {
         // Safety: We know this pointer is valid because we just created it below
         let data = unsafe { &mut *(data as *mut CallbackData<F, R>) };
-        
+
         // Use take() to move out of the Option, ensuring we don't try to run the function twice
         if let Some(func) = data.func.take() {
             // Use panic::catch_unwind to prevent Ruby process termination if the Rust code panics
@@ -115,12 +117,12 @@ where
                     } else {
                         "Unknown panic occurred in Rust code".to_string()
                     };
-                    
+
                     data.result = Some(Err(panic_msg));
                 }
             }
         }
-        
+
         null_mut()
     }
 
@@ -192,13 +194,13 @@ where
 fn compress(ruby: &Ruby, data: RString) -> Result<RString, Error> {
     let data_bytes = data.as_bytes();
     let data_len = data_bytes.len();
-    
+
     // Use nogvl_if_large with proper error handling
     let compressed_bytes = nogvl_if_large(data_len, || {
         // CPU-intensive operation here that returns a Vec<u8>
         compression_algorithm(data_bytes)
     })?; // Propagate any errors
-    
+
     // Create new Ruby string with compressed data
     let result = RString::from_slice(ruby, &compressed_bytes);
     Ok(result)
@@ -208,10 +210,10 @@ fn compress(ruby: &Ruby, data: RString) -> Result<RString, Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Compression")?;
-    
+
     // Using method! for defining instance methods
     module.define_singleton_method("compress", function!(compress, 1))?;
-    
+
     Ok(())
 }
 ```
@@ -228,7 +230,8 @@ When using rb-sys directly:
 
 ## Higher-level Wrappers (Magnus)
 
-Magnus provides a more ergonomic, Rust-like API on top of rb-sys. It handles many of the unsafe aspects of Ruby integration for you.
+Magnus provides a more ergonomic, Rust-like API on top of rb-sys. It handles many of the unsafe aspects of Ruby
+integration for you.
 
 ### When to Use Magnus
 
@@ -265,25 +268,25 @@ use magnus::{function, prelude::*, Error, RModule, Ruby};
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Lz4Flex")?;
-    
+
     // Define error classes
     let base_error = module.define_error("Error", magnus::exception::standard_error())?;
     let _ = module.define_error("EncodeError", base_error)?;
     let _ = module.define_error("DecodeError", base_error)?;
-    
+
     // Define methods
     module.define_singleton_method("compress", function!(compress, 1))?;
     module.define_singleton_method("decompress", function!(decompress, 1))?;
-    
+
     // Define aliases
     module.singleton_class()?.define_alias("deflate", "compress")?;
     module.singleton_class()?.define_alias("inflate", "decompress")?;
-    
+
     // Define nested module
     let varint_module = module.define_module("VarInt")?;
     varint_module.define_singleton_method("compress", function!(compress_varint, 1))?;
     varint_module.define_singleton_method("decompress", function!(decompress_varint, 1))?;
-    
+
     Ok(())
 }
 ```
@@ -316,7 +319,8 @@ Magnus builds on top of rb-sys and provides:
 
 ## Mixing Approaches
 
-You can also mix the two approaches when appropriate. Magnus provides access to the underlying rb-sys functionality when needed:
+You can also mix the two approaches when appropriate. Magnus provides access to the underlying rb-sys functionality when
+needed:
 
 ```rust
 use magnus::{function, prelude::*, Error, Ruby};
@@ -336,10 +340,10 @@ unsafe extern "C" fn low_level(_: rb_sys::VALUE) -> rb_sys::VALUE {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MixedExample")?;
-    
+
     // Use Magnus for most things
     module.define_singleton_method("high_level", function!(high_level, 0))?;
-    
+
     // Use rb-sys directly for special cases
     unsafe {
         rb_sys::rb_define_module_function(
@@ -349,7 +353,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
             0,
         );
     }
-    
+
     Ok(())
 }
 
@@ -374,10 +378,12 @@ magnus = { version = "0.7", features = ["rb-sys"] }
 ### Common Mixing Patterns
 
 1. **Use Magnus for most functionality, rb-sys for specific optimizations**:
+
    - Define your public API using Magnus for safety and ease
    - Drop down to rb-sys in critical performance paths, especially when using `nogvl`
 
 2. **Use rb-sys for core functionality, Magnus for complex conversions**:
+
    - Build core functionality with rb-sys for maximum control
    - Use Magnus for handling complex Ruby objects or collections
 
@@ -396,7 +402,7 @@ Blake3-Ruby is a cryptographic hashing library that uses direct rb-sys to achiev
 ```rust
 // Based on blake3-ruby
 use rb_sys::{
-    rb_define_module, rb_define_module_function, rb_string_value_cstr, 
+    rb_define_module, rb_define_module_function, rb_string_value_cstr,
     rb_str_new_cstr, VALUE,
 };
 
@@ -406,7 +412,7 @@ pub extern "C" fn Init_blake3_ext() {
         // Create module and class hierarchy
         let digest_module = /* ... */;
         let blake3_class = /* ... */;
-        
+
         // Define methods directly using rb-sys for maximum performance
         rb_define_module_function(
             blake3_class,
@@ -414,7 +420,7 @@ pub extern "C" fn Init_blake3_ext() {
             Some(rb_blake3_digest as unsafe extern "C" fn(VALUE, VALUE) -> VALUE),
             1,
         );
-        
+
         // More method definitions...
     }
 }
@@ -423,12 +429,12 @@ unsafe extern "C" fn rb_blake3_digest(_klass: VALUE, string: VALUE) -> VALUE {
     // Extract data from Ruby VALUE
     let data_ptr = rb_string_value_cstr(&string);
     let data_len = /* ... */;
-    
+
     // Release GVL for CPU-intensive operation
     let hash = nogvl(|| {
         blake3::hash(/* ... */)
     });
-    
+
     // Return result as Ruby string
     rb_str_new_cstr(/* ... */)
 }
@@ -446,11 +452,11 @@ use rb_sys::{rb_str_locktmp, rb_str_unlocktmp, rb_thread_call_without_gvl};
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Lz4Flex")?;
-    
+
     // High-level API using Magnus
     module.define_singleton_method("compress", function!(compress, 1))?;
     module.define_singleton_method("decompress", function!(decompress, 1))?;
-    
+
     Ok(())
 }
 
@@ -458,12 +464,12 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 fn compress(input: LockedRString) -> Result<RString, Error> {
     let bufsize = get_maximum_output_size(input.len());
     let mut output = RStringMut::buf_new(bufsize);
-    
+
     // Use nogvl_if_large to release GVL for large inputs
     let outsize = nogvl_if_large(input.len(), || {
         lz4_flex::block::compress_into(input.as_slice(), output.as_mut_slice())
     }).map_err(|e| Error::new(encode_error_class(), e.to_string()))?;
-    
+
     output.set_len(outsize);
     Ok(output.into_inner())
 }
@@ -476,7 +482,7 @@ impl LockedRString {
         unsafe { rb_str_locktmp(string.as_raw()) };
         Self(string)
     }
-    
+
     fn as_slice(&self) -> &[u8] {
         // Implementation using rb-sys functions
     }

@@ -14,16 +14,16 @@ jobs:
     strategy:
       matrix:
         ruby:
-          - '3.4.1'
+          - "3.4.1"
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Ruby & Rust
-      uses: oxidize-rb/actions/setup-ruby-and-rust@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-        cargo-cache: true
-        rubygems: '3.6.2'
-    - name: Run the default task
-      run: bundle exec rake
+      - uses: actions/checkout@v4
+      - name: Set up Ruby & Rust
+        uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          cargo-cache: true
+          rubygems: "3.6.2"
+      - name: Run the default task
+        run: bundle exec rake

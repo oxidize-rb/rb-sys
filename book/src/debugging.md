@@ -1,6 +1,7 @@
 # Debugging & Troubleshooting
 
-This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to solving the most frequent issues.
+This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to
+solving the most frequent issues.
 
 ## Overview
 
@@ -29,6 +30,7 @@ end
 #### Missing Ruby Headers
 
 **Error:**
+
 ```
 fatal error: ruby.h: No such file or directory
 #include <ruby.h>
@@ -37,6 +39,7 @@ compilation terminated.
 ```
 
 **Solution:**
+
 - Ensure Ruby development headers are installed
 - Check that `rb_sys_env::activate()` is being called in your `build.rs`
 - Verify that your Ruby installation is accessible to your build environment
@@ -44,6 +47,7 @@ compilation terminated.
 #### Incompatible Ruby Version
 
 **Error:**
+
 ```
 error: failed to run custom build command for `rb-sys v0.9.78`
 ```
@@ -51,6 +55,7 @@ error: failed to run custom build command for `rb-sys v0.9.78`
 With details mentioning Ruby version compatibility issues.
 
 **Solution:**
+
 - Ensure your rb-sys version is compatible with your Ruby version
 - Update rb-sys to the latest version
 - Check your build environment's Ruby version with `ruby -v`
@@ -58,12 +63,14 @@ With details mentioning Ruby version compatibility issues.
 #### Linking Errors
 
 **Error:**
+
 ```
 error: linking with `cc` failed: exit status: 1
 ... undefined reference to `rb_define_module` ...
 ```
 
 **Solution:**
+
 - Ensure proper linking configuration in `build.rs`
 - Make sure you've called `rb_sys_env::activate()`
 - Verify that your Ruby installation is correctly detected
@@ -75,11 +82,13 @@ error: linking with `cc` failed: exit status: 1
 Segmentation faults typically occur when accessing memory improperly:
 
 **Common Causes:**
+
 1. Accessing Ruby objects after they've been garbage collected
 2. Not protecting Ruby values from garbage collection during C API calls
 3. Incorrect use of raw pointers
 
 **Solutions:**
+
 - Use `TypedData` and implement the `mark` method to protect Ruby objects
 - Use `rb_gc_guard!` macro when working with raw C API
 - Prefer the higher-level Magnus API over raw rb-sys
@@ -89,23 +98,28 @@ Segmentation faults typically occur when accessing memory improperly:
 When using `RefCell` for interior mutability:
 
 **Error:**
+
 ```
 thread '<unnamed>' panicked at 'already borrowed: BorrowMutError', ...
 ```
 
 **Solution:**
+
 - Complete all immutable borrows before attempting mutable borrows
 - Copy required data out of immutable borrows before borrowing mutably
-- See the [RefCell and Interior Mutability](memory-management.md#refcell-and-interior-mutability) section in the Memory Management chapter
+- See the [RefCell and Interior Mutability](memory-management.md#refcell-and-interior-mutability) section in the Memory
+  Management chapter
 
 #### Method Argument Mismatch
 
 **Error:**
+
 ```
 ArgumentError: wrong number of arguments (given 2, expected 1)
 ```
 
 **Solution:**
+
 - Check method definitions in your Rust code
 - Ensure `function!` and `method!` macros have the correct arity
 - Verify Ruby method calls match the defined signatures
@@ -113,11 +127,13 @@ ArgumentError: wrong number of arguments (given 2, expected 1)
 #### Type Conversion Failures
 
 **Error:**
+
 ```
 TypeError: no implicit conversion of Integer into String
 ```
 
 **Solution:**
+
 - Add proper type checking and conversions in Rust
 - Use `try_convert` and handle conversion errors gracefully
 - Add explicit type annotations to clarify intent
@@ -153,7 +169,8 @@ end
 
 ### VSCode + LLDB
 
-The [code-lldb](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension for VSCode is a great way to debug Rust code. Here is an example configuration file:
+The [code-lldb](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension for VSCode is a great
+way to debug Rust code. Here is an example configuration file:
 
 ```json
 // .vscode/launch.json
@@ -209,16 +226,19 @@ with debug symbols, any calls into the Ruby C API become a black box. Luckily, i
 LLDB is an excellent tool for debugging Rust extensions from the command line:
 
 1. Compile with debug symbols:
+
    ```bash
    RUSTFLAGS="-g" bundle exec rake compile
    ```
 
 2. Run Ruby with LLDB:
+
    ```bash
    lldb -- ruby -I lib -e 'require "my_extension"; MyExtension.method_to_debug'
    ```
 
 3. Set breakpoints and run:
+
    ```
    (lldb) breakpoint set --name rb_my_method
    (lldb) run
@@ -237,16 +257,19 @@ LLDB is an excellent tool for debugging Rust extensions from the command line:
 GDB offers similar capabilities to LLDB on Linux systems:
 
 1. Compile with debug symbols:
+
    ```bash
    RUSTFLAGS="-g" bundle exec rake compile
    ```
 
 2. Run Ruby with GDB:
+
    ```bash
    gdb --args ruby -I lib -e 'require "my_extension"; MyExtension.method_to_debug'
    ```
 
 3. Set breakpoints and run:
+
    ```
    (gdb) break rb_my_method
    (gdb) run
@@ -274,12 +297,12 @@ use log::{debug, error, info};
 
 fn some_function() -> Result<(), Error> {
     debug!("Entering some_function");
-    
+
     if let Err(e) = fallible_operation() {
         error!("Operation failed: {}", e);
         return Err(e.into());
     }
-    
+
     info!("Operation succeeded");
     Ok(())
 }
@@ -305,9 +328,11 @@ RUST_LOG=debug ruby -I lib -e 'require "my_extension"'
 
 ### Using ruby_memcheck
 
-The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem helps identify memory leaks in Ruby extensions by filtering out Ruby's internal memory management noise when running Valgrind.
+The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem helps identify memory leaks in Ruby extensions by
+filtering out Ruby's internal memory management noise when running Valgrind.
 
 1. Install dependencies:
+
    ```bash
    gem install ruby_memcheck
    # On Debian/Ubuntu
@@ -315,14 +340,15 @@ The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem helps identify
    ```
 
 2. Set up in your Rakefile:
+
    ```ruby
    require 'ruby_memcheck'
-   
+
    test_config = lambda do |t|
      t.libs << "test"
      t.test_files = FileList["test/**/*_test.rb"]
    end
-   
+
    namespace :test do
      RubyMemcheck::TestTask.new(valgrind: :compile, &test_config)
    end
@@ -333,7 +359,8 @@ The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem helps identify
    bundle exec rake test:valgrind
    ```
 
-For more detailed instructions and configuration options, refer to the [ruby_memcheck documentation](https://github.com/Shopify/ruby_memcheck).
+For more detailed instructions and configuration options, refer to the
+[ruby_memcheck documentation](https://github.com/Shopify/ruby_memcheck).
 
 ## Best Practices
 
@@ -347,9 +374,9 @@ For more detailed instructions and configuration options, refer to the [ruby_mem
 
 ## Next Steps
 
-- Build your extension with `RB_SYS_CARGO_PROFILE=dev` and practice setting breakpoints.  
-- Explore GDB as an alternative to LLDB for low-level debugging.  
-- See the Memory Management & Safety chapter for GC-related troubleshooting.  
+- Build your extension with `RB_SYS_CARGO_PROFILE=dev` and practice setting breakpoints.
+- Explore GDB as an alternative to LLDB for low-level debugging.
+- See the Memory Management & Safety chapter for GC-related troubleshooting.
 - If you're still stuck, [join the Slack channel][slack] to ask questions and get help from the community!
 
 [slack]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw

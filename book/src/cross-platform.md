@@ -2,26 +2,28 @@
 
 ## Overview
 
-One of rb-sys's greatest strengths is its support for cross-platform Ruby extensions. This chapter covers how to develop, test, and distribute extensions across multiple platforms.
+One of rb-sys's greatest strengths is its support for cross-platform Ruby extensions. This chapter covers how to
+develop, test, and distribute extensions across multiple platforms.
 
 ## Supported Platforms
 
 rb-sys supports cross-compilation to the following platforms:
 
-| Platform           | Supported | Docker Image                                     |
-| ------------------ | --------- | ------------------------------------------------ |
-| x86_64-linux       | ✅        | `rbsys/x86_64-linux`                             |
-| x86_64-linux-musl  | ✅        | `rbsys/x86_64-linux-musl`                        |
-| aarch64-linux      | ✅        | `rbsys/aarch64-linux`                            |
-| aarch64-linux-musl | ✅        | `rbsys/aarch64-linux-musl`                       |
-| arm-linux          | ✅        | `rbsys/arm-linux`                                |
-| arm64-darwin       | ✅        | `rbsys/arm64-darwin`                             |
-| x64-mingw32        | ✅        | `rbsys/x64-mingw32`                              |
-| x64-mingw-ucrt     | ✅        | `rbsys/x64-mingw-ucrt`                           |
-| mswin              | ✅        | not available on Docker                          |
-| truffleruby        | ✅        | not available on Docker                          |
+| Platform           | Supported | Docker Image               |
+| ------------------ | --------- | -------------------------- |
+| x86_64-linux       | ✅        | `rbsys/x86_64-linux`       |
+| x86_64-linux-musl  | ✅        | `rbsys/x86_64-linux-musl`  |
+| aarch64-linux      | ✅        | `rbsys/aarch64-linux`      |
+| aarch64-linux-musl | ✅        | `rbsys/aarch64-linux-musl` |
+| arm-linux          | ✅        | `rbsys/arm-linux`          |
+| arm64-darwin       | ✅        | `rbsys/arm64-darwin`       |
+| x64-mingw32        | ✅        | `rbsys/x64-mingw32`        |
+| x64-mingw-ucrt     | ✅        | `rbsys/x64-mingw-ucrt`     |
+| mswin              | ✅        | not available on Docker    |
+| truffleruby        | ✅        | not available on Docker    |
 
-The Docker images are available on [Docker Hub](https://hub.docker.com/r/rbsys/rcd) and are automatically updated with each rb-sys release.
+The Docker images are available on [Docker Hub](https://hub.docker.com/r/rbsys/rcd) and are automatically updated with
+each rb-sys release.
 
 ## Platform Considerations
 
@@ -39,16 +41,17 @@ rb-sys provides tools to handle these differences effectively.
 
 Ruby identifies platforms with standardized strings:
 
-| Platform String | Description |
-|-----------------|-------------|
-| `x86_64-linux` | 64-bit Linux on Intel/AMD |
-| `aarch64-linux` | 64-bit Linux on ARM |
-| `x86_64-darwin` | 64-bit macOS on Intel |
-| `arm64-darwin` | 64-bit macOS on Apple Silicon |
-| `x64-mingw-ucrt` | 64-bit Windows (UCRT) |
-| `x64-mingw32` | 64-bit Windows (older) |
+| Platform String  | Description                   |
+| ---------------- | ----------------------------- |
+| `x86_64-linux`   | 64-bit Linux on Intel/AMD     |
+| `aarch64-linux`  | 64-bit Linux on ARM           |
+| `x86_64-darwin`  | 64-bit macOS on Intel         |
+| `arm64-darwin`   | 64-bit macOS on Apple Silicon |
+| `x64-mingw-ucrt` | 64-bit Windows (UCRT)         |
+| `x64-mingw32`    | 64-bit Windows (older)        |
 
 These platform strings are used by:
+
 - RubyGems to select the correct pre-built binary
 - rake-compiler for cross-compilation
 - rb-sys-dock to build for different platforms
@@ -185,7 +188,7 @@ The Rust build script (`build.rs`) can be used to detect platforms and configure
 fn main() {
     // Detect OS
     let target = std::env::var("TARGET").unwrap_or_default();
-    
+
     if target.contains("windows") {
         println!("cargo:rustc-link-lib=dylib=user32");
         println!("cargo:rustc-cfg=feature=\"windows_specific\"");
@@ -196,7 +199,7 @@ fn main() {
         println!("cargo:rustc-link-lib=dylib=dl");
         println!("cargo:rustc-cfg=feature=\"linux_specific\"");
     }
-    
+
     // Tell Cargo to invalidate the built crate whenever the build script changes
     println!("cargo:rerun-if-changed=build.rs");
 }
@@ -322,9 +325,9 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -332,18 +335,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        ruby: ['3.0', '3.1', '3.2', '3.3']
-        
+        ruby: ["3.0", "3.1", "3.2", "3.3"]
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-    - run: bundle exec rake compile
-    - run: bundle exec rake test
+      - uses: actions/checkout@v4
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - run: bundle exec rake test
 ```
 
 ### Cross-Compiling for Release
@@ -354,35 +357,29 @@ name: Release
 
 on:
   push:
-    tags: [ 'v*' ]
+    tags: ["v*"]
 
 jobs:
   cross_compile:
     strategy:
       fail-fast: false
       matrix:
-        platform: [
-          'x86_64-linux',
-          'aarch64-linux', 
-          'x86_64-darwin',
-          'arm64-darwin',
-          'x64-mingw-ucrt'
-        ]
-        
+        platform: ["x86_64-linux", "aarch64-linux", "x86_64-darwin", "arm64-darwin", "x64-mingw-ucrt"]
+
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.1'
-    - uses: oxidize-rb/actions/cross-gem@v1
-      with:
-        platform: ${{ matrix.platform }}
-    - uses: actions/upload-artifact@v3
-      with:
-        name: gem-${{ matrix.platform }}
-        path: pkg/*-${{ matrix.platform }}.gem
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+      - uses: oxidize-rb/actions/cross-gem@v1
+        with:
+          platform: ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gem-${{ matrix.platform }}
+          path: pkg/*-${{ matrix.platform }}.gem
 ```
 
 ### Complete CI Workflow Example
@@ -396,7 +393,7 @@ name: Gem Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   fetch-data:
@@ -409,14 +406,14 @@ jobs:
         with:
           supported-ruby-platforms: |
             exclude: [x86-linux, x86-darwin, arm-linux]
-  
+
   test:
     needs: fetch-data
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        ruby: ['3.0', '3.1', '3.2', '3.3']
+        ruby: ["3.0", "3.1", "3.2", "3.3"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -426,7 +423,7 @@ jobs:
           bundler-cache: true
       - run: bundle exec rake compile
       - run: bundle exec rake test
-  
+
   cross-compile:
     needs: [fetch-data, test]
     runs-on: ubuntu-latest
@@ -438,7 +435,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'
+          ruby-version: "3.1"
       - uses: oxidize-rb/actions/cross-gem@v1
         with:
           platform: ${{ matrix.platform }}
@@ -446,7 +443,7 @@ jobs:
         with:
           name: gem-${{ matrix.platform }}
           path: pkg/*-${{ matrix.platform }}.gem
-  
+
   release:
     needs: cross-compile
     runs-on: ubuntu-latest
@@ -454,7 +451,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'
+          ruby-version: "3.1"
       - uses: actions/download-artifact@v3
         with:
           path: artifacts
@@ -479,41 +476,44 @@ jobs:
 Windows presents unique challenges for Ruby extensions:
 
 - **Path Handling**: Use forward slashes (`/`) in paths, not backslashes (`\`)
+
   ```rust
   // Instead of this:
-  let path = "C:\\Users\\Name\\file.txt"; 
-  
+  let path = "C:\\Users\\Name\\file.txt";
+
   // Do this:
   let path = "C:/Users/Name/file.txt";
   ```
 
 - **DLL Loading**: Handle DLL loading carefully
+
   ```rust
   #[cfg(target_os = "windows")]
   fn load_library(name: &str) -> Result<(), Error> {
       use std::os::windows::ffi::OsStrExt;
       use std::ffi::OsStr;
       use winapi::um::libloaderapi::LoadLibraryW;
-      
+
       let name_wide: Vec<u16> = OsStr::new(name)
           .encode_wide()
           .chain(std::iter::once(0))
           .collect();
-      
+
       let handle = unsafe { LoadLibraryW(name_wide.as_ptr()) };
       if handle.is_null() {
           return Err(Error::new("Failed to load library"));
       }
-      
+
       Ok(())
   }
   ```
 
 - **Asynchronous I/O**: Windows has different async I/O APIs
+
   ```rust
   #[cfg(target_os = "windows")]
   use windows_specific_io::read_file;
-  
+
   #[cfg(not(target_os = "windows"))]
   use posix_specific_io::read_file;
   ```
@@ -521,6 +521,7 @@ Windows presents unique challenges for Ruby extensions:
 ### macOS
 
 - **Architectures**: Support both Intel and Apple Silicon
+
   ```ruby
   # Rakefile
   RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
@@ -529,6 +530,7 @@ Windows presents unique challenges for Ruby extensions:
   ```
 
 - **Framework Linking**: Link against macOS frameworks
+
   ```rust
   // build.rs
   #[cfg(target_os = "macos")]
@@ -549,6 +551,7 @@ Windows presents unique challenges for Ruby extensions:
 ### Linux
 
 - **glibc vs musl**: Consider both glibc and musl for maximum compatibility
+
   ```ruby
   # Rakefile
   RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
@@ -557,6 +560,7 @@ Windows presents unique challenges for Ruby extensions:
   ```
 
 - **Static Linking**: Increase portability with static linking
+
   ```toml
   # Cargo.toml
   [target.'cfg(target_os = "linux")'.dependencies]
@@ -589,7 +593,7 @@ Windows presents unique challenges for Ruby extensions:
 // Platform abstraction module
 mod platform {
     pub struct FileHandle(PlatformSpecificHandle);
-    
+
     impl FileHandle {
         pub fn open(path: &str) -> Result<Self, Error> {
             #[cfg(target_os = "windows")]
@@ -597,24 +601,24 @@ mod platform {
                 // Windows-specific implementation
                 // ...
             }
-            
+
             #[cfg(unix)]
             {
                 // Unix-based implementation (Linux, macOS, etc.)
                 // ...
             }
-            
+
             #[cfg(not(any(target_os = "windows", unix)))]
             {
                 return Err(Error::new("Unsupported platform"));
             }
         }
-        
+
         pub fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
             // Platform-specific reading implementation
             // ...
         }
-        
+
         pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
             // Platform-specific writing implementation
             // ...
@@ -638,7 +642,8 @@ Here's a complete example for releasing a cross-platform gem:
 
 1. **Develop locally** on your preferred platform
 2. **Test your changes** locally with `bundle exec rake test`
-3. **Verify cross-platform builds** with `bundle exec rb-sys-dock --platform x86_64-linux --command "bundle exec rake test"`
+3. **Verify cross-platform builds** with
+   `bundle exec rb-sys-dock --platform x86_64-linux --command "bundle exec rake test"`
 4. **Commit and push** your changes
 5. **CI tests** run on all supported platforms
 6. **Create a release tag** when ready (`git tag v1.0.0 && git push --tags`)
@@ -651,7 +656,8 @@ By following this workflow, you can be confident your extension works consistent
 
 Many real-world gems use rb-sys for cross-platform development:
 
-- [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function implementation with full cross-platform support
+- [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function implementation with full
+  cross-platform support
 - [lz4-ruby](https://github.com/yoshoku/lz4-ruby) - LZ4 compression library with rb-sys
 - [wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb) - WebAssembly runtime
 
@@ -682,12 +688,12 @@ pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), Error> {
     {
         return unix::map_memory(addr, len);
     }
-    
+
     #[cfg(windows)]
     {
         return windows::map_memory(addr, len);
     }
-    
+
     #[cfg(not(any(unix, windows)))]
     {
         return Err(Error::new("Unsupported platform"));
@@ -704,7 +710,8 @@ Cross-platform development with rb-sys leverages Rust's excellent platform-speci
 3. **rb-sys-dock** enables easy cross-compilation for multiple platforms
 4. **GitHub Actions integration** automates testing and releases
 
-By following the patterns in this chapter, your Ruby extensions can work seamlessly across all major platforms while minimizing platform-specific code and maintenance burden.
+By following the patterns in this chapter, your Ruby extensions can work seamlessly across all major platforms while
+minimizing platform-specific code and maintenance burden.
 
 ## Next Steps
 

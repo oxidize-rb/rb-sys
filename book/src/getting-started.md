@@ -58,6 +58,7 @@ If you encounter issues with the quick start above, here are the detailed requir
 ### libclang (for Ruby/Rust FFI bindings)
 
 Simplest approach: add to your Gemfile
+
 ```ruby
 gem "libclang", "~> 14.0"
 ```

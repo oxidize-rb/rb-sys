@@ -2,11 +2,13 @@
 
 # Error Handling in Rust Ruby Extensions
 
-Proper error handling is critical for robust Ruby extensions. This guide covers how to handle errors in Rust and map them to appropriate Ruby exceptions.
+Proper error handling is critical for robust Ruby extensions. This guide covers how to handle errors in Rust and map
+them to appropriate Ruby exceptions.
 
 <div class="warning">
 
-Improper error handling can lead to crashes that take down the entire Ruby VM. This chapter shows you how to properly raise and handle exceptions in your Rust extensions.
+Improper error handling can lead to crashes that take down the entire Ruby VM. This chapter shows you how to properly
+raise and handle exceptions in your Rust extensions.
 
 </div>
 
@@ -20,13 +22,15 @@ When building Ruby extensions with Rust, you'll typically use one of these error
 
 <div class="note">
 
-The most common pattern in rb-sys extensions is to use Rust's `Result<T, magnus::Error>` type, where the `Error` type represents a Ruby exception that can be raised.
+The most common pattern in rb-sys extensions is to use Rust's `Result<T, magnus::Error>` type, where the `Error` type
+represents a Ruby exception that can be raised.
 
 </div>
 
 ## The Result Type and Magnus::Error
 
-Magnus uses `Result<T, Error>` as the standard way to handle errors. The `Error` type represents a Ruby exception that can be raised:
+Magnus uses `Result<T, Error>` as the standard way to handle errors. The `Error` type represents a Ruby exception that
+can be raised:
 
 ```rust
 use magnus::{Error, Ruby};
@@ -43,6 +47,7 @@ fn might_fail(ruby: &Ruby, value: i64) -> Result<i64, Error> {
 ```
 
 The `Error` type:
+
 - Contains a reference to a Ruby exception class
 - Includes an error message
 - Can be created from an existing Ruby exception
@@ -89,21 +94,21 @@ fn parse_number(ruby: &Ruby, input: &str) -> Result<i64, Error> {
 
 Common Ruby exception types available through the Ruby API:
 
-| Method | Exception Class | Typical Use Case |
-|--------|----------------|------------------|
-| `ruby.exception_arg_error()` | `ArgumentError` | Invalid argument value or type |
-| `ruby.exception_index_error()` | `IndexError` | Array/string index out of bounds |
-| `ruby.exception_key_error()` | `KeyError` | Hash key not found |
-| `ruby.exception_name_error()` | `NameError` | Reference to undefined name |
-| `ruby.exception_no_memory_error()` | `NoMemoryError` | Memory allocation failure |
-| `ruby.exception_not_imp_error()` | `NotImplementedError` | Feature not implemented |
-| `ruby.exception_range_error()` | `RangeError` | Value outside valid range |
-| `ruby.exception_regexp_error()` | `RegexpError` | Invalid regular expression |
-| `ruby.exception_runtime_error()` | `RuntimeError` | General runtime error |
-| `ruby.exception_script_error()` | `ScriptError` | Problem in script execution |
-| `ruby.exception_syntax_error()` | `SyntaxError` | Invalid syntax |
-| `ruby.exception_type_error()` | `TypeError` | Type mismatch |
-| `ruby.exception_zero_div_error()` | `ZeroDivisionError` | Division by zero |
+| Method                             | Exception Class       | Typical Use Case                 |
+| ---------------------------------- | --------------------- | -------------------------------- |
+| `ruby.exception_arg_error()`       | `ArgumentError`       | Invalid argument value or type   |
+| `ruby.exception_index_error()`     | `IndexError`          | Array/string index out of bounds |
+| `ruby.exception_key_error()`       | `KeyError`            | Hash key not found               |
+| `ruby.exception_name_error()`      | `NameError`           | Reference to undefined name      |
+| `ruby.exception_no_memory_error()` | `NoMemoryError`       | Memory allocation failure        |
+| `ruby.exception_not_imp_error()`   | `NotImplementedError` | Feature not implemented          |
+| `ruby.exception_range_error()`     | `RangeError`          | Value outside valid range        |
+| `ruby.exception_regexp_error()`    | `RegexpError`         | Invalid regular expression       |
+| `ruby.exception_runtime_error()`   | `RuntimeError`        | General runtime error            |
+| `ruby.exception_script_error()`    | `ScriptError`         | Problem in script execution      |
+| `ruby.exception_syntax_error()`    | `SyntaxError`         | Invalid syntax                   |
+| `ruby.exception_type_error()`      | `TypeError`           | Type mismatch                    |
+| `ruby.exception_zero_div_error()`  | `ZeroDivisionError`   | Division by zero                 |
 
 ### Creating Custom Exception Classes
 
@@ -115,15 +120,15 @@ use magnus::{class, Error, Ruby};
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MyExtension")?;
-    
+
     // Create custom exception classes
     let std_error = ruby.exception_standard_error();
     let custom_error = module.define_class("CustomError", std_error)?;
     let validation_error = module.define_class("ValidationError", custom_error)?;
-    
+
     // Register them as constants for easier access
     ruby.define_global_const("MY_CUSTOM_ERROR", custom_error)?;
-    
+
     Ok(())
 }
 
@@ -152,10 +157,10 @@ fn process_data(ruby: &Ruby, input: Value) -> Result<Value, Error> {
         Ok(val) => val,
         Err(err) => return Err(err), // Pass along the original error
     };
-    
+
     // Or with the ? operator
     let result = input.funcall(ruby, "process", ())?;
-    
+
     Ok(result)
 }
 ```
@@ -194,7 +199,7 @@ fn dangerous_operation(ruby: &Ruby, input: i64) -> Result<i64, Error> {
         }
         input * 2
     });
-    
+
     match result {
         Ok(value) => Ok(value),
         Err(_) => Err(Error::new(
@@ -217,7 +222,7 @@ fn multi_step_operation(ruby: &Ruby, value: i64) -> Result<i64, Error> {
     let step1 = validate_input(ruby, value)?;
     let step2 = transform_data(ruby, step1)?;
     let step3 = final_calculation(ruby, step2)?;
-    
+
     Ok(step3)
 }
 ```
@@ -229,7 +234,7 @@ For more sophisticated error handling, pattern match on error types:
 ```rust
 fn handle_specific_errors(ruby: &Ruby, value: Value) -> Result<Value, Error> {
     let result = value.funcall(ruby, "some_method", ());
-    
+
     match result {
         Ok(val) => Ok(val),
         Err(err) if err.is_kind_of(ruby, ruby.exception_zero_div_error()) => {
@@ -278,7 +283,7 @@ impl Drop for TempResource {
 fn process_with_resource(ruby: &Ruby) -> Result<Value, Error> {
     // Resource is created
     let mut resource = TempResource::new();
-    
+
     // If an error occurs here, resource will still be cleaned up
     let file_result = File::open("data.txt");
     let mut file = match file_result {
@@ -288,7 +293,7 @@ fn process_with_resource(ruby: &Ruby) -> Result<Value, Error> {
             format!("Could not open file: {}", e)
         )),
     };
-    
+
     // Resource will be dropped at the end of this scope
     Ok(ruby.ary_new_from_ary(&[1, 2, 3]))
 }
@@ -308,7 +313,7 @@ Choose the most appropriate Ruby exception type:
 
 ```rust,hidelines=#
 # use magnus::{Error, Ruby};
-# 
+#
 # fn example(ruby: &Ruby, index: usize, array: &[i32]) -> Result<i32, Error> {
 // ✅ GOOD: Specific exception type
 if index >= array.len() {
@@ -317,7 +322,7 @@ if index >= array.len() {
         format!("Index {} out of bounds (0..{})", index, array.len() - 1)
     ));
 }
-# 
+#
 # // Example with bad practice commented out
 # /*
 # // ❌ BAD: Generic RuntimeError for specific issue
@@ -334,7 +339,8 @@ if index >= array.len() {
 
 <div class="note">
 
-Ruby has a rich hierarchy of exception types. Using the specific exception type helps users handle errors properly in their Ruby code.
+Ruby has a rich hierarchy of exception types. Using the specific exception type helps users handle errors properly in
+their Ruby code.
 
 </div>
 
@@ -425,7 +431,7 @@ impl MutCounter {
     fn new() -> Self {
         MutCounter(RefCell::new(0))
     }
-    
+
     fn increment(ruby: &Ruby, self_: &Self) -> Result<u64, Error> {
         match self_.0.try_borrow_mut() {
             Ok(mut value) => {
@@ -438,7 +444,7 @@ impl MutCounter {
             )),
         }
     }
-    
+
     // Better approach: complete borrows before starting new ones
     fn safe_increment(&self) -> u64 {
         let mut value = self.0.borrow_mut();
@@ -452,13 +458,16 @@ impl MutCounter {
 
 <div class="warning">
 
-Never use `unwrap()` or `expect()` in production code for your Ruby extensions. These can cause panics that will crash the Ruby VM. Always use proper error handling with `Result` and `Error` types.
+Never use `unwrap()` or `expect()` in production code for your Ruby extensions. These can cause panics that will crash
+the Ruby VM. Always use proper error handling with `Result` and `Error` types.
 
 </div>
 
-Effective error handling makes your Ruby extensions more robust and user-friendly. By using the right exception types and providing clear error messages, you create a better experience for users of your extension.
+Effective error handling makes your Ruby extensions more robust and user-friendly. By using the right exception types
+and providing clear error messages, you create a better experience for users of your extension.
 
 Remember these key points:
+
 - Use `Result<T, Error>` for functions that can fail
 - Choose appropriate Ruby exception types
 - Provide clear, detailed error messages
@@ -467,6 +476,7 @@ Remember these key points:
 
 <div class="tip">
 
-After you've handled errors in your Rust code, try to test your extension with invalid inputs to ensure it fails gracefully with appropriate Ruby exceptions rather than crashing.
+After you've handled errors in your Rust code, try to test your extension with invalid inputs to ensure it fails
+gracefully with appropriate Ruby exceptions rather than crashing.
 
 </div>

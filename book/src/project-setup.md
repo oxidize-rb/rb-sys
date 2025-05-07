@@ -1,6 +1,7 @@
 # Project Structure
 
-In this chapter, we'll explore how to set up and organize a Ruby gem with a Rust extension. We'll focus on practical patterns and highlight how to leverage valuable Rust libraries without introducing unnecessary complexity.
+In this chapter, we'll explore how to set up and organize a Ruby gem with a Rust extension. We'll focus on practical
+patterns and highlight how to leverage valuable Rust libraries without introducing unnecessary complexity.
 
 ## Enhanced Project Structure
 
@@ -29,7 +30,8 @@ Let's examine a practical example using a useful but simple Rust library.
 
 ## Example: URL Parsing with the `url` crate
 
-The [url](https://crates.io/crates/url) crate, developed by the Servo team, is a robust implementation of the URL Standard. It provides accurate URL parsing that would be complex to implement from scratch. Here's a simple example:
+The [url](https://crates.io/crates/url) crate, developed by the Servo team, is a robust implementation of the URL
+Standard. It provides accurate URL parsing that would be complex to implement from scratch. Here's a simple example:
 
 ### 1. Extension Cargo.toml
 
@@ -80,24 +82,24 @@ impl UrlWrapper {
             }
         }
     }
-    
+
     // Basic getters
     fn scheme(&self) -> String {
         self.inner.scheme().to_string()
     }
-    
+
     fn host(&self) -> Option<String> {
         self.inner.host_str().map(|s| s.to_string())
     }
-    
+
     fn path(&self) -> String {
         self.inner.path().to_string()
     }
-    
+
     fn query(&self) -> Option<String> {
         self.inner.query().map(|s| s.to_string())
     }
-    
+
     // String representation of the URL
     fn to_string(&self) -> String {
         self.inner.to_string()
@@ -114,21 +116,21 @@ fn is_valid_url(url_str: String) -> bool {
 fn init(ruby: &Ruby) -> Result<(), Error> {
     // Define the main module
     let module = ruby.define_module("UrlParser")?;
-    
+
     // Add utility function at module level
     module.define_singleton_method("valid_url?", function!(is_valid_url, 1))?;
-    
+
     // Define and configure the URL class
     let class = module.define_class("URL", ruby.class_object())?;
     class.define_singleton_method("parse", function!(UrlWrapper::parse, 1))?;
-    
+
     // Instance methods
     class.define_method("scheme", method!(UrlWrapper::scheme, 0))?;
     class.define_method("host", method!(UrlWrapper::host, 0))?;
     class.define_method("path", method!(UrlWrapper::path, 0))?;
     class.define_method("query", method!(UrlWrapper::query, 0))?;
     class.define_method("to_s", method!(UrlWrapper::to_string, 0))?;
-    
+
     Ok(())
 }
 ```
@@ -142,14 +144,14 @@ require_relative "url_parser/url_parser"
 
 module UrlParser
   class Error < StandardError; end
-  
+
   # Parse a URL string and return a URL object
   def self.parse(url_string)
     URL.parse(url_string)
   rescue => e
     raise Error, "Failed to parse URL: #{e.message}"
   end
-  
+
   # Check if a URL has an HTTPS scheme
   def self.https?(url_string)
     return false unless valid_url?(url_string)
@@ -168,23 +170,23 @@ require "test_helper"
 class TestUrlParser < Minitest::Test
   def test_basic_url_parsing
     url = UrlParser::URL.parse("https://example.com/path?query=value")
-    
+
     assert_equal "https", url.scheme
     assert_equal "example.com", url.host
     assert_equal "/path", url.path
     assert_equal "query=value", url.query
   end
-  
+
   def test_url_validation
     assert UrlParser.valid_url?("https://example.com")
     refute UrlParser.valid_url?("not a url")
   end
-  
+
   def test_https_check
     assert UrlParser.https?("https://example.com")
     refute UrlParser.https?("http://example.com")
   end
-  
+
   def test_invalid_url_raises_error
     assert_raises UrlParser::Error do
       UrlParser.parse("not://a.valid/url")
@@ -198,6 +200,7 @@ end
 ### 1. Simplicity with Value
 
 This example demonstrates how to:
+
 - Wrap a useful Rust library (`url`) with minimal code
 - Expose only the most essential functionality
 - Handle errors properly
@@ -206,6 +209,7 @@ This example demonstrates how to:
 ### 2. Why Use Rust for URL Parsing?
 
 Ruby has URI handling in its standard library, but the Rust `url` crate offers advantages:
+
 - Full compliance with the URL standard used by browsers
 - Better handling of internationalized domain names (IDNs)
 - Robust error detection

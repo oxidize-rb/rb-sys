@@ -2,9 +2,11 @@
 
 # Introduction
 
-Welcome to the rb-sys guide. This book will show you how to build Ruby extensions in Rust that are both powerful and reliable.
+Welcome to the rb-sys guide. This book will show you how to build Ruby extensions in Rust that are both powerful and
+reliable.
 
-The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If it's not easy, it's a bug.
+The primary goal of `rb-sys` is to make building native Ruby extensions in Rust **easier** than it would be in C. If
+it's not easy, it's a bug.
 
 ## Key Features
 
@@ -17,11 +19,13 @@ The primary goal of `rb-sys` is to make building native Ruby extensions in Rust 
 
 ## Why Rust for Ruby Extensions?
 
-Ruby extensions have traditionally been written in C, requiring manual memory management and careful handling of Ruby's internals. This approach is error-prone and often results in security vulnerabilities, memory leaks, and crashes.
+Ruby extensions have traditionally been written in C, requiring manual memory management and careful handling of Ruby's
+internals. This approach is error-prone and often results in security vulnerabilities, memory leaks, and crashes.
 
 <div class="note">
 
-While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience with improved safety guarantees and access to a rich ecosystem of libraries.
+While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience
+with improved safety guarantees and access to a rich ecosystem of libraries.
 
 </div>
 
@@ -35,7 +39,9 @@ Rust offers a compelling alternative with several advantages:
 
 <div class="warning">
 
-Importantly, performance should not be the sole motivation for using Rust. With Ruby's YJIT compiler, pure Ruby code is now faster than ever. Instead, consider Rust when you need memory safety, type safety, or want to leverage the rich Rust ecosystem's capabilities.
+Importantly, performance should not be the sole motivation for using Rust. With Ruby's YJIT compiler, pure Ruby code is
+now faster than ever. Instead, consider Rust when you need memory safety, type safety, or want to leverage the rich Rust
+ecosystem's capabilities.
 
 </div>
 
@@ -47,11 +53,12 @@ rb-sys consists of several components working together:
 2. **rb_sys gem**: Handles the Ruby side of extension compilation
 3. **Magnus**: A higher-level, ergonomic API for Rust/Ruby interoperability
 4. **rb-sys-dock**: Docker-based cross-compilation tooling
-5. **GitHub Actions**: Setup and cross-compilation automation for CI workflows 
+5. **GitHub Actions**: Setup and cross-compilation automation for CI workflows
 
 <div class="tip">
 
-Most developers will use the Magnus API when building their extensions, as it provides a much more ergonomic interface than using rb-sys directly.
+Most developers will use the Magnus API when building their extensions, as it provides a much more ergonomic interface
+than using rb-sys directly.
 
 </div>
 
@@ -89,17 +96,18 @@ You can click the eye icon (<i class="fa fa-eye"></i>) to see the hidden details
 
 Let's compare writing extensions in Rust versus C:
 
-| Aspect | C Extensions | Rust Extensions |
-|--------|-------------|----------------|
-| **Memory Safety** | Manual memory management | Guaranteed memory safety at compile time |
-| **Type Safety** | Weak typing, runtime errors | Strong static typing, compile-time checks |
-| **API Ergonomics** | Low-level C API | High-level Magnus API |
-| **Development Speed** | Slower, more error-prone | Faster, safer development cycle |
-| **Ecosystem Access** | Limited to C libraries | Full access to Rust crates |
-| **Debugging** | Harder to debug memory issues | Easier to debug with Rust's safety guarantees |
-| **Cross-Compilation** | Complex manual configuration | Simplified with rb-sys-dock |
+| Aspect                | C Extensions                  | Rust Extensions                               |
+| --------------------- | ----------------------------- | --------------------------------------------- |
+| **Memory Safety**     | Manual memory management      | Guaranteed memory safety at compile time      |
+| **Type Safety**       | Weak typing, runtime errors   | Strong static typing, compile-time checks     |
+| **API Ergonomics**    | Low-level C API               | High-level Magnus API                         |
+| **Development Speed** | Slower, more error-prone      | Faster, safer development cycle               |
+| **Ecosystem Access**  | Limited to C libraries        | Full access to Rust crates                    |
+| **Debugging**         | Harder to debug memory issues | Easier to debug with Rust's safety guarantees |
+| **Cross-Compilation** | Complex manual configuration  | Simplified with rb-sys-dock                   |
 
-While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience with improved safety guarantees and access to a rich ecosystem of libraries.
+While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience
+with improved safety guarantees and access to a rich ecosystem of libraries.
 
 ## Real-World Examples
 
@@ -107,8 +115,10 @@ These gems demonstrate rb-sys in action:
 
 - [lz4-ruby](https://github.com/yoshoku/lz4-ruby) - LZ4 compression library with rb-sys
 - [wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb) - WebAssembly runtime with rb-sys and Magnus
-- [oxi-test](https://github.com/oxidize-rb/oxi-test) - Canonical example of how to use rb-sys (minimal, fully tested, cross-compiled)
-- [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function with full cross-platform support
+- [oxi-test](https://github.com/oxidize-rb/oxi-test) - Canonical example of how to use rb-sys (minimal, fully tested,
+  cross-compiled)
+- [blake3-ruby](https://github.com/oxidize-rb/blake3-ruby) - Fast cryptographic hash function with full cross-platform
+  support
 
 ## Supported Toolchains
 

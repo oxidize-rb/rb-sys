@@ -1,6 +1,7 @@
 # rb-sys-test-helpers
 
-The `rb-sys-test-helpers` crate provides utilities for testing Ruby extensions from Rust. It makes it easy to run tests with a valid Ruby VM.
+The `rb-sys-test-helpers` crate provides utilities for testing Ruby extensions from Rust. It makes it easy to run tests
+with a valid Ruby VM.
 
 ## Usage
 
@@ -48,9 +49,11 @@ mod tests {
 
 ## How It Works
 
-The `ruby_test` macro sets up a Ruby VM before running your test and tears it down afterward. This allows you to interact with Ruby from your Rust code during tests without having to set up the VM yourself.
+The `ruby_test` macro sets up a Ruby VM before running your test and tears it down afterward. This allows you to
+interact with Ruby from your Rust code during tests without having to set up the VM yourself.
 
-The test helpers are compatible with both `rb-sys` for low-level C API access and `magnus` for higher-level Ruby interactions.
+The test helpers are compatible with both `rb-sys` for low-level C API access and `magnus` for higher-level Ruby
+interactions.
 
 ## Common Testing Patterns
 
@@ -66,12 +69,12 @@ fn test_value_conversion() {
         let obj = rb_cObject;
         let name = CString::new("test").unwrap();
         let value = rb_str_new_cstr(name.as_ptr());
-        
+
         rb_iv_set(obj, b"@name\0".as_ptr() as *const _, value);
-        
-        let result = rb_funcall(obj, b"instance_variable_get\0".as_ptr() as *const _, 1, 
+
+        let result = rb_funcall(obj, b"instance_variable_get\0".as_ptr() as *const _, 1,
                                 rb_str_new_cstr(b"@name\0".as_ptr() as *const _));
-                                
+
         assert_eq!(value, result);
     }
 }
@@ -83,10 +86,10 @@ fn test_value_conversion() {
 #[ruby_test]
 fn test_with_magnus() {
     use magnus::{Ruby, RString, Value};
-    
+
     let ruby = unsafe { Ruby::get().unwrap() };
     let string = RString::new(ruby, "Hello, world!").unwrap();
-    
+
     assert_eq!(string.to_string().unwrap(), "Hello, world!");
 }
 ```
@@ -101,7 +104,7 @@ jobs:
   test:
     strategy:
       matrix:
-        ruby: ['2.7', '3.0', '3.1', '3.2', '3.3']
+        ruby: ["2.7", "3.0", "3.1", "3.2", "3.3"]
     steps:
       - uses: actions/checkout@v4
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
@@ -120,7 +123,7 @@ The `ruby_test` attribute works with common Rust test frameworks like `proptest`
 #[ruby_test]
 fn test_with_proptest() {
     use proptest::prelude::*;
-    
+
     proptest!(|(s in "[a-zA-Z0-9]*")| {
         let ruby = unsafe { Ruby::get().unwrap() };
         let ruby_string = RString::new(ruby, &s).unwrap();

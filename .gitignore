@@ -5,3 +5,4 @@ gem/docs
 .yardoc/
 .DS_Store
 examples/rust_reverse/ext/rust_reverse/Cargo.lock
+book/src/https:/

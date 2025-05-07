@@ -2,17 +2,20 @@
 
 # Testing Extensions
 
-Testing is a critical part of developing Ruby extensions. This chapter covers strategies for testing your Rust code that interfaces with Ruby, from unit tests to integration tests and CI workflows.
+Testing is a critical part of developing Ruby extensions. This chapter covers strategies for testing your Rust code that
+interfaces with Ruby, from unit tests to integration tests and CI workflows.
 
 <div class="warning">
 
-Testing is particularly important for Ruby extensions because segmentation faults, memory leaks, and other low-level issues can crash the entire Ruby VM. Untested extensions can lead to hard-to-debug production crashes.
+Testing is particularly important for Ruby extensions because segmentation faults, memory leaks, and other low-level
+issues can crash the entire Ruby VM. Untested extensions can lead to hard-to-debug production crashes.
 
 </div>
 
 ## rb-sys-test-helpers Overview
 
-The `rb-sys-test-helpers` crate provides specialized utilities for testing Ruby extensions in Rust. It solves many of the challenges associated with testing code that interacts with the Ruby VM:
+The `rb-sys-test-helpers` crate provides specialized utilities for testing Ruby extensions in Rust. It solves many of
+the challenges associated with testing code that interacts with the Ruby VM:
 
 - Automating Ruby VM initialization and teardown
 - Managing thread safety for Ruby VM operations
@@ -35,13 +38,15 @@ Testing Rust code that interacts with Ruby presents unique challenges:
 
 <div class="note">
 
-rb-sys provides specialized tools to overcome these challenges, particularly the `#[ruby_test]` macro which handles Ruby VM initialization and thread management automatically.
+rb-sys provides specialized tools to overcome these challenges, particularly the `#[ruby_test]` macro which handles Ruby
+VM initialization and thread management automatically.
 
 </div>
 
 ### Complete Test Setup Guide
 
-Setting up proper testing for Ruby extensions requires several components working together. This guide provides a comprehensive setup that you can adapt to your project.
+Setting up proper testing for Ruby extensions requires several components working together. This guide provides a
+comprehensive setup that you can adapt to your project.
 
 #### Required Dependencies
 
@@ -68,6 +73,7 @@ rb-sys-test-helpers = "0.2" # For Ruby VM test helpers
 ```
 
 The key points:
+
 - Include `rb-sys` as a regular dependency (not just a dev-dependency)
 - Both `rb-sys-env` and `rb-sys-test-helpers` are needed for tests
 
@@ -89,8 +95,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 ```
 
 The `rb_sys_env::activate()` function:
+
 - Sets up Cargo configuration based on the detected Ruby environment
-- Exposes Ruby version information as feature flags (e.g., `ruby_gte_3_0`, `ruby_use_flonum`) 
+- Exposes Ruby version information as feature flags (e.g., `ruby_gte_3_0`, `ruby_use_flonum`)
 - Ensures proper linking to the Ruby library
 
 #### Importing Test Helpers
@@ -112,11 +119,13 @@ mod tests {
 
 <div class="tip">
 
-The `#[ruby_test]` macro is the simplest and most reliable way to test Ruby extensions in Rust. It handles all the complexities of VM initialization and thread management.
+The `#[ruby_test]` macro is the simplest and most reliable way to test Ruby extensions in Rust. It handles all the
+complexities of VM initialization and thread management.
 
 </div>
 
-The simplest way to test Ruby extensions is with the `#[ruby_test]` macro, which wraps your test functions to ensure they run within a properly initialized Ruby VM:
+The simplest way to test Ruby extensions is with the `#[ruby_test]` macro, which wraps your test functions to ensure
+they run within a properly initialized Ruby VM:
 
 ```rust,hidelines=#
 # // Complete example of using the ruby_test macro
@@ -128,17 +137,17 @@ fn test_string_manipulation() {
     unsafe {
         // Create a Ruby string
         let rb_str = rb_utf8_str_new_cstr("hello\0".as_ptr() as _);
-        
+
         // Append to the string
         let rb_str = rb_str_cat(rb_str, " world\0".as_ptr() as _, 6);
-        
+
         // Convert to Rust string for assertion
         let mut rb_str_val = rb_str;
         let result_ptr = rb_string_value_cstr(&mut rb_str_val);
         let result = std::ffi::CStr::from_ptr(result_ptr)
             .to_string_lossy()
             .to_string();
-        
+
         assert_eq!(result, "hello world");
     }
 }
@@ -165,13 +174,13 @@ fn test_string_manipulation() {
 #     {
 #         // Test Ruby 3.0+ specific features
 #     }
-#     
+#
 #     // This block only runs on Ruby 2.7
 #     #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
 #     {
 #         // Test Ruby 2.7 specific features
 #     }
-#     
+#
 #     // This block runs if float values are stored
 #     // as immediate values (Ruby implementation detail)
 #     #[cfg(ruby_use_flonum)]
@@ -184,16 +193,19 @@ fn test_string_manipulation() {
 <div class="note">
 
 The `#[ruby_test]` macro:
+
 1. Ensures the Ruby VM is initialized once and only once
 2. Runs all tests on the same OS thread
 3. Catches and propagates Ruby exceptions as Rust errors
 4. Performs GC after each test to catch memory management issues
 
-Click the eye icon (<i class="fa fa-eye"></i>) to view additional examples of the macro options and version-specific testing.
+Click the eye icon (<i class="fa fa-eye"></i>) to view additional examples of the macro options and version-specific
+testing.
 
 </div>
 
 The `#[ruby_test]` macro:
+
 1. Ensures the Ruby VM is initialized once and only once
 2. Runs all tests on the same OS thread
 3. Catches and propagates Ruby exceptions as Rust errors
@@ -203,11 +215,13 @@ The `#[ruby_test]` macro:
 
 <div class="tip">
 
-Magnus provides a much more ergonomic Rust API for working with Ruby. Combined with the `#[ruby_test]` macro, it makes testing Ruby extensions much simpler and safer.
+Magnus provides a much more ergonomic Rust API for working with Ruby. Combined with the `#[ruby_test]` macro, it makes
+testing Ruby extensions much simpler and safer.
 
 </div>
 
-One of the great advantages of the `#[ruby_test]` macro is that it works seamlessly with Magnus, providing a much more ergonomic way to test Ruby integrations:
+One of the great advantages of the `#[ruby_test]` macro is that it works seamlessly with Magnus, providing a much more
+ergonomic way to test Ruby integrations:
 
 ```rust,hidelines=#
 # // Complete example of using Magnus with ruby_test
@@ -218,16 +232,16 @@ use rb_sys_test_helpers::ruby_test;
 fn test_with_magnus() {
     // Get the Ruby interpreter - no unsafe required when using Magnus!
     let ruby = Ruby::get().unwrap();
-    
+
     // Create a Ruby string with Magnus
     let hello = RString::new(ruby, "Hello, ");
-    
+
     // Append to the string
     let message = hello.concat(ruby, "World!");
-    
+
     // Convert to Rust string for assertion - easy with Magnus
     let result = message.to_string().unwrap();
-    
+
     assert_eq!(result, "Hello, World!");
 }
 
@@ -235,25 +249,27 @@ fn test_with_magnus() {
 # #[ruby_test]
 # fn test_ruby_class_interaction() {
 #     let ruby = Ruby::get().unwrap();
-#     
+#
 #     // Define a Ruby class for testing
 #     let test_class = ruby.define_class("TestClass", ruby.class_object()).unwrap();
-#     
+#
 #     // Define a method on the class
-#     test_class.define_method("double", 
+#     test_class.define_method("double",
 #         magnus::method!(|_rb_self, num: i64| -> i64 { num * 2 }, 1)
 #     ).unwrap();
-#     
+#
 #     // Use Ruby's eval to test the class
 #     let result: i64 = ruby.eval("TestClass.new.double(21)").unwrap();
-#     
+#
 #     assert_eq!(result, 42);
 # }
 ```
 
 <div class="note">
 
-Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the `#[ruby_test]` macro gives you the best of both worlds:
+Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the
+`#[ruby_test]` macro gives you the best of both worlds:
+
 - Magnus's safe, high-level API
 - The `#[ruby_test]` macro's robust Ruby VM management
 
@@ -261,7 +277,9 @@ Click the eye icon (<i class="fa fa-eye"></i>) to see examples of more complex R
 
 </div>
 
-Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the `#[ruby_test]` macro gives you the best of both worlds:
+Magnus makes it much easier to interact with Ruby objects in a safe and idiomatic way. Using Magnus with the
+`#[ruby_test]` macro gives you the best of both worlds:
+
 - Magnus's safe, high-level API
 - The `#[ruby_test]` macro's robust Ruby VM management
 
@@ -274,18 +292,18 @@ use rb_sys_test_helpers::ruby_test;
 #[ruby_test]
 fn test_ruby_class_interaction() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Define a Ruby class for testing
     let test_class = ruby.define_class("TestClass", ruby.class_object()).unwrap();
-    
+
     // Define a method on the class
     test_class.define_method("double", method!(|ruby, num: i64| -> i64 {
         num * 2
     })).unwrap();
-    
+
     // Create an instance and call the method
     let result: i64 = eval!(ruby, "TestClass.new.double(21)").unwrap();
-    
+
     assert_eq!(result, 42);
 }
 ```
@@ -300,17 +318,17 @@ fn test_gc_interactions() {
     unsafe {
         // Create a Ruby string
         let s = rb_str_new_cstr("hello world\0".as_ptr() as _);
-        
+
         // Get a pointer to the string's contents
         let s_ptr = RSTRING_PTR(s);
-        
+
         // Protect s from garbage collection
         rb_gc_guard!(s);
-        
+
         // Now we can safely use s_ptr, even though GC might run
         let t = rb_str_new_cstr("prefix: \0".as_ptr() as _);
         let result = rb_str_cat_cstr(t, s_ptr);
-        
+
         // More code...
     }
 }
@@ -325,21 +343,23 @@ use rb_sys_test_helpers::ruby_test;
 #[ruby_test(gc_stress)]
 fn test_gc_interactions_with_magnus() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Create first string
     let s = RString::new(ruby, "hello world");
-    
+
     // Magnus handles GC protection automatically!
-    
+
     // Create second string and concatenate
     let t = RString::new(ruby, "prefix: ");
     let result = t.concat(ruby, &s);
-    
+
     assert_eq!(result.to_string().unwrap(), "prefix: hello world");
 }
 ```
 
-The `gc_stress` option forces Ruby's garbage collector to run frequently during the test, which helps expose bugs related to:
+The `gc_stress` option forces Ruby's garbage collector to run frequently during the test, which helps expose bugs
+related to:
+
 - Objects not being properly protected from GC
 - Dangling pointers
 - Invalid memory access
@@ -352,7 +372,7 @@ Ruby exceptions can be caught and converted to Rust errors using the `protect` f
 #[ruby_test]
 fn test_exception_handling() {
     use rb_sys_test_helpers::protect;
-    
+
     // This code will raise a Ruby exception
     let result = unsafe {
         protect(|| {
@@ -361,10 +381,10 @@ fn test_exception_handling() {
             "success"
         })
     };
-    
+
     // Verify we got an error
     assert!(result.is_err());
-    
+
     // Check the error message
     let error = result.unwrap_err();
     assert!(error.message().unwrap().contains("Test error"));
@@ -380,13 +400,13 @@ use rb_sys_test_helpers::ruby_test;
 #[ruby_test]
 fn test_exception_handling_with_magnus() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Evaluate Ruby code that raises an exception
     let result: Result<String, Error> = eval!(ruby, "raise 'Test error'");
-    
+
     // Verify we got an error
     assert!(result.is_err());
-    
+
     // Magnus errors contain the Ruby exception
     let error = result.unwrap_err();
     assert!(error.to_string().contains("Test error"));
@@ -408,11 +428,11 @@ fn test_version_specific_features() {
             // Example: using Ractor API which is only available in Ruby 3.0+
             #[cfg(ruby_have_ruby_ractor_h)]
             let is_ractor_supported = rb_sys::rb_ractor_main_p() != 0;
-            
+
             // ...
         }
     }
-    
+
     // This block will only run on Ruby 2.7
     #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
     {
@@ -431,14 +451,14 @@ use rb_sys_test_helpers::ruby_test;
 #[ruby_test]
 fn test_version_specific_features_with_magnus() {
     let ruby = Ruby::get().unwrap();
-    
+
     // This test will only run on Ruby 3.0 or higher
     #[cfg(ruby_gte_3_0)]
     {
         // Test Ruby 3.0+ specific features
         #[cfg(ruby_have_ruby_ractor_h)]
         let is_ractor_supported: bool = eval!(ruby, "defined?(Ractor) != nil").unwrap();
-        
+
         #[cfg(ruby_have_ruby_ractor_h)]
         assert!(is_ractor_supported);
     }
@@ -446,6 +466,7 @@ fn test_version_specific_features_with_magnus() {
 ```
 
 Available version flags include:
+
 - `ruby_gte_X_Y`: Ruby version >= X.Y
 - `ruby_lt_X_Y`: Ruby version < X.Y
 - `ruby_eq_X_Y`: Ruby version == X.Y
@@ -460,11 +481,11 @@ rb-sys-test-helpers includes several macros to simplify common testing patterns:
 #[ruby_test]
 fn test_with_helper_macros() {
     use rb_sys_test_helpers::rstring_to_string;
-    
+
     unsafe {
         let rb_str = rb_utf8_str_new_cstr("hello world\0".as_ptr() as _);
         let rust_str = rstring_to_string!(rb_str);
-        
+
         assert_eq!(rust_str, "hello world");
     }
 }
@@ -487,14 +508,14 @@ fn test_complex_scenario() {
                 42
             })
         };
-        
+
         let result2 = unsafe {
             protect(|| {
                 // Second operation...
                 "success"
             })
         };
-        
+
         assert_eq!(result1.unwrap(), 42);
         assert_eq!(result2.unwrap(), "success");
     }).unwrap();
@@ -511,13 +532,13 @@ use rb_sys_test_helpers::with_ruby_vm;
 fn test_complex_scenario_with_magnus() {
     with_ruby_vm(|| {
         let ruby = Ruby::get().unwrap();
-        
+
         // First operation
         let result1: i64 = eval!(ruby, "21 * 2").unwrap();
-        
+
         // Second operation
         let result2: String = eval!(ruby, "'suc' + 'cess'").unwrap();
-        
+
         assert_eq!(result1, 42);
         assert_eq!(result2, "success");
     }).unwrap();
@@ -526,7 +547,8 @@ fn test_complex_scenario_with_magnus() {
 
 ## Debugging Failed Tests
 
-When your tests fail, debugging tools can help identify the root cause. LLDB is particularly useful for debugging memory issues, segmentation faults, and other low-level problems.
+When your tests fail, debugging tools can help identify the root cause. LLDB is particularly useful for debugging memory
+issues, segmentation faults, and other low-level problems.
 
 ### Using LLDB to Debug Tests
 
@@ -631,11 +653,13 @@ For diagnosing `BorrowMutError` panics:
 
 ### Further Information
 
-For more comprehensive debugging setup including VSCode integration and debugging the Ruby C API, see the [Debugging & Troubleshooting](debugging.md) chapter.
+For more comprehensive debugging setup including VSCode integration and debugging the Ruby C API, see the
+[Debugging & Troubleshooting](debugging.md) chapter.
 
 ### Common Testing Patterns and Anti-Patterns
 
-When testing Ruby extensions, several patterns emerge that can help you write more effective tests, along with anti-patterns to avoid.
+When testing Ruby extensions, several patterns emerge that can help you write more effective tests, along with
+anti-patterns to avoid.
 
 #### Pattern: Proper Method Invocation
 
@@ -685,15 +709,15 @@ assert!(err.message().unwrap().contains("Division by zero"));
 fn test_argument_error() -> Result<(), Error> {
     let ruby = Ruby::get()?;
     let calc = Calculator::new();
-    
+
     // Function that raises ArgumentError on negative input
     let result = Calculator::sqrt(&ruby, &calc, -1.0);
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     assert!(err.is_kind_of(ruby, ruby.exception_arg_error()));
     assert!(err.message().unwrap().contains("must be positive"));
-    
+
     Ok(())
 }
 
@@ -701,28 +725,28 @@ fn test_argument_error() -> Result<(), Error> {
 fn test_range_error() -> Result<(), Error> {
     let ruby = Ruby::get()?;
     let calc = Calculator::new();
-    
+
     // Function that raises RangeError on large values
     let result = Calculator::factorial(&ruby, &calc, 100);
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     assert!(err.is_kind_of(ruby, ruby.exception_range_error()));
-    
+
     Ok(())
 }
 
 // Testing for TypeError
 fn test_type_error() -> Result<(), Error> {
     let ruby = Ruby::get()?;
-    
+
     // Use eval to create a type error situation
     let result: Result<i64, Error> = ruby.eval("'string' + 5");
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     assert!(err.is_kind_of(ruby, ruby.exception_type_error()));
-    
+
     Ok(())
 }
 ```
@@ -735,20 +759,20 @@ You can also test how Ruby exceptions are raised and handled using `eval`:
 #[ruby_test]
 fn test_ruby_exceptions_with_eval() -> Result<(), Error> {
     let ruby = Ruby::get()?;
-    
+
     // Set up our extension
     let module = ruby.define_module("MyModule")?;
     let calc_class = module.define_class("Calculator", ruby.class_object())?;
     calc_class.define_singleton_method("new", function!(Calculator::new, 0))?;
     calc_class.define_method("divide", method!(Calculator::divide, 2))?;
-    
+
     // Test division by zero from Ruby code
     let result: Result<f64, Error> = ruby.eval("MyModule::Calculator.new.divide(10, 0)");
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     assert!(err.is_kind_of(ruby, ruby.exception_zero_div_error()));
-    
+
     Ok(())
 }
 ```
@@ -761,14 +785,14 @@ For custom exception classes:
 #[ruby_test]
 fn test_custom_exception() -> Result<(), Error> {
     let ruby = Ruby::get()?;
-    
+
     // Create a custom exception class
     let module = ruby.define_module("MyModule")?;
     let custom_error = module.define_class("CustomError", ruby.exception_standard_error())?;
-    
+
     // Define a method that raises our custom error
     let obj = ruby.eval::<Value>("Object.new")?;
-    obj.define_singleton_method(ruby, "raise_custom", 
+    obj.define_singleton_method(ruby, "raise_custom",
         function!(|ruby: &Ruby| -> Result<(), Error> {
             Err(Error::new(
                 ruby.class_path_to_value("MyModule::CustomError"),
@@ -776,15 +800,15 @@ fn test_custom_exception() -> Result<(), Error> {
             ))
         }, 0)
     )?;
-    
+
     // Call the method and verify the exception
     let result: Result<(), Error> = ruby.eval("Object.new.raise_custom");
     assert!(result.is_err());
-    
+
     let err = result.unwrap_err();
     assert!(err.is_kind_of(ruby, custom_error));
     assert!(err.message().unwrap().contains("Custom error"));
-    
+
     Ok(())
 }
 ```
@@ -821,7 +845,7 @@ fn test_features() {
     {
         // Test Ruby 3.0+ specific features
     }
-    
+
     #[cfg(not(ruby_gte_3_0))]
     {
         // Test for older Ruby versions
@@ -838,7 +862,8 @@ fn test_features() {
 
 <div class="warning">
 
-Failing to follow these practices can result in segmentation faults, memory leaks, and other serious issues that may only appear in production environments with specific data or Ruby versions.
+Failing to follow these practices can result in segmentation faults, memory leaks, and other serious issues that may
+only appear in production environments with specific data or Ruby versions.
 
 </div>
 
@@ -859,35 +884,35 @@ Failing to follow these practices can result in segmentation faults, memory leak
 # use magnus::{class, eval, function, method, prelude::*, Error, Ruby, Value};
 # use rb_sys_test_helpers::ruby_test;
 # use std::cell::RefCell;
-# 
+#
 # // Define a struct with interior mutability
 # struct Counter {
 #     count: i64,
 # }
-# 
+#
 # #[magnus::wrap(class = "MyExtension::Counter")]
 # struct MutCounter(RefCell<Counter>);
-# 
+#
 # impl MutCounter {
 #     fn new(initial: i64) -> Self {
 #         Self(RefCell::new(Counter { count: initial }))
 #     }
-#     
+#
 #     fn count(&self) -> i64 {
 #         self.0.borrow().count
 #     }
-#     
+#
 #     fn increment(&self) -> i64 {
 #         let mut counter = self.0.borrow_mut();
 #         counter.count += 1;
 #         counter.count
 #     }
-#     
+#
 #     // Method that uses Ruby VM to potentially raise exceptions
 #     fn add_checked(ruby: &Ruby, rb_self: &Self, val: i64) -> Result<i64, Error> {
 #         // ✅ GOOD: Complete borrow before starting a new one
 #         let current = rb_self.0.borrow().count;
-#         
+#
 #         if let Some(sum) = current.checked_add(val) {
 #             rb_self.0.borrow_mut().count = sum;
 #             Ok(sum)
@@ -899,12 +924,12 @@ Failing to follow these practices can result in segmentation faults, memory leak
 #         }
 #     }
 # }
-# 
+#
 # // Comprehensive test suite following best practices
 # #[cfg(test)]
 # mod tests {
 #     use super::*;
-#     
+#
 #     // ✅ GOOD: Basic functionality test
 #     #[ruby_test]
 #     fn test_counter_basic() {
@@ -913,41 +938,41 @@ Failing to follow these practices can result in segmentation faults, memory leak
 #         assert_eq!(counter.increment(), 1);
 #         assert_eq!(counter.increment(), 2);
 #     }
-#     
+#
 #     // ✅ GOOD: Test with Ruby exceptions
 #     #[ruby_test]
 #     fn test_counter_overflow() {
 #         let ruby = Ruby::get().unwrap();
 #         let counter = MutCounter::new(i64::MAX);
-#         
+#
 #         // Test method that might raise Ruby exception
 #         let result = MutCounter::add_checked(&ruby, &counter, 1);
 #         assert!(result.is_err());
-#         
+#
 #         // ✅ GOOD: Check specific exception type
 #         let err = result.unwrap_err();
 #         assert!(err.is_kind_of(ruby, ruby.exception_range_error()));
 #     }
-#     
+#
 #     // ✅ GOOD: GC stress testing to catch memory issues
 #     #[ruby_test(gc_stress)]
 #     fn test_with_gc_stress() {
 #         let ruby = Ruby::get().unwrap();
 #         let counter = MutCounter::new(0);
-#         
+#
 #         // Register Ruby class for testing from Ruby
 #         let class = ruby.define_class("Counter", ruby.class_object()).unwrap();
 #         class.define_singleton_method("new", function!(MutCounter::new, 1)).unwrap();
 #         class.define_method("increment", method!(MutCounter::increment, 0)).unwrap();
-#         
+#
 #         // Access from Ruby (with GC stress active)
 #         let result: i64 = ruby.eval(
 #             "counter = Counter.new(5); counter.increment; counter.increment"
 #         ).unwrap();
-#         
+#
 #         assert_eq!(result, 7);
 #     }
-#     
+#
 #     // ✅ GOOD: Version-specific tests
 #     #[ruby_test]
 #     fn test_version_specific() {
@@ -955,7 +980,7 @@ Failing to follow these practices can result in segmentation faults, memory leak
 #         {
 #             // Test Ruby 3.0+ specific features
 #         }
-#         
+#
 #         #[cfg(all(ruby_gte_2_7, ruby_lt_3_0))]
 #         {
 #             // Test Ruby 2.7 specific features
@@ -964,13 +989,15 @@ Failing to follow these practices can result in segmentation faults, memory leak
 # }
 ```
 
-This example illustrates proper handling of RefCell borrowing, Ruby exceptions, GC stress testing, and version-specific tests.
+This example illustrates proper handling of RefCell borrowing, Ruby exceptions, GC stress testing, and version-specific
+tests.
 
 </div>
 
 ### Example: Complete Test Module
 
-Here's a complete end-to-end example based on the rusty_calculator extension. This includes the project structure, required files, and comprehensive test module:
+Here's a complete end-to-end example based on the rusty_calculator extension. This includes the project structure,
+required files, and comprehensive test module:
 
 #### Project Setup
 
@@ -1012,7 +1039,7 @@ use std::error::Error;
 fn main() -> Result<(), Box<dyn Error>> {
     // Activate rb-sys-env to set up Ruby environment for both builds and tests
     let _ = rb_sys_env::activate()?;
-    
+
     Ok(())
 }
 ```
@@ -1038,7 +1065,7 @@ impl MutCalculator {
     fn new() -> Self {
         Self(RefCell::new(Calculator { memory: 0.0 }))
     }
-    
+
     // Basic arithmetic that returns a Result which can generate Ruby exceptions
     fn divide(ruby: &Ruby, _rb_self: &Self, a: f64, b: f64) -> Result<f64, Error> {
         if b == 0.0 {
@@ -1049,18 +1076,18 @@ impl MutCalculator {
         }
         Ok(a / b)
     }
-    
+
     // Regular instance method
     fn add(&self, a: f64, b: f64) -> f64 {
         a + b
     }
-    
+
     // Memory operations using RefCell
     fn store(&self, value: f64) -> f64 {
         self.0.borrow_mut().memory = value;
         value
     }
-    
+
     fn recall(&self) -> f64 {
         self.0.borrow().memory
     }
@@ -1070,7 +1097,7 @@ impl MutCalculator {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MyExtension")?;
-    
+
     // Set up the Calculator class
     let calc_class = module.define_class("Calculator", ruby.class_object())?;
     calc_class.define_singleton_method("new", function!(MutCalculator::new, 0))?;
@@ -1078,7 +1105,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     calc_class.define_method("add", method!(MutCalculator::add, 2))?;
     calc_class.define_method("store", method!(MutCalculator::store, 1))?;
     calc_class.define_method("recall", method!(MutCalculator::recall, 0))?;
-    
+
     Ok(())
 }
 
@@ -1087,67 +1114,67 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 mod tests {
     use super::*;
     use rb_sys_test_helpers::ruby_test;
-    
+
     // Basic functionality test
     #[ruby_test]
     fn test_calculator_basic_operations() {
         let calc = MutCalculator::new();
-        
+
         // Test regular instance method
         assert_eq!(calc.add(2.0, 3.0), 5.0);
-        
+
         // Test memory operations
         assert_eq!(calc.store(42.0), 42.0);
         assert_eq!(calc.recall(), 42.0);
     }
-    
+
     // Test method that raises Ruby exceptions
     #[ruby_test]
     fn test_calculator_divide() {
         let ruby = Ruby::get().unwrap();
         let calc = MutCalculator::new();
-        
+
         // Test normal division - note the function syntax for methods
         // that take ruby and rb_self parameters
         let result = MutCalculator::divide(&ruby, &calc, 10.0, 2.0);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 5.0);
-        
+
         // Test division by zero
         let result = MutCalculator::divide(&ruby, &calc, 10.0, 0.0);
         assert!(result.is_err());
-        
+
         // Verify specific exception type
         let err = result.unwrap_err();
         assert!(err.is_kind_of(ruby, ruby.exception_zero_div_error()));
         assert!(err.message().unwrap().contains("Division by zero"));
     }
-    
+
     // Test with GC stress for memory issues
     #[ruby_test(gc_stress)]
     fn test_calculator_with_gc_stress() {
         let calc = MutCalculator::new();
-        
+
         // Store and recall with GC stress active
         for i in 0..100 {
             calc.store(i as f64);
             assert_eq!(calc.recall(), i as f64);
         }
-        
+
         // No segfaults or panics means test passed
     }
-    
+
     // Test for Ruby integration using eval
     #[ruby_test]
     fn test_ruby_integration() {
         let ruby = Ruby::get().unwrap();
-        
+
         // Define the calculator class - this simulates what init() does
         let module = ruby.define_module("MyExtension").unwrap();
         let calc_class = module.define_class("Calculator", ruby.class_object()).unwrap();
         calc_class.define_singleton_method("new", function!(MutCalculator::new, 0)).unwrap();
         calc_class.define_method("add", method!(MutCalculator::add, 2)).unwrap();
-        
+
         // Call methods via Ruby's eval
         let result: f64 = ruby.eval("MyExtension::Calculator.new.add(2, 3)").unwrap();
         assert_eq!(result, 5.0);
@@ -1165,7 +1192,8 @@ This complete example demonstrates:
 6. Ruby integration testing via eval
 
 You can adapt this template to your own extension, adding the specific functionality your project requires.
-```
+
+````
 
 ## Integration Testing Ruby API
 
@@ -1206,35 +1234,35 @@ class TestMyExtension < Minitest::Test
     # Test that nil values are properly handled
     assert_nil @calculator.process(nil)
   end
-  
+
 # # Test memory management
 # def test_gc_safety
 #   # Create many objects and force garbage collection
 #   1000.times do |i|
 #     obj = MyExtension::Calculator.new
 #     obj.add(i, i)
-#     
+#
 #     # Force garbage collection periodically
 #     GC.start if i % 100 == 0
 #   end
-#   
+#
 #   # If we reach here without segfaults, the test passes
 #   assert true
 # end
-# 
+#
 # # Test edge cases
 # def test_edge_cases
 #   # Test with extreme values
 #   max = (2**60)
 #   assert_equal max * 2, @calculator.multiply(max, 2)
-#   
+#
 #   # Test with different types
 #   assert_raises(TypeError) do
 #     @calculator.add("string", 1)
 #   end
 # end
 end
-```
+````
 
 <div class="note">
 
@@ -1273,11 +1301,11 @@ def test_gc_safety
   # Create many objects and force garbage collection
   1000.times do |i|
     obj = MyExtension::Point.new(i, i)
-    
+
     # Force garbage collection periodically
     GC.start if i % 100 == 0
   end
-  
+
   # If we reach here without segfaults or leaks, the test passes
   assert true
 end
@@ -1286,13 +1314,13 @@ def test_object_references
   # Test that nested objects maintain correct references
   parent = MyExtension::Node.new("parent")
   child = MyExtension::Node.new("child")
-  
+
   # Create relationship
   parent.add_child(child)
-  
+
   # Force garbage collection
   GC.start
-  
+
   # Both objects should still be valid
   assert_equal "parent", parent.name
   assert_equal "child", parent.children.first.name
@@ -1311,22 +1339,22 @@ Type conversions between Rust and Ruby are common sources of bugs:
 #[ruby_test]
 fn test_type_conversions() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Test Ruby to Rust conversions
     let rb_str = RString::new(ruby, "test");
     let rb_int = Integer::from_i64(42);
     let rb_array = RArray::from_iter(ruby, vec![1, 2, 3]);
-    
+
     // Convert to Rust types
     let rust_str: String = rb_str.to_string().unwrap();
     let rust_int: i64 = rb_int.to_i64().unwrap();
     let rust_vec: Vec<i64> = rb_array.to_vec().unwrap();
-    
+
     // Verify conversions
     assert_eq!(rust_str, "test");
     assert_eq!(rust_int, 42);
     assert_eq!(rust_vec, vec![1, 2, 3]);
-    
+
     // Test Rust to Ruby conversions
     let rust_str = "reverse";
     let rb_str = RString::new(ruby, rust_str);
@@ -1336,7 +1364,8 @@ fn test_type_conversions() {
 
 ### Method Invocation Syntax in Tests
 
-When testing Rust methods exposed to Ruby, it's important to understand the different invocation patterns based on the method's signature:
+When testing Rust methods exposed to Ruby, it's important to understand the different invocation patterns based on the
+method's signature:
 
 #### Regular Instance Methods
 
@@ -1377,18 +1406,20 @@ fn divide(ruby: &Ruby, _rb_self: &Self, a: f64, b: f64) -> Result<f64, Error> {
 fn test_divide() {
     let ruby = Ruby::get().unwrap();
     let calc = MutCalculator::new();
-    
+
     // CORRECT: Associated function syntax with all parameters
     let result = MutCalculator::divide(&ruby, &calc, 6.0, 2.0);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), 3.0);
-    
+
     // INCORRECT: This will not compile
     // let result = calc.divide(&ruby, 6.0, 2.0);
 }
 ```
 
-The key difference is that when a method takes `rb_self: &Self` as a parameter (as many methods do that interact with Ruby), it's not a true instance method from Rust's perspective. In tests, you must call these using the associated function syntax, passing in the Ruby interpreter and the self reference explicitly.
+The key difference is that when a method takes `rb_self: &Self` as a parameter (as many methods do that interact with
+Ruby), it's not a true instance method from Rust's perspective. In tests, you must call these using the associated
+function syntax, passing in the Ruby interpreter and the self reference explicitly.
 
 ### Testing RefCell Borrowing
 
@@ -1399,12 +1430,12 @@ For extensions that use `RefCell` for interior mutability, test these patterns t
 fn test_refcell_borrowing() {
     let ruby = Ruby::get().unwrap();
     let counter = MutCounter::new(0);
-    
+
     // Test regular instance methods
     assert_eq!(counter.count(), 0);
     assert_eq!(counter.increment(), 1);
     assert_eq!(counter.increment(), 2);
-    
+
     // Test methods that use checked operations with the Ruby VM
     // Note the use of associated function syntax here
     let result = MutCounter::add_checked(&ruby, &counter, 10);
@@ -1416,7 +1447,9 @@ fn test_refcell_borrowing() {
 
 ### GC Stress Testing
 
-Testing with Ruby's garbage collector is essential to ensure your extension doesn't leak memory or access deallocated objects. The `#[ruby_test(gc_stress)]` option helps identify these issues early by running the garbage collector more frequently.
+Testing with Ruby's garbage collector is essential to ensure your extension doesn't leak memory or access deallocated
+objects. The `#[ruby_test(gc_stress)]` option helps identify these issues early by running the garbage collector more
+frequently.
 
 #### Basic GC Stress Testing
 
@@ -1424,16 +1457,16 @@ Testing with Ruby's garbage collector is essential to ensure your extension does
 #[ruby_test(gc_stress)]
 fn test_gc_integration() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Create objects that should be properly managed
     for i in 0..100 {
         let obj = SomeObject::new(i);
         // obj goes out of scope here, should be collected
     }
-    
+
     // Force garbage collection explicitly
     ruby.gc_start();
-    
+
     // No panics or segfaults means the test passes
 }
 ```
@@ -1464,7 +1497,7 @@ impl Container {
     fn new(item: Value, metadata: Value) -> Self {
         Self { item, metadata }
     }
-    
+
     fn item(&self) -> Value {
         self.item
     }
@@ -1474,21 +1507,21 @@ impl Container {
 #[ruby_test(gc_stress)]
 fn test_container_mark_method() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Create Ruby strings
     let item = RString::new(ruby, "Test Item");
     let metadata = RString::new(ruby, "Item Description");
-    
+
     // Create our container
     let container = Container::new(item.as_value(), metadata.as_value());
-    
+
     // Force garbage collection
     ruby.gc_start();
-    
+
     // The items should still be accessible and not garbage collected
     let retrieved_item = container.item();
     let item_str: String = RString::from_value(retrieved_item).unwrap().to_string().unwrap();
-    
+
     assert_eq!(item_str, "Test Item");
 }
 ```
@@ -1501,7 +1534,7 @@ This test ensures objects referenced by your extension aren't prematurely collec
 #[ruby_test(gc_stress)]
 fn test_object_references_survive_gc() {
     let ruby = Ruby::get().unwrap();
-    
+
     // Create a struct holding references to other objects
     #[derive(TypedData)]
     #[magnus(class = "Node", free_immediately, mark)]
@@ -1509,7 +1542,7 @@ fn test_object_references_survive_gc() {
         value: Value,
         children: Vec<Value>,
     }
-    
+
     impl DataTypeFunctions for Node {
         fn mark(&self, marker: &Marker) {
             marker.mark(self.value);
@@ -1518,16 +1551,16 @@ fn test_object_references_survive_gc() {
             }
         }
     }
-    
+
     impl Node {
         fn new(value: Value) -> Self {
             Self { value, children: Vec::new() }
         }
-        
+
         fn add_child(&mut self, child: Value) {
             self.children.push(child);
         }
-        
+
         fn child_values(&self, ruby: &Ruby) -> Result<Vec<String>, Error> {
             let mut result = Vec::new();
             for child in &self.children {
@@ -1537,22 +1570,22 @@ fn test_object_references_survive_gc() {
             Ok(result)
         }
     }
-    
+
     // Create the parent node
     let parent_value = RString::new(ruby, "Parent");
     let mut parent = Node::new(parent_value.as_value());
-    
+
     // Add many child nodes
     for i in 0..20 {
         let child = RString::new(ruby, format!("Child {}", i));
         parent.add_child(child.as_value());
     }
-    
+
     // Run garbage collection multiple times
     for _ in 0..5 {
         ruby.gc_start();
     }
-    
+
     // Verify all children are still accessible
     let child_values = parent.child_values(ruby).unwrap();
     assert_eq!(child_values.len(), 20);
@@ -1573,23 +1606,23 @@ fn test_raw_pointer_safety() {
     unsafe {
         // Create Ruby values
         let rb_ary = rb_ary_new();
-        
+
         // IMPORTANT: Protect from GC
         let rb_ary = rb_gc_guard!(rb_ary);
-        
+
         // Add items to the array
         for i in 0..10 {
             let rb_str = rb_utf8_str_new_cstr(format!("item {}\0", i).as_ptr() as _);
-            
+
             // IMPORTANT: Protect each string from GC
             let rb_str = rb_gc_guard!(rb_str);
-            
+
             rb_ary_push(rb_ary, rb_str);
         }
-        
+
         // Force GC
         rb_gc();
-        
+
         // Array should still have 10 elements
         assert_eq!(rb_ary_len(rb_ary), 10);
     }
@@ -1615,11 +1648,11 @@ fn test_with_conversion_helpers() {
         let rb_ary = rb_ary_new();
         rb_ary_push(rb_ary, rb_utf8_str_new_cstr("one\0".as_ptr() as _));
         rb_ary_push(rb_ary, rb_utf8_str_new_cstr("two\0".as_ptr() as _));
-        
+
         // Convert to Rust using helpers
         let rust_str = rstring_to_string!(rb_str);
         let rust_vec = rarray_to_vec!(rb_ary, String);
-        
+
         // Verify conversions
         assert_eq!(rust_str, "hello");
         assert_eq!(rust_vec, vec!["one".to_string(), "two".to_string()]);
@@ -1647,7 +1680,7 @@ fn test_exception_handling() {
             )
         })
     };
-    
+
     // Verify we got an exception
     assert!(result.is_err());
     let error = result.unwrap_err();
@@ -1659,11 +1692,13 @@ fn test_exception_handling() {
 
 <div class="warning">
 
-CI testing is essential for extensions that will be distributed as gems. Without it, you risk publishing binaries that crash on specific Ruby versions or platforms.
+CI testing is essential for extensions that will be distributed as gems. Without it, you risk publishing binaries that
+crash on specific Ruby versions or platforms.
 
 </div>
 
-Setting up continuous integration (CI) testing is crucial for Ruby extension gems. This section covers best practices for testing your extensions in CI environments.
+Setting up continuous integration (CI) testing is crucial for Ruby extension gems. This section covers best practices
+for testing your extensions in CI environments.
 
 ### Basic GitHub Actions Setup
 
@@ -1692,10 +1727,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         ruby: ['3.0', '3.1', '3.2']
-        
+
     steps:
     - uses: actions/checkout@v3
-    
+
     # Use the setup-ruby-and-rust action from oxidize-rb
     - name: Set up Ruby and Rust
       uses: oxidize-rb/actions/setup-ruby-and-rust@v1
@@ -1703,13 +1738,13 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
         cargo-cache: true
-    
+
     # Run tests
     - name: Compile and test
       run: |
         bundle exec rake compile
         bundle exec rake test
-        
+
     # Run Rust tests
     - name: Run Rust tests
       run: cargo test --workspace
@@ -1738,7 +1773,8 @@ jobs:
 
 Click the eye icon (<i class="fa fa-eye"></i>) to see a Windows-specific job configuration.
 
-The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provides specialized GitHub Actions for Ruby extensions written in Rust, making setup much simpler.
+The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provides specialized GitHub Actions for Ruby
+extensions written in Rust, making setup much simpler.
 
 </div>
 
@@ -1746,11 +1782,14 @@ The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provi
 
 <div class="tip">
 
-Memory leaks can be particularly difficult to detect in Ruby extensions. Tools like ruby_memcheck help catch these issues early.
+Memory leaks can be particularly difficult to detect in Ruby extensions. Tools like ruby_memcheck help catch these
+issues early.
 
 </div>
 
-The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem provides a powerful way to detect memory leaks in Ruby extensions. It uses Valgrind under the hood but filters out false positives that are common when running Valgrind on Ruby code.
+The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem provides a powerful way to detect memory leaks in Ruby
+extensions. It uses Valgrind under the hood but filters out false positives that are common when running Valgrind on
+Ruby code.
 
 To use ruby_memcheck, add it to your test workflow:
 
@@ -1774,16 +1813,17 @@ end
 # RubyMemcheck.config do |config|
 #   # Adjust valgrind options
 #   config.valgrind_options += ["--leak-check=full", "--show-leak-kinds=all"]
-#   
+#
 #   # Specify custom suppression files
 #   config.valgrind_suppression_files << "my_suppressions.supp"
-#   
+#
 #   # Skip specific Ruby functions
 #   config.skipped_ruby_functions << /my_custom_allocator/
 # end
 ```
 
 To run memory tests:
+
 ```bash
 # Install valgrind first if needed
 # sudo apt-get install valgrind  # On Debian/Ubuntu
@@ -1796,19 +1836,22 @@ bundle exec rake test:valgrind
 
 Click the eye icon (<i class="fa fa-eye"></i>) to see advanced configuration options for ruby_memcheck.
 
-For more detailed instructions and configuration options, refer to the [ruby_memcheck documentation](https://github.com/Shopify/ruby_memcheck).
+For more detailed instructions and configuration options, refer to the
+[ruby_memcheck documentation](https://github.com/Shopify/ruby_memcheck).
 
 </div>
 
 ### Cross-Platform Testing with rb-sys-dock
 
-For testing across different platforms, [rb-sys-dock](https://github.com/oxidize-rb/rb-sys-dock) provides Docker images pre-configured for cross-platform compilation and testing of Rust Ruby extensions.
+For testing across different platforms, [rb-sys-dock](https://github.com/oxidize-rb/rb-sys-dock) provides Docker images
+pre-configured for cross-platform compilation and testing of Rust Ruby extensions.
 
 ### Best Practices for CI Testing
 
 <div class="warning">
 
-Without thorough CI testing across all supported platforms and Ruby versions, your extension may work perfectly in your development environment but crash for users with different setups.
+Without thorough CI testing across all supported platforms and Ruby versions, your extension may work perfectly in your
+development environment but crash for users with different setups.
 
 </div>
 
@@ -1821,9 +1864,10 @@ Without thorough CI testing across all supported platforms and Ruby versions, yo
 <div class="tip">
 
 The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provides ready-to-use GitHub Actions for:
+
 - Setting up Ruby and Rust environments
 - Building native gems
-- Cross-compiling for multiple platforms 
+- Cross-compiling for multiple platforms
 - Running tests and linting checks
 
 Using these specialized actions will save you time and ensure your tests follow best practices.

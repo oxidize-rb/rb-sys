@@ -46,7 +46,9 @@ fn init() -> Result<(), Error> {
 
 <div class="note">
 
-You can click the "play" button on code blocks to try them out in the Rust Playground where appropriate. For code that depends on the Ruby API, you won't be able to run it directly, but you can experiment with Rust syntax and standard library functions.
+You can click the "play" button on code blocks to try them out in the Rust Playground where appropriate. For code that
+depends on the Ruby API, you won't be able to run it directly, but you can experiment with Rust syntax and standard
+library functions.
 
 </div>
 
@@ -82,7 +84,7 @@ impl Greeter {
     fn new(name: String) -> Self {
         Greeter { name }
     }
-    
+
     // Instance method
     fn greet(&self) -> String {
         format!("Hello, {}!", self.name)
@@ -100,22 +102,23 @@ impl Greeter {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("HelloRusty")?;
-    
+
     // Define and configure the Greeter class
     let class = module.define_class("Greeter", ruby.class_object())?;
     class.define_singleton_method("new", function!(Greeter::new, 1))?;
     class.define_method("greet", method!(Greeter::greet, 0))?;
-    
+
     # // We could also expose the additional method
     # // class.define_method("greet_with_prefix", method!(Greeter::greet_with_prefix, 1))?;
-    
+
     Ok(())
 }
 ```
 
 <div class="tip">
 
-Click the eye icon (<i class="fa fa-eye"></i>) to reveal commented lines with additional functionality that you could add to your implementation.
+Click the eye icon (<i class="fa fa-eye"></i>) to reveal commented lines with additional functionality that you could
+add to your implementation.
 
 </div>
 
@@ -130,6 +133,7 @@ bundle exec rake compile
 ```
 
 What happens during compilation:
+
 1. Ruby's `mkmf` reads your `extconf.rb`
 2. `create_rust_makefile` generates a Makefile with Cargo commands
 3. Cargo compiles your Rust code to a dynamic library
@@ -152,7 +156,7 @@ class TestHelloRusty < Minitest::Test
     greeter = HelloRusty::Greeter.new("Rustacean")
     assert_equal "Hello, Rustacean!", greeter.greet
   end
-  
+
   # # If we implemented the additional method, we could test it
   # def test_greeter_with_prefix
   #   greeter = HelloRusty::Greeter.new("Rustacean")

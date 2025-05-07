@@ -2,9 +2,11 @@
 
 ## Overview
 
-This chapter explains what happens behind the scenes when rb-sys compiles your Rust extension, helping you debug issues and optimize builds.
+This chapter explains what happens behind the scenes when rb-sys compiles your Rust extension, helping you debug issues
+and optimize builds.
 
-This chapter explains what happens behind the scenes when rb-sys compiles your Rust extension. Understanding this process will help you debug issues and optimize your extension.
+This chapter explains what happens behind the scenes when rb-sys compiles your Rust extension. Understanding this
+process will help you debug issues and optimize your extension.
 
 ## How rb-sys Compiles Your Code
 
@@ -19,7 +21,8 @@ Let's examine each step in detail.
 
 ## The Role of extconf.rb
 
-The `extconf.rb` file is the entry point for Ruby's native extension system. For rb-sys projects, it typically looks like this:
+The `extconf.rb` file is the entry point for Ruby's native extension system. For rb-sys projects, it typically looks
+like this:
 
 ```ruby
 # extconf.rb
@@ -49,32 +52,33 @@ create_rust_makefile("my_gem/my_gem") do |config|
 
   # Set environment variables for cargo
   config.env = { "SOME_VAR" => "value" }
-  
+
   # Specify extra Rust flags
   config.extra_rustflags = ["--cfg=feature=\"custom_feature\""]
-  
+
   # Clean up target directory after installation to reduce gem size
   config.clean_after_install = true
-  
+
   # Force installation of Rust toolchain if not present
   config.force_install_rust_toolchain = "stable"
-  
+
   # Auto-install Rust toolchain during gem installation
   config.auto_install_rust_toolchain = true
 end
 ```
 
-For a complete reference of all available configuration options, see the [rb_sys Gem Configuration](./api-reference/rb-sys-gem-config.md) documentation.
+For a complete reference of all available configuration options, see the
+[rb_sys Gem Configuration](./api-reference/rb-sys-gem-config.md) documentation.
 
 ## Environment Variables
 
 Several environment variables affect the build process:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `RB_SYS_CARGO_PROFILE` | Cargo profile to use (`dev` or `release`) | `dev` |
-| `RB_SYS_CARGO_FEATURES` | Comma-separated list of features to enable | None |
-| `RB_SYS_CARGO_ARGS` | Additional arguments to pass to cargo | None |
+| Variable                | Description                                | Default |
+| ----------------------- | ------------------------------------------ | ------- |
+| `RB_SYS_CARGO_PROFILE`  | Cargo profile to use (`dev` or `release`)  | `dev`   |
+| `RB_SYS_CARGO_FEATURES` | Comma-separated list of features to enable | None    |
+| `RB_SYS_CARGO_ARGS`     | Additional arguments to pass to cargo      | None    |
 
 For example:
 
@@ -147,10 +151,10 @@ fn main() {
     if std::env::var("TARGET").unwrap().contains("windows") {
         println!("cargo:rustc-cfg=feature=\"windows\"");
     }
-    
+
     // Link to system libraries if needed
     println!("cargo:rustc-link-lib=dylib=ssl");
-    
+
     // Rerun if specific files change
     println!("cargo:rerun-if-changed=src/native_code.h");
 }
@@ -167,7 +171,8 @@ build = "build.rs"
 
 ## Cross-Compilation with rb-sys-dock
 
-The real power of rb-sys is its ability to cross-compile extensions using `rb-sys-dock`. This tool runs your build in Docker containers configured for different platforms.
+The real power of rb-sys is its ability to cross-compile extensions using `rb-sys-dock`. This tool runs your build in
+Docker containers configured for different platforms.
 
 ### Basic Cross-Compilation
 
@@ -209,7 +214,8 @@ rb-sys supports many platforms, including:
 
 ## CI/CD with oxidize-rb/actions
 
-The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provides GitHub Actions specifically designed for rb-sys projects:
+The [oxidize-rb/actions](https://github.com/oxidize-rb/actions) repository provides GitHub Actions specifically designed
+for rb-sys projects:
 
 ### setup-ruby-and-rust
 
@@ -255,7 +261,8 @@ jobs:
           platform: ${{ matrix.platform }}
 ```
 
-For a complete CI/CD setup, combine these actions to test your extension on multiple Ruby versions and platforms, then cross-compile for release.
+For a complete CI/CD setup, combine these actions to test your extension on multiple Ruby versions and platforms, then
+cross-compile for release.
 
 ## Next Steps
 
