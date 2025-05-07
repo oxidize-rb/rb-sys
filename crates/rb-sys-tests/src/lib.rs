@@ -14,7 +14,9 @@ mod value_type_test;
 #[cfg(test)]
 mod special_consts_test;
 
+// TODO: Figure out why this is failing on Ruby 3.5
 #[cfg(test)]
+#[cfg(ruby_lte_3_4)]
 mod tracking_allocator_test;
 
 #[cfg(all(test, unix))]

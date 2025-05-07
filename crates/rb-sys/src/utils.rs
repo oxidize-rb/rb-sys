@@ -38,6 +38,23 @@ pub(crate) unsafe fn is_ruby_vm_started() -> bool {
     ret
 }
 
+/// Macro for conditionally asserting type checks in Ruby, only active when RUBY_DEBUG is enabled.
+/// This matches Ruby's behavior of only checking types in debug mode.
+#[macro_export]
+macro_rules! debug_ruby_assert_type {
+    ($obj:expr, $type:expr, $message:expr) => {
+        if $crate::RUBY_DEBUG != 0 {
+            #[allow(clippy::macro_metavars_in_unsafe)]
+            unsafe {
+                assert!(
+                    !$crate::SPECIAL_CONST_P($obj) && $crate::RB_BUILTIN_TYPE($obj) == $type,
+                    $message
+                );
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

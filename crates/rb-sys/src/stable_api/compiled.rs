@@ -1,6 +1,7 @@
 use super::StableApiDefinition;
-use crate::{ruby_value_type, timeval, VALUE};
+use crate::{ruby_value_type, timeval, RUBY_API_VERSION_MAJOR, RUBY_API_VERSION_MINOR, VALUE};
 use std::{
+    ffi::c_void,
     os::raw::{c_char, c_long},
     ptr::NonNull,
     time::Duration,
@@ -79,13 +80,26 @@ extern "C" {
 
     #[link_name = "impl_thread_sleep"]
     fn impl_thread_sleep(interval: timeval);
+
+    // RTypedData functions
+    #[link_name = "impl_rtypeddata_p"]
+    fn impl_rtypeddata_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rtypeddata_embedded_p"]
+    fn impl_rtypeddata_embedded_p(obj: VALUE) -> bool;
+
+    #[link_name = "impl_rtypeddata_type"]
+    fn impl_rtypeddata_type(obj: VALUE) -> *const crate::rb_data_type_t;
+
+    #[link_name = "impl_rtypeddata_get_data"]
+    fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
 }
 
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
-    const VERSION_MAJOR: u32 = 0;
-    const VERSION_MINOR: u32 = 0;
+    const VERSION_MAJOR: u32 = RUBY_API_VERSION_MAJOR;
+    const VERSION_MINOR: u32 = RUBY_API_VERSION_MINOR;
 
     #[inline]
     unsafe fn rstring_len(&self, obj: VALUE) -> std::os::raw::c_long {
@@ -212,5 +226,32 @@ impl StableApiDefinition for Definition {
         };
 
         unsafe { impl_thread_sleep(time) }
+    }
+
+    #[inline]
+    unsafe fn rtypeddata_p(&self, obj: VALUE) -> bool {
+        impl_rtypeddata_p(obj)
+    }
+
+    #[inline]
+    #[cfg(ruby_gte_3_3)]
+    unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool {
+        impl_rtypeddata_embedded_p(obj)
+    }
+
+    #[inline]
+    #[cfg(ruby_lt_3_3)]
+    unsafe fn rtypeddata_embedded_p(&self, _obj: VALUE) -> bool {
+        false
+    }
+
+    #[inline]
+    unsafe fn rtypeddata_type(&self, obj: VALUE) -> *const crate::rb_data_type_t {
+        impl_rtypeddata_type(obj)
+    }
+
+    #[inline]
+    unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
+        impl_rtypeddata_get_data(obj)
     }
 }

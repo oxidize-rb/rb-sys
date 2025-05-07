@@ -57,6 +57,10 @@ jobs:
             sys:
               os: windows-2022
               rust_toolchain: stable-x86_64-pc-windows-msvc
+          - ruby_version: "ruby-head"
+            sys:
+              os: ubuntu-latest
+              rust_toolchain: stable
         exclude:
           - ruby_version: "3.1"
             sys:
