@@ -1,50 +1,95 @@
-# Getting started
+# Prerequisites and Installation
 
-## Creating a new gem
+This chapter provides a streamlined setup guide for building Ruby extensions with Rust.
 
-The easiest way to create a new gem is to use the `bundle gem` command. This will scaffold a new Rust gem using `rb-sys`
-and `magnus`.
+## TL;DR
 
-1. Install a Rust toolchain (if needed)
+### 1. Install Prerequisites
 
-   ```bash
-   $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
+```bash
+# Install Ruby (3.0+ recommended)
+# Using your preferred manager: rbenv, rvm, asdf, etc.
 
-2. Upgrade RubyGems and Bundler
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-   ```bash
-   $ gem update --system
-   ```
-
-3. Scaffold a new gem with a Rust extension
-
-   ```bash
-   $ bundle gem --ext=rust my_gem_name
-   ```
-
-This will create a new gem in the `my_gem_name` directory. Firstly, open up `my_gem_name.gemspec` in your text editor
-and make sure you update all fields that contain `TODO`. Inside the directory, you should now have a fully working Rust
-gem.
-
-> **💡 Tip:** [Join the Slack channel][slack] to ask questions and get help from the community!
-
-## Building the gem and running tests
-
-The default Rake task is configured to compile the Rust code and run tests. Simply run:
-
-```
-$ bundle exec rake
+# Install rb_sys gem
+gem install rb_sys
 ```
 
-At this point you should start reading the docs for [`magnus`][magnus] to get familiar with the API. It is designed to be
-a safe and idiomatic wrapper around the Ruby C API.
+### 2. Create a New Gem with Rust Extension
 
-## Next steps
+```bash
+# Generate a new gem with Rust extension support
+bundle gem --ext=rust mygem
+cd mygem
 
-- [Learn how to debug Rust code using LLDB](./tutorial/testing/debugging.md)
-- [Learn how to publish cross-compiled gems](./tutorial/publishing/cross-compilation.md)
+# Build the extension
+bundle install
+bundle exec rake compile
 
-[rb-sys]: https://github.com/oxidize-rb/rb-sys
-[magnus]: https://github.com/matsadler/magnus
-[slack]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw
+# Try it out
+bundle exec rake
+```
+
+That's it! You now have a working Ruby gem with Rust extension.
+
+## Detailed Installation
+
+If you encounter issues with the quick start above, here are the detailed requirements:
+
+### Ruby Requirements
+
+- Ruby 3.0+ recommended (2.6+ supported)
+- Ruby development headers (usually part of official packages)
+- Bundler (`gem install bundler`)
+
+### Rust Requirements
+
+- Rust 1.65.0+ via [rustup](https://rustup.rs/)
+- Make sure Cargo is in your PATH (typically `~/.cargo/bin`)
+
+### C Compiler Requirements
+
+- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+- **Linux**: build-essential (Debian/Ubuntu) or Development Tools (Fedora/RHEL)
+- **Windows**: Microsoft Visual Studio C++ Build Tools
+
+### libclang (for Ruby/Rust FFI bindings)
+
+Simplest approach: add to your Gemfile
+
+```ruby
+gem "libclang", "~> 14.0"
+```
+
+## Verifying Your Setup
+
+The simplest way to verify your setup is to create a test gem:
+
+```bash
+bundle gem --ext=rust hello_rusty
+cd hello_rusty
+bundle install
+bundle exec rake compile
+bundle exec rake test
+```
+
+If everything runs without errors, your environment is correctly set up.
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. **Missing libclang**: Add the `libclang` gem to your Gemfile
+2. **Missing C compiler**: Install appropriate build tools for your platform
+3. **Ruby headers not found**: Install Ruby development package
+
+For detailed troubleshooting, consult the [rb-sys wiki](https://github.com/oxidize-rb/rb-sys/wiki/Troubleshooting).
+
+## Next Steps
+
+- Validate your setup with the [Quick Start](quick-start.md).
+- Dive into [Build Process](build-process.md) for deeper compilation insights.
+- Explore [Project Setup](project-setup.md) patterns.
+- Learn [Testing Extensions](testing.md) to add tests.
