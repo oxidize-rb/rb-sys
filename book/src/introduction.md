@@ -1,24 +1,104 @@
-# Ruby on Rust
+{{#title Ruby on Rust: Introduction}}
 
-This book describes how to use [Rust][rust] to build fast, reliable and secure native gems for [Ruby][ruby]. You may be
-new to Rust, and that's OK! You'll find that Rust has many of the things you love about Ruby. And unlike C, incorrect
-code will usually fail at compile time rather than bringing down production.
+# Introduction
 
-By the end of this book, you will be confident to build, test, and deploy a Rusty Ruby gem of your own! If you get stuck
-along the way or want to improve Ruby on Rust, [please join our Slack channel][chat]!
+Welcome to the rb-sys guide. This book will show you how to build Ruby extensions in Rust that are both powerful and reliable.
 
-> **💡 Tip:** [Join the Slack channel][chat] to ask questions and get help from the community!
+## Why Rust for Ruby Extensions?
 
-## What's next?
+Ruby extensions have traditionally been written in C, requiring manual memory management and careful handling of Ruby's internals. This approach is error-prone and often results in security vulnerabilities, memory leaks, and crashes.
 
-- [Learn how native Ruby gems work](./background-and-concepts.html)
-- [Get started by building a new Rust gem](./getting-started.html)
+<div class="note">
+
+While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience with improved safety guarantees and access to a rich ecosystem of libraries.
+
+</div>
+
+Rust offers a compelling alternative with several advantages:
+
+- **Memory safety without garbage collection**
+- **Strong type system that catches errors at compile time**
+- **Modern language features like pattern matching and traits**
+- **Access to the vast Rust ecosystem via crates.io**
+- **Strong tooling for testing, documentation, and deployment**
+
+<div class="warning">
+
+Importantly, performance should not be the sole motivation for using Rust. With Ruby's YJIT compiler, pure Ruby code is now faster than ever. Instead, consider Rust when you need memory safety, type safety, or want to leverage the rich Rust ecosystem's capabilities.
+
+</div>
+
+## The rb-sys Project Ecosystem
+
+rb-sys consists of several components working together:
+
+1. **rb-sys crate**: Provides low-level Rust bindings to Ruby's C API
+2. **rb_sys gem**: Handles the Ruby side of extension compilation
+3. **Magnus**: A higher-level, ergonomic API for Rust/Ruby interoperability
+4. **rb-sys-dock**: Docker-based cross-compilation tooling
+
+<div class="tip">
+
+Most developers will use the Magnus API when building their extensions, as it provides a much more ergonomic interface than using rb-sys directly.
+
+</div>
+
+Here's how these components interact when building a typical Ruby gem with Rust:
+
+```diagram,hidelines=~
+Your Ruby Code (.rb files)
+       ↓
+  Your Rust Code (.rs files)
+       ↓
+~   Magnus API
+       ↓
+~  rb-sys crate
+       ↓
+~Ruby C API Bindings
+       ↓
+~  Ruby VM
+```
+
+During compilation:
+
+```diagram,hidelines=~
+~  Your gem's extconf.rb
+       ↓
+~  rb_sys gem's create_rust_makefile
+       ↓
+~  Cargo build process using rb-sys crate
+       ↓
+~  Native extension (.so/.bundle/.dll)
+```
+
+You can click the eye icon (<i class="fa fa-eye"></i>) to see the hidden details in these diagrams.
+
+## Comparison with Traditional C Extensions
+
+Let's compare writing extensions in Rust versus C:
+
+| Aspect | C Extensions | Rust Extensions |
+|--------|-------------|----------------|
+| **Memory Safety** | Manual memory management | Guaranteed memory safety at compile time |
+| **Type Safety** | Weak typing, runtime errors | Strong static typing, compile-time checks |
+| **API Ergonomics** | Low-level C API | High-level Magnus API |
+| **Development Speed** | Slower, more error-prone | Faster, safer development cycle |
+| **Ecosystem Access** | Limited to C libraries | Full access to Rust crates |
+| **Debugging** | Harder to debug memory issues | Easier to debug with Rust's safety guarantees |
+| **Cross-Compilation** | Complex manual configuration | Simplified with rb-sys-dock |
+
+While C extensions offer flexibility and minimal dependencies, Rust extensions provide a superior developer experience with improved safety guarantees and access to a rich ecosystem of libraries.
 
 ## Contributing to this book
 
 This book is open source! Find a typo? Did we overlook something? [**Send us a pull request!**][repo]. Help wanted!
 
-[rust]: https://www.rust-lang.org
-[ruby]: https://www.ruby-lang.org
+## Next Steps
+
+- Proceed to [Getting Started](getting-started.md) to set up your development environment.
+- Try the [Quick Start](quick-start.md) to build your first extension.
+- Explore core concepts in [Build Process](build-process.md) and [Memory Management & Safety](memory-management.md).
+- Learn advanced topics like [Cross-Platform Development](cross-platform.md) and [Testing Extensions](testing.md).
+
 [repo]: https://github.com/oxidize-rb/rb-sys
 [chat]: https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw
