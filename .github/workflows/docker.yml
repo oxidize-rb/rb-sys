@@ -175,10 +175,27 @@ jobs:
 
           echo "Running dive on $image with max wasted percent of $lowest_efficiency"
 
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive "$image" \
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/wagoodman/dive "$image" \
             --ci \
             --lowestEfficiency "$lowest_efficiency" \
             --highestUserWastedPercent "$highest_user_wasted_percent"
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:sha-${{ github.sha }}"
+          format: "sarif"
+          output: "trivy-results-${{ env.ruby_platform }}.sarif"
+          severity: "CRITICAL"
+          ignore-unfixed: true
+          timeout: "10m"
+          exit-code: "1"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: "trivy-results-${{ env.ruby_platform }}.sarif"
+          category: "docker-${{ env.ruby_platform }}"
 
       - name: Docker push
         uses: docker/build-push-action@v6
