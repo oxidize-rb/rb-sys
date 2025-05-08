@@ -43,7 +43,7 @@ pub(crate) unsafe fn is_ruby_vm_started() -> bool {
 #[macro_export]
 macro_rules! debug_ruby_assert_type {
     ($obj:expr, $type:expr, $message:expr) => {
-        if $crate::RUBY_DEBUG != 0 {
+        if $crate::uncategorized::RUBY_DEBUG != 0 {
             #[allow(clippy::macro_metavars_in_unsafe)]
             unsafe {
                 assert!(
