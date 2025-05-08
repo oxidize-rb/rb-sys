@@ -69,9 +69,3 @@
 #ifdef HAVE_RUBY_IO_BUFFER_H
 #include "ruby/io/buffer.h"
 #endif
-
-#ifdef HAVE_RUBY_ASSERT_H
-#include "ruby/assert.h"
-#else
-# define RUBY_DEBUG 0
-#endif
