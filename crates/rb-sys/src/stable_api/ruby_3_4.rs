@@ -294,7 +294,7 @@ impl StableApiDefinition for Definition {
         let rdata = obj as *const RTypedData;
         let typed_flag = (*rdata).typed_flag;
         // TYPED_DATA_EMBEDDED (2) flag indicates embedded data
-        (typed_flag & (TYPED_DATA_EMBEDDED as u64)) != 0
+        (typed_flag & (TYPED_DATA_EMBEDDED as VALUE)) != 0
     }
 
     #[inline]
