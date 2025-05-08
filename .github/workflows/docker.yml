@@ -17,6 +17,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  security-events: write
 
 jobs:
   fetch_ci_data:
@@ -192,7 +193,7 @@ jobs:
           exit-code: "0" # Changed from "1" to "0" to prevent failing on EOL OS warnings
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results-${{ env.ruby_platform }}.sarif"
           category: "docker-${{ env.ruby_platform }}"
