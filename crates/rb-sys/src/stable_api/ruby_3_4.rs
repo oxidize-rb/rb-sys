@@ -3,7 +3,7 @@ use crate::{
     debug_ruby_assert_type,
     internal::{RArray, RString, RTypedData},
     ruby_value_type::RUBY_T_DATA,
-    value_type, TYPED_DATA_EMBEDDED, VALUE,
+    value_type, VALUE,
 };
 use std::{
     ffi::c_void,
@@ -293,8 +293,12 @@ impl StableApiDefinition for Definition {
 
         let rdata = obj as *const RTypedData;
         let typed_flag = (*rdata).typed_flag;
-        // TYPED_DATA_EMBEDDED (2) flag indicates embedded data
-        (typed_flag & (TYPED_DATA_EMBEDDED as u64)) != 0
+        #[cfg(target_pointer_width = "64")]
+        const FLAG: u64 = crate::TYPED_DATA_EMBEDDED as u64;
+        #[cfg(target_pointer_width = "32")]
+        const FLAG: u32 = crate::TYPED_DATA_EMBEDDED as u32;
+
+        (typed_flag & FLAG) != 0
     }
 
     #[inline]
