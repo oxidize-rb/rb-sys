@@ -1,5 +1,8 @@
 #include "ruby.h"
 
+#ifndef RUBY_DEBUG
+#endif
+
 #ifdef HAVE_RUBY_DEBUG_H
 #include "ruby/debug.h"
 #endif
@@ -68,4 +71,8 @@
 #endif
 #ifdef HAVE_RUBY_IO_BUFFER_H
 #include "ruby/io/buffer.h"
+#endif
+
+#if !defined(RUBY_DEBUG)
+#  define RUBY_DEBUG 0
 #endif
