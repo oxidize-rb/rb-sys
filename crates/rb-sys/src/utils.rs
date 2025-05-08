@@ -53,6 +53,10 @@ macro_rules! debug_ruby_assert_type {
                 );
             }
         }
+        #[cfg(not(ruby_ruby_debug = "true"))]
+        {
+            let _ = ($obj, $type, $message); // Prevent unused variable warnings
+        }
     };
 }
 
