@@ -349,6 +349,52 @@ jobs:
       - run: bundle exec rake test
 ```
 
+### Ruby-Head Compatibility
+
+When supporting `ruby-head` or development versions of Ruby, you must publish a source gem alongside your precompiled gems. This is necessary because:
+
+1. The Ruby ABI (Application Binary Interface) can change between development versions
+2. Precompiled binary gems built against one ruby-head version may be incompatible with newer ruby-head versions
+3. Source gems allow users to compile the extension against their specific ruby-head version
+
+To ensure compatibility, add a source gem to your release process:
+
+```ruby
+# Rakefile
+RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
+  # Configure cross-platform gems as usual
+  ext.cross_compile = true
+  ext.cross_platform = ['x86_64-linux', 'arm64-darwin', ...]
+
+  # The default platform will build the source gem
+end
+```
+
+Then in your CI/CD pipeline, include both platform-specific and source gem builds:
+
+```yaml
+# .github/workflows/release.yml
+jobs:
+  # First build all platform-specific gems
+  cross_compile:
+    # ...
+
+  # Then build the source gem
+  source_gem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: bundle install
+      - run: bundle exec rake build # Builds the source gem
+      - uses: actions/upload-artifact@v3
+        with:
+          name: source-gem
+          path: pkg/*.gem # Include source gem without platform suffix
+```
+
 ### Cross-Compiling for Release
 
 ```yaml

@@ -398,6 +398,36 @@ TypeError: wrong argument type Integer (expected String)
 
 ## Cross-Platform Issues
 
+### Ruby-Head Compatibility Issues
+
+**Problem**: Gems don't work with `ruby-head` or development versions of Ruby.
+
+**Solutions**:
+
+1. Always publish a source gem alongside platform-specific gems:
+
+   ```ruby
+   # In your release workflow, build both platform-specific and source gems
+   # The source gem allows ruby-head users to compile against their exact version
+   bundle exec rake build  # For source gem
+   bundle exec rake native # For platform-specific gems
+   ```
+
+2. For users, install the gem with compilation enabled:
+
+   ```bash
+   gem install my_gem --platform=ruby
+   ```
+
+3. For gem maintainers, update your CI to test against ruby-head:
+
+   ```yaml
+   # .github/workflows/test.yml
+   strategy:
+     matrix:
+       ruby: ["3.1", "3.2", "3.3", "head"]
+   ```
+
 ### Platform-Specific Build Problems
 
 #### Windows Issues
