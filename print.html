@@ -4149,6 +4149,45 @@ jobs:
       - run: bundle exec rake compile
       - run: bundle exec rake test
 </code></pre>
+<h3 id="ruby-head-compatibility"><a class="header" href="#ruby-head-compatibility">Ruby-Head Compatibility</a></h3>
+<p>When supporting <code>ruby-head</code> or development versions of Ruby, you must publish a source gem alongside your precompiled gems. This is necessary because:</p>
+<ol>
+<li>The Ruby ABI (Application Binary Interface) can change between development versions</li>
+<li>Precompiled binary gems built against one ruby-head version may be incompatible with newer ruby-head versions</li>
+<li>Source gems allow users to compile the extension against their specific ruby-head version</li>
+</ol>
+<p>To ensure compatibility, add a source gem to your release process:</p>
+<pre><code class="language-ruby"># Rakefile
+RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
+  # Configure cross-platform gems as usual
+  ext.cross_compile = true
+  ext.cross_platform = ['x86_64-linux', 'arm64-darwin', ...]
+
+  # The default platform will build the source gem
+end
+</code></pre>
+<p>Then in your CI/CD pipeline, include both platform-specific and source gem builds:</p>
+<pre><code class="language-yaml"># .github/workflows/release.yml
+jobs:
+  # First build all platform-specific gems
+  cross_compile:
+    # ...
+
+  # Then build the source gem
+  source_gem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: bundle install
+      - run: bundle exec rake build # Builds the source gem
+      - uses: actions/upload-artifact@v3
+        with:
+          name: source-gem
+          path: pkg/*.gem # Include source gem without platform suffix
+</code></pre>
 <h3 id="cross-compiling-for-release"><a class="header" href="#cross-compiling-for-release">Cross-Compiling for Release</a></h3>
 <pre><code class="language-yaml"># .github/workflows/release.yml
 name: Release
@@ -6895,6 +6934,32 @@ let result = nogvl(|| {
 </li>
 </ol>
 <h2 id="cross-platform-issues"><a class="header" href="#cross-platform-issues">Cross-Platform Issues</a></h2>
+<h3 id="ruby-head-compatibility-issues"><a class="header" href="#ruby-head-compatibility-issues">Ruby-Head Compatibility Issues</a></h3>
+<p><strong>Problem</strong>: Gems don't work with <code>ruby-head</code> or development versions of Ruby.</p>
+<p><strong>Solutions</strong>:</p>
+<ol>
+<li>
+<p>Always publish a source gem alongside platform-specific gems:</p>
+<pre><code class="language-ruby"># In your release workflow, build both platform-specific and source gems
+# The source gem allows ruby-head users to compile against their exact version
+bundle exec rake build  # For source gem
+bundle exec rake native # For platform-specific gems
+</code></pre>
+</li>
+<li>
+<p>For users, install the gem with compilation enabled:</p>
+<pre><code class="language-bash">gem install my_gem --platform=ruby
+</code></pre>
+</li>
+<li>
+<p>For gem maintainers, update your CI to test against ruby-head:</p>
+<pre><code class="language-yaml"># .github/workflows/test.yml
+strategy:
+  matrix:
+    ruby: ["3.1", "3.2", "3.3", "head"]
+</code></pre>
+</li>
+</ol>
 <h3 id="platform-specific-build-problems"><a class="header" href="#platform-specific-build-problems">Platform-Specific Build Problems</a></h3>
 <h4 id="windows-issues"><a class="header" href="#windows-issues">Windows Issues</a></h4>
 <p><strong>Problem</strong>: Build fails on Windows with linking errors.</p>
