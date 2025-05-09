@@ -1,6 +1,9 @@
 ---
 name: "Docs"
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -16,9 +19,9 @@ jobs:
     name: 📑 Validate Docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@e34163cd15f4bb403dcd72d98e295997e6a55798 # v1
         with:
           bundler-cache: true
           ruby-version: "3.2"

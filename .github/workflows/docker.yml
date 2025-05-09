@@ -38,7 +38,7 @@ jobs:
       matrix:
         toolchain: ${{ fromJSON(needs.fetch_ci_data.outputs.toolchains-data) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set rb-sys version variable
         id: vars
@@ -55,28 +55,28 @@ jobs:
           echo "aliases=$aliases" >> $GITHUB_ENV
 
       # Test the container
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           repository: "oxidize-rb/oxi-test"
           path: "tmp/oxi-test"
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@e34163cd15f4bb403dcd72d98e295997e6a55798 # v1
         with:
           ruby-version: "3.1"
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
 
       - name: Prepare Docker images list
         id: prepare_images
@@ -91,7 +91,7 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
           images: |
             ${{ env.images }}
@@ -108,7 +108,7 @@ jobs:
             org.oxidize-rb.ruby.platform=${{ env.ruby_platform }}
 
       - name: Docker build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
@@ -182,7 +182,7 @@ jobs:
             --highestUserWastedPercent "$highest_user_wasted_percent"
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@99baf0d8b4e787c3cfd7b602664c8ce60a43cd38 # master
         with:
           image-ref: "${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:sha-${{ github.sha }}"
           format: "sarif"
@@ -193,13 +193,13 @@ jobs:
           exit-code: "0" # Changed from "1" to "0" to prevent failing on EOL OS warnings
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3
         with:
           sarif_file: "trivy-results-${{ env.ruby_platform }}.sarif"
           category: "docker-${{ env.ruby_platform }}"
 
       - name: Docker push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./docker
@@ -212,7 +212,7 @@ jobs:
           cache-to: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:cache-${{ steps.vars.outputs.rb-sys-version }}
 
       - name: Docker Hub Description
-        uses: peter-evans/dockerhub-description@v4
+        uses: peter-evans/dockerhub-description@432a30c9e07499fd01da9f8a49f0faf9e0ca5b77 # v4
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
@@ -220,7 +220,7 @@ jobs:
           readme-filepath: ./readme.md
 
       - name: Slack Noti on Failure
-        uses: 8398a7/action-slack@v3
+        uses: 8398a7/action-slack@1750b5085f3ec60384090fb7c52965ef822e869e # v3
         with:
           status: ${{ job.status }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest

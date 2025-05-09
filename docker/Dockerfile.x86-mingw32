@@ -20,7 +20,7 @@ ENV RUBY_TARGET="x86-mingw32" \
     PKG_CONFIG_PATH_i686_pc_windows_gnu="/usr/i686-w64-mingw32/pkgconfig" \
     CMAKE_i686_pc_windows_gnu="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
+COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh setup/delete-unused-files.sh /
 
 RUN set -ex; \
     curl -Lo /llvm-mingw.zip https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_VERSION}/llvm-mingw-${LLVM_MINGW_VERSION}-msvcrt-i686.zip; \
@@ -33,4 +33,5 @@ RUN set -ex; \
     /rubygems.sh && \
     /cmake.sh && \
     /rubybashrc.sh && \
+    /delete-unused-files.sh && \
     /rb-sys-dock.sh
