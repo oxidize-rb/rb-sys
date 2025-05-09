@@ -72,15 +72,15 @@ jobs:
               rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/upload-core-dumps@v1
+      - uses: oxidize-rb/actions/upload-core-dumps@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
 
       - name: Setup debug info
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
         if: matrix.ruby_version != 'skip'
         with:
           cache-version: v2
@@ -150,7 +150,7 @@ jobs:
         if: env.ACTIONS_STEP_DEBUG == 'true'
         run: bundle exec rake bindings:generate
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: rb-sys-ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
@@ -171,11 +171,11 @@ jobs:
             rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/upload-core-dumps@v1
+      - uses: oxidize-rb/actions/upload-core-dumps@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
@@ -187,7 +187,7 @@ jobs:
           echo "GEM_HOME=~/.gem/ruby/${{ matrix.ruby_version }}" >> $GITHUB_ENV
 
       - name: ⚡ Cache
-        uses: actions/cache@v4
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         with:
           path: |
             /opt/rubies/${{ matrix.ruby_version }}
