@@ -1,6 +1,9 @@
 ---
 name: "Docs"
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
