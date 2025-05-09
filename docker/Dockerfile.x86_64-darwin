@@ -17,12 +17,13 @@ ENV RUBY_TARGET="x86_64-darwin" \
     PKG_CONFIG="x86_64-apple-darwin-pkg-config" \
     CMAKE_x86_64_apple_darwin="/opt/cmake/bin/cmake"
 
-COPY setup/lib.sh setup/osxcross-shebang.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh /
+COPY setup/lib.sh setup/osxcross-shebang.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh setup/delete-unused-files.sh /
 
 RUN bash -c "source /lib.sh && install_packages libclang-dev clang" && \
     /rustup.sh && \
     /rubygems.sh && \
     /cmake.sh && \
     /rubybashrc.sh && \
+    /delete-unused-files.sh && \
     /rb-sys-dock.sh && \
     /osxcross-shebang.sh
