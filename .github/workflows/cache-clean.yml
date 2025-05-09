@@ -71,13 +71,27 @@ jobs:
                 totalDeleted++;
                 totalBytes += cache.size_in_bytes;
 
-                await github.rest.actions.deleteActionsCacheById({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  cache_id: cache.id
-                });
-
-                console.log(`Deleted cache ${cache.id} (${sizeInMb(cache.size_in_bytes)} MB) for ref ${cache.ref}`);
+                try {
+                  await github.rest.actions.deleteActionsCacheByKey({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    key: cache.key,
+                    ref: cache.ref
+                  });
+                  console.log(`Deleted cache ${cache.key} (${sizeInMb(cache.size_in_bytes)} MB) for ref ${cache.ref}`);
+                } catch (error) {
+                  console.warn(`Error deleting cache by key: ${error.message}. Attempting alternative method...`);
+                  try {
+                    await github.rest.actions.deleteActionsCacheByKey({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      key: cache.key
+                    });
+                    console.log(`Deleted cache ${cache.key} (${sizeInMb(cache.size_in_bytes)} MB) without ref parameter`);
+                  } catch (secondError) {
+                    console.error(`Failed to delete cache ${cache.key}: ${secondError.message}`);
+                  }
+                }
               }
             }
 
