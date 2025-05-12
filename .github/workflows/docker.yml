@@ -182,7 +182,7 @@ jobs:
             --highestUserWastedPercent "$highest_user_wasted_percent"
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@99baf0d8b4e787c3cfd7b602664c8ce60a43cd38 # master
+        uses: aquasecurity/trivy-action@b3dafe507ffa004210975439a1e6156b8ebb3f50 # master
         with:
           image-ref: "${{ secrets.DOCKER_HUB_USERNAME }}/${{ env.ruby_platform }}:sha-${{ github.sha }}"
           format: "sarif"
