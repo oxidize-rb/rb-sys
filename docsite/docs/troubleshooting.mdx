@@ -1,0 +1,327 @@
+---
+sidebar_position: 10
+---
+
+# Troubleshooting
+
+```mdx-code-block
+import LanguageCallout from '@site/src/components/LanguageCallout';
+```
+
+This guide helps you diagnose and fix common issues when developing Ruby extensions with rb-sys.
+
+<LanguageCallout />
+
+## Common Build Issues
+
+### Missing Ruby Headers
+
+```
+Compilation failed: Cannot find ruby.h
+```
+
+**Solution**:
+1. Install Ruby development files:
+   - **Ubuntu/Debian**: `apt-get install ruby-dev`
+   - **Fedora/RHEL**: `dnf install ruby-devel`
+   - **macOS**: Headers come with Ruby
+   - **Windows**: Headers come with Ruby installation
+
+2. Verify Ruby installation:
+```bash
+ruby -v
+which ruby
+```
+
+### Linker Errors
+
+```
+Undefined reference to `rb_define_module`
+```
+
+**Solution**:
+1. Check your Cargo.toml:
+```toml
+[dependencies]
+rb-sys = { version = "0.9", features = ["stable-api"] }
+```
+
+2. Verify extconf.rb:
+```ruby
+require "rb_sys/mkmf"
+
+create_rust_makefile("my_extension")
+```
+
+### Version Mismatch
+
+```
+Error: Incompatible rb-sys version
+```
+
+**Solution**:
+Ensure consistent versions:
+
+```ruby
+# Gemfile
+gem "rb_sys", "~> 0.9.0"
+```
+
+```toml
+# Cargo.toml
+[dependencies]
+rb-sys = { version = "0.9.0", features = ["stable-api"] }
+```
+
+## Runtime Issues
+
+### Segmentation Faults
+
+```
+[BUG] Segmentation fault
+```
+
+**Common Causes**:
+1. Accessing deallocated Ruby objects
+2. Missing GC mark implementation
+3. Thread safety issues
+
+**Solution**:
+```rust
+#[magnus::wrap(class = "MyClass")]
+struct MyObject {
+    // Hold references properly
+    data: Value
+}
+
+impl DataTypeFunctions for MyObject {
+    fn mark(&self, marker: &Marker) {
+        // Mark all Ruby objects
+        marker.mark(self.data);
+    }
+}
+```
+
+### Memory Leaks
+
+**Symptoms**:
+- Growing memory usage
+- Slow performance over time
+
+**Solution**:
+1. Enable debugging:
+```rust
+#[cfg(debug_assertions)]
+static ALLOCATION_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+fn track_allocation() {
+    #[cfg(debug_assertions)]
+    ALLOCATION_COUNT.fetch_add(1, Ordering::SeqCst);
+}
+```
+
+2. Use memory profiling:
+```ruby
+GC.start
+GC.stat
+```
+
+### Thread Safety Issues
+
+```
+ThreadError: deadlock detected
+```
+
+**Solution**:
+1. Use proper thread safety patterns:
+```rust
+use std::sync::Mutex;
+
+struct ThreadSafeObject {
+    data: Mutex<Vec<Value>>
+}
+
+impl ThreadSafeObject {
+    fn modify_data(&self) -> Result<(), Error> {
+        let mut data = self.data.lock().unwrap();
+        // Modify data safely
+        Ok(())
+    }
+}
+```
+
+2. Release GVL when appropriate:
+```rust
+unsafe {
+    rb_thread_call_without_gvl(
+        Some(heavy_computation),
+        ptr::null_mut(),
+        None,
+        ptr::null_mut()
+    )
+}
+```
+
+## Debug Techniques
+
+### Enable Debug Logging
+
+1. Set environment variables:
+```bash
+export RUST_BACKTRACE=1
+export RUST_LOG=debug
+```
+
+2. Add logging to your code:
+```rust
+use log::{debug, error, info};
+
+fn process_data(input: &str) -> Result<String, Error> {
+    debug!("Processing: {}", input);
+    // Processing logic
+    if error_condition {
+        error!("Failed to process: {}", error);
+        return Err(Error::new(
+            magnus::exception::runtime_error(),
+            "Processing failed"
+        ));
+    }
+    Ok(result)
+}
+```
+
+### GDB/LLDB Debugging
+
+1. Compile with debug symbols:
+```toml
+[profile.dev]
+debug = true
+```
+
+2. Run with debugger:
+```bash
+lldb -- ruby -I lib test/my_test.rb
+```
+
+3. Set breakpoints:
+```bash
+(lldb) b my_extension.c:42
+(lldb) continue
+```
+
+### Memory Analysis
+
+1. Use Ruby's memory profiler:
+```ruby
+require "memory_profiler"
+
+MemoryProfiler.report do
+  # Your code here
+end.pretty_print
+```
+
+2. Track object allocations:
+```ruby
+GC.stat
+object_count = ObjectSpace.count_objects
+puts "Live objects: #{object_count[:TOTAL]}"
+```
+
+## Platform-Specific Issues
+
+### Windows
+
+```
+Error linking with `link.exe`
+```
+
+**Solution**:
+1. Install Visual Studio build tools
+2. Set environment:
+```batch
+call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+```
+
+### macOS
+
+```
+Dyld Error: Library not loaded
+```
+
+**Solution**:
+1. Check library paths:
+```bash
+otool -L your_extension.bundle
+```
+
+2. Fix rpath issues:
+```ruby
+# extconf.rb
+append_ldflags("-Wl,-rpath,@loader_path/")
+```
+
+### Linux
+
+```
+Error loading shared library
+```
+
+**Solution**:
+1. Update ldconfig:
+```bash
+sudo ldconfig
+```
+
+2. Check library dependencies:
+```bash
+ldd your_extension.so
+```
+
+## Best Practices
+
+1. **Systematic Debugging**:
+   - Start with logging
+   - Use debugger for complex issues
+   - Profile memory for leaks
+
+2. **Error Handling**:
+```rust
+fn process_data(input: &str) -> Result<String, Error> {
+    if input.is_empty() {
+        return Err(Error::new(
+            magnus::exception::arg_error(),
+            "Input cannot be empty"
+        ));
+    }
+    // Processing logic
+    Ok(result)
+}
+```
+
+3. **Memory Management**:
+```rust
+#[derive(TypedData)]
+#[magnus(class = "MyClass", mark)]
+struct MyObject {
+    data: Value
+}
+
+impl DataTypeFunctions for MyObject {
+    fn mark(&self, marker: &Marker) {
+        marker.mark(self.data);
+    }
+}
+```
+
+4. **Cross-Platform Compatibility**:
+```rust
+#[cfg(target_os = "windows")]
+fn platform_specific() {
+    // Windows-specific code
+}
+
+#[cfg(not(target_os = "windows"))]
+fn platform_specific() {
+    // Unix-like systems code
+}
+```

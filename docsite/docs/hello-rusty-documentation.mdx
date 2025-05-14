@@ -1,0 +1,148 @@
+---
+sidebar_position: 3
+---
+
+# Hello Rusty Documentation
+
+```mdx-code-block
+import LanguageCallout from '@site/src/components/LanguageCallout';
+```
+
+<LanguageCallout language="rust">
+  The Rust code in this gem is a native extension for Ruby. It is compiled into a dynamic library that can be loaded by Ruby.
+</LanguageCallout>
+```
+
+This section serves as companion documentation to the [Hello Rusty](https://github.com/oxidize-rb/rb-sys/tree/main/examples/hello_rusty) example project. It provides detailed explanations of the project's structure and implementation.
+
+<LanguageCallout />
+
+## Project Structure
+
+Let's examine the components that make up our Rusty Ruby Gem:
+
+```plaintext
+hello_rusty/
+├── Cargo.toml             # Rust package manifest
+├── Gemfile               # Ruby dependencies
+├── LICENSE.txt           # Project license
+├── README.md             # Project documentation
+├── Rakefile              # Build automation
+├── ext/                  # Native extension directory
+│   └── hello_rusty/      # Extension implementation
+│       ├── Cargo.toml    # Rust crate configuration
+│       ├── extconf.rb    # Ruby extension configuration
+│       └── src/          # Rust source code
+│           └── lib.rs    # Main implementation
+├── hello_rusty.gemspec   # Gem specification
+├── lib/                  # Ruby library code
+│   ├── hello_rusty.rb    # Main Ruby module
+│   └── hello_rusty/      # Ruby implementation
+│       └── version.rb    # Version information
+└── test/                 # Test files
+    ├── test_helper.rb    # Test configuration
+    └── test_hello_rusty.rb # Test implementation
+```
+
+This structure follows Ruby's standard gem layout with a few additions for the Rust implementation:
+
+- `ext/hello_rusty/`: Contains the Rust implementation of our native extension
+- `ext/hello_rusty/Cargo.toml`: Rust crate configuration and dependencies
+- `ext/hello_rusty/src/lib.rs`: Rust source code that implements our extension
+
+## Implementation Details
+
+### Ruby Extension Configuration
+
+The `extconf.rb` file sets up our extension's build process:
+
+```ruby
+require 'rb_sys/extensiontask'
+
+RbSys::ExtensionTask.new('hello_rusty') do |ext|
+  ext.lib_dir = File.expand_path('../lib/hello_rusty/', __dir__)
+  ext.cross_compile = true
+ end
+```
+
+This configuration:
+1. Requires the `rb_sys` gem
+2. Creates a new extension task named 'hello_rusty'
+3. Sets the output directory for our compiled extension
+4. Enables cross-compilation support
+
+### Rust Implementation
+
+Let's examine our Rust implementation in `ext/hello_rusty/src/lib.rs`:
+
+```rust
+use rb_sys::{ rb_define_module, rb_define_module_function };
+
+#[no_mangle]
+pub extern "C" fn Init_hello_rusty() {
+    let module = unsafe { rb_define_module("HelloRusty") };
+    
+    unsafe {
+        rb_define_module_function(
+            module,
+            "greet",
+            Some(greet as unsafe extern "C" fn()),
+            0,
+        );
+    }
+}
+
+unsafe extern "C" fn greet() -> VALUE {
+    rb_str_new_cstr("Hello from Rust!")
+}
+```
+
+This code:
+1. Imports necessary functions from `rb_sys`
+2. Defines the initialization function (`Init_hello_rusty`)
+3. Creates a Ruby module named "HelloRusty"
+4. Defines a module function `greet` that returns a string
+
+### Ruby Integration
+
+Our Ruby code in `lib/hello_rusty.rb` loads the extension:
+
+```ruby
+require_relative "hello_rusty/version"
+require_relative "hello_rusty/hello_rusty"
+
+module HelloRusty
+  class Error < StandardError; end
+end
+```
+
+This provides:
+1. Version information
+2. The native extension
+3. A custom error class
+
+## Trying It Out
+
+After installing the gem, you can use it like this:
+
+```ruby
+require 'hello_rusty'
+
+puts HelloRusty.greet  # Output: "Hello from Rust!"
+```
+
+## Testing
+
+Our test file `test/test_hello_rusty.rb` verifies the functionality:
+
+```ruby
+require "test_helper"
+
+class TestHelloRusty < Test::Unit::TestCase
+  def test_greet
+    assert_equal "Hello from Rust!", HelloRusty.greet
+  end
+end
+```
+
+This ensures our Rust implementation correctly returns the expected greeting.

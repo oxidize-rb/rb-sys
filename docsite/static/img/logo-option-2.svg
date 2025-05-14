@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 2: Molecular Structure -->
+  <!-- Ruby atom/electron -->
+  <circle cx="16" cy="16" r="5" fill="#D15B56" fill-opacity="0.9"/>
+  <!-- Rust orbital paths -->
+  <ellipse cx="16" cy="16" rx="14" ry="8" stroke="#D99A6C" stroke-width="1.5" stroke-opacity="0.9"/>
+  <ellipse cx="16" cy="16" rx="8" ry="14" stroke="#D99A6C" stroke-width="1.5" stroke-opacity="0.9" transform="rotate(30 16 16)"/>
+  <ellipse cx="16" cy="16" rx="8" ry="14" stroke="#D99A6C" stroke-width="1.5" stroke-opacity="0.9" transform="rotate(60 16 16)"/>
+  
+  <!-- Rust electrons -->
+  <circle cx="30" cy="16" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="2" cy="16" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="16" cy="30" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="16" cy="2" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="25" cy="25" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="7" cy="7" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="7" cy="25" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+  <circle cx="25" cy="7" r="2" fill="#D99A6C" fill-opacity="0.9"/>
+</svg>

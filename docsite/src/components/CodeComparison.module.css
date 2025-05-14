@@ -1,0 +1,55 @@
+.codeComparison {
+  margin: 2rem 0;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: var(--border-width) solid var(--neutral-accent);
+}
+
+.codeBlock {
+  position: relative;
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+
+/* Custom tabs styling */
+:global(.tabs__item) {
+  padding: 0.75rem 1.5rem;
+  font-family: var(--ifm-font-family-heading);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: all var(--transition-fast);
+}
+
+:global(.tabs__item--active[data-value="ruby"]) {
+  border-bottom-color: var(--ruby-accent);
+  color: var(--ruby-accent);
+}
+
+:global(.tabs__item--active[data-value="rust"]) {
+  border-bottom-color: var(--rust-accent);
+  color: var(--rust-accent);
+}
+
+/* Language indicator */
+.languageIndicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-family: var(--ifm-font-family-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.rubyIndicator {
+  color: var(--ruby-accent);
+}
+
+.rustIndicator {
+  color: var(--rust-accent);
+}
