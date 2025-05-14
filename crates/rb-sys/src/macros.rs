@@ -341,3 +341,31 @@ pub unsafe fn RTYPEDDATA_TYPE(obj: VALUE) -> *const rb_data_type_t {
 pub unsafe fn RTYPEDDATA_GET_DATA(obj: VALUE) -> *mut c_void {
     api().rtypeddata_get_data(obj)
 }
+
+/// Checks if the bignum is positive.
+///
+/// @param[in]  b      An object of RBignum.
+/// @retval     false  `b` is less than zero.
+/// @retval     true   Otherwise.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// accessing the underlying bignum structure.
+#[inline]
+pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
+    api().bignum_positive_p(b)
+}
+
+/// Checks if the bignum is negative.
+///
+/// @param[in]  b      An object of RBignum.
+/// @retval     true   `b` is less than zero.
+/// @retval     false  Otherwise.
+///
+/// # Safety
+/// This function is unsafe because it could dereference a raw pointer when
+/// accessing the underlying bignum structure.
+#[inline]
+pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
+    api().bignum_negative_p(b)
+}
