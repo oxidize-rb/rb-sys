@@ -72,13 +72,13 @@ Let's improve the default implementation by adding a simple class:
 # // This is our enhanced implementation
 use magnus::{define_module, define_class, function, method, prelude::*, Error, Ruby};
 
-// Define a struct to hold state
+// Define a struct to hold state and
+// implement Ruby wrapper for the struct
+#[magnus::wrap(class = "HelloRusty::Greeter")]
 struct Greeter {
     name: String,
 }
 
-// Implement Ruby wrapper for the struct
-#[magnus::wrap(class = "HelloRusty::Greeter")]
 impl Greeter {
     // Constructor
     fn new(name: String) -> Self {
