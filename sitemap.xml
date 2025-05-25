@@ -2,133 +2,133 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/api-reference/rb-sys-features.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/api-reference/rb-sys-gem-config.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/api-reference/test-helpers.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/build-process.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/classes-and-modules.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/community-support.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/cross-platform.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/debugging.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/development-approaches.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/error-handling.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/getting-started.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/hello-rusty-documentation.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/https:/github.com/oxidize-rb/rb-sys/blob/main/CONTRIBUTING.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/introduction.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/memory-management.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/project-setup.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/quick-start.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/testing.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/toc.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/troubleshooting.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://oxidize-rb.github.io/rb-sys/working-with-ruby-objects.html</loc>
-    <lastmod>2025-05-14</lastmod>
+    <lastmod>2025-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
