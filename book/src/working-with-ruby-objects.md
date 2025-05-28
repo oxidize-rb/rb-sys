@@ -13,16 +13,16 @@ use magnus::{RString, Ruby, Value, Integer, Float, Boolean};
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Convert Rust types to Ruby
-    let rb_string: RString = RString::new(ruby, "Hello, Ruby!");  // Rust &str to Ruby String
-    let rb_int: Integer = Integer::from_i64(42);                 // Rust i64 to Ruby Integer
-    let rb_float: Float = Float::from_f64(3.14159);             // Rust f64 to Ruby Float
-    let rb_bool: Boolean = Boolean::from(true);                 // Rust bool to Ruby true/false
+    let rb_string: RString = Ruby::str_new(ruby, "Ruby!");  // Rust &str to Ruby String
+    let rb_int: Integer = Integer::from_i64(42);            // Rust i64 to Ruby Integer
+    let rb_float: Float = Float::from_f64(3.14159);         // Rust f64 to Ruby Float
+    let rb_bool: Boolean = Boolean::from(true);             // Rust bool to Ruby true/false
 
     // Convert Ruby types to Rust
-    let rust_string: String = rb_string.to_string()?;           // Ruby String to Rust String
-    let rust_int: i64 = rb_int.to_i64()?;                       // Ruby Integer to Rust i64
-    let rust_float: f64 = rb_float.to_f64()?;                   // Ruby Float to Rust f64
-    let rust_bool: bool = rb_bool.to_bool();                    // Ruby true/false to Rust bool
+    let rust_string: String = rb_string.to_string()?;       // Ruby String to Rust String
+    let rust_int: i64 = rb_int.to_i64()?;                   // Ruby Integer to Rust i64
+    let rust_float: f64 = rb_float.to_f64()?;               // Ruby Float to Rust f64
+    let rust_bool: bool = rb_bool.to_bool();                // Ruby true/false to Rust bool
 
     Ok(())
 }
