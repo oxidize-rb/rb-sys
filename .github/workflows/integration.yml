@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           path: rb-sys
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@c179116ae638d5d1da5039b8ca798b1fd5ce9219 # v1
         id: setup
         with:
           cache-version: v2
