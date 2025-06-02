@@ -241,7 +241,7 @@ impl<'a> ConfValue<'a> {
             Expr::Lit(ExprLit {
                 lit: Lit::Int(ref lit),
                 ..
-            }) => lit.base10_parse::<u8>().unwrap() != 0,
+            }) => lit.base10_parse::<u8>().unwrap_or(1) != 0,
             Expr::Lit(ExprLit {
                 lit: Lit::Bool(ref lit),
                 ..
