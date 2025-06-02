@@ -1,0 +1,29 @@
+{
+  "id": "build-process",
+  "title": "The Build Process",
+  "description": "Overview",
+  "source": "@site/docs/build-process.mdx",
+  "sourceDirName": ".",
+  "slug": "/build-process",
+  "permalink": "/docs/build-process",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/build-process.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 8,
+  "frontMatter": {
+    "id": "build-process",
+    "title": "The Build Process",
+    "sidebar_position": 8
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Memory Management & Safety",
+    "permalink": "/docs/memory-management"
+  },
+  "next": {
+    "title": "Cross-Platform Development",
+    "permalink": "/docs/cross-platform"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "api-reference/test-helpers",
+  "title": "rb-sys-test-helpers",
+  "description": "The rb-sys-test-helpers crate provides utilities for testing Ruby extensions from Rust. It makes it easy to run tests",
+  "source": "@site/docs/api-reference/test-helpers.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/test-helpers",
+  "permalink": "/docs/api-reference/test-helpers",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/api-reference/test-helpers.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "test-helpers",
+    "title": "rb-sys-test-helpers"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "rb_sys Gem Configuration",
+    "permalink": "/docs/api-reference/rb-sys-gem-config"
+  },
+  "next": {
+    "title": "Community and Support",
+    "permalink": "/docs/community-support"
+  }
+}

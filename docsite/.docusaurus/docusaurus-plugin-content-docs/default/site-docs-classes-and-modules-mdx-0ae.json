@@ -1,0 +1,29 @@
+{
+  "id": "classes-and-modules",
+  "title": "Ruby Classes and Modules",
+  "description": "This guide explains how to define and work with Ruby classes and modules from Rust. It covers approaches for creating Ruby objects, defining methods, and organizing code.",
+  "source": "@site/docs/classes-and-modules.mdx",
+  "sourceDirName": ".",
+  "slug": "/classes-and-modules",
+  "permalink": "/docs/classes-and-modules",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/classes-and-modules.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 10,
+  "frontMatter": {
+    "id": "classes-and-modules",
+    "title": "Ruby Classes and Modules",
+    "sidebar_position": 10
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Working with Ruby Objects",
+    "permalink": "/docs/working-with-ruby-objects"
+  },
+  "next": {
+    "title": "Error Handling in Rust Ruby Extensions",
+    "permalink": "/docs/error-handling"
+  }
+}

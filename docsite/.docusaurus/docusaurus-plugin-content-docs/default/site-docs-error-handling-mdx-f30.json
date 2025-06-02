@@ -1,0 +1,29 @@
+{
+  "id": "error-handling",
+  "title": "Error Handling in Rust Ruby Extensions",
+  "description": "This guide covers how to handle errors in Rust and map them to appropriate Ruby exceptions.",
+  "source": "@site/docs/error-handling.mdx",
+  "sourceDirName": ".",
+  "slug": "/error-handling",
+  "permalink": "/docs/error-handling",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/error-handling.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 11,
+  "frontMatter": {
+    "id": "error-handling",
+    "title": "Error Handling in Rust Ruby Extensions",
+    "sidebar_position": 11
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Ruby Classes and Modules",
+    "permalink": "/docs/classes-and-modules"
+  },
+  "next": {
+    "title": "Memory Management & Safety",
+    "permalink": "/docs/memory-management"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "troubleshooting",
+  "title": "Troubleshooting",
+  "description": "This guide helps you diagnose and fix common issues when developing Ruby extensions with rb-sys.",
+  "source": "@site/docs/troubleshooting.mdx",
+  "sourceDirName": ".",
+  "slug": "/troubleshooting",
+  "permalink": "/docs/troubleshooting",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/troubleshooting.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 10,
+  "frontMatter": {
+    "sidebar_position": 10
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Debugging & Troubleshooting",
+    "permalink": "/docs/debugging"
+  },
+  "next": {
+    "title": "rb-sys Crate Features",
+    "permalink": "/docs/api-reference/rb-sys-features"
+  }
+}

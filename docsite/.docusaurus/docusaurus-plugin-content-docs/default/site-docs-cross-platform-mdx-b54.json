@@ -1,0 +1,29 @@
+{
+  "id": "cross-platform",
+  "title": "Cross-Platform Development",
+  "description": "Overview",
+  "source": "@site/docs/cross-platform.mdx",
+  "sourceDirName": ".",
+  "slug": "/cross-platform",
+  "permalink": "/docs/cross-platform",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/cross-platform.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "id": "cross-platform",
+    "title": "Cross-Platform Development",
+    "sidebar_position": 9
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "The Build Process",
+    "permalink": "/docs/build-process"
+  },
+  "next": {
+    "title": "Testing",
+    "permalink": "/docs/testing"
+  }
+}

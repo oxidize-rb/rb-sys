@@ -1,0 +1,29 @@
+{
+  "id": "debugging",
+  "title": "Debugging & Troubleshooting",
+  "description": "This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to",
+  "source": "@site/docs/debugging.mdx",
+  "sourceDirName": ".",
+  "slug": "/debugging",
+  "permalink": "/docs/debugging",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/debugging.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 14,
+  "frontMatter": {
+    "id": "debugging",
+    "title": "Debugging & Troubleshooting",
+    "sidebar_position": 14
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Testing",
+    "permalink": "/docs/testing"
+  },
+  "next": {
+    "title": "Troubleshooting",
+    "permalink": "/docs/troubleshooting"
+  }
+}

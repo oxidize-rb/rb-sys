@@ -1,0 +1,149 @@
+{
+  "/__docusaurus/debug-5ff": {
+    "__comp": "__comp---theme-debug-config-23-a-2ff",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/config-5ba": {
+    "__comp": "__comp---theme-debug-config-23-a-2ff",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/content-a2b": {
+    "__comp": "__comp---theme-debug-contentba-8-ce7",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    },
+    "__props": "__props---docusaurus-debug-content-3-c-0-be2"
+  },
+  "/__docusaurus/debug/globalData-c3c": {
+    "__comp": "__comp---theme-debug-global-dataede-0fa",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/metadata-156": {
+    "__comp": "__comp---theme-debug-site-metadata-68-e-3d4",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/registry-88c": {
+    "__comp": "__comp---theme-debug-registry-679-501",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/__docusaurus/debug/routes-000": {
+    "__comp": "__comp---theme-debug-routes-946-699",
+    "__context": {
+      "plugin": "plugin---docusaurus-debugb-38-ad3"
+    }
+  },
+  "/docs-eeb": {
+    "__comp": "__comp---theme-docs-root-5-e-9-0b6",
+    "__context": {
+      "plugin": "plugin---docsaba-d7c"
+    }
+  },
+  "/docs-75e": {
+    "__comp": "__comp---theme-doc-version-roota-7-b-5de",
+    "__props": "__props---docs-005-788"
+  },
+  "/docs-c09": {
+    "__comp": "__comp---theme-doc-roota-94-67a"
+  },
+  "/docs/-c76": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-972-23e"
+  },
+  "/docs/api-reference/rb-sys-features-134": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-api-reference-rb-sys-features-5-f-9-8db"
+  },
+  "/docs/api-reference/rb-sys-gem-config-a49": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-api-reference-rb-sys-gem-configfb-2-879"
+  },
+  "/docs/api-reference/test-helpers-e7c": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-api-reference-test-helpersbfb-c29"
+  },
+  "/docs/build-process-954": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-build-process-287-155"
+  },
+  "/docs/classes-and-modules-c46": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-classes-and-modules-0-ae-48b"
+  },
+  "/docs/community-support-5b6": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-community-support-941-237"
+  },
+  "/docs/cross-platform-0be": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-cross-platformb-54-4de"
+  },
+  "/docs/debugging-ccf": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-debuggingb-11-6b6"
+  },
+  "/docs/development-approaches-db8": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-development-approachesbda-477"
+  },
+  "/docs/error-handling-b31": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-error-handlingf-30-208"
+  },
+  "/docs/examples-bfa": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-examples-675-db8"
+  },
+  "/docs/getting-started-41b": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-getting-started-302-242"
+  },
+  "/docs/hello-rusty-documentation-af1": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-hello-rusty-documentation-536-fe8"
+  },
+  "/docs/intro-853": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-intro-0-e-3-be1"
+  },
+  "/docs/memory-management-b8a": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-memory-management-7-cd-d5a"
+  },
+  "/docs/project-setup-4b7": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-project-setupe-4-d-448"
+  },
+  "/docs/quick-start-8d8": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-quick-startc-17-618"
+  },
+  "/docs/testing-cf2": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-testing-1-dc-798"
+  },
+  "/docs/troubleshooting-b4e": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-troubleshootinga-76-0e1"
+  },
+  "/docs/working-with-ruby-objects-d4f": {
+    "__comp": "__comp---theme-doc-item-178-a40",
+    "content": "content---docs-working-with-ruby-objects-496-539"
+  },
+  "/-e5f": {
+    "__comp": "__comp---site-src-pages-index-tsx-1-df-d3e",
+    "__context": {
+      "plugin": "plugin---a-74-9d6"
+    },
+    "config": "config---5-e-9-4f3"
+  }
+}

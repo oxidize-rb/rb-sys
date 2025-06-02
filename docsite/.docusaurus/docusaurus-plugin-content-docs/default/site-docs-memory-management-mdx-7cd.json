@@ -1,0 +1,24 @@
+{
+  "id": "memory-management",
+  "title": "Memory Management & Safety",
+  "description": "This guide covers how Ruby's garbage collector interacts with Rust objects and how to prevent memory leaks and segmentation faults in your extensions.",
+  "source": "@site/docs/memory-management.mdx",
+  "sourceDirName": ".",
+  "slug": "/memory-management",
+  "permalink": "/docs/memory-management",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/memory-management.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Error Handling in Rust Ruby Extensions",
+    "permalink": "/docs/error-handling"
+  },
+  "next": {
+    "title": "The Build Process",
+    "permalink": "/docs/build-process"
+  }
+}

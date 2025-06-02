@@ -1,0 +1,29 @@
+{
+  "id": "quick-start",
+  "title": "Quick Start - Your First Extension",
+  "description": "This guide covers creating a Ruby gem with a Rust extension using Bundler's built-in Rust support.",
+  "source": "@site/docs/quick-start.mdx",
+  "sourceDirName": ".",
+  "slug": "/quick-start",
+  "permalink": "/docs/quick-start",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/quick-start.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "id": "quick-start",
+    "title": "Quick Start - Your First Extension",
+    "sidebar_position": 3
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Prerequisites and Installation",
+    "permalink": "/docs/getting-started"
+  },
+  "next": {
+    "title": "Project Setup",
+    "permalink": "/docs/project-setup"
+  }
+}

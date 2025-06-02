@@ -1,0 +1,25 @@
+{
+  "id": "community-support",
+  "title": "Community and Support",
+  "description": "The rb-sys project is maintained by the Oxidize Ruby community. We integrate Rust and Ruby to improve extension development.",
+  "source": "@site/docs/community-support.mdx",
+  "sourceDirName": ".",
+  "slug": "/community-support",
+  "permalink": "/docs/community-support",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/community-support.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 20,
+  "frontMatter": {
+    "id": "community-support",
+    "title": "Community and Support",
+    "sidebar_position": 20
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "rb-sys-test-helpers",
+    "permalink": "/docs/api-reference/test-helpers"
+  }
+}

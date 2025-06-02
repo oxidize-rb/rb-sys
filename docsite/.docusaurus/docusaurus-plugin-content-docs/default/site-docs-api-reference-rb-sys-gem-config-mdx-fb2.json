@@ -1,0 +1,27 @@
+{
+  "id": "api-reference/rb-sys-gem-config",
+  "title": "rb_sys Gem Configuration",
+  "description": "The rb_sys gem makes it easy to build native Ruby extensions in Rust. It interoperates with existing Ruby native",
+  "source": "@site/docs/api-reference/rb-sys-gem-config.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/rb-sys-gem-config",
+  "permalink": "/docs/api-reference/rb-sys-gem-config",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/api-reference/rb-sys-gem-config.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "rb-sys-gem-config",
+    "title": "rb_sys Gem Configuration"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "rb-sys Crate Features",
+    "permalink": "/docs/api-reference/rb-sys-features"
+  },
+  "next": {
+    "title": "rb-sys-test-helpers",
+    "permalink": "/docs/api-reference/test-helpers"
+  }
+}

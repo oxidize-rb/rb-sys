@@ -1,0 +1,26 @@
+{
+  "id": "introduction",
+  "title": "Introduction",
+  "description": "rb-sys helps you build Ruby extensions in Rust.",
+  "source": "@site/docs/introduction.mdx",
+  "sourceDirName": ".",
+  "slug": "/",
+  "permalink": "/docs/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/introduction.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "id": "introduction",
+    "title": "Introduction",
+    "slug": "/",
+    "sidebar_position": 1
+  },
+  "sidebar": "docsSidebar",
+  "next": {
+    "title": "Prerequisites and Installation",
+    "permalink": "/docs/getting-started"
+  }
+}

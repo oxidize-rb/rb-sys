@@ -1,0 +1,29 @@
+{
+  "id": "development-approaches",
+  "title": "Development Approaches",
+  "description": "When building Ruby extensions with Rust and rb-sys, you have two main approaches to choose from:",
+  "source": "@site/docs/development-approaches.mdx",
+  "sourceDirName": ".",
+  "slug": "/development-approaches",
+  "permalink": "/docs/development-approaches",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/development-approaches.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "id": "development-approaches",
+    "title": "Development Approaches",
+    "sidebar_position": 6
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Hello Rusty Documentation",
+    "permalink": "/docs/hello-rusty-documentation"
+  },
+  "next": {
+    "title": "Working with Ruby Objects",
+    "permalink": "/docs/working-with-ruby-objects"
+  }
+}

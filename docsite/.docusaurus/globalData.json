@@ -1,0 +1,131 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/docs",
+          "mainDocId": "introduction",
+          "docs": [
+            {
+              "id": "api-reference/rb-sys-features",
+              "path": "/docs/api-reference/rb-sys-features",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "api-reference/rb-sys-gem-config",
+              "path": "/docs/api-reference/rb-sys-gem-config",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "api-reference/test-helpers",
+              "path": "/docs/api-reference/test-helpers",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "build-process",
+              "path": "/docs/build-process",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "classes-and-modules",
+              "path": "/docs/classes-and-modules",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "community-support",
+              "path": "/docs/community-support",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "cross-platform",
+              "path": "/docs/cross-platform",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "debugging",
+              "path": "/docs/debugging",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "development-approaches",
+              "path": "/docs/development-approaches",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "error-handling",
+              "path": "/docs/error-handling",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "examples",
+              "path": "/docs/examples"
+            },
+            {
+              "id": "getting-started",
+              "path": "/docs/getting-started",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "hello-rusty-documentation",
+              "path": "/docs/hello-rusty-documentation",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "intro",
+              "path": "/docs/intro"
+            },
+            {
+              "id": "introduction",
+              "path": "/docs/",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "memory-management",
+              "path": "/docs/memory-management",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "project-setup",
+              "path": "/docs/project-setup",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "quick-start",
+              "path": "/docs/quick-start",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "testing",
+              "path": "/docs/testing",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "troubleshooting",
+              "path": "/docs/troubleshooting",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "working-with-ruby-objects",
+              "path": "/docs/working-with-ruby-objects",
+              "sidebar": "docsSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "docsSidebar": {
+              "link": {
+                "path": "/docs/",
+                "label": "introduction"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "examples",
+  "title": "Examples",
+  "description": "This page demonstrates the custom components created for the oxidize.rb documentation.",
+  "source": "@site/docs/examples.mdx",
+  "sourceDirName": ".",
+  "slug": "/examples",
+  "permalink": "/docs/examples",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/examples.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "examples",
+    "title": "Examples"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "hello-rusty-documentation",
+  "title": "Hello Rusty Documentation",
+  "description": "The Rust code in this gem is a native extension for Ruby. It is compiled into a dynamic library that can be loaded by Ruby.",
+  "source": "@site/docs/hello-rusty-documentation.mdx",
+  "sourceDirName": ".",
+  "slug": "/hello-rusty-documentation",
+  "permalink": "/docs/hello-rusty-documentation",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/hello-rusty-documentation.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Project Setup",
+    "permalink": "/docs/project-setup"
+  },
+  "next": {
+    "title": "Development Approaches",
+    "permalink": "/docs/development-approaches"
+  }
+}

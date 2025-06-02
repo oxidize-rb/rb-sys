@@ -1,0 +1,27 @@
+{
+  "id": "api-reference/rb-sys-features",
+  "title": "rb-sys Crate Features",
+  "description": "The rb-sys crate provides battle-tested Rust bindings for the Ruby C API. It uses the",
+  "source": "@site/docs/api-reference/rb-sys-features.mdx",
+  "sourceDirName": "api-reference",
+  "slug": "/api-reference/rb-sys-features",
+  "permalink": "/docs/api-reference/rb-sys-features",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/api-reference/rb-sys-features.mdx",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "rb-sys-features",
+    "title": "rb-sys Crate Features"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Troubleshooting",
+    "permalink": "/docs/troubleshooting"
+  },
+  "next": {
+    "title": "rb_sys Gem Configuration",
+    "permalink": "/docs/api-reference/rb-sys-gem-config"
+  }
+}

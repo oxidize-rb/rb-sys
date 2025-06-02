@@ -1,0 +1,27 @@
+{
+  "id": "testing",
+  "title": "Testing",
+  "description": "Testing Ruby extensions written in Rust requires consideration of both the Ruby and Rust sides of your code. This chapter covers best practices and tools for comprehensive testing.",
+  "source": "@site/docs/testing.mdx",
+  "sourceDirName": ".",
+  "slug": "/testing",
+  "permalink": "/docs/testing",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/testing.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "sidebar_position": 9
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Cross-Platform Development",
+    "permalink": "/docs/cross-platform"
+  },
+  "next": {
+    "title": "Debugging & Troubleshooting",
+    "permalink": "/docs/debugging"
+  }
+}

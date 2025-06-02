@@ -1,0 +1,29 @@
+{
+  "id": "getting-started",
+  "title": "Prerequisites and Installation",
+  "description": "This guide covers the prerequisites and installation steps for building Ruby extensions with Rust.",
+  "source": "@site/docs/getting-started.mdx",
+  "sourceDirName": ".",
+  "slug": "/getting-started",
+  "permalink": "/docs/getting-started",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/getting-started.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "id": "getting-started",
+    "title": "Prerequisites and Installation",
+    "sidebar_position": 2
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Introduction",
+    "permalink": "/docs/"
+  },
+  "next": {
+    "title": "Quick Start - Your First Extension",
+    "permalink": "/docs/quick-start"
+  }
+}

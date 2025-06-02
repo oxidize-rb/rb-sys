@@ -1,0 +1,27 @@
+{
+  "id": "working-with-ruby-objects",
+  "title": "Working with Ruby Objects",
+  "description": "When writing Ruby extensions in Rust, one of the most common tasks is converting between Ruby and Rust types. The magnus crate provides a comprehensive set of conversion functions for this purpose.",
+  "source": "@site/docs/working-with-ruby-objects.mdx",
+  "sourceDirName": ".",
+  "slug": "/working-with-ruby-objects",
+  "permalink": "/docs/working-with-ruby-objects",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/oxidize-rb/rb-sys/tree/main/docsite/docs/working-with-ruby-objects.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 7,
+  "frontMatter": {
+    "sidebar_position": 7
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Development Approaches",
+    "permalink": "/docs/development-approaches"
+  },
+  "next": {
+    "title": "Ruby Classes and Modules",
+    "permalink": "/docs/classes-and-modules"
+  }
+}
