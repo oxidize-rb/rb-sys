@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "rb-sys-env"
-version = "0.2.2"
+version = "0.1.3"
 
 [[package]]
 name = "rb-sys-test-helpers"
