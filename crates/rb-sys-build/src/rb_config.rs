@@ -99,6 +99,7 @@ impl RbConfig {
         };
 
         parsed.get("cflags").map(|f| rbconfig.push_cflags(f));
+        parsed.get("CFLAGS").map(|f| rbconfig.push_cflags(f));
         parsed.get("DLDFLAGS").map(|f| rbconfig.push_dldflags(f));
 
         rbconfig.value_map = parsed;
