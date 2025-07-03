@@ -346,7 +346,6 @@ module RbSys
       end
     end
 
-
     def musl?
       RbConfig::CONFIG["target_os"] == "linux-musl" || RbConfig::CONFIG["CC"]&.include?("musl-gcc")
     end

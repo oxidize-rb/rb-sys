@@ -70,14 +70,14 @@ class TestRubygemsDetection < Minitest::Test
   def test_cargo_builder_rubygems_detection
     # Test CargoBuilder's rubygems_invoked? method directly
     cargo_builder = create_cargo_builder_with_profile(:dev)
-    
+
     # Normal context
     refute cargo_builder.rubygems_invoked?, "CargoBuilder should not detect rubygems in normal context"
-    
+
     # With SOURCE_DATE_EPOCH
     ENV["SOURCE_DATE_EPOCH"] = "315619200"
     assert cargo_builder.rubygems_invoked?, "CargoBuilder should detect rubygems with SOURCE_DATE_EPOCH"
-    
+
     # In nix environment
     ENV["NIX_STORE"] = "/nix/store"
     refute cargo_builder.rubygems_invoked?, "CargoBuilder should not detect rubygems in nix"
@@ -103,14 +103,15 @@ class TestRubygemsDetection < Minitest::Test
   def create_config
     # Create a mock builder
     builder = Object.new
-    def builder.config=(config); end
+    def builder.config=(config)
+    end
     RbSys::Mkmf::Config.new(builder)
   end
 
   def create_cargo_builder_with_profile(profile)
     # Create a stub spec object
     spec = Object.new
-    
+
     # Create a cargo builder instance and set its profile
     cargo_builder = RbSys::CargoBuilder.new(spec)
     cargo_builder.profile = profile

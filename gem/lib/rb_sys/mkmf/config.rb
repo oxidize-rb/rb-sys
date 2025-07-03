@@ -62,7 +62,7 @@ module RbSys
       # Note: we avoid nix environments so we do not force recompilation in
       # development, and accept that the "clean" task will not automatically
       # run.
-      # 
+      #
       def rubygems_invoked?
         ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1" && !ENV.key?("NIX_STORE")
       end
