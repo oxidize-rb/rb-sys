@@ -34,6 +34,18 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
+    // Workaround for Clang 20 on Windows including AVX512 intrinsics headers
+    // that cause bindgen errors with types like __m512h
+    if cfg!(target_os = "windows") {
+        // Tell clang to not include immintrin.h and related intrinsics headers
+        clang_args.push("-D__IMMINTRIN_H".to_string());
+        clang_args.push("-D__AVX512FP16INTRIN_H".to_string());
+        clang_args.push("-D__AVX512VLINTRIN_H".to_string());
+        clang_args.push("-D__AMXAVX512INTRIN_H".to_string());
+        clang_args.push("-D__AVX10_2CONVERTINTRIN_H".to_string());
+        debug_log!("INFO: Added header guards to prevent AVX512 intrinsics inclusion on Windows");
+    }
+
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
@@ -142,14 +154,6 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
         .opaque_type("^__sFILE$")
-        // Block AVX512 and related intrinsics that cause issues with Clang 20
-        .blocklist_item("__m512h")
-        .blocklist_item("__m256h")
-        .blocklist_item("__m128h")
-        .blocklist_item("__v8hf")
-        .blocklist_item("__v16hf")
-        .blocklist_file(".*amxavx512intrin\\.h")
-        .blocklist_file(".*avx10_2convertintrin\\.h")
         .merge_extern_blocks(true)
         .generate_comments(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
