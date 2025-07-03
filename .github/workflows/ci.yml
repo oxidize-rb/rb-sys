@@ -29,6 +29,29 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
           echo "minimum-supported-rust-version=$(jq -r '.policy["minimum-supported-rust-version"]' toolchains.json)" >> $GITHUB_OUTPUT
+
+  lint:
+    name: 🚓 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
+        with:
+          cache-version: v2
+          ruby-version: "3.1"
+          rustup-toolchain: stable
+          bundler-cache: true
+          cargo-cache: true
+
+      - name: 🚓 Run Standard.rb
+        run: bundle exec standardrb --format github
+
+      - name: ✂️ Run clippy
+        run: cargo clippy
+
+      - name: 📃 Run cargo fmt
+        run: cargo fmt --check
   build_and_test:
     name: 🧪 Test
     needs: fetch_ci_data
@@ -136,17 +159,6 @@ jobs:
           ../../script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
-
-      - name: ✂️ Run clippy
-        run: cargo clippy
-
-      - name: 📃 Run cargo fmt
-        if: matrix.sys.rust_toolchain == 'stable'
-        run: cargo fmt --check
-
-      - name: 🚓 Run Standard.rb
-        if: matrix.ruby_version == '3.1'
-        run: bundle exec standardrb --format github
 
       - name: "🧱 Generate bindings"
         if: env.ACTIONS_STEP_DEBUG == 'true'
