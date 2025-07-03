@@ -110,6 +110,10 @@ module RbSys
       end
     end
 
+    def rubygems_invoked?
+      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1" && !ENV.key?("NIX_STORE")
+    end
+
     private
 
     def rb_config_env
@@ -342,9 +346,6 @@ module RbSys
       end
     end
 
-    def rubygems_invoked?
-      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
-    end
 
     def musl?
       RbConfig::CONFIG["target_os"] == "linux-musl" || RbConfig::CONFIG["CC"]&.include?("musl-gcc")
