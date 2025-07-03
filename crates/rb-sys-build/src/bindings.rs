@@ -34,17 +34,6 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-    // Workaround for Clang 20 on Windows including AVX512 intrinsics headers
-    // that cause bindgen errors with types like __m512h
-    if cfg!(target_os = "windows") {
-        // Tell clang to not include immintrin.h and related intrinsics headers
-        clang_args.push("-D__IMMINTRIN_H".to_string());
-        clang_args.push("-D__AVX512FP16INTRIN_H".to_string());
-        clang_args.push("-D__AVX512VLINTRIN_H".to_string());
-        clang_args.push("-D__AMXAVX512INTRIN_H".to_string());
-        clang_args.push("-D__AVX10_2CONVERTINTRIN_H".to_string());
-        debug_log!("INFO: Added header guards to prevent AVX512 intrinsics inclusion on Windows");
-    }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
@@ -142,7 +131,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 }
 
 fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
-    let bindings = bindgen::Builder::default()
+    let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
@@ -159,6 +148,25 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
         .impl_debug(cfg!(feature = "bindgen-impl-debug"))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
+
+    // Block problematic intrinsics headers on Windows with Clang 20
+    if cfg!(target_os = "windows") {
+        bindings = bindings
+            // Block AVX512 FP16 types that cause errors
+            .blocklist_item("__m512h")
+            .blocklist_item("__m256h") 
+            .blocklist_item("__m128h")
+            .blocklist_item("__v8hf")
+            .blocklist_item("__v16hf")
+            .blocklist_item("__v32hf")
+            // Block the intrinsics headers themselves
+            .blocklist_file(".*intrin\\.h")
+            .blocklist_file(".*intrinsics\\.h")
+            // Block functions from these headers
+            .blocklist_function("_mm.*")
+            .blocklist_function("_m_.*")
+            .blocklist_function("__builtin_ia32_.*");
+    }
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {
         bindings.enable_function_attribute_detection()
