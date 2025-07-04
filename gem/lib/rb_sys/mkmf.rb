@@ -378,15 +378,20 @@ module RbSys
 
     def windows_bindgen_fix
       # Only apply on Windows
-      return "" unless RUBY_PLATFORM =~ /mingw|mswin/
+      return "" unless RUBY_PLATFORM.match?(/mingw|mswin/)
 
-      <<~MAKE
-        # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS on Windows
-        #{if_neq_stmt("$(BINDGEN_EXTRA_CLANG_ARGS)", "")}
-        BINDGEN_EXTRA_CLANG_ARGS := $(shell echo "$(BINDGEN_EXTRA_CLANG_ARGS)" | sed 's/--target=stable-[^ ]*/--target=x86_64-pc-windows-gnu/g')
-        #{export_env("BINDGEN_EXTRA_CLANG_ARGS", "$(BINDGEN_EXTRA_CLANG_ARGS)")}
-        #{endif_stmt}
-      MAKE
+      # Fix the environment variable at Ruby level
+      if ENV['BINDGEN_EXTRA_CLANG_ARGS'] && ENV['BINDGEN_EXTRA_CLANG_ARGS'].include?('--target=stable-')
+        fixed_args = ENV['BINDGEN_EXTRA_CLANG_ARGS'].gsub(/--target=stable-[^ ]*/, '--target=x86_64-pc-windows-gnu')
+        ENV['BINDGEN_EXTRA_CLANG_ARGS'] = fixed_args
+      end
+
+      # Export the corrected value in the Makefile
+      if ENV['BINDGEN_EXTRA_CLANG_ARGS']
+        export_env("BINDGEN_EXTRA_CLANG_ARGS", ENV['BINDGEN_EXTRA_CLANG_ARGS'])
+      else
+        ""
+      end
     end
   end
 end
