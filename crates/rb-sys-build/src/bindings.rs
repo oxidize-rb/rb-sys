@@ -34,18 +34,35 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-    // On Windows, disable CPU features that trigger problematic intrinsics
+    // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
-        debug_log!("INFO: Disabling AVX512 features to prevent intrinsics issues on Windows");
+        debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
         
-        // Disable the CPU features that would trigger these intrinsics
-        clang_args.push("-mno-avx512f".to_string());
-        clang_args.push("-mno-avx512fp16".to_string());
-        clang_args.push("-mno-avx10.2-512".to_string());
-        clang_args.push("-mno-amx-avx512".to_string());
+        // Add MinGW include path for mm_malloc.h and other system headers
+        if let Some(mingw_prefix) = rbconfig.get("prefix") {
+            // Try common MinGW include paths
+            let possible_paths = vec![
+                format!("{}/include", mingw_prefix),
+                format!("{}/mingw64/include", mingw_prefix),
+                format!("{}/ucrt64/include", mingw_prefix),
+                format!("{}/msys64/ucrt64/include", mingw_prefix),
+            ];
+            
+            for path in possible_paths {
+                if std::path::Path::new(&path).exists() {
+                    clang_args.push(format!("-I{}", path));
+                    debug_log!("INFO: Added MinGW include path: {}", path);
+                    break;
+                }
+            }
+        }
         
-        // Use a conservative target CPU
-        clang_args.push("-march=x86-64".to_string());
+        // Use feature detection macros to prevent AVX512 intrinsics
+        clang_args.push("-U__AVX512F__".to_string());
+        clang_args.push("-U__AVX512FP16__".to_string());
+        clang_args.push("-U__AMX_AVX512__".to_string());
+        clang_args.push("-U__AVX10_1__".to_string());
+        clang_args.push("-U__AVX10_1_512__".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
