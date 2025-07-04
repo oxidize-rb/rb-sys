@@ -115,6 +115,19 @@ jobs:
           bundler-cache: true
           cargo-cache: true
 
+      - name: Fix BINDGEN_EXTRA_CLANG_ARGS on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS
+          if [[ "$BINDGEN_EXTRA_CLANG_ARGS" == *"--target=stable-"* ]]; then
+            echo "Fixing invalid target triple in BINDGEN_EXTRA_CLANG_ARGS"
+            echo "Original: $BINDGEN_EXTRA_CLANG_ARGS"
+            export BINDGEN_EXTRA_CLANG_ARGS=$(echo "$BINDGEN_EXTRA_CLANG_ARGS" | sed 's/--target=stable-[^ ]*/--target=x86_64-pc-windows-gnu/')
+            echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
+            echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
+          fi
+
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
         shell: bash
