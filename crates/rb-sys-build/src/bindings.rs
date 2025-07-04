@@ -34,19 +34,18 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-    // On Windows, define header guards to prevent problematic intrinsics headers from being included
+    // On Windows, disable CPU features that trigger problematic intrinsics
     if cfg!(target_os = "windows") {
-        debug_log!("INFO: Defining header guards to prevent AVX512 intrinsics inclusion");
+        debug_log!("INFO: Disabling AVX512 features to prevent intrinsics issues on Windows");
         
-        // Define the header guards for the problematic files
-        clang_args.push("-D_AMXAVX512INTRIN_H".to_string());
-        clang_args.push("-D__AMXAVX512INTRIN_H".to_string());
-        clang_args.push("-D_AVX10_2CONVERTINTRIN_H".to_string());
-        clang_args.push("-D__AVX10_2CONVERTINTRIN_H".to_string());
-        clang_args.push("-D_AVX512FP16INTRIN_H".to_string());
-        clang_args.push("-D__AVX512FP16INTRIN_H".to_string());
-        clang_args.push("-D_AVX512VLFP16INTRIN_H".to_string());
-        clang_args.push("-D__AVX512VLFP16INTRIN_H".to_string());
+        // Disable the CPU features that would trigger these intrinsics
+        clang_args.push("-mno-avx512f".to_string());
+        clang_args.push("-mno-avx512fp16".to_string());
+        clang_args.push("-mno-avx10.2-512".to_string());
+        clang_args.push("-mno-amx-avx512".to_string());
+        
+        // Use a conservative target CPU
+        clang_args.push("-march=x86-64".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
