@@ -31,6 +31,7 @@ fn main() {
     // This must be done before any bindgen operations
     if cfg!(target_os = "windows") {
         if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
+            eprintln!("DEBUG: Original BINDGEN_EXTRA_CLANG_ARGS: {}", extra_args);
             if extra_args.contains("--target=stable-") {
                 // Parse and filter out the invalid target, then reconstruct
                 let filtered_args: Vec<&str> = extra_args
@@ -42,6 +43,7 @@ fn main() {
                 let mut new_args = filtered_args.join(" ");
                 new_args.push_str(" --target=x86_64-pc-windows-gnu");
 
+                eprintln!("DEBUG: Fixed BINDGEN_EXTRA_CLANG_ARGS: {}", new_args);
                 env::set_var("BINDGEN_EXTRA_CLANG_ARGS", new_args);
             }
         }
