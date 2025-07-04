@@ -42,6 +42,13 @@ pub fn generate(
     if cfg!(target_os = "windows") {
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
+        // Use -nostdinc to prevent Clang from loading ANY builtin headers
+        // This is the nuclear option but necessary to prevent AVX512 intrinsics from loading
+        clang_args.push("-nostdinc".to_string());
+
+        // Now we need to manually add back the include paths we need
+        // First add Ruby's include directories (already done above)
+
         // Add MinGW include path for mm_malloc.h and other system headers
         if let Some(mingw_prefix) = rbconfig.get("prefix") {
             // Try common MinGW include paths
@@ -79,11 +86,10 @@ pub fn generate(
             }
         }
 
-
         // Add compatibility flags
         clang_args.push("-fno-builtin".to_string());
         clang_args.push("-fms-extensions".to_string());
-        
+
         // Try to prevent Clang from including its own intrinsics headers
         // Use target that doesn't support AVX512
         clang_args.push("-target".to_string());
@@ -223,62 +229,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
 
     // Comprehensive blocklist for Windows Clang 20 AVX512 intrinsics issues
     if cfg!(target_os = "windows") {
-        debug_log!(
-            "INFO: Adding Windows-specific blocklist and header guards for AVX512 intrinsics"
-        );
-
-        // Block Clang's built-in intrinsics headers entirely
-        bindings = bindings
-            .blocklist_file(".*intrin\\.h$")
-            .blocklist_file(".*intrin\\.h")
-            .blocklist_file(".*immintrin\\.h")
-            .blocklist_file(".*amxavx512intrin\\.h")
-            .blocklist_file(".*avx10.*intrin\\.h")
-            .blocklist_file(".*avx512.*intrin\\.h");
-
-        // Add raw lines to define header guards before any includes
-        bindings = bindings
-            // Define header guards for AVX512 intrinsics headers
-            .raw_line("#define _AMXAVX512INTRIN_H")
-            .raw_line("#define _AVX10_2CONVERTINTRIN_H")
-            .raw_line("#define _AVX512FP16INTRIN_H")
-            .raw_line("#define _AVX512VLFP16INTRIN_H")
-            .raw_line("#define _IMMINTRIN_H")
-            .raw_line("#define _AVX512FINTRIN_H")
-            .raw_line("#define _AVX512PFINTRIN_H")
-            .raw_line("#define _AVX512VLINTRIN_H")
-            .raw_line("#define _AVX512BWINTRIN_H")
-            .raw_line("#define _AVX512DQINTRIN_H")
-            .raw_line("#define _AVX512CDINTRIN_H")
-            .raw_line("#define _AVX512ERINTRIN_H")
-            .raw_line("#define _AVX512IFMAINTRIN_H")
-            .raw_line("#define _AVX512IFMAVLINTRIN_H")
-            .raw_line("#define _AVX512VBMIINTRIN_H")
-            .raw_line("#define _AVX512VBMIVLINTRIN_H")
-            .raw_line("#define _AVX512VBMI2INTRIN_H")
-            .raw_line("#define _AVX512VBMI2VLINTRIN_H")
-            .raw_line("#define _AVX512VNNIINTRIN_H")
-            .raw_line("#define _AVX512VNNIVLINTRIN_H")
-            .raw_line("#define _AVX512VPOPCNTDQINTRIN_H")
-            .raw_line("#define _AVX512VPOPCNTDQVLINTRIN_H")
-            .raw_line("#define _AVX512BITALGINTRIN_H")
-            .raw_line("#define _AVX512BITALG_H")
-            .raw_line("#define _AVX512BF16INTRIN_H")
-            .raw_line("#define _AVX512BF16VLINTRIN_H")
-            .raw_line("#define _AVX512VP2INTERSECTINTRIN_H")
-            .raw_line("#define _AVX512VP2INTERSECTVLINTRIN_H")
-            // Also prevent AVX10 headers
-            .raw_line("#define _AVX10_1_256INTRIN_H")
-            .raw_line("#define _AVX10_1_512INTRIN_H")
-            .raw_line("#define _AVX10_1INTRIN_H")
-            .raw_line("#define _AVX10_2_256INTRIN_H")
-            .raw_line("#define _AVX10_2_512INTRIN_H")
-            .raw_line("#define _AVX10_2INTRIN_H")
-            .raw_line("#define _AVX10_2CONVERTINTRIN_H")
-            .raw_line("#define _AVX10_2SATCVTINTRIN_H")
-            .raw_line("#define _AVX10_2COPYINTRIN_H")
-            .raw_line("#define _AVX10_2MEDIAINTRIN_H")
-            .raw_line("#define _AVX10_2MINMAXINTRIN_H");
+        debug_log!("INFO: Adding Windows-specific blocklist for AVX512 intrinsics");
 
         // Block problematic AVX512 FP16 types
         bindings = bindings
@@ -291,11 +242,6 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
             // Block problematic type aliases
             .blocklist_item("_Float16")
             .blocklist_type("_Float16")
-            // Block the specific intrinsics headers
-            .blocklist_file(".*amxavx512intrin\\.h")
-            .blocklist_file(".*avx10_2convertintrin\\.h")
-            .blocklist_file(".*avx512fp16intrin\\.h")
-            .blocklist_file(".*avx512vlfp16intrin\\.h")
             // Block functions that use these types
             .blocklist_function("_tile_cmmimfp16ps")
             .blocklist_function("_tile_cmmrlfp16ps");
