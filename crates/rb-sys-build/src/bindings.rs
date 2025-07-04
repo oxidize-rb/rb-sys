@@ -79,76 +79,15 @@ pub fn generate(
             }
         }
 
-        // Step 3: Explicitly disable all AVX512 and AVX10 features
-        // Note: We use both -mno- flags and -U macros for maximum compatibility
-        // Removed -mno-avx512er and -mno-avx512pf as they're not recognized by some Clang versions
-        let avx_disable_flags = vec![
-            "-mno-avx512f",
-            "-mno-avx512cd",
-            // "-mno-avx512er",  // Not recognized by some Clang versions
-            // "-mno-avx512pf",  // Not recognized by some Clang versions
-            "-mno-avx512dq",
-            "-mno-avx512bw",
-            "-mno-avx512vl",
-            "-mno-avx512ifma",
-            "-mno-avx512vbmi",
-            "-mno-avx512vbmi2",
-            "-mno-avx512vnni",
-            "-mno-avx512bitalg",
-            "-mno-avx512vpopcntdq",
-            "-mno-avx512fp16",
-            "-mno-avx512bf16",
-            "-mno-avx512vp2intersect",
-            "-mno-amx-tile",
-            "-mno-amx-int8",
-            "-mno-amx-bf16",
-        ];
 
-        for flag in avx_disable_flags {
-            clang_args.push(flag.to_string());
-        }
-
-        // Step 3b: Also disable AVX and AVX2 to prevent loading of immintrin.h
-        clang_args.push("-mno-avx".to_string());
-        clang_args.push("-mno-avx2".to_string());
-
-        // Step 4: Undefine all feature detection macros
-        let undef_macros = vec![
-            "-U__AVX512F__",
-            "-U__AVX512CD__",
-            "-U__AVX512ER__",
-            "-U__AVX512PF__",
-            "-U__AVX512DQ__",
-            "-U__AVX512BW__",
-            "-U__AVX512VL__",
-            "-U__AVX512IFMA__",
-            "-U__AVX512VBMI__",
-            "-U__AVX512VBMI2__",
-            "-U__AVX512VNNI__",
-            "-U__AVX512BITALG__",
-            "-U__AVX512VPOPCNTDQ__",
-            "-U__AVX512FP16__",
-            "-U__AVX512BF16__",
-            "-U__AVX512VP2INTERSECT__",
-            "-U__AMX_TILE__",
-            "-U__AMX_INT8__",
-            "-U__AMX_BF16__",
-            "-U__AMX_AVX512__",
-            "-U__AVX10_1__",
-            "-U__AVX10_1_256__",
-            "-U__AVX10_1_512__",
-            "-U__AVX10_2__",
-            "-U__AVX10_2_256__",
-            "-U__AVX10_2_512__",
-        ];
-
-        for macro_undef in undef_macros {
-            clang_args.push(macro_undef.to_string());
-        }
-
-        // Step 5: Add compatibility flags
+        // Add compatibility flags
         clang_args.push("-fno-builtin".to_string());
         clang_args.push("-fms-extensions".to_string());
+        
+        // Try to prevent Clang from including its own intrinsics headers
+        // Use target that doesn't support AVX512
+        clang_args.push("-target".to_string());
+        clang_args.push("x86_64-pc-windows-gnu".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
@@ -287,6 +226,15 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         debug_log!(
             "INFO: Adding Windows-specific blocklist and header guards for AVX512 intrinsics"
         );
+
+        // Block Clang's built-in intrinsics headers entirely
+        bindings = bindings
+            .blocklist_file(".*intrin\\.h$")
+            .blocklist_file(".*intrin\\.h")
+            .blocklist_file(".*immintrin\\.h")
+            .blocklist_file(".*amxavx512intrin\\.h")
+            .blocklist_file(".*avx10.*intrin\\.h")
+            .blocklist_file(".*avx512.*intrin\\.h");
 
         // Add raw lines to define header guards before any includes
         bindings = bindings
