@@ -27,27 +27,6 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
 ];
 
 fn main() {
-    // Clean up problematic BINDGEN_EXTRA_CLANG_ARGS on Windows before bindgen runs
-    if cfg!(target_os = "windows") {
-        if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
-            // Parse and filter out problematic flags
-            let filtered_args: Vec<&str> = extra_args
-                .split_whitespace()
-                .filter(|arg| {
-                    // Remove the invalid --target=stable-x86_64-pc-windows-gnu
-                    !arg.starts_with("--target=stable-")
-                })
-                .collect();
-
-            if filtered_args.is_empty() {
-                env::remove_var("BINDGEN_EXTRA_CLANG_ARGS");
-            } else {
-                let new_args = filtered_args.join(" ");
-                env::set_var("BINDGEN_EXTRA_CLANG_ARGS", new_args);
-            }
-        }
-    }
-
     warn_deprecated_feature_flags();
 
     let mut rbconfig = RbConfig::current();
