@@ -36,6 +36,13 @@ pub fn generate(
 
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
+        // Filter out any problematic environment clang args
+        if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
+            debug_log!("INFO: Found BINDGEN_EXTRA_CLANG_ARGS: {}", extra_args);
+            // Clear the environment variable to prevent bindgen from using it
+            env::remove_var("BINDGEN_EXTRA_CLANG_ARGS");
+            debug_log!("INFO: Removed BINDGEN_EXTRA_CLANG_ARGS from environment");
+        }
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
         // Add MinGW include path for mm_malloc.h and other system headers

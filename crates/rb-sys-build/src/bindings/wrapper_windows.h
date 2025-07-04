@@ -3,6 +3,14 @@
 
 #ifdef _WIN32
 
+  // Step 0: Undefine any macros that might have been set externally
+  #ifdef __AVX512VLFP16INTRIN_H
+    #undef __AVX512VLFP16INTRIN_H
+  #endif
+  #ifdef __AVX512FP16INTRIN_H
+    #undef __AVX512FP16INTRIN_H
+  #endif
+
   // Step 1: Define all intrinsics header guards to prevent their inclusion
   // This must be done before ANY includes
   #define _IMMINTRIN_H
@@ -10,6 +18,8 @@
   #define _AVX10_2CONVERTINTRIN_H
   #define _AVX512FP16INTRIN_H
   #define _AVX512VLFP16INTRIN_H
+  #define __AVX512FP16INTRIN_H
+  #define __AVX512VLFP16INTRIN_H
   #define _AVX512FINTRIN_H
   #define _AVX512PFINTRIN_H
   #define _AVX512VLINTRIN_H
