@@ -65,11 +65,12 @@ pub fn generate(
 
         // Step 3: Explicitly disable all AVX512 and AVX10 features
         // Note: We use both -mno- flags and -U macros for maximum compatibility
+        // Removed -mno-avx512er and -mno-avx512pf as they're not recognized by some Clang versions
         let avx_disable_flags = vec![
             "-mno-avx512f",
             "-mno-avx512cd",
-            "-mno-avx512er",
-            "-mno-avx512pf",
+            // "-mno-avx512er",  // Not recognized by some Clang versions
+            // "-mno-avx512pf",  // Not recognized by some Clang versions
             "-mno-avx512dq",
             "-mno-avx512bw",
             "-mno-avx512vl",
