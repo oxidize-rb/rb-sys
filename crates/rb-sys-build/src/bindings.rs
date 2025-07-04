@@ -32,7 +32,11 @@ pub fn generate(
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
-    clang_args.extend(rbconfig.cppflags());
+    
+    // Debug: Print cppflags before adding them
+    let cppflags = rbconfig.cppflags();
+    debug_log!("INFO: Ruby CPPFLAGS: {:?}", cppflags);
+    clang_args.extend(cppflags);
 
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
