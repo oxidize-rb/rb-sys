@@ -381,14 +381,14 @@ module RbSys
       return "" unless RUBY_PLATFORM.match?(/mingw|mswin/)
 
       # Fix the environment variable at Ruby level
-      if ENV['BINDGEN_EXTRA_CLANG_ARGS'] && ENV['BINDGEN_EXTRA_CLANG_ARGS'].include?('--target=stable-')
-        fixed_args = ENV['BINDGEN_EXTRA_CLANG_ARGS'].gsub(/--target=stable-[^ ]*/, '--target=x86_64-pc-windows-gnu')
-        ENV['BINDGEN_EXTRA_CLANG_ARGS'] = fixed_args
+      if ENV["BINDGEN_EXTRA_CLANG_ARGS"]&.include?("--target=stable-")
+        fixed_args = ENV["BINDGEN_EXTRA_CLANG_ARGS"].gsub(/--target=stable-[^ ]*/, "--target=x86_64-pc-windows-gnu")
+        ENV["BINDGEN_EXTRA_CLANG_ARGS"] = fixed_args
       end
 
       # Export the corrected value in the Makefile
-      if ENV['BINDGEN_EXTRA_CLANG_ARGS']
-        export_env("BINDGEN_EXTRA_CLANG_ARGS", ENV['BINDGEN_EXTRA_CLANG_ARGS'])
+      if ENV["BINDGEN_EXTRA_CLANG_ARGS"]
+        export_env("BINDGEN_EXTRA_CLANG_ARGS", ENV["BINDGEN_EXTRA_CLANG_ARGS"])
       else
         ""
       end
