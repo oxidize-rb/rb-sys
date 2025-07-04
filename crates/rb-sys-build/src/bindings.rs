@@ -57,55 +57,88 @@ pub fn generate(
             }
         }
 
-        // Set explicit target triple without AVX512 features
+        // Step 1: Set explicit target triple for Windows GNU toolchain
         clang_args.push("--target=x86_64-pc-windows-gnu".to_string());
-
-        // Disable builtin functions and types
-        clang_args.push("-fno-builtin".to_string());
-
-        // Explicitly disable AVX512 features
+        
+        // Step 2: Force basic x86-64 architecture without extensions
         clang_args.push("-march=x86-64".to_string());
-        clang_args.push("-mno-avx512f".to_string());
-        clang_args.push("-mno-avx512fp16".to_string());
-
-        // Use feature detection macros to prevent AVX512 intrinsics
-        clang_args.push("-U__AVX512F__".to_string());
-        clang_args.push("-U__AVX512FP16__".to_string());
-        clang_args.push("-U__AMX_AVX512__".to_string());
-        clang_args.push("-U__AVX10_1__".to_string());
-        clang_args.push("-U__AVX10_1_512__".to_string());
-        clang_args.push("-U__AVX10_2__".to_string());
-        clang_args.push("-U__AVX10_2_512__".to_string());
+        
+        // Step 3: Explicitly disable all AVX512 and AVX10 features
+        // Note: We use both -mno- flags and -U macros for maximum compatibility
+        let avx_disable_flags = vec![
+            "-mno-avx512f",
+            "-mno-avx512cd", 
+            "-mno-avx512er",
+            "-mno-avx512pf",
+            "-mno-avx512dq",
+            "-mno-avx512bw",
+            "-mno-avx512vl",
+            "-mno-avx512ifma",
+            "-mno-avx512vbmi",
+            "-mno-avx512vbmi2",
+            "-mno-avx512vnni",
+            "-mno-avx512bitalg",
+            "-mno-avx512vpopcntdq",
+            "-mno-avx512fp16",
+            "-mno-avx512bf16",
+            "-mno-avx512vp2intersect",
+            "-mno-amx-tile",
+            "-mno-amx-int8",
+            "-mno-amx-bf16",
+        ];
+        
+        for flag in avx_disable_flags {
+            clang_args.push(flag.to_string());
+        }
+        
+        // Step 4: Undefine all feature detection macros
+        let undef_macros = vec![
+            "-U__AVX512F__",
+            "-U__AVX512CD__",
+            "-U__AVX512ER__",
+            "-U__AVX512PF__",
+            "-U__AVX512DQ__",
+            "-U__AVX512BW__",
+            "-U__AVX512VL__",
+            "-U__AVX512IFMA__",
+            "-U__AVX512VBMI__",
+            "-U__AVX512VBMI2__",
+            "-U__AVX512VNNI__",
+            "-U__AVX512BITALG__",
+            "-U__AVX512VPOPCNTDQ__",
+            "-U__AVX512FP16__",
+            "-U__AVX512BF16__",
+            "-U__AVX512VP2INTERSECT__",
+            "-U__AMX_TILE__",
+            "-U__AMX_INT8__",
+            "-U__AMX_BF16__",
+            "-U__AMX_AVX512__",
+            "-U__AVX10_1__",
+            "-U__AVX10_1_256__",
+            "-U__AVX10_1_512__",
+            "-U__AVX10_2__",
+            "-U__AVX10_2_256__",
+            "-U__AVX10_2_512__",
+        ];
+        
+        for macro_undef in undef_macros {
+            clang_args.push(macro_undef.to_string());
+        }
+        
+        // Step 5: Add compatibility flags
+        clang_args.push("-fno-builtin".to_string());
+        clang_args.push("-fms-extensions".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
 
-    // Add Windows-specific pragmas at the very beginning to suppress intrinsics
+    // Add Windows-specific wrapper to suppress intrinsics
     if cfg!(target_os = "windows") {
-        let windows_pragmas = r#"
-// Prevent AVX512 intrinsics headers from being included on Windows
-#ifdef _WIN32
-  // Define header guards to prevent intrinsics headers from being processed
-  #define _IMMINTRIN_H
-  #define _AMXAVX512INTRIN_H
-  #define _AVX10_2CONVERTINTRIN_H
-  #define _AVX512FP16INTRIN_H
-  #define _AVX512VLFP16INTRIN_H
-  
-  // Undefine CPU feature macros
-  #undef __AVX512F__
-  #undef __AVX512FP16__
-  #undef __AMX_AVX512__
-  #undef __AVX10_1__
-  #undef __AVX10_1_512__
-  #undef __AVX10_2__
-  #undef __AVX10_2_512__
-#endif
-
-"#;
-        wrapper_h = windows_pragmas.to_string() + &wrapper_h;
+        // Include our custom Windows wrapper that defines all header guards
+        let windows_wrapper = include_str!("bindings/wrapper_windows.h");
+        wrapper_h = windows_wrapper.to_string() + "\n" + &wrapper_h;
     }
 
     if !is_msvc() {
