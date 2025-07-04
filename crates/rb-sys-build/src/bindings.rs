@@ -42,12 +42,29 @@ pub fn generate(
     if cfg!(target_os = "windows") {
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
-        // Use -nostdinc to prevent Clang from loading ANY builtin headers
-        // This is the nuclear option but necessary to prevent AVX512 intrinsics from loading
-        clang_args.push("-nostdinc".to_string());
+        // Try a different approach: instead of using -nostdinc, we'll try to
+        // define CPU feature macros to pretend we don't support AVX512
+        // This should prevent the intrinsics headers from being used
+        clang_args.push("-U__AVX512F__".to_string());
+        clang_args.push("-U__AVX512FP16__".to_string());
+        clang_args.push("-U__AMX_AVX512__".to_string());
+        clang_args.push("-U__AVX10_1__".to_string());
+        clang_args.push("-U__AVX10_1_512__".to_string());
+        clang_args.push("-U__AVX10_2__".to_string());
+        clang_args.push("-U__AVX10_2_512__".to_string());
+        clang_args.push("-U__AVX__".to_string());
+        clang_args.push("-U__AVX2__".to_string());
+        clang_args.push("-U__SSE__".to_string());
+        clang_args.push("-U__SSE2__".to_string());
+        clang_args.push("-U__SSE3__".to_string());
+        clang_args.push("-U__SSSE3__".to_string());
+        clang_args.push("-U__SSE4_1__".to_string());
+        clang_args.push("-U__SSE4_2__".to_string());
 
-        // Now we need to manually add back the include paths we need
-        // First add Ruby's include directories (already done above)
+        // Define that we're a basic x86_64 without vector extensions
+        clang_args.push("-D__tune_k8__".to_string());
+        clang_args.push("-march=x86-64".to_string());
+        clang_args.push("-mtune=generic".to_string());
 
         // Add MinGW include path for mm_malloc.h and other system headers
         if let Some(mingw_prefix) = rbconfig.get("prefix") {
