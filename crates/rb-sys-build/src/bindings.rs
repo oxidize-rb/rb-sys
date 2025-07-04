@@ -34,6 +34,21 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
+    // On Windows, define header guards to prevent problematic intrinsics headers from being included
+    if cfg!(target_os = "windows") {
+        debug_log!("INFO: Defining header guards to prevent AVX512 intrinsics inclusion");
+        
+        // Define the header guards for the problematic files
+        clang_args.push("-D_AMXAVX512INTRIN_H".to_string());
+        clang_args.push("-D__AMXAVX512INTRIN_H".to_string());
+        clang_args.push("-D_AVX10_2CONVERTINTRIN_H".to_string());
+        clang_args.push("-D__AVX10_2CONVERTINTRIN_H".to_string());
+        clang_args.push("-D_AVX512FP16INTRIN_H".to_string());
+        clang_args.push("-D__AVX512FP16INTRIN_H".to_string());
+        clang_args.push("-D_AVX512VLFP16INTRIN_H".to_string());
+        clang_args.push("-D__AVX512VLFP16INTRIN_H".to_string());
+    }
+
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
