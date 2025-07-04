@@ -127,6 +127,15 @@ jobs:
             echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
             echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
           fi
+          
+          # Remove AVX512 defines that cause bindgen parse errors with our header guards
+          if [[ "$BINDGEN_EXTRA_CLANG_ARGS" == *"-D__AVX512"* ]]; then
+            echo "Removing AVX512 defines from BINDGEN_EXTRA_CLANG_ARGS"
+            echo "Original: $BINDGEN_EXTRA_CLANG_ARGS"
+            export BINDGEN_EXTRA_CLANG_ARGS=$(echo "$BINDGEN_EXTRA_CLANG_ARGS" | sed 's/-D__AVX512[^ ]*//g')
+            echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
+            echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
+          fi
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
