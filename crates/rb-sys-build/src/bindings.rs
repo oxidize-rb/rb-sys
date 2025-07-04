@@ -36,29 +36,6 @@ pub fn generate(
 
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
-        // Handle problematic BINDGEN_EXTRA_CLANG_ARGS from CI environment
-        if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
-            debug_log!("INFO: Found BINDGEN_EXTRA_CLANG_ARGS: {}", extra_args);
-
-            // Parse and filter out problematic flags
-            let filtered_args: Vec<String> = extra_args
-                .split_whitespace()
-                .filter(|arg| {
-                    // Remove the invalid --target=stable-x86_64-pc-windows-gnu
-                    !arg.starts_with("--target=stable-")
-                })
-                .map(|s| s.to_string())
-                .collect();
-
-            if filtered_args.is_empty() {
-                env::remove_var("BINDGEN_EXTRA_CLANG_ARGS");
-                debug_log!("INFO: Removed BINDGEN_EXTRA_CLANG_ARGS entirely");
-            } else {
-                let new_args = filtered_args.join(" ");
-                env::set_var("BINDGEN_EXTRA_CLANG_ARGS", &new_args);
-                debug_log!("INFO: Updated BINDGEN_EXTRA_CLANG_ARGS to: {}", new_args);
-            }
-        }
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
         // Add MinGW include path for mm_malloc.h and other system headers
@@ -81,7 +58,26 @@ pub fn generate(
         }
 
         // Step 1: Set explicit target triple for Windows GNU toolchain
+        // This overrides any invalid target from BINDGEN_EXTRA_CLANG_ARGS
         clang_args.push("--target=x86_64-pc-windows-gnu".to_string());
+
+        // Also add sysroot if provided by rbconfig
+        if let Some(sysroot) = rbconfig.get("prefix") {
+            // Try to find the correct sysroot path
+            let possible_sysroots = vec![
+                format!("{}/msys64/ucrt64", sysroot),
+                format!("{}/ucrt64", sysroot),
+                format!("{}", sysroot),
+            ];
+
+            for sysroot_path in possible_sysroots {
+                if std::path::Path::new(&sysroot_path).exists() {
+                    clang_args.push(format!("--sysroot={}", sysroot_path));
+                    debug_log!("INFO: Added sysroot: {}", sysroot_path);
+                    break;
+                }
+            }
+        }
 
         // Step 2: Force basic x86-64 architecture without extensions
         clang_args.push("-march=x86-64".to_string());
