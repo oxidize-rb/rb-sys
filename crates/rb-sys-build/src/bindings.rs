@@ -34,7 +34,6 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
-
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
@@ -154,7 +153,7 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         bindings = bindings
             // Block AVX512 FP16 types that cause errors
             .blocklist_item("__m512h")
-            .blocklist_item("__m256h") 
+            .blocklist_item("__m256h")
             .blocklist_item("__m128h")
             .blocklist_item("__v8hf")
             .blocklist_item("__v16hf")
