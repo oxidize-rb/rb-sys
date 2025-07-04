@@ -62,7 +62,7 @@ pub fn generate(
 
         // Step 2: Force basic x86-64 architecture without extensions
         clang_args.push("-march=x86-64".to_string());
-        
+
         // Step 2b: Use soft float to avoid any FP16 issues
         clang_args.push("-msoft-float".to_string());
 
