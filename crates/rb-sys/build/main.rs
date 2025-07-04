@@ -27,7 +27,6 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
 ];
 
 fn main() {
-
     warn_deprecated_feature_flags();
 
     let mut rbconfig = RbConfig::current();
