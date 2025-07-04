@@ -36,12 +36,28 @@ pub fn generate(
 
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
-        // Filter out any problematic environment clang args
+        // Handle problematic BINDGEN_EXTRA_CLANG_ARGS from CI environment
         if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
             debug_log!("INFO: Found BINDGEN_EXTRA_CLANG_ARGS: {}", extra_args);
-            // Clear the environment variable to prevent bindgen from using it
-            env::remove_var("BINDGEN_EXTRA_CLANG_ARGS");
-            debug_log!("INFO: Removed BINDGEN_EXTRA_CLANG_ARGS from environment");
+
+            // Parse and filter out problematic flags
+            let filtered_args: Vec<String> = extra_args
+                .split_whitespace()
+                .filter(|arg| {
+                    // Remove the invalid --target=stable-x86_64-pc-windows-gnu
+                    !arg.starts_with("--target=stable-")
+                })
+                .map(|s| s.to_string())
+                .collect();
+
+            if filtered_args.is_empty() {
+                env::remove_var("BINDGEN_EXTRA_CLANG_ARGS");
+                debug_log!("INFO: Removed BINDGEN_EXTRA_CLANG_ARGS entirely");
+            } else {
+                let new_args = filtered_args.join(" ");
+                env::set_var("BINDGEN_EXTRA_CLANG_ARGS", &new_args);
+                debug_log!("INFO: Updated BINDGEN_EXTRA_CLANG_ARGS to: {}", new_args);
+            }
         }
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
