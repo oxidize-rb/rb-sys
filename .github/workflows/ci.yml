@@ -136,6 +136,9 @@ jobs:
             echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
             echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
           fi
+          
+          # Enable debug output
+          echo "RUST_LOG=bindgen=debug" >> $GITHUB_ENV
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
@@ -155,6 +158,7 @@ jobs:
         shell: bash
         env:
           RB_SYS_CARGO_PROFILE: "release"
+          RUST_BACKTRACE: "1"
         run: |
           ulimit -c unlimited
           script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"

@@ -212,7 +212,17 @@ pub fn generate(
     let mut tokens = {
         write!(std::io::stderr(), "{}", wrapper_h)?;
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
-        let code_string = bindings.generate()?.to_string();
+        
+        // Generate bindings with better error handling
+        let code_string = match bindings.generate() {
+            Ok(bindings) => bindings.to_string(),
+            Err(e) => {
+                debug_log!("ERROR: Bindgen failed with: {}", e);
+                debug_log!("ERROR: Full clang args: {:?}", clang_args);
+                return Err(Box::new(e));
+            }
+        };
+        
         syn::parse_file(&code_string)?
     };
 
