@@ -92,6 +92,10 @@ pub fn generate(
             clang_args.push(flag.to_string());
         }
 
+        // Step 3b: Also disable AVX and AVX2 to prevent loading of immintrin.h
+        clang_args.push("-mno-avx".to_string());
+        clang_args.push("-mno-avx2".to_string());
+
         // Step 4: Undefine all feature detection macros
         let undef_macros = vec![
             "-U__AVX512F__",

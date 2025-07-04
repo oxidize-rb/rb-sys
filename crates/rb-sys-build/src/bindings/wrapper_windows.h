@@ -2,6 +2,19 @@
 // This file is included BEFORE the main wrapper.h content on Windows
 
 #ifdef _WIN32
+  // Step 0: Define the problematic types FIRST before any headers can define them differently
+  typedef struct { char dummy[16]; } __m128h;
+  typedef struct { char dummy[32]; } __m256h;
+  typedef struct { char dummy[64]; } __m512h;
+  
+  // Also define the vector types that might be used
+  typedef struct { char dummy[16]; } __v8hf;
+  typedef struct { char dummy[32]; } __v16hf;
+  typedef struct { char dummy[64]; } __v32hf;
+  
+  // Define _Float16 as a dummy type
+  typedef struct { char dummy[2]; } _Float16;
+
   // Step 1: Define all intrinsics header guards to prevent their inclusion
   // This must be done before ANY includes
   #define _IMMINTRIN_H
@@ -43,6 +56,16 @@
   #define _AVX10_2MEDIAINTRIN_H
   #define _AVX10_2MINMAXINTRIN_H
   
+  // Also prevent emmintrin.h and avxintrin.h
+  #define _EMMINTRIN_H
+  #define _AVXINTRIN_H
+  #define _AVX2INTRIN_H
+  #define _XMMINTRIN_H
+  #define _PMMINTRIN_H
+  #define _TMMINTRIN_H
+  #define _SMMINTRIN_H
+  #define _NMMINTRIN_H
+  
   // Step 2: Undefine all CPU feature macros that would trigger intrinsics
   #ifdef __AVX512F__
     #undef __AVX512F__
@@ -65,16 +88,10 @@
   #ifdef __AVX10_2_512__
     #undef __AVX10_2_512__
   #endif
-  
-  // Step 3: Define dummy types to satisfy any accidental references
-  // These should never be used but prevent compilation errors
-  #ifndef __m512h
-    typedef struct { char dummy[64]; } __m512h;
+  #ifdef __AVX__
+    #undef __AVX__
   #endif
-  #ifndef __m256h
-    typedef struct { char dummy[32]; } __m256h;
-  #endif
-  #ifndef __m128h
-    typedef struct { char dummy[16]; } __m128h;
+  #ifdef __AVX2__
+    #undef __AVX2__
   #endif
 #endif // _WIN32
