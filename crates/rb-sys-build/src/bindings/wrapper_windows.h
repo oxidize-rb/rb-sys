@@ -12,8 +12,10 @@
   typedef struct { char dummy[32]; } __v16hf;
   typedef struct { char dummy[64]; } __v32hf;
   
-  // Define _Float16 as a dummy type
-  typedef struct { char dummy[2]; } _Float16;
+  // Define _Float16 as a dummy type  
+  #ifndef _Float16
+    typedef struct { char dummy[2]; } _Float16;
+  #endif
 
   // Step 1: Define all intrinsics header guards to prevent their inclusion
   // This must be done before ANY includes

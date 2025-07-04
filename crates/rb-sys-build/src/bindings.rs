@@ -95,6 +95,14 @@ pub fn generate(
         // Step 3b: Also disable AVX and AVX2 to prevent loading of immintrin.h
         clang_args.push("-mno-avx".to_string());
         clang_args.push("-mno-avx2".to_string());
+        
+        // Step 3c: Disable SSE as well to prevent loading any intrinsics
+        clang_args.push("-mno-sse".to_string());
+        clang_args.push("-mno-sse2".to_string());
+        clang_args.push("-mno-sse3".to_string());
+        clang_args.push("-mno-ssse3".to_string());
+        clang_args.push("-mno-sse4.1".to_string());
+        clang_args.push("-mno-sse4.2".to_string());
 
         // Step 4: Undefine all feature detection macros
         let undef_macros = vec![
