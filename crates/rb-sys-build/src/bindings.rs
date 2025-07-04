@@ -37,7 +37,7 @@ pub fn generate(
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
-        
+
         // Add MinGW include path for mm_malloc.h and other system headers
         if let Some(mingw_prefix) = rbconfig.get("prefix") {
             // Try common MinGW include paths
@@ -47,7 +47,7 @@ pub fn generate(
                 format!("{}/ucrt64/include", mingw_prefix),
                 format!("{}/msys64/ucrt64/include", mingw_prefix),
             ];
-            
+
             for path in possible_paths {
                 if std::path::Path::new(&path).exists() {
                     clang_args.push(format!("-I{}", path));
@@ -56,18 +56,57 @@ pub fn generate(
                 }
             }
         }
-        
+
+        // Set explicit target triple without AVX512 features
+        clang_args.push("--target=x86_64-pc-windows-gnu".to_string());
+
+        // Disable builtin functions and types
+        clang_args.push("-fno-builtin".to_string());
+
+        // Explicitly disable AVX512 features
+        clang_args.push("-march=x86-64".to_string());
+        clang_args.push("-mno-avx512f".to_string());
+        clang_args.push("-mno-avx512fp16".to_string());
+
         // Use feature detection macros to prevent AVX512 intrinsics
         clang_args.push("-U__AVX512F__".to_string());
         clang_args.push("-U__AVX512FP16__".to_string());
         clang_args.push("-U__AMX_AVX512__".to_string());
         clang_args.push("-U__AVX10_1__".to_string());
         clang_args.push("-U__AVX10_1_512__".to_string());
+        clang_args.push("-U__AVX10_2__".to_string());
+        clang_args.push("-U__AVX10_2_512__".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
+
+    // Add Windows-specific pragmas at the very beginning to suppress intrinsics
+    if cfg!(target_os = "windows") {
+        let windows_pragmas = r#"
+// Prevent AVX512 intrinsics headers from being included on Windows
+#ifdef _WIN32
+  // Define header guards to prevent intrinsics headers from being processed
+  #define _IMMINTRIN_H
+  #define _AMXAVX512INTRIN_H
+  #define _AVX10_2CONVERTINTRIN_H
+  #define _AVX512FP16INTRIN_H
+  #define _AVX512VLFP16INTRIN_H
+  
+  // Undefine CPU feature macros
+  #undef __AVX512F__
+  #undef __AVX512FP16__
+  #undef __AMX_AVX512__
+  #undef __AVX10_1__
+  #undef __AVX10_1_512__
+  #undef __AVX10_2__
+  #undef __AVX10_2_512__
+#endif
+
+"#;
+        wrapper_h = windows_pragmas.to_string() + &wrapper_h;
+    }
 
     if !is_msvc() {
         wrapper_h.push_str("#ifdef HAVE_RUBY_ATOMIC_H\n");
@@ -181,12 +220,58 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
 
     // Comprehensive blocklist for Windows Clang 20 AVX512 intrinsics issues
     if cfg!(target_os = "windows") {
-        debug_log!("INFO: Adding Windows-specific blocklist for AVX512 intrinsics");
-        
+        debug_log!(
+            "INFO: Adding Windows-specific blocklist and header guards for AVX512 intrinsics"
+        );
+
+        // Add raw lines to define header guards before any includes
+        bindings = bindings
+            // Define header guards for AVX512 intrinsics headers
+            .raw_line("#define _AMXAVX512INTRIN_H")
+            .raw_line("#define _AVX10_2CONVERTINTRIN_H")
+            .raw_line("#define _AVX512FP16INTRIN_H")
+            .raw_line("#define _AVX512VLFP16INTRIN_H")
+            .raw_line("#define _IMMINTRIN_H")
+            .raw_line("#define _AVX512FINTRIN_H")
+            .raw_line("#define _AVX512PFINTRIN_H")
+            .raw_line("#define _AVX512VLINTRIN_H")
+            .raw_line("#define _AVX512BWINTRIN_H")
+            .raw_line("#define _AVX512DQINTRIN_H")
+            .raw_line("#define _AVX512CDINTRIN_H")
+            .raw_line("#define _AVX512ERINTRIN_H")
+            .raw_line("#define _AVX512IFMAINTRIN_H")
+            .raw_line("#define _AVX512IFMAVLINTRIN_H")
+            .raw_line("#define _AVX512VBMIINTRIN_H")
+            .raw_line("#define _AVX512VBMIVLINTRIN_H")
+            .raw_line("#define _AVX512VBMI2INTRIN_H")
+            .raw_line("#define _AVX512VBMI2VLINTRIN_H")
+            .raw_line("#define _AVX512VNNIINTRIN_H")
+            .raw_line("#define _AVX512VNNIVLINTRIN_H")
+            .raw_line("#define _AVX512VPOPCNTDQINTRIN_H")
+            .raw_line("#define _AVX512VPOPCNTDQVLINTRIN_H")
+            .raw_line("#define _AVX512BITALGINTRIN_H")
+            .raw_line("#define _AVX512BITALG_H")
+            .raw_line("#define _AVX512BF16INTRIN_H")
+            .raw_line("#define _AVX512BF16VLINTRIN_H")
+            .raw_line("#define _AVX512VP2INTERSECTINTRIN_H")
+            .raw_line("#define _AVX512VP2INTERSECTVLINTRIN_H")
+            // Also prevent AVX10 headers
+            .raw_line("#define _AVX10_1_256INTRIN_H")
+            .raw_line("#define _AVX10_1_512INTRIN_H")
+            .raw_line("#define _AVX10_1INTRIN_H")
+            .raw_line("#define _AVX10_2_256INTRIN_H")
+            .raw_line("#define _AVX10_2_512INTRIN_H")
+            .raw_line("#define _AVX10_2INTRIN_H")
+            .raw_line("#define _AVX10_2CONVERTINTRIN_H")
+            .raw_line("#define _AVX10_2SATCVTINTRIN_H")
+            .raw_line("#define _AVX10_2COPYINTRIN_H")
+            .raw_line("#define _AVX10_2MEDIAINTRIN_H")
+            .raw_line("#define _AVX10_2MINMAXINTRIN_H");
+
         // Block problematic AVX512 FP16 types
         bindings = bindings
             .blocklist_item("__m512h")
-            .blocklist_item("__m256h") 
+            .blocklist_item("__m256h")
             .blocklist_item("__m128h")
             .blocklist_item("__v8hf")
             .blocklist_item("__v16hf")
