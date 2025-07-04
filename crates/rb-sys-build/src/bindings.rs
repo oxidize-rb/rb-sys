@@ -38,32 +38,6 @@ pub fn generate(
     if cfg!(target_os = "windows") {
         debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
 
-        // Check if BINDGEN_EXTRA_CLANG_ARGS has an invalid target triple and fix it
-        if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
-            debug_log!("INFO: Found BINDGEN_EXTRA_CLANG_ARGS: {}", extra_args);
-            // If it contains --target=stable-..., we need to fix it
-            if extra_args.contains("--target=stable-") {
-                debug_log!(
-                    "WARN: Detected invalid target triple in BINDGEN_EXTRA_CLANG_ARGS, fixing it"
-                );
-                // Parse and filter out the invalid target, then reconstruct
-                let filtered_args: Vec<&str> = extra_args
-                    .split_whitespace()
-                    .filter(|arg| !arg.starts_with("--target=stable-"))
-                    .collect();
-
-                // Add the correct target
-                let mut new_args = filtered_args.join(" ");
-                new_args.push_str(" --target=x86_64-pc-windows-gnu");
-
-                env::set_var("BINDGEN_EXTRA_CLANG_ARGS", new_args);
-                debug_log!(
-                    "INFO: Fixed BINDGEN_EXTRA_CLANG_ARGS: {}",
-                    env::var("BINDGEN_EXTRA_CLANG_ARGS").unwrap_or_default()
-                );
-            }
-        }
-
         // Add MinGW include path for mm_malloc.h and other system headers
         if let Some(mingw_prefix) = rbconfig.get("prefix") {
             // Try common MinGW include paths

@@ -27,6 +27,26 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
 ];
 
 fn main() {
+    // Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS set by CI
+    // This must be done before any bindgen operations
+    if cfg!(target_os = "windows") {
+        if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
+            if extra_args.contains("--target=stable-") {
+                // Parse and filter out the invalid target, then reconstruct
+                let filtered_args: Vec<&str> = extra_args
+                    .split_whitespace()
+                    .filter(|arg| !arg.starts_with("--target=stable-"))
+                    .collect();
+                
+                // Add the correct target
+                let mut new_args = filtered_args.join(" ");
+                new_args.push_str(" --target=x86_64-pc-windows-gnu");
+                
+                env::set_var("BINDGEN_EXTRA_CLANG_ARGS", new_args);
+            }
+        }
+    }
+
     warn_deprecated_feature_flags();
 
     let mut rbconfig = RbConfig::current();
