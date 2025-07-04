@@ -59,15 +59,15 @@ pub fn generate(
 
         // Step 1: Set explicit target triple for Windows GNU toolchain
         clang_args.push("--target=x86_64-pc-windows-gnu".to_string());
-        
+
         // Step 2: Force basic x86-64 architecture without extensions
         clang_args.push("-march=x86-64".to_string());
-        
+
         // Step 3: Explicitly disable all AVX512 and AVX10 features
         // Note: We use both -mno- flags and -U macros for maximum compatibility
         let avx_disable_flags = vec![
             "-mno-avx512f",
-            "-mno-avx512cd", 
+            "-mno-avx512cd",
             "-mno-avx512er",
             "-mno-avx512pf",
             "-mno-avx512dq",
@@ -86,11 +86,11 @@ pub fn generate(
             "-mno-amx-int8",
             "-mno-amx-bf16",
         ];
-        
+
         for flag in avx_disable_flags {
             clang_args.push(flag.to_string());
         }
-        
+
         // Step 4: Undefine all feature detection macros
         let undef_macros = vec![
             "-U__AVX512F__",
@@ -120,11 +120,11 @@ pub fn generate(
             "-U__AVX10_2_256__",
             "-U__AVX10_2_512__",
         ];
-        
+
         for macro_undef in undef_macros {
             clang_args.push(macro_undef.to_string());
         }
-        
+
         // Step 5: Add compatibility flags
         clang_args.push("-fno-builtin".to_string());
         clang_args.push("-fms-extensions".to_string());
