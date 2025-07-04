@@ -33,6 +33,15 @@ module RbSys
     #     r.target_dir = "some/target/dir"
     #   end
     def create_rust_makefile(target, &blk)
+      # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS on Windows
+      if ENV['BINDGEN_EXTRA_CLANG_ARGS'] && ENV['BINDGEN_EXTRA_CLANG_ARGS'].include?('--target=stable-')
+        # Parse and filter out the invalid target, then reconstruct
+        args = ENV['BINDGEN_EXTRA_CLANG_ARGS'].split(/\s+/)
+        filtered_args = args.reject { |arg| arg.start_with?('--target=stable-') }
+        # Add the correct target
+        ENV['BINDGEN_EXTRA_CLANG_ARGS'] = filtered_args.join(' ') + ' --target=x86_64-pc-windows-gnu'
+      end
+
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"

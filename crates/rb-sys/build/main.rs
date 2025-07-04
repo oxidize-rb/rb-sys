@@ -37,11 +37,11 @@ fn main() {
                     .split_whitespace()
                     .filter(|arg| !arg.starts_with("--target=stable-"))
                     .collect();
-                
+
                 // Add the correct target
                 let mut new_args = filtered_args.join(" ");
                 new_args.push_str(" --target=x86_64-pc-windows-gnu");
-                
+
                 env::set_var("BINDGEN_EXTRA_CLANG_ARGS", new_args);
             }
         }
