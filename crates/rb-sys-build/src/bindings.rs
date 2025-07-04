@@ -62,6 +62,9 @@ pub fn generate(
 
         // Step 2: Force basic x86-64 architecture without extensions
         clang_args.push("-march=x86-64".to_string());
+        
+        // Step 2b: Use soft float to avoid any FP16 issues
+        clang_args.push("-msoft-float".to_string());
 
         // Step 3: Explicitly disable all AVX512 and AVX10 features
         // Note: We use both -mno- flags and -U macros for maximum compatibility
@@ -95,7 +98,7 @@ pub fn generate(
         // Step 3b: Also disable AVX and AVX2 to prevent loading of immintrin.h
         clang_args.push("-mno-avx".to_string());
         clang_args.push("-mno-avx2".to_string());
-        
+
         // Step 3c: Disable SSE as well to prevent loading any intrinsics
         clang_args.push("-mno-sse".to_string());
         clang_args.push("-mno-sse2".to_string());

@@ -2,20 +2,6 @@
 // This file is included BEFORE the main wrapper.h content on Windows
 
 #ifdef _WIN32
-  // Step 0: Define the problematic types FIRST before any headers can define them differently
-  typedef struct { char dummy[16]; } __m128h;
-  typedef struct { char dummy[32]; } __m256h;
-  typedef struct { char dummy[64]; } __m512h;
-  
-  // Also define the vector types that might be used
-  typedef struct { char dummy[16]; } __v8hf;
-  typedef struct { char dummy[32]; } __v16hf;
-  typedef struct { char dummy[64]; } __v32hf;
-  
-  // Define _Float16 as a dummy type  
-  #ifndef _Float16
-    typedef struct { char dummy[2]; } _Float16;
-  #endif
 
   // Step 1: Define all intrinsics header guards to prevent their inclusion
   // This must be done before ANY includes
