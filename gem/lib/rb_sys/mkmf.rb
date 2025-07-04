@@ -33,15 +33,6 @@ module RbSys
     #     r.target_dir = "some/target/dir"
     #   end
     def create_rust_makefile(target, &blk)
-      # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS on Windows
-      if ENV['BINDGEN_EXTRA_CLANG_ARGS'] && ENV['BINDGEN_EXTRA_CLANG_ARGS'].include?('--target=stable-')
-        # Parse and filter out the invalid target, then reconstruct
-        args = ENV['BINDGEN_EXTRA_CLANG_ARGS'].split(/\s+/)
-        filtered_args = args.reject { |arg| arg.start_with?('--target=stable-') }
-        # Add the correct target
-        ENV['BINDGEN_EXTRA_CLANG_ARGS'] = filtered_args.join(' ') + ' --target=x86_64-pc-windows-gnu'
-      end
-
       if target.include?("/")
         target_prefix, target = File.split(target)
         target_prefix[0, 0] = "/"
@@ -127,6 +118,7 @@ module RbSys
 
         #{env_vars(builder)}
         #{export_env("RUSTFLAGS", "$(RB_SYS_GLOBAL_RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS) $(RUSTFLAGS)")}
+        #{windows_bindgen_fix}
 
         FORCE: ;
 
@@ -382,6 +374,19 @@ module RbSys
       return assign_stmt("RB_SYS_CARGO_PROFILE", "release") if builder.rubygems_invoked?
 
       conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)
+    end
+
+    def windows_bindgen_fix
+      # Only apply on Windows
+      return "" unless RUBY_PLATFORM =~ /mingw|mswin/
+
+      <<~MAKE
+        # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS on Windows
+        #{if_neq_stmt("$(BINDGEN_EXTRA_CLANG_ARGS)", "")}
+        BINDGEN_EXTRA_CLANG_ARGS := $(shell echo "$(BINDGEN_EXTRA_CLANG_ARGS)" | sed 's/--target=stable-[^ ]*/--target=x86_64-pc-windows-gnu/g')
+        #{export_env("BINDGEN_EXTRA_CLANG_ARGS", "$(BINDGEN_EXTRA_CLANG_ARGS)")}
+        #{endif_stmt}
+      MAKE
     end
   end
 end
