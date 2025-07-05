@@ -504,7 +504,6 @@ TypeError: wrong argument type Integer (expected String)
    ```
 
 2. Use debug prints in build.rs to check feature detection:
-
    ```rust
    fn main() {
        println!("cargo:warning=Ruby version: {}", rb_sys_env::ruby_major_version());
@@ -608,7 +607,6 @@ TypeError: wrong argument type Integer (expected String)
    ```
 
 2. Catch specific exception types:
-
    ```rust
    fn handle_exceptions(ruby: &Ruby, val: Value) -> Result<Value, Error> {
        let result = val.funcall(ruby, "may_raise", ());

@@ -378,10 +378,12 @@ magnus = { version = "0.7", features = ["rb-sys"] }
 ### Common Mixing Patterns
 
 1. **Use Magnus for most functionality, rb-sys for specific optimizations**:
+
    - Define your public API using Magnus for safety and ease
    - Drop down to rb-sys in critical performance paths, especially when using `nogvl`
 
 2. **Use rb-sys for core functionality, Magnus for complex conversions**:
+
    - Build core functionality with rb-sys for maximum control
    - Use Magnus for handling complex Ruby objects or collections
 

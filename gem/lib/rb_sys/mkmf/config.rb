@@ -55,16 +55,12 @@ module RbSys
         @builder.respond_to?(name) || super
       end
 
-      # Unfortunate, but this seems to be the only way to reliably know if we
-      # were invoked by Rubygems. We want to know this so we can cleanup the
-      # target directory after an install, to remove bloat.
-      #
-      # Note: we avoid nix environments so we do not force recompilation in
-      # development, and accept that the "clean" task will not automatically
-      # run.
-      #
+      # Seems to be the only way to reliably know if we were invoked by Rubygems.
+      # We want to know this so we can cleanup the target directory after an
+      # install, to remove bloat.
+      # @api private
       def rubygems_invoked?
-        ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1" && !ENV.key?("NIX_STORE")
+        ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
       end
 
       def use_stable_api_compiled_fallback?
