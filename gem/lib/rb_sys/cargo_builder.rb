@@ -343,7 +343,7 @@ module RbSys
     end
 
     def rubygems_invoked?
-      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
+      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1" && !ENV.key?("NIX_STORE")
     end
 
     def musl?

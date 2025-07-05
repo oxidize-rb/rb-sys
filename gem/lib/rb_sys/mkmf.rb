@@ -118,7 +118,6 @@ module RbSys
 
         #{env_vars(builder)}
         #{export_env("RUSTFLAGS", "$(RB_SYS_GLOBAL_RUSTFLAGS) $(RB_SYS_EXTRA_RUSTFLAGS) $(RUSTFLAGS)")}
-        #{windows_bindgen_fix}
 
         FORCE: ;
 
@@ -374,24 +373,6 @@ module RbSys
       return assign_stmt("RB_SYS_CARGO_PROFILE", "release") if builder.rubygems_invoked?
 
       conditional_assign("RB_SYS_CARGO_PROFILE", builder.profile)
-    end
-
-    def windows_bindgen_fix
-      # Only apply on Windows
-      return "" unless RUBY_PLATFORM.match?(/mingw|mswin/)
-
-      # Fix the environment variable at Ruby level
-      if ENV["BINDGEN_EXTRA_CLANG_ARGS"]&.include?("--target=stable-")
-        fixed_args = ENV["BINDGEN_EXTRA_CLANG_ARGS"].gsub(/--target=stable-[^ ]*/, "--target=x86_64-pc-windows-gnu")
-        ENV["BINDGEN_EXTRA_CLANG_ARGS"] = fixed_args
-      end
-
-      # Export the corrected value in the Makefile
-      if ENV["BINDGEN_EXTRA_CLANG_ARGS"]
-        export_env("BINDGEN_EXTRA_CLANG_ARGS", ENV["BINDGEN_EXTRA_CLANG_ARGS"])
-      else
-        ""
-      end
     end
   end
 end
