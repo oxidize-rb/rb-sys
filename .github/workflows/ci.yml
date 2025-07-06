@@ -82,7 +82,7 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@4c939d516bd77ec5806f382c9bb574f4634098a7 # v1
         if: matrix.ruby_version != 'skip'
         with:
           cache-version: v2
@@ -177,7 +177,7 @@ jobs:
 
       - uses: oxidize-rb/actions/upload-core-dumps@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@4c939d516bd77ec5806f382c9bb574f4634098a7 # v1
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}

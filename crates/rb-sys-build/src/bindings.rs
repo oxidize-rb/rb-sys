@@ -34,6 +34,17 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
+    // On Windows x86_64, we need to handle AVX512 FP16 compatibility issues
+    // Clang 20+ includes types like __m512h that aren't compatible with bindgen
+    if cfg!(target_os = "windows") && cfg!(target_arch = "x86_64") {
+        // For MinGW toolchain, disable SSE/AVX only for bindgen
+        // This prevents intrinsics headers from loading but doesn't affect the final binary
+        if !is_msvc() {
+            clang_args.push("-mno-sse".to_string());
+            clang_args.push("-mno-avx".to_string());
+        }
+    }
+
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
@@ -48,7 +59,7 @@ pub fn generate(
         clang_args.push("-DHAVE_RUBY_IO_BUFFER_H".to_string());
     }
 
-    let bindings = default_bindgen(clang_args)
+    let bindings = default_bindgen(clang_args, rbconfig)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("rb_tr_abi_version")
@@ -129,14 +140,28 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
-    let bindings = bindgen::Builder::default()
+fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
+    // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
+    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
+        if let Some((major, minor)) = rbconfig.major_minor() {
+            (major == 2 && minor == 7) || (major == 3 && minor == 0)
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    let enable_layout_tests = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-layout-tests");
+    let impl_debug = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-impl-debug");
+
+    let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
-        .layout_tests(cfg!(feature = "bindgen-layout-tests"))
+        .layout_tests(enable_layout_tests)
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
@@ -145,8 +170,13 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .merge_extern_blocks(true)
         .generate_comments(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
-        .impl_debug(cfg!(feature = "bindgen-impl-debug"))
+        .impl_debug(impl_debug)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
+
+    // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
+    if cfg!(target_os = "windows") && !is_msvc() {
+        bindings = bindings.opaque_type("__mingw_ldbl_type_t");
+    }
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {
         bindings.enable_function_attribute_detection()
