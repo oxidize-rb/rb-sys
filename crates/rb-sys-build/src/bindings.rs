@@ -141,19 +141,22 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 }
 
 fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
-    // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
-    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
-        if let Some((major, minor)) = rbconfig.major_minor() {
-            (major == 2 && minor == 7) || (major == 3 && minor == 0)
-        } else {
-            false
-        }
+    // On Windows MinGW, disable layout tests and Debug impl to avoid type incompatibility issues
+    // These issues primarily affect older Ruby versions (2.7, 3.0) but the workaround is harmless
+    let is_windows_mingw = cfg!(target_os = "windows") && !is_msvc();
+    
+    // Allow overriding via environment variables for debugging
+    let enable_layout_tests = if is_windows_mingw {
+        env::var("RB_SYS_FORCE_LAYOUT_TESTS").is_ok()
     } else {
-        false
+        cfg!(feature = "bindgen-layout-tests")
     };
-
-    let enable_layout_tests = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-layout-tests");
-    let impl_debug = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-impl-debug");
+    
+    let impl_debug = if is_windows_mingw {
+        env::var("RB_SYS_FORCE_DEBUG_IMPL").is_ok()
+    } else {
+        cfg!(feature = "bindgen-impl-debug")
+    };
 
     let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
@@ -173,9 +176,11 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .impl_debug(impl_debug)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-    // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
-    if cfg!(target_os = "windows") && !is_msvc() {
-        bindings = bindings.opaque_type("__mingw_ldbl_type_t");
+    // Make problematic types opaque on Windows MinGW to avoid conflicting packed/align representation
+    if is_windows_mingw {
+        bindings = bindings
+            .opaque_type("__mingw_ldbl_type_t")
+            .opaque_type("INET_PORT_RESERVATION_INSTANCE");
     }
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {

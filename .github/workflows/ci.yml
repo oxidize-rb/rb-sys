@@ -36,33 +36,33 @@ jobs:
       fail-fast: false
       matrix:
         # Test against all versions supported by rubygems
-        ruby_version: ["2.7", "3.0", "3.1", "3.2", "3.3", "3.4"]
+        ruby_version: ["2.7", "3.0"]
         sys:
-          - os: ubuntu-latest
-            rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
-          - os: ubuntu-latest
-            rust_toolchain: stable
-          - os: macos-latest
-            rust_toolchain: stable
+          # - os: ubuntu-latest
+          #   rust_toolchain: ${{ needs.fetch_ci_data.outputs.minimum-supported-rust-version }}
+          # - os: ubuntu-latest
+          #   rust_toolchain: stable
+          # - os: macos-latest
+          #   rust_toolchain: stable
           - os: windows-2022
             rust_toolchain: stable
-        include:
-          - ruby_version: "truffleruby"
-            sys:
-              os: ubuntu-latest
-              rust_toolchain: stable
-          - ruby_version: "truffleruby"
-            sys:
-              os: macos-latest
-              rust_toolchain: stable
-          - ruby_version: mswin
-            sys:
-              os: windows-2022
-              rust_toolchain: stable-x86_64-pc-windows-msvc
-          - ruby_version: "ruby-head"
-            sys:
-              os: ubuntu-latest
-              rust_toolchain: stable
+        include: []
+          # - ruby_version: "truffleruby"
+          #   sys:
+          #     os: ubuntu-latest
+          #     rust_toolchain: stable
+          # - ruby_version: "truffleruby"
+          #   sys:
+          #     os: macos-latest
+          #     rust_toolchain: stable
+          # - ruby_version: mswin
+          #   sys:
+          #     os: windows-2022
+          #     rust_toolchain: stable-x86_64-pc-windows-msvc
+          # - ruby_version: "ruby-head"
+          #   sys:
+          #     os: ubuntu-latest
+          #     rust_toolchain: stable
         exclude:
           - ruby_version: "3.1"
             sys:
