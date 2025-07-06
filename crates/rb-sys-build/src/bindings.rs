@@ -162,7 +162,6 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 }
 
 fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
-
     let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
