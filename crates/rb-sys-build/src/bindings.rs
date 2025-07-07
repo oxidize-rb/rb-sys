@@ -140,28 +140,14 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
-    // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
-    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
-        if let Some((major, minor)) = rbconfig.major_minor() {
-            (major == 2 && minor == 7) || (major == 3 && minor == 0)
-        } else {
-            false
-        }
-    } else {
-        false
-    };
-
-    let enable_layout_tests = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-layout-tests");
-    let impl_debug = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-impl-debug");
-
+fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
     let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
-        .layout_tests(enable_layout_tests)
+        .layout_tests(cfg!(feature = "bindgen-layout-tests"))
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
@@ -170,12 +156,32 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .merge_extern_blocks(true)
         .generate_comments(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
-        .impl_debug(impl_debug)
+        .impl_debug(cfg!(feature = "bindgen-impl-debug"))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-    // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
-    if cfg!(target_os = "windows") && !is_msvc() {
-        bindings = bindings.opaque_type("__mingw_ldbl_type_t");
+    // Comprehensive blocklist for Windows Clang 20 AVX512 intrinsics issues
+    if cfg!(target_os = "windows") {
+        debug_log!("INFO: Adding Windows-specific blocklist for AVX512 intrinsics");
+
+        // Block problematic AVX512 FP16 types
+        bindings = bindings
+            .blocklist_item("__m512h")
+            .blocklist_item("__m256h")
+            .blocklist_item("__m128h")
+            .blocklist_item("__v8hf")
+            .blocklist_item("__v16hf")
+            .blocklist_item("__v32hf")
+            // Block problematic type aliases
+            .blocklist_item("_Float16")
+            .blocklist_type("_Float16")
+            // Block functions that use these types
+            .blocklist_function("_tile_cmmimfp16ps")
+            .blocklist_function("_tile_cmmrlfp16ps");
+
+        // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
+        if !is_msvc() {
+            bindings = bindings.opaque_type("__mingw_ldbl_type_t");
+        }
     }
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {
