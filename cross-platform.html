@@ -470,7 +470,8 @@ jobs:
       - run: bundle exec rake test
 </code></pre>
 <h3 id="ruby-head-compatibility"><a class="header" href="#ruby-head-compatibility">Ruby-Head Compatibility</a></h3>
-<p>When supporting <code>ruby-head</code> or development versions of Ruby, you must publish a source gem alongside your precompiled gems. This is necessary because:</p>
+<p>When supporting <code>ruby-head</code> or development versions of Ruby, you must publish a source gem alongside your precompiled
+gems. This is necessary because:</p>
 <ol>
 <li>The Ruby ABI (Application Binary Interface) can change between development versions</li>
 <li>Precompiled binary gems built against one ruby-head version may be incompatible with newer ruby-head versions</li>
