@@ -102,7 +102,9 @@ pub fn generate(
             .allowlist_function("^ruby_.*")
             .allowlist_var("^rb_.*")
             .allowlist_var("^ruby_.*")
-    }
+    };
+
+    let bindings = bindings
         .blocklist_item("ruby_abi_version")
         .blocklist_function("rb_tr_abi_version")
         .blocklist_function("^__.*")
