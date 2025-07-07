@@ -178,9 +178,12 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
             .blocklist_function("_tile_cmmimfp16ps")
             .blocklist_function("_tile_cmmrlfp16ps");
 
-        // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
+        // Blocklist problematic MinGW types to avoid conflicting packed/align representation
+        // This is the approach used by libR-sys and other projects
         if !is_msvc() {
-            bindings = bindings.opaque_type("__mingw_ldbl_type_t");
+            bindings = bindings
+                .blocklist_item("__mingw_ldbl_type_t")
+                .blocklist_item("INET_PORT_RESERVATION_INSTANCE");
         }
     }
 
