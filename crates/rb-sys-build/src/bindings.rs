@@ -66,51 +66,54 @@ pub fn generate(
         clang_args.push("-march=x86-64".to_string());
         clang_args.push("-mtune=generic".to_string());
 
-        // Add MinGW include path for mm_malloc.h and other system headers
-        if let Some(mingw_prefix) = rbconfig.get("prefix") {
-            // Try common MinGW include paths
-            let possible_paths = vec![
-                format!("{}/include", mingw_prefix),
-                format!("{}/mingw64/include", mingw_prefix),
-                format!("{}/ucrt64/include", mingw_prefix),
-                format!("{}/msys64/ucrt64/include", mingw_prefix),
-            ];
+        // Only apply MinGW-specific configuration for non-MSVC builds
+        if !is_msvc() {
+            // Add MinGW include path for mm_malloc.h and other system headers
+            if let Some(mingw_prefix) = rbconfig.get("prefix") {
+                // Try common MinGW include paths
+                let possible_paths = vec![
+                    format!("{}/include", mingw_prefix),
+                    format!("{}/mingw64/include", mingw_prefix),
+                    format!("{}/ucrt64/include", mingw_prefix),
+                    format!("{}/msys64/ucrt64/include", mingw_prefix),
+                ];
 
-            for path in possible_paths {
-                if std::path::Path::new(&path).exists() {
-                    clang_args.push(format!("-I{}", path));
-                    debug_log!("INFO: Added MinGW include path: {}", path);
-                    break;
+                for path in possible_paths {
+                    if std::path::Path::new(&path).exists() {
+                        clang_args.push(format!("-I{}", path));
+                        debug_log!("INFO: Added MinGW include path: {}", path);
+                        break;
+                    }
                 }
             }
-        }
 
-        // Also add sysroot if provided by rbconfig
-        if let Some(sysroot) = rbconfig.get("prefix") {
-            // Try to find the correct sysroot path
-            let possible_sysroots = vec![
-                format!("{}/msys64/ucrt64", sysroot),
-                format!("{}/ucrt64", sysroot),
-                format!("{}", sysroot),
-            ];
+            // Also add sysroot if provided by rbconfig
+            if let Some(sysroot) = rbconfig.get("prefix") {
+                // Try to find the correct sysroot path
+                let possible_sysroots = vec![
+                    format!("{}/msys64/ucrt64", sysroot),
+                    format!("{}/ucrt64", sysroot),
+                    format!("{}", sysroot),
+                ];
 
-            for sysroot_path in possible_sysroots {
-                if std::path::Path::new(&sysroot_path).exists() {
-                    clang_args.push(format!("--sysroot={}", sysroot_path));
-                    debug_log!("INFO: Added sysroot: {}", sysroot_path);
-                    break;
+                for sysroot_path in possible_sysroots {
+                    if std::path::Path::new(&sysroot_path).exists() {
+                        clang_args.push(format!("--sysroot={}", sysroot_path));
+                        debug_log!("INFO: Added sysroot: {}", sysroot_path);
+                        break;
+                    }
                 }
             }
+
+            // Try to prevent Clang from including its own intrinsics headers
+            // Use target that doesn't support AVX512
+            clang_args.push("-target".to_string());
+            clang_args.push("x86_64-pc-windows-gnu".to_string());
         }
 
         // Add compatibility flags
         clang_args.push("-fno-builtin".to_string());
         clang_args.push("-fms-extensions".to_string());
-
-        // Try to prevent Clang from including its own intrinsics headers
-        // Use target that doesn't support AVX512
-        clang_args.push("-target".to_string());
-        clang_args.push("x86_64-pc-windows-gnu".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
