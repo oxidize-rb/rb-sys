@@ -184,8 +184,10 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
             bindings = bindings
                 .blocklist_item("__mingw_ldbl_type_t")
                 .blocklist_item("INET_PORT_RESERVATION_INSTANCE")
+                .blocklist_item("PINET_PORT_RESERVATION_INSTANCE")
                 // Also block related Windows networking types that may reference the blocklisted types
-                .blocklist_type("INET_PORT_RESERVATION_INSTANCE");
+                .blocklist_type("INET_PORT_RESERVATION_INSTANCE")
+                .blocklist_type("PINET_PORT_RESERVATION_INSTANCE");
         }
     }
 
