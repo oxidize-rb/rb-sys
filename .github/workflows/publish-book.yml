@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@e3710e1b6d477d035be0877e19aada2226de8e04 # fix-avx512-defines
         with:
           ruby-version: "3.4"
           bundler-cache: true

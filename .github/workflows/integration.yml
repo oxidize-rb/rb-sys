@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           path: rb-sys
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@4c939d516bd77ec5806f382c9bb574f4634098a7 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@e3710e1b6d477d035be0877e19aada2226de8e04 # fix-avx512-defines
         id: setup
         with:
           cache-version: v2
