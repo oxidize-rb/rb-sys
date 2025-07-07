@@ -32,97 +32,22 @@ pub fn generate(
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
+    clang_args.extend(rbconfig.cppflags());
 
-    // Debug: Print cppflags before adding them
-    let cppflags = rbconfig.cppflags();
-    debug_log!("INFO: Ruby CPPFLAGS: {:?}", cppflags);
-    clang_args.extend(cppflags);
-
-    // On Windows, use a different approach to handle intrinsics issues
-    if cfg!(target_os = "windows") {
-        debug_log!("INFO: Configuring clang for Windows to handle intrinsics issues");
-
-        // Try a different approach: instead of using -nostdinc, we'll try to
-        // define CPU feature macros to pretend we don't support AVX512
-        // This should prevent the intrinsics headers from being used
-        clang_args.push("-U__AVX512F__".to_string());
-        clang_args.push("-U__AVX512FP16__".to_string());
-        clang_args.push("-U__AMX_AVX512__".to_string());
-        clang_args.push("-U__AVX10_1__".to_string());
-        clang_args.push("-U__AVX10_1_512__".to_string());
-        clang_args.push("-U__AVX10_2__".to_string());
-        clang_args.push("-U__AVX10_2_512__".to_string());
-        clang_args.push("-U__AVX__".to_string());
-        clang_args.push("-U__AVX2__".to_string());
-        clang_args.push("-U__SSE__".to_string());
-        clang_args.push("-U__SSE2__".to_string());
-        clang_args.push("-U__SSE3__".to_string());
-        clang_args.push("-U__SSSE3__".to_string());
-        clang_args.push("-U__SSE4_1__".to_string());
-        clang_args.push("-U__SSE4_2__".to_string());
-
-        // Define that we're a basic x86_64 without vector extensions
-        clang_args.push("-D__tune_k8__".to_string());
-        clang_args.push("-march=x86-64".to_string());
-        clang_args.push("-mtune=generic".to_string());
-
-        // Add MinGW include path for mm_malloc.h and other system headers
-        if let Some(mingw_prefix) = rbconfig.get("prefix") {
-            // Try common MinGW include paths
-            let possible_paths = vec![
-                format!("{}/include", mingw_prefix),
-                format!("{}/mingw64/include", mingw_prefix),
-                format!("{}/ucrt64/include", mingw_prefix),
-                format!("{}/msys64/ucrt64/include", mingw_prefix),
-            ];
-
-            for path in possible_paths {
-                if std::path::Path::new(&path).exists() {
-                    clang_args.push(format!("-I{}", path));
-                    debug_log!("INFO: Added MinGW include path: {}", path);
-                    break;
-                }
-            }
+    // On Windows x86_64, we need to handle AVX512 FP16 compatibility issues
+    // Clang 20+ includes types like __m512h that aren't compatible with bindgen
+    if cfg!(target_os = "windows") && cfg!(target_arch = "x86_64") {
+        // For MinGW toolchain, disable SSE/AVX only for bindgen
+        // This prevents intrinsics headers from loading but doesn't affect the final binary
+        if !is_msvc() {
+            clang_args.push("-mno-sse".to_string());
+            clang_args.push("-mno-avx".to_string());
         }
-
-        // Also add sysroot if provided by rbconfig
-        if let Some(sysroot) = rbconfig.get("prefix") {
-            // Try to find the correct sysroot path
-            let possible_sysroots = vec![
-                format!("{}/msys64/ucrt64", sysroot),
-                format!("{}/ucrt64", sysroot),
-                format!("{}", sysroot),
-            ];
-
-            for sysroot_path in possible_sysroots {
-                if std::path::Path::new(&sysroot_path).exists() {
-                    clang_args.push(format!("--sysroot={}", sysroot_path));
-                    debug_log!("INFO: Added sysroot: {}", sysroot_path);
-                    break;
-                }
-            }
-        }
-
-        // Add compatibility flags
-        clang_args.push("-fno-builtin".to_string());
-        clang_args.push("-fms-extensions".to_string());
-
-        // Try to prevent Clang from including its own intrinsics headers
-        // Use target that doesn't support AVX512
-        clang_args.push("-target".to_string());
-        clang_args.push("x86_64-pc-windows-gnu".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
 
     let mut wrapper_h = WRAPPER_H_CONTENT.to_string();
-
-    // Add Windows-specific wrapper to suppress intrinsics
-    if cfg!(target_os = "windows") {
-        // Include our custom Windows wrapper that defines all header guards
-        let windows_wrapper = include_str!("bindings/wrapper_windows.h");
-        wrapper_h = windows_wrapper.to_string() + "\n" + &wrapper_h;
-    }
 
     if !is_msvc() {
         wrapper_h.push_str("#ifdef HAVE_RUBY_ATOMIC_H\n");
@@ -134,7 +59,7 @@ pub fn generate(
         clang_args.push("-DHAVE_RUBY_IO_BUFFER_H".to_string());
     }
 
-    let bindings = default_bindgen(clang_args.clone())
+    let bindings = default_bindgen(clang_args, rbconfig)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("rb_tr_abi_version")
@@ -163,17 +88,7 @@ pub fn generate(
     let mut tokens = {
         write!(std::io::stderr(), "{}", wrapper_h)?;
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
-
-        // Generate bindings with better error handling
-        let code_string = match bindings.generate() {
-            Ok(bindings) => bindings.to_string(),
-            Err(e) => {
-                debug_log!("ERROR: Bindgen failed with: {}", e);
-                debug_log!("ERROR: Full clang args: {:?}", clang_args);
-                return Err(Box::new(e));
-            }
-        };
-
+        let code_string = bindings.generate()?.to_string();
         syn::parse_file(&code_string)?
     };
 
@@ -225,14 +140,28 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
+fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
+    // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
+    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
+        if let Some((major, minor)) = rbconfig.major_minor() {
+            (major == 2 && minor == 7) || (major == 3 && minor == 0)
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    let enable_layout_tests = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-layout-tests");
+    let impl_debug = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-impl-debug");
+
     let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
         .no_copy("rb_data_type_struct")
         .derive_eq(true)
         .derive_debug(true)
         .clang_args(clang_args)
-        .layout_tests(cfg!(feature = "bindgen-layout-tests"))
+        .layout_tests(enable_layout_tests)
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
         .blocklist_item("^pthread_.*")
@@ -241,27 +170,12 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
         .merge_extern_blocks(true)
         .generate_comments(true)
         .size_t_is_usize(env::var("CARGO_FEATURE_BINDGEN_SIZE_T_IS_USIZE").is_ok())
-        .impl_debug(cfg!(feature = "bindgen-impl-debug"))
+        .impl_debug(impl_debug)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
-    // Comprehensive blocklist for Windows Clang 20 AVX512 intrinsics issues
-    if cfg!(target_os = "windows") {
-        debug_log!("INFO: Adding Windows-specific blocklist for AVX512 intrinsics");
-
-        // Block problematic AVX512 FP16 types
-        bindings = bindings
-            .blocklist_item("__m512h")
-            .blocklist_item("__m256h")
-            .blocklist_item("__m128h")
-            .blocklist_item("__v8hf")
-            .blocklist_item("__v16hf")
-            .blocklist_item("__v32hf")
-            // Block problematic type aliases
-            .blocklist_item("_Float16")
-            .blocklist_type("_Float16")
-            // Block functions that use these types
-            .blocklist_function("_tile_cmmimfp16ps")
-            .blocklist_function("_tile_cmmrlfp16ps");
+    // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
+    if cfg!(target_os = "windows") && !is_msvc() {
+        bindings = bindings.opaque_type("__mingw_ldbl_type_t");
     }
 
     if env::var("CARGO_FEATURE_BINDGEN_ENABLE_FUNCTION_ATTRIBUTE_DETECTION").is_ok() {

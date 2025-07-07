@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           cache-version: v2
           ruby-version: "3.1"
@@ -105,7 +105,7 @@ jobs:
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
         with:
           cache-version: v2
@@ -126,7 +126,7 @@ jobs:
             echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
             echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
           fi
-          
+
           # Remove AVX512 defines that cause bindgen parse errors with our header guards
           if [[ "$BINDGEN_EXTRA_CLANG_ARGS" == *"-D__AVX512"* ]]; then
             echo "Removing AVX512 defines from BINDGEN_EXTRA_CLANG_ARGS"
@@ -135,7 +135,7 @@ jobs:
             echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
             echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
           fi
-          
+
           # Enable debug output
           echo "RUST_LOG=bindgen=debug" >> $GITHUB_ENV
 
@@ -215,7 +215,7 @@ jobs:
 
       - uses: oxidize-rb/actions/upload-core-dumps@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
