@@ -32,7 +32,11 @@ pub fn generate(
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
-    clang_args.extend(rbconfig.cppflags());
+
+    // Debug: Print cppflags before adding them
+    let cppflags = rbconfig.cppflags();
+    debug_log!("INFO: Ruby CPPFLAGS: {:?}", cppflags);
+    clang_args.extend(cppflags);
 
     // On Windows, use a different approach to handle intrinsics issues
     if cfg!(target_os = "windows") {
@@ -56,6 +60,57 @@ pub fn generate(
         clang_args.push("-U__SSSE3__".to_string());
         clang_args.push("-U__SSE4_1__".to_string());
         clang_args.push("-U__SSE4_2__".to_string());
+
+        // Define that we're a basic x86_64 without vector extensions
+        clang_args.push("-D__tune_k8__".to_string());
+        clang_args.push("-march=x86-64".to_string());
+        clang_args.push("-mtune=generic".to_string());
+
+        // Add MinGW include path for mm_malloc.h and other system headers
+        if let Some(mingw_prefix) = rbconfig.get("prefix") {
+            // Try common MinGW include paths
+            let possible_paths = vec![
+                format!("{}/include", mingw_prefix),
+                format!("{}/mingw64/include", mingw_prefix),
+                format!("{}/ucrt64/include", mingw_prefix),
+                format!("{}/msys64/ucrt64/include", mingw_prefix),
+            ];
+
+            for path in possible_paths {
+                if std::path::Path::new(&path).exists() {
+                    clang_args.push(format!("-I{}", path));
+                    debug_log!("INFO: Added MinGW include path: {}", path);
+                    break;
+                }
+            }
+        }
+
+        // Also add sysroot if provided by rbconfig
+        if let Some(sysroot) = rbconfig.get("prefix") {
+            // Try to find the correct sysroot path
+            let possible_sysroots = vec![
+                format!("{}/msys64/ucrt64", sysroot),
+                format!("{}/ucrt64", sysroot),
+                format!("{}", sysroot),
+            ];
+
+            for sysroot_path in possible_sysroots {
+                if std::path::Path::new(&sysroot_path).exists() {
+                    clang_args.push(format!("--sysroot={}", sysroot_path));
+                    debug_log!("INFO: Added sysroot: {}", sysroot_path);
+                    break;
+                }
+            }
+        }
+
+        // Add compatibility flags
+        clang_args.push("-fno-builtin".to_string());
+        clang_args.push("-fms-extensions".to_string());
+
+        // Try to prevent Clang from including its own intrinsics headers
+        // Use target that doesn't support AVX512
+        clang_args.push("-target".to_string());
+        clang_args.push("x86_64-pc-windows-gnu".to_string());
     }
 
     debug_log!("INFO: using bindgen with clang args: {:?}", clang_args);
@@ -109,7 +164,17 @@ pub fn generate(
     let mut tokens = {
         write!(std::io::stderr(), "{}", wrapper_h)?;
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
-        let code_string = bindings.generate()?.to_string();
+
+        // Generate bindings with better error handling
+        let code_string = match bindings.generate() {
+            Ok(bindings) => bindings.to_string(),
+            Err(e) => {
+                debug_log!("ERROR: Bindgen failed with: {}", e);
+                debug_log!("ERROR: Full clang args: {:?}", clang_args);
+                return Err(Box::new(e));
+            }
+        };
+
         syn::parse_file(&code_string)?
     };
 
