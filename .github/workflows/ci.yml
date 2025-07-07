@@ -29,6 +29,29 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/oxidize-rb/rb-sys/$GITHUB_SHA/data/toolchains.json > toolchains.json
           echo "minimum-supported-rust-version=$(jq -r '.policy["minimum-supported-rust-version"]' toolchains.json)" >> $GITHUB_OUTPUT
+
+  lint:
+    name: 🚓 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        with:
+          cache-version: v2
+          ruby-version: "3.1"
+          rustup-toolchain: stable
+          bundler-cache: true
+          cargo-cache: true
+
+      - name: 🚓 Run Standard.rb
+        run: bundle exec standardrb --format github
+
+      - name: ✂️ Run clippy
+        run: cargo clippy
+
+      - name: 📃 Run cargo fmt
+        run: cargo fmt --check
   build_and_test:
     name: 🧪 Test
     needs: fetch_ci_data
@@ -76,13 +99,13 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/upload-core-dumps@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/upload-core-dumps@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
 
       - name: Setup debug info
         shell: bash
         run: script/ci/set-debug-env.sh
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@4c939d516bd77ec5806f382c9bb574f4634098a7 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         if: matrix.ruby_version != 'skip'
         with:
           cache-version: v2
@@ -90,6 +113,31 @@ jobs:
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}
           bundler-cache: true
           cargo-cache: true
+
+      - name: Fix BINDGEN_EXTRA_CLANG_ARGS on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # Fix invalid target triple in BINDGEN_EXTRA_CLANG_ARGS
+          if [[ "$BINDGEN_EXTRA_CLANG_ARGS" == *"--target=stable-"* ]]; then
+            echo "Fixing invalid target triple in BINDGEN_EXTRA_CLANG_ARGS"
+            echo "Original: $BINDGEN_EXTRA_CLANG_ARGS"
+            export BINDGEN_EXTRA_CLANG_ARGS=$(echo "$BINDGEN_EXTRA_CLANG_ARGS" | sed 's/--target=stable-[^ ]*/--target=x86_64-pc-windows-gnu/')
+            echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
+            echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
+          fi
+
+          # Remove AVX512 defines that cause bindgen parse errors with our header guards
+          if [[ "$BINDGEN_EXTRA_CLANG_ARGS" == *"-D__AVX512"* ]]; then
+            echo "Removing AVX512 defines from BINDGEN_EXTRA_CLANG_ARGS"
+            echo "Original: $BINDGEN_EXTRA_CLANG_ARGS"
+            export BINDGEN_EXTRA_CLANG_ARGS=$(echo "$BINDGEN_EXTRA_CLANG_ARGS" | sed 's/-D__AVX512[^ ]*//g')
+            echo "Fixed: $BINDGEN_EXTRA_CLANG_ARGS"
+            echo "BINDGEN_EXTRA_CLANG_ARGS=$BINDGEN_EXTRA_CLANG_ARGS" >> $GITHUB_ENV
+          fi
+
+          # Enable debug output
+          echo "RUST_LOG=bindgen=debug" >> $GITHUB_ENV
 
       - name: Bundle install
         if: matrix.ruby_version == 'skip'
@@ -109,6 +157,7 @@ jobs:
         shell: bash
         env:
           RB_SYS_CARGO_PROFILE: "release"
+          RUST_BACKTRACE: "1"
         run: |
           ulimit -c unlimited
           script/ci/upload-on-failure.sh "bundle exec rake test:examples" "examples-test" "./examples"
@@ -137,17 +186,6 @@ jobs:
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
 
-      - name: ✂️ Run clippy
-        run: cargo clippy
-
-      - name: 📃 Run cargo fmt
-        if: matrix.sys.rust_toolchain == 'stable'
-        run: cargo fmt --check
-
-      - name: 🚓 Run Standard.rb
-        if: matrix.ruby_version == '3.1'
-        run: bundle exec standardrb --format github
-
       - name: "🧱 Generate bindings"
         if: env.ACTIONS_STEP_DEBUG == 'true'
         run: bundle exec rake bindings:generate
@@ -175,9 +213,9 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: oxidize-rb/actions/upload-core-dumps@d4731ac609739be0920f0faf5569b58b8eb1a262 # v1
+      - uses: oxidize-rb/actions/upload-core-dumps@ad2f40797c2160b7ef31f1aabcfcb6a02539f6bc # v1
 
-      - uses: oxidize-rb/actions/setup-ruby-and-rust@4c939d516bd77ec5806f382c9bb574f4634098a7 # v1
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
           ruby-version: none
           rustup-toolchain: ${{ matrix.sys.rust_toolchain }}

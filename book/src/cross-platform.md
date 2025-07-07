@@ -351,7 +351,8 @@ jobs:
 
 ### Ruby-Head Compatibility
 
-When supporting `ruby-head` or development versions of Ruby, you must publish a source gem alongside your precompiled gems. This is necessary because:
+When supporting `ruby-head` or development versions of Ruby, you must publish a source gem alongside your precompiled
+gems. This is necessary because:
 
 1. The Ruby ABI (Application Binary Interface) can change between development versions
 2. Precompiled binary gems built against one ruby-head version may be incompatible with newer ruby-head versions

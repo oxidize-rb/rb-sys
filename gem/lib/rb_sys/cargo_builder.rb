@@ -110,6 +110,10 @@ module RbSys
       end
     end
 
+    def rubygems_invoked?
+      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1" && !ENV.key?("NIX_STORE")
+    end
+
     private
 
     def rb_config_env
@@ -340,10 +344,6 @@ module RbSys
       when :dev then "debug"
       else raise "unknown target directory for profile: #{profile}"
       end
-    end
-
-    def rubygems_invoked?
-      ENV.key?("SOURCE_DATE_EPOCH") && ENV["RB_SYS_TEST"] != "1"
     end
 
     def musl?
