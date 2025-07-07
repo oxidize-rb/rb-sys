@@ -61,6 +61,17 @@ pub fn generate(
 
     let bindings = default_bindgen(clang_args)
         .allowlist_file(".*ruby.*")
+        // Only include Ruby-related types, not Windows system types
+        .allowlist_type("^rb_.*")
+        .allowlist_type("^RB_.*")
+        .allowlist_type("^ruby_.*")
+        .allowlist_type("^RUBY_.*")
+        .allowlist_type("^VALUE")
+        .allowlist_type("^ID")
+        .allowlist_function("^rb_.*")
+        .allowlist_function("^ruby_.*")
+        .allowlist_var("^rb_.*")
+        .allowlist_var("^ruby_.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("rb_tr_abi_version")
         .blocklist_function("^__.*")
