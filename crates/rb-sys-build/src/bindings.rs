@@ -59,50 +59,24 @@ pub fn generate(
         clang_args.push("-DHAVE_RUBY_IO_BUFFER_H".to_string());
     }
 
-    let bindings = if cfg!(target_os = "windows") {
-        // On Windows, use very restrictive allowlist to prevent system types
-        default_bindgen(clang_args)
-            .allowlist_file(".*ruby.*")
-            .allowlist_file(".*rb.*")
-            // Only include Ruby-specific types and functions, nothing else
-            .allowlist_type("^rb_.*")
-            .allowlist_type("^RB_.*")
-            .allowlist_type("^ruby_.*")
-            .allowlist_type("^RUBY_.*")
-            .allowlist_type("^VALUE$")
-            .allowlist_type("^ID$")
-            // Explicitly allowlist essential Ruby types
-            .allowlist_type("^st_table$")
-            .allowlist_type("^st_data_t$")
-            .allowlist_type("^rb_data_type_struct$")
-            .allowlist_type("^rb_data_type_t$")
-            .allowlist_function("^rb_.*")
-            .allowlist_function("^ruby_.*")
-            .allowlist_var("^rb_.*")
-            .allowlist_var("^ruby_.*")
-            // Block all Windows system headers and types
-            .blocklist_file(".*windows.*")
-            .blocklist_file(".*mingw.*")
-            .blocklist_file(".*winnt.*")
-            .blocklist_file(".*windef.*")
-            .blocklist_file(".*winbase.*")
-            .blocklist_file(".*winsock.*")
-            .blocklist_file(".*ws2.*")
-    } else {
-        default_bindgen(clang_args)
-            .allowlist_file(".*ruby.*")
-            // Only include Ruby-related types, not Windows system types
-            .allowlist_type("^rb_.*")
-            .allowlist_type("^RB_.*")
-            .allowlist_type("^ruby_.*")
-            .allowlist_type("^RUBY_.*")
-            .allowlist_type("^VALUE")
-            .allowlist_type("^ID")
-            .allowlist_function("^rb_.*")
-            .allowlist_function("^ruby_.*")
-            .allowlist_var("^rb_.*")
-            .allowlist_var("^ruby_.*")
-    };
+    let bindings = default_bindgen(clang_args)
+        .allowlist_file(".*ruby.*")
+        // Only include Ruby-related types, not Windows system types
+        .allowlist_type("^rb_.*")
+        .allowlist_type("^RB_.*")
+        .allowlist_type("^ruby_.*")
+        .allowlist_type("^RUBY_.*")
+        .allowlist_type("^VALUE")
+        .allowlist_type("^ID")
+        // Essential Ruby types for functionality
+        .allowlist_type("^st_table")
+        .allowlist_type("^st_data_t")
+        .allowlist_type("^rb_data_type_struct")
+        .allowlist_type("^rb_data_type_t")
+        .allowlist_function("^rb_.*")
+        .allowlist_function("^ruby_.*")
+        .allowlist_var("^rb_.*")
+        .allowlist_var("^ruby_.*");
 
     let bindings = bindings
         .blocklist_item("ruby_abi_version")
@@ -231,7 +205,20 @@ fn default_bindgen(clang_args: Vec<String>) -> bindgen::Builder {
                 .blocklist_item("PINET_PORT_RESERVATION_INSTANCE")
                 // Also block related Windows networking types that may reference the blocklisted types
                 .blocklist_type("INET_PORT_RESERVATION_INSTANCE")
-                .blocklist_type("PINET_PORT_RESERVATION_INSTANCE");
+                .blocklist_type("PINET_PORT_RESERVATION_INSTANCE")
+                // Block all Windows system headers that cause packed struct issues
+                .blocklist_file(".*windows.*")
+                .blocklist_file(".*winnt.*")
+                .blocklist_file(".*windef.*")
+                .blocklist_file(".*winbase.*")
+                .blocklist_file(".*winsock.*")
+                .blocklist_file(".*ws2.*")
+                // Block specific Windows system types that cause packed field alignment issues
+                .blocklist_type(".*_PORT_RESERVATION_.*")
+                .blocklist_type(".*_ADAPTER_.*")
+                .blocklist_type(".*_ACTIVATION_CONTEXT_.*")
+                .blocklist_type(".*ADAPTER_STATUS.*")
+                .blocklist_type(".*ACTIVATION_CONTEXT.*");
         }
     }
 
