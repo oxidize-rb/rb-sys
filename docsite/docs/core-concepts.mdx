@@ -232,8 +232,8 @@ fn divide(a: f64, b: f64) -> Result<f64, Error> {
 
 // Magnus automatically converts Result to Ruby exceptions
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("MyMath")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("MyMath")?;
     module.define_singleton_method("divide", function!(divide, 2))?;
     Ok(())
 }
@@ -280,7 +280,7 @@ end
 **Cargo.toml**
 ```toml
 [dependencies]
-magnus = { version = "0.6", features = ["embed"] }
+magnus = { version = "0.7", features = ["embed"] }
 rb-sys = { version = "0.9", features = ["stable-api-compiled"] }
 
 [features]

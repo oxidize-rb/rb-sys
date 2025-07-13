@@ -19,7 +19,7 @@ Master the fundamental patterns for building Ruby extensions with Rust. These pa
 The simplest pattern - standalone functions in a module:
 
 ```rust
-use magnus::{define_module, function, prelude::*, Error};
+use magnus::{function, prelude::*, Error, Ruby};
 
 // Simple function with automatic type conversion
 fn add(a: i64, b: i64) -> i64 {
@@ -39,8 +39,8 @@ fn divide(a: f64, b: f64) -> Result<f64, Error> {
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("MathUtils")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("MathUtils")?;
     
     // Register functions with their arity
     module.define_singleton_method("add", function!(add, 2))?;
@@ -62,7 +62,7 @@ MathUtils.divide(10, 0)  # => ZeroDivisionError
 Creating classes with instance methods:
 
 ```rust
-use magnus::{class, define_class, function, method, prelude::*, Error, Ruby};
+use magnus::{class, function, method, prelude::*, Error, Ruby};
 
 #[derive(Clone, Debug)]
 struct Counter {
@@ -95,8 +95,8 @@ impl Counter {
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let class = define_class("Counter", class::object())?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let class = ruby.define_class("Counter", ruby.class_object())?;
     
     // Constructor
     class.define_singleton_method("new", function!(Counter::new, 1))?;
@@ -173,7 +173,7 @@ Handle different encodings properly:
 use magnus::{RString, encoding::{EncodingCapacity, Index}, Error, Ruby};
 
 fn ensure_utf8(input: RString) -> Result<RString, Error> {
-    let ruby = Ruby::get().unwrap();
+    let ruby = unsafe { Ruby::get_unchecked() };
     
     // Check current encoding
     let enc = input.enc_get();

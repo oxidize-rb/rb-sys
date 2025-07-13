@@ -15,7 +15,7 @@ Ready-to-use recipes for common Ruby extension patterns. Copy, paste, and adapt!
 ### Fast String Reversal with Unicode Support
 
 ```rust
-use magnus::{define_module, function, prelude::*, Error};
+use magnus::{function, prelude::*, Error, Ruby};
 use unicode_segmentation::UnicodeSegmentation;
 
 fn reverse_preserving_graphemes(input: String) -> String {
@@ -23,8 +23,8 @@ fn reverse_preserving_graphemes(input: String) -> String {
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("StringUtils")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("StringUtils")?;
     module.define_singleton_method(
         "reverse_unicode", 
         function!(reverse_preserving_graphemes, 1)

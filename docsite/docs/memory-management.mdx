@@ -290,7 +290,7 @@ impl MemoryGuard {
     }
 
     fn get(&self) -> Result<&Memory, Error> {
-        let ruby = Ruby::get().unwrap();
+        let ruby = unsafe { Ruby::get_unchecked() };
         let mem = ruby.get_inner_ref(&self.memory);
 
         // Check that memory size hasn't changed

@@ -88,15 +88,15 @@ puts calc.add(40, 2) # => 42`}
                   <div className={styles.codeMeta}>Rust Implementation</div>
                   <CodeBlock language="rust" className={styles.codeBlock}>
                     {`// Implement in Rust with rb-sys
-use magnus::{define_class, function, method, prelude::*, Error};
+use magnus::{define_class, method, prelude::*, Error, Ruby};
 
-fn add(a: i64, b: i64) -> i64 {
+fn add(_ruby: &Ruby, _self: magnus::Value, a: i64, b: i64) -> i64 {
     a + b
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let calculator = define_class("Calculator", Default::default())?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let calculator = define_class("Calculator", ruby.class_object())?;
     calculator.define_method("add", method!(add, 2))?;
     Ok(())
 }`}

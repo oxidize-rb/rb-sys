@@ -93,7 +93,7 @@ fn debug_function(value: String) {
     eprintln!("Debug: value = {:?}", value);
     
     // Or use Ruby's puts
-    let ruby = Ruby::get().unwrap();
+    let ruby = unsafe { Ruby::get_unchecked() };
     ruby.eval(&format!("puts 'Debug: {}'", value)).unwrap();
 }
 ```

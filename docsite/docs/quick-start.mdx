@@ -65,7 +65,7 @@ Replace the default code with our fast string implementation:
 
 ```rust
 // ext/fast_strings/src/lib.rs
-use magnus::{define_module, function, prelude::*, Error, Ruby};
+use magnus::{function, prelude::*, Error, Ruby};
 
 /// Reverses a string preserving Unicode grapheme clusters
 fn reverse_string(input: String) -> String {
@@ -108,8 +108,8 @@ fn levenshtein_distance(s1: String, s2: String) -> usize {
 }
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("FastStrings")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("FastStrings")?;
     
     // Define our module methods
     module.define_singleton_method("reverse", function!(reverse_string, 1))?;
@@ -129,7 +129,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-magnus = { version = "0.6" }
+magnus = { version = "0.7" }
 unicode-segmentation = "1.10"
 
 [lib]

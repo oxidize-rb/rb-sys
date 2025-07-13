@@ -29,8 +29,8 @@ result = MyGem.process_data(large_dataset)
 use magnus::{function, prelude::*, Error, Ruby};
 
 #[magnus::init]
-fn init() -> Result<(), Error> {
-    let module = define_module("MyGem")?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("MyGem")?;
     module.define_singleton_method("process_data", function!(process_data, 1))?;
     Ok(())
 }

@@ -55,7 +55,7 @@ resolver = "2"
 
 # Shared dependencies for all crates
 [workspace.dependencies]
-magnus = { version = "0.6", features = ["rb-sys"] }
+magnus = { version = "0.7", features = ["rb-sys"] }
 rb-sys = "0.9"
 ```
 
@@ -154,7 +154,7 @@ members = ["ext/*"]
 resolver = "2"
 
 [workspace.dependencies]
-magnus = { version = "0.6", features = ["rb-sys"] }
+magnus = { version = "0.7", features = ["rb-sys"] }
 url = "2.5"
 EOF
 ```
@@ -189,7 +189,7 @@ rb-sys-env = "0.1"
 
 ```rust
 // ext/url_parser/src/lib.rs
-use magnus::{define_module, define_class, function, method, prelude::*, Error, Ruby};
+use magnus::{function, method, prelude::*, Error, Ruby};
 use url::Url;
 
 // Simple URL wrapper class
@@ -389,7 +389,7 @@ fn main() {
 # ext/my_gem/Cargo.toml
 [dependencies]
 # Required dependencies
-magnus = { version = "0.6", features = ["rb-sys"] }
+magnus = { version = "0.7", features = ["rb-sys"] }
 
 # Feature-gated dependencies
 serde = { version = "1.0", optional = true }

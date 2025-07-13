@@ -95,7 +95,7 @@ fn test_value_conversion() {
 fn test_with_magnus() {
     use magnus::{Ruby, RString, Value};
 
-    let ruby = unsafe { Ruby::get().unwrap() };
+    let ruby = unsafe { Ruby::get_unchecked() };
     let string = RString::new(ruby, "Hello, world!").unwrap();
 
     assert_eq!(string.to_string().unwrap(), "Hello, world!");
@@ -134,7 +134,7 @@ fn test_with_proptest() {
     use proptest::prelude::*;
 
     proptest!(|(s in "[a-zA-Z0-9]*")| {
-        let ruby = unsafe { Ruby::get().unwrap() };
+        let ruby = unsafe { Ruby::get_unchecked() };
         let ruby_string = RString::new(ruby, &s).unwrap();
         assert_eq!(ruby_string.to_string().unwrap(), s);
     });
