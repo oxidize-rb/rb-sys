@@ -1,6 +1,7 @@
 # oxidize.rb Theme Customizations
 
-This directory contains custom theme components for the oxidize.rb documentation site. These components override the default Docusaurus theme components to implement specific design requirements.
+This directory contains custom theme components for the oxidize.rb documentation site. These components override the
+default Docusaurus theme components to implement specific design requirements.
 
 ## Components
 
@@ -31,7 +32,8 @@ This directory contains custom theme components for the oxidize.rb documentation
 
 ## Usage
 
-These components are automatically used by Docusaurus through its swizzling mechanism. No additional configuration is needed.
+These components are automatically used by Docusaurus through its swizzling mechanism. No additional configuration is
+needed.
 
 ## Implementation Details
 

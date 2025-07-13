@@ -1,0 +1,494 @@
+---
+id: faq
+title: Frequently Asked Questions
+sidebar_position: 20
+keywords: [faq, questions, troubleshooting, help, common issues]
+description: Answers to frequently asked questions about building Ruby extensions with Rust using rb-sys.
+---
+
+# Frequently Asked Questions
+
+Find answers to common questions about building Ruby extensions with Rust.
+
+## General Questions
+
+### Q: When should I use Rust for Ruby extensions?
+
+**A:** Consider Rust when you need:
+
+✅ **Good fit for Rust:**
+- CPU-intensive algorithms (parsing, compression, cryptography)
+- Memory-intensive operations (image processing, data transformation)
+- System-level integration (OS APIs, hardware access)
+- Concurrent/parallel processing
+- Security-critical code
+- Wrapping existing Rust libraries
+
+❌ **Keep in Ruby:**
+- Simple business logic
+- Database queries (use Ruby's ORM)
+- Web framework code
+- Glue code between services
+- Anything that's "fast enough" in Ruby
+
+### Q: Is Rust harder to learn than C?
+
+**A:** Different, not necessarily harder:
+
+**Rust challenges:**
+- Ownership and borrowing concepts
+- Stricter compiler
+- More complex type system
+
+**Rust advantages:**
+- No segfaults or memory leaks
+- Better error messages
+- Modern tooling (Cargo, rustfmt, clippy)
+- Comprehensive standard library
+- Amazing documentation
+
+Most developers find Rust's learning curve worth it for the safety guarantees.
+
+### Q: How much faster will my code be?
+
+**A:** It depends on what you're doing:
+
+- **CPU-bound operations**: Often 10-100x faster
+- **Memory allocation heavy**: 5-20x faster
+- **String processing**: 5-50x faster
+- **Simple operations**: May be slower due to FFI overhead
+
+**Remember:** With Ruby's YJIT, pure Ruby is faster than ever. Profile first!
+
+### Q: Will this work with Rails?
+
+**A:** Yes! rb-sys extensions work perfectly with Rails:
+
+```ruby
+# Gemfile
+gem 'your_rust_extension'
+
+# In your Rails code
+class DataProcessor
+  def process(data)
+    # Calls your Rust extension
+    YourRustExtension.process(data)
+  end
+end
+```
+
+Many production Rails apps use Rust extensions for performance-critical paths.
+
+## Technical Questions
+
+### Q: How do I debug Rust extensions?
+
+**A:** Several approaches:
+
+**1. Print debugging:**
+```rust
+use magnus::Ruby;
+
+fn debug_function(value: String) {
+    eprintln!("Debug: value = {:?}", value);
+    
+    // Or use Ruby's puts
+    let ruby = Ruby::get().unwrap();
+    ruby.eval(&format!("puts 'Debug: {}'", value)).unwrap();
+}
+```
+
+**2. Use a debugger:**
+```bash
+# With LLDB on macOS
+lldb -- ruby -r ./lib/my_extension.rb -e "MyExtension.method"
+
+# With GDB on Linux
+gdb --args ruby -r ./lib/my_extension.rb -e "MyExtension.method"
+```
+
+**3. Logging:**
+```rust
+// Add to Cargo.toml
+[dependencies]
+log = "0.4"
+env_logger = "0.10"
+
+// In your code
+log::debug!("Processing {} items", items.len());
+```
+
+### Q: How do I handle Ruby version compatibility?
+
+**A:** rb-sys provides version detection:
+
+```rust
+// In build.rs
+fn main() {
+    let ruby_version = rb_sys_env::ruby_version();
+    
+    if ruby_version.major >= 3 {
+        println!("cargo:rustc-cfg=ruby3");
+    }
+}
+
+// In your code
+#[cfg(ruby3)]
+fn ruby3_only_feature() {
+    // Ruby 3.0+ only code
+}
+
+#[cfg(not(ruby3))]
+fn ruby2_compat() {
+    // Ruby 2.x compatible code
+}
+```
+
+### Q: Can I use async/await in Ruby extensions?
+
+**A:** Yes, but carefully:
+
+```rust
+use magnus::{Error, Ruby};
+use tokio::runtime::Runtime;
+
+fn async_operation() -> Result<String, Error> {
+    // Create a tokio runtime
+    let rt = Runtime::new().unwrap();
+    
+    // Block on async code
+    let result = rt.block_on(async {
+        // Your async code here
+        perform_async_work().await
+    });
+    
+    Ok(result)
+}
+
+// For long-running operations, release the GVL
+fn long_async_operation(data: Vec<u8>) -> Result<Vec<u8>, Error> {
+    use rb_sys::rb_thread_call_without_gvl;
+    
+    unsafe {
+        rb_thread_call_without_gvl(
+            Some(|data: *mut Vec<u8>| {
+                let rt = Runtime::new().unwrap();
+                rt.block_on(async {
+                    process_async(&*data).await
+                })
+            }),
+            &data as *const _ as *mut _,
+            None,
+            std::ptr::null_mut(),
+        )
+    }
+}
+```
+
+### Q: How do I distribute my gem?
+
+**A:** Multiple strategies:
+
+**1. Source gems (easiest):**
+```ruby
+# In gemspec
+spec.extensions = ["ext/my_gem/extconf.rb"]
+spec.files = Dir["ext/**/*.{rs,toml,rb}", "lib/**/*.rb"]
+
+# Users need Rust installed
+```
+
+**2. Pre-compiled gems (best UX):**
+```ruby
+# Use rake-compiler-dock
+rake gem:native
+
+# Creates platform-specific gems:
+# - my_gem-1.0.0-x86_64-linux.gem
+# - my_gem-1.0.0-x86_64-darwin.gem
+# - my_gem-1.0.0-arm64-darwin.gem
+```
+
+**3. GitHub Actions (automated):**
+```yaml
+# .github/workflows/release.yml
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+      - uses: oxidize-rb/actions/cross-gem@v1
+```
+
+## Performance Questions
+
+### Q: Why is my extension slower than expected?
+
+**A:** Common causes:
+
+**1. Too many conversions:**
+```rust
+// ❌ Bad: Converts entire array upfront
+fn sum(numbers: Vec<i64>) -> i64 {
+    numbers.iter().sum()
+}
+
+// ✅ Good: Iterates without conversion
+fn sum(array: RArray) -> Result<i64, Error> {
+    let mut total = 0;
+    for item in array.each() {
+        total += i64::try_convert(item?)?;
+    }
+    Ok(total)
+}
+```
+
+**2. Not releasing the GVL:**
+```rust
+// ✅ Release GVL for operations > 100ms
+if data.len() > 1_000_000 {
+    // Use rb_thread_call_without_gvl
+}
+```
+
+**3. Excessive allocations:**
+```rust
+// ❌ Bad: Allocates repeatedly
+for i in 0..1000 {
+    let mut vec = Vec::new();
+    // ...
+}
+
+// ✅ Good: Reuse allocation
+let mut vec = Vec::with_capacity(1000);
+for i in 0..1000 {
+    vec.clear();
+    // ...
+}
+```
+
+### Q: How do I profile my extension?
+
+**A:** Use cargo's built-in profiling:
+
+```bash
+# Add to Cargo.toml
+[profile.release]
+debug = true
+
+# Profile with flamegraph
+cargo install flamegraph
+sudo cargo flamegraph --bin my_extension
+
+# Or use Ruby's profiling tools
+ruby -r profile -r ./lib/my_extension.rb -e "MyExtension.slow_method"
+```
+
+## Memory Questions
+
+### Q: How do I prevent memory leaks?
+
+**A:** Follow these patterns:
+
+**1. Always mark Ruby references:**
+```rust
+#[magnus::wrap(class = "MyClass", mark)]
+struct MyClass {
+    ruby_string: Value,
+}
+
+impl DataTypeFunctions for MyClass {
+    fn mark(&self, marker: &Marker) {
+        marker.mark(self.ruby_string);
+    }
+}
+```
+
+**2. Use RAII patterns:**
+```rust
+// Resources are automatically cleaned up
+struct TempFile {
+    path: PathBuf,
+}
+
+impl Drop for TempFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
+```
+
+**3. Test with GC stress:**
+```ruby
+# In your tests
+GC.stress = true
+YourExtension.method_that_allocates
+GC.stress = false
+```
+
+### Q: Can I share memory between Ruby and Rust?
+
+**A:** Yes, but carefully:
+
+```rust
+// Zero-copy string access
+fn process_string(ruby_str: RString) -> Result<(), Error> {
+    let bytes = unsafe { ruby_str.as_slice() };
+    // Process bytes without copying
+    Ok(())
+}
+
+// Shared memory with TypedData
+struct SharedBuffer {
+    data: Vec<u8>,
+}
+
+impl SharedBuffer {
+    fn get_slice(&self, start: usize, len: usize) -> &[u8] {
+        &self.data[start..start + len]
+    }
+}
+```
+
+## Error Handling Questions
+
+### Q: How should I handle panics?
+
+**A:** Avoid them entirely:
+
+```rust
+// ❌ Bad: Panics crash Ruby
+fn bad_function(index: usize, data: Vec<String>) -> String {
+    data[index].clone()  // Panics on out of bounds
+}
+
+// ✅ Good: Return errors
+fn good_function(index: usize, data: Vec<String>) -> Result<String, Error> {
+    data.get(index)
+        .cloned()
+        .ok_or_else(|| Error::new(
+            exception::index_error(),
+            format!("index {} out of bounds", index)
+        ))
+}
+
+// If you must use code that might panic
+use std::panic;
+
+fn safe_wrapper() -> Result<String, Error> {
+    panic::catch_unwind(|| {
+        potentially_panicking_code()
+    }).map_err(|_| Error::new(
+        exception::runtime_error(),
+        "operation failed"
+    ))
+}
+```
+
+## Deployment Questions
+
+### Q: Do users need Rust installed?
+
+**A:** Depends on distribution method:
+
+- **Source gems**: Yes, users need Rust
+- **Pre-compiled gems**: No, includes compiled binary
+- **Bundled with vendored**: No, but larger gem size
+
+### Q: How do I support multiple platforms?
+
+**A:** Use rb-sys's cross-compilation:
+
+```bash
+# Install cross-compilation tool
+gem install rb_sys
+
+# Build for multiple platforms
+bundle exec rb-sys-dock --platforms x86_64-linux,aarch64-linux
+
+# Or use GitHub Actions
+# See oxidize-rb/cross-gem-action
+```
+
+### Q: What about Ruby version compatibility?
+
+**A:** rb-sys handles most differences:
+
+```toml
+# Cargo.toml
+[dependencies]
+rb-sys = { version = "0.9", features = ["stable-api-compiled-fallback"] }
+
+# Supports Ruby 2.6 through 3.3+
+```
+
+## Troubleshooting
+
+### Q: "undefined symbol" errors?
+
+**A:** Common causes:
+
+1. **Missing rb-sys dependency**
+2. **Wrong library type in Cargo.toml** - use `crate-type = ["cdylib"]`
+3. **Name mismatch** between Rust and Ruby
+
+### Q: "libclang not found" during installation?
+
+**A:** Install libclang:
+
+```bash
+# macOS
+brew install llvm
+
+# Ubuntu/Debian
+apt-get install libclang-dev
+
+# Or use the gem
+gem install libclang
+```
+
+### Q: Extension works locally but fails in production?
+
+**A:** Check:
+
+1. **Platform compatibility** - build for production architecture
+2. **Ruby version** - ensure compatibility
+3. **Dependencies** - system libraries available?
+4. **Compilation flags** - release vs debug build
+
+## Getting Help
+
+### Q: Where can I get help?
+
+**A:** Multiple resources:
+
+1. **[Oxidize Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Active community
+2. **[GitHub Discussions](https://github.com/oxidize-rb/rb-sys/discussions)** - Q&A forum
+3. **[GitHub Issues](https://github.com/oxidize-rb/rb-sys/issues)** - Bug reports
+4. **[Examples Repository](https://github.com/oxidize-rb/examples)** - Working code
+
+### Q: How can I contribute?
+
+**A:** We love contributions!
+
+- **Documentation**: Fix typos, add examples
+- **Code**: Fix bugs, add features
+- **Examples**: Share your extensions
+- **Community**: Help others, share knowledge
+
+See our [Contributing Guide](contributing) for details.
+
+---
+
+<div className="success-message">
+
+### 🤝 Still Have Questions?
+
+Join our [Slack community](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) - we're happy to help!
+
+</div>

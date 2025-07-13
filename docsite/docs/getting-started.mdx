@@ -1,101 +1,378 @@
 ---
 id: getting-started
-title: Prerequisites and Installation
+title: Installation & Setup
 sidebar_position: 2
+keywords: [install, setup, prerequisites, ruby, rust, rb-sys]
+description: Install and configure everything you need to build Ruby extensions with Rust. Platform-specific guides for macOS, Linux, and Windows.
 ---
 
-# Prerequisites and Installation
+# Installation & Setup
 
-This guide covers the prerequisites and installation steps for building Ruby extensions with Rust.
+Get your development environment ready to build Ruby extensions with Rust. This guide covers all platforms with automated setup scripts.
 
-## TL;DR
+## Quick Setup Script
 
-### 1. Install Prerequisites
+Run this script to check and install everything automatically:
 
 ```bash
-# Install Ruby (3.0+ recommended)
-# Using your preferred manager: rbenv, rvm, asdf, etc.
+# Download and run the setup script
+curl -sSL https://raw.githubusercontent.com/oxidize-rb/rb-sys/main/contrib/setup.sh | bash
 
-# Install Rust
+# Or if you prefer wget:
+wget -qO- https://raw.githubusercontent.com/oxidize-rb/rb-sys/main/contrib/setup.sh | bash
+```
+
+<details>
+<summary>🔍 What does this script do?</summary>
+
+The script:
+1. Checks for Ruby (installs if missing)
+2. Checks for Rust (installs if missing)
+3. Installs required system dependencies
+4. Installs the rb_sys gem
+5. Verifies everything works
+
+</details>
+
+## Manual Installation
+
+Prefer to install manually? Here's what you need:
+
+### 1️⃣ Ruby Setup
+
+<tabs>
+<tabItem value="macos" label="macOS" default>
+
+```bash
+# Using Homebrew (recommended)
+brew install ruby
+
+# Or using rbenv
+brew install rbenv ruby-build
+rbenv install 3.3.0
+rbenv global 3.3.0
+
+# Or using asdf
+asdf plugin add ruby
+asdf install ruby 3.3.0
+asdf global ruby 3.3.0
+```
+
+</tabItem>
+<tabItem value="linux" label="Linux">
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install ruby-full ruby-dev
+
+# Fedora/RHEL/CentOS
+sudo dnf install ruby ruby-devel
+
+# Arch Linux
+sudo pacman -S ruby
+
+# Or using rbenv (all distros)
+git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+exec $SHELL
+```
+
+</tabItem>
+<tabItem value="windows" label="Windows">
+
+```powershell
+# Using RubyInstaller (recommended)
+# Download from: https://rubyinstaller.org/
+# Choose "Ruby+Devkit" version
+
+# Or using Chocolatey
+choco install ruby
+
+# Or using Scoop
+scoop install ruby
+```
+
+</tabItem>
+</tabs>
+
+### 2️⃣ Rust Setup
+
+<tabs>
+<tabItem value="all" label="All Platforms" default>
+
+```bash
+# Official Rust installer (recommended for all platforms)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# Install rb_sys gem
-gem install rb_sys
+# Follow the prompts and restart your terminal
+# Verify installation:
+rustc --version
+cargo --version
 ```
 
-### 2. Create a New Gem with Rust Extension
+</tabItem>
+<tabItem value="macos-brew" label="macOS (Homebrew)">
 
 ```bash
-# Generate a new gem with Rust extension support
-bundle gem --ext=rust mygem
-cd mygem
+# Alternative: Install via Homebrew
+brew install rust
 
-# Build the extension
-bundle install
-bundle exec rake compile
-
-# Try it out
-bundle exec rake
+# Note: rustup is preferred for easier toolchain management
 ```
 
-That's it! You now have a working Ruby gem with Rust extension.
+</tabItem>
+<tabItem value="windows" label="Windows">
 
-## Detailed Installation
+```powershell
+# Download installer from https://rustup.rs
+# Or use Chocolatey:
+choco install rust
 
-If you encounter issues with the quick start above, here are the detailed requirements:
+# Or use Scoop:
+scoop install rust
+```
 
-### Ruby Requirements
+</tabItem>
+</tabs>
 
-- Ruby 3.0+ recommended (2.6+ supported)
-- Ruby development headers (usually part of official packages)
-- Bundler (`gem install bundler`)
+### 3️⃣ System Dependencies
 
-### Rust Requirements
+<tabs>
+<tabItem value="macos" label="macOS" default>
 
-- Rust 1.65.0+ via [rustup](https://rustup.rs/)
-- Make sure Cargo is in your PATH (typically `~/.cargo/bin`)
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
 
-### C Compiler Requirements
+# Install LLVM (for bindgen)
+brew install llvm
 
-- **macOS**: Xcode Command Line Tools (`xcode-select --install`)
-- **Linux**: build-essential (Debian/Ubuntu) or Development Tools (Fedora/RHEL)
-- **Windows**: Microsoft Visual Studio C++ Build Tools
+# Add to your shell profile (~/.zshrc or ~/.bash_profile):
+echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
+```
 
-### libclang (for Ruby/Rust FFI bindings)
+</tabItem>
+<tabItem value="linux" label="Linux">
 
-Simplest approach: add to your Gemfile
+```bash
+# Ubuntu/Debian
+sudo apt install build-essential libclang-dev pkg-config
 
+# Fedora/RHEL/CentOS
+sudo dnf group install "Development Tools"
+sudo dnf install clang-devel pkgconfig
+
+# Arch Linux
+sudo pacman -S base-devel clang pkg-config
+
+# Alpine Linux
+apk add build-base clang-dev pkgconfig
+```
+
+</tabItem>
+<tabItem value="windows" label="Windows">
+
+```powershell
+# Install Visual Studio Build Tools
+# Download from: https://visualstudio.microsoft.com/downloads/
+# Select "Desktop development with C++"
+
+# Or minimal installation via Chocolatey:
+choco install visualstudio2022buildtools
+choco install visualstudio2022-workload-vctools
+```
+
+</tabItem>
+</tabs>
+
+### 4️⃣ Install rb_sys
+
+```bash
+# Install globally
+gem install rb_sys
+
+# Or add to your Gemfile
+bundle add rb_sys --group development
+```
+
+## ✅ Verify Your Setup
+
+Run our verification script to ensure everything is properly installed:
+
+```bash
+# Check all dependencies
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/oxidize-rb/rb-sys/main/contrib/check-setup.rb)"
+```
+
+You should see output like:
+
+```
+✅ Ruby 3.3.0 installed
+✅ Rust 1.75.0 installed
+✅ Cargo in PATH
+✅ C compiler found
+✅ libclang available
+✅ rb_sys gem installed
+
+🎉 All dependencies satisfied! You're ready to build Ruby extensions with Rust.
+```
+
+### Manual Verification
+
+Alternatively, check each component manually:
+
+```bash
+# Check Ruby
+ruby --version  # Should be 2.6+
+
+# Check Rust
+rustc --version  # Should be 1.65+
+cargo --version
+
+# Check C compiler
+cc --version     # macOS/Linux
+cl               # Windows (in Developer Command Prompt)
+
+# Check rb_sys
+gem list rb_sys  # Should show rb_sys
+```
+
+## 🔧 Common Issues & Solutions
+
+<details>
+<summary><strong>Error: "libclang not found"</strong></summary>
+
+**Solution 1:** Add to your Gemfile:
 ```ruby
 gem "libclang", "~> 14.0"
 ```
 
-## Verifying Your Setup
-
-The simplest way to verify your setup is to create a test gem:
-
+**Solution 2:** Install system libclang:
 ```bash
-bundle gem --ext=rust hello_rusty
-cd hello_rusty
-bundle install
-bundle exec rake compile
-bundle exec rake test
+# macOS
+brew install llvm
+
+# Ubuntu/Debian
+sudo apt install libclang-dev
+
+# Fedora
+sudo dnf install clang-devel
 ```
 
-If everything runs without errors, your environment is correctly set up.
+</details>
 
-## Troubleshooting
+<details>
+<summary><strong>Error: "Ruby headers not found"</strong></summary>
 
-If you encounter issues:
+**Solution:** Install Ruby development package:
+```bash
+# Ubuntu/Debian
+sudo apt install ruby-dev
 
-1. **Missing libclang**: Add the `libclang` gem to your Gemfile
-2. **Missing C compiler**: Install appropriate build tools for your platform
-3. **Ruby headers not found**: Install Ruby development package
+# Fedora/RHEL
+sudo dnf install ruby-devel
 
-For detailed troubleshooting, consult the [rb-sys wiki](https://github.com/oxidize-rb/rb-sys/wiki/Troubleshooting).
+# macOS with Homebrew Ruby
+brew reinstall ruby
+```
 
-## Next Steps
+</details>
 
-- Validate your setup with the [Quick Start](quick-start).
-- Dive into [Build Process](build-process) for deeper compilation insights.
-- Explore [Project Setup](project-setup) patterns.
-- Learn [Testing Extensions](testing) to add tests.
+<details>
+<summary><strong>Error: "cargo not found"</strong></summary>
+
+**Solution:** Add Cargo to your PATH:
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Reload shell
+source ~/.bashrc  # or ~/.zshrc
+```
+
+</details>
+
+<details>
+<summary><strong>Windows: "error C2039: 'sem_t': is not a member"</strong></summary>
+
+**Solution:** Use stable-x86_64-pc-windows-gnu toolchain:
+```bash
+rustup default stable-x86_64-pc-windows-gnu
+```
+
+</details>
+
+## 🐳 Docker Option
+
+Prefer containers? Use our pre-configured Docker image:
+
+```bash
+# Pull the official rb-sys development image
+docker pull ghcr.io/oxidize-rb/rb-sys-dev:latest
+
+# Run with your project mounted
+docker run -it -v $(pwd):/workspace ghcr.io/oxidize-rb/rb-sys-dev:latest
+
+# Everything is pre-installed and ready to use!
+```
+
+<details>
+<summary>Dockerfile for custom setup</summary>
+
+```dockerfile
+FROM rust:latest
+
+# Install Ruby and dependencies
+RUN apt-get update && apt-get install -y \
+    ruby-full \
+    ruby-dev \
+    libclang-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install rb_sys
+RUN gem install rb_sys
+
+WORKDIR /workspace
+```
+
+</details>
+
+## Platform-Specific Notes
+
+### macOS
+- Apple Silicon (M1/M2/M3) is fully supported
+- Xcode Command Line Tools required (not full Xcode)
+- Use Homebrew for easiest dependency management
+
+### Linux
+- Most distributions work out of the box
+- Ensure you have glibc 2.17+ (check with `ldd --version`)
+- Alpine Linux users: you may need additional musl compatibility
+
+### Windows
+- Use RubyInstaller with DevKit for best results
+- MSYS2 toolchain is automatically configured
+- WSL2 is fully supported (follow Linux instructions)
+
+## 🎯 Next Steps
+
+Now that your environment is ready:
+
+1. **[🚀 Quick Start Guide](quick-start)** - Build your first extension in 15 minutes
+2. **[📚 Core Concepts](core-concepts)** - Understand how rb-sys works
+3. **[🔨 Project Setup](project-setup)** - Structure your gem properly
+4. **[💡 Examples](examples)** - Learn from real-world code
+
+---
+
+<div className="success-message">
+
+### 🎉 Congratulations!
+
+Your development environment is ready. Let's build something amazing!
+
+[**Continue to Quick Start →**](quick-start)
+
+</div>

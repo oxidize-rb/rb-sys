@@ -28,7 +28,7 @@ In rb-sys extensions, Rust's `Result<T, magnus::Error>` type is typically used, 
 
 ## The Result Type and Magnus::Error
 
-Magnus uses `Result<T, Error>` as the standard way to handle errors. The `Error` type represents a Ruby exception that
+Magnus uses `Result&lt;T, Error&gt;` as the standard way to handle errors. The `Error` type represents a Ruby exception that
 can be raised:
 
 ```rust
@@ -451,7 +451,7 @@ and providing clear error messages, you create a better experience for users of 
 
 Remember these key points:
 
-- Use `Result<T, Error>` for functions that can fail
+- Use `Result&lt;T, Error&gt;` for functions that can fail
 - Choose appropriate Ruby exception types
 - Provide clear, detailed error messages
 - Handle Rust panics to prevent VM crashes

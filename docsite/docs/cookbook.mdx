@@ -1,0 +1,525 @@
+---
+id: cookbook
+title: Cookbook
+sidebar_position: 19
+keywords: [cookbook, recipes, examples, patterns, solutions]
+description: Ready-to-use recipes for common Ruby extension patterns with Rust.
+---
+
+# Cookbook
+
+Ready-to-use recipes for common Ruby extension patterns. Copy, paste, and adapt!
+
+## String Manipulation
+
+### Fast String Reversal with Unicode Support
+
+```rust
+use magnus::{define_module, function, prelude::*, Error};
+use unicode_segmentation::UnicodeSegmentation;
+
+fn reverse_preserving_graphemes(input: String) -> String {
+    input.graphemes(true).rev().collect()
+}
+
+#[magnus::init]
+fn init() -> Result<(), Error> {
+    let module = define_module("StringUtils")?;
+    module.define_singleton_method(
+        "reverse_unicode", 
+        function!(reverse_preserving_graphemes, 1)
+    )?;
+    Ok(())
+}
+```
+
+**Usage:**
+```ruby
+StringUtils.reverse_unicode("Hello 👨‍👩‍👧‍👦!")  # => "!👨‍👩‍👧‍👦 olleH"
+```
+
+### Efficient String Search and Replace
+
+```rust
+use magnus::{RArray, Error};
+use regex::Regex;
+
+fn batch_replace(text: String, patterns: Vec<(String, String)>) -> Result<String, Error> {
+    let mut result = text;
+    
+    for (pattern, replacement) in patterns {
+        let re = Regex::new(&pattern)
+            .map_err(|e| Error::new(
+                magnus::exception::arg_error(),
+                format!("Invalid regex: {}", e)
+            ))?;
+        
+        result = re.replace_all(&result, replacement.as_str()).to_string();
+    }
+    
+    Ok(result)
+}
+```
+
+## Data Processing
+
+### Parallel Array Processing
+
+```rust
+use magnus::{RArray, Value, Error};
+use rayon::prelude::*;
+use rb_sys::rb_thread_call_without_gvl;
+
+fn parallel_map(array: RArray) -> Result<RArray, Error> {
+    // Convert to Rust Vec
+    let mut items = Vec::with_capacity(array.len());
+    for item in array.each() {
+        let val: i64 = item?.try_convert()?;
+        items.push(val);
+    }
+    
+    // Process in parallel (release GVL)
+    let processed = unsafe {
+        rb_thread_call_without_gvl(
+            Some(|data: *mut Vec<i64>| {
+                let items = &*data;
+                items.par_iter()
+                    .map(|&x| x * x)  // Square each number
+                    .collect::<Vec<_>>()
+            }),
+            &mut items as *mut _ as *mut _,
+            None,
+            std::ptr::null_mut(),
+        )
+    };
+    
+    // Convert back to Ruby array
+    let result = RArray::new();
+    for val in processed {
+        result.push(val)?;
+    }
+    
+    Ok(result)
+}
+```
+
+### CSV Processing
+
+```rust
+use magnus::{RArray, RHash, Symbol, Error};
+use csv;
+
+fn parse_csv_to_hashes(csv_string: String) -> Result<RArray, Error> {
+    let mut reader = csv::Reader::from_reader(csv_string.as_bytes());
+    let headers = reader.headers()
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            e.to_string()
+        ))?
+        .clone();
+    
+    let result = RArray::new();
+    
+    for record in reader.records() {
+        let record = record.map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            e.to_string()
+        ))?;
+        
+        let hash = RHash::new();
+        for (header, value) in headers.iter().zip(record.iter()) {
+            hash.aset(Symbol::new(header), value)?;
+        }
+        
+        result.push(hash)?;
+    }
+    
+    Ok(result)
+}
+```
+
+## JSON Handling
+
+### High-Performance JSON Parser
+
+```rust
+use magnus::{RHash, RArray, Value, Error};
+use serde_json;
+
+fn parse_json(json_string: String) -> Result<Value, Error> {
+    let value: serde_json::Value = serde_json::from_str(&json_string)
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("JSON parse error: {}", e)
+        ))?;
+    
+    json_to_ruby(value)
+}
+
+fn json_to_ruby(value: serde_json::Value) -> Result<Value, Error> {
+    use serde_json::Value as J;
+    
+    match value {
+        J::Null => Ok(Value::from(magnus::QNIL)),
+        J::Bool(b) => Ok(Value::from(b)),
+        J::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                Ok(Value::from(i))
+            } else if let Some(f) = n.as_f64() {
+                Ok(Value::from(f))
+            } else {
+                Err(Error::new(
+                    magnus::exception::runtime_error(),
+                    "Number out of range"
+                ))
+            }
+        }
+        J::String(s) => Ok(Value::from(s)),
+        J::Array(arr) => {
+            let ruby_array = RArray::with_capacity(arr.len());
+            for item in arr {
+                ruby_array.push(json_to_ruby(item)?)?;
+            }
+            Ok(ruby_array.into())
+        }
+        J::Object(obj) => {
+            let ruby_hash = RHash::new();
+            for (key, val) in obj {
+                ruby_hash.aset(key, json_to_ruby(val)?)?;
+            }
+            Ok(ruby_hash.into())
+        }
+    }
+}
+```
+
+## File Operations
+
+### Fast File Processing
+
+```rust
+use magnus::{Error, RString};
+use std::fs;
+use std::io::{BufRead, BufReader};
+
+fn process_large_file(path: String, pattern: String) -> Result<i64, Error> {
+    let file = fs::File::open(&path)
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Cannot open file: {}", e)
+        ))?;
+    
+    let reader = BufReader::new(file);
+    let mut count = 0i64;
+    
+    for line in reader.lines() {
+        let line = line.map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Read error: {}", e)
+        ))?;
+        
+        if line.contains(&pattern) {
+            count += 1;
+        }
+    }
+    
+    Ok(count)
+}
+
+fn read_binary_file(path: String) -> Result<RString, Error> {
+    let data = fs::read(&path)
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Cannot read file: {}", e)
+        ))?;
+    
+    // Return as binary string
+    Ok(RString::from_slice(&data))
+}
+```
+
+## Cryptography
+
+### Hash Functions
+
+```rust
+use magnus::{RString, Error};
+use sha2::{Sha256, Digest};
+use hex;
+
+fn sha256_hexdigest(input: RString) -> Result<String, Error> {
+    let data = unsafe { input.as_slice() };
+    
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    
+    Ok(hex::encode(result))
+}
+
+fn sha256_raw(input: RString) -> Result<RString, Error> {
+    let data = unsafe { input.as_slice() };
+    
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    
+    Ok(RString::from_slice(&result))
+}
+```
+
+## Database Operations
+
+### Connection Pool Pattern
+
+```rust
+use magnus::{class, define_class, method, Error, Ruby};
+use std::sync::{Arc, Mutex};
+use once_cell::sync::Lazy;
+
+// Global connection pool
+static POOL: Lazy<Arc<Mutex<Vec<Connection>>>> = Lazy::new(|| {
+    Arc::new(Mutex::new(Vec::new()))
+});
+
+struct Connection {
+    id: usize,
+    // Your actual connection here
+}
+
+#[magnus::wrap(class = "DatabasePool", free_immediately)]
+struct DatabasePool;
+
+impl DatabasePool {
+    fn acquire() -> Result<Connection, Error> {
+        let mut pool = POOL.lock().unwrap();
+        
+        if let Some(conn) = pool.pop() {
+            Ok(conn)
+        } else {
+            // Create new connection
+            Ok(Connection { id: pool.len() })
+        }
+    }
+    
+    fn release(conn: Connection) -> Result<(), Error> {
+        let mut pool = POOL.lock().unwrap();
+        pool.push(conn);
+        Ok(())
+    }
+    
+    fn with_connection<F, R>(f: F) -> Result<R, Error>
+    where
+        F: FnOnce(&Connection) -> Result<R, Error>,
+    {
+        let conn = Self::acquire()?;
+        let result = f(&conn);
+        Self::release(conn)?;
+        result
+    }
+}
+```
+
+## HTTP Client
+
+### Async HTTP Requests
+
+```rust
+use magnus::{RHash, Error};
+use reqwest;
+use tokio::runtime::Runtime;
+
+fn fetch_json(url: String) -> Result<RHash, Error> {
+    let rt = Runtime::new().unwrap();
+    
+    let response = rt.block_on(async {
+        reqwest::get(&url)
+            .await
+            .map_err(|e| Error::new(
+                magnus::exception::runtime_error(),
+                format!("HTTP request failed: {}", e)
+            ))?
+            .json::<serde_json::Value>()
+            .await
+            .map_err(|e| Error::new(
+                magnus::exception::runtime_error(),
+                format!("JSON parse failed: {}", e)
+            ))
+    })?;
+    
+    // Convert JSON to Ruby hash
+    match json_to_ruby(response)? {
+        Value::Hash(h) => Ok(h),
+        _ => Err(Error::new(
+            magnus::exception::runtime_error(),
+            "Response was not a JSON object"
+        ))
+    }
+}
+```
+
+## Image Processing
+
+### Basic Image Operations
+
+```rust
+use magnus::{RString, Error};
+use image::{DynamicImage, ImageFormat};
+
+fn resize_image(
+    image_data: RString, 
+    width: u32, 
+    height: u32
+) -> Result<RString, Error> {
+    let bytes = unsafe { image_data.as_slice() };
+    
+    let img = image::load_from_memory(bytes)
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Invalid image: {}", e)
+        ))?;
+    
+    let resized = img.resize_exact(width, height, image::imageops::FilterType::Lanczos3);
+    
+    let mut output = Vec::new();
+    resized.write_to(&mut output, ImageFormat::Png)
+        .map_err(|e| Error::new(
+            magnus::exception::runtime_error(),
+            format!("Failed to encode image: {}", e)
+        ))?;
+    
+    Ok(RString::from_slice(&output))
+}
+```
+
+## Performance Monitoring
+
+### Benchmarking Helper
+
+```rust
+use magnus::{block::Proc, Value, Error};
+use std::time::Instant;
+
+fn benchmark_block(iterations: usize, block: Proc) -> Result<f64, Error> {
+    let start = Instant::now();
+    
+    for _ in 0..iterations {
+        block.call::<_, _, Value>(())?;
+    }
+    
+    let duration = start.elapsed();
+    Ok(duration.as_secs_f64())
+}
+
+fn measure_memory<F, R>(f: F) -> Result<(R, usize), Error>
+where
+    F: FnOnce() -> Result<R, Error>,
+{
+    let before = get_memory_usage();
+    let result = f()?;
+    let after = get_memory_usage();
+    
+    Ok((result, after - before))
+}
+
+fn get_memory_usage() -> usize {
+    // Platform-specific memory measurement
+    #[cfg(target_os = "linux")]
+    {
+        use std::fs;
+        let status = fs::read_to_string("/proc/self/status").unwrap();
+        // Parse VmRSS from status
+        0 // Placeholder
+    }
+    
+    #[cfg(not(target_os = "linux"))]
+    {
+        0 // Placeholder
+    }
+}
+```
+
+## Thread Safety
+
+### Thread-Safe Counter
+
+```rust
+use magnus::{define_class, method, Error};
+use std::sync::{Arc, Mutex};
+
+#[magnus::wrap(class = "ThreadSafeCounter", free_immediately)]
+struct ThreadSafeCounter {
+    value: Arc<Mutex<i64>>,
+}
+
+impl ThreadSafeCounter {
+    fn new() -> Self {
+        ThreadSafeCounter {
+            value: Arc::new(Mutex::new(0)),
+        }
+    }
+    
+    fn increment(&self) -> Result<i64, Error> {
+        let mut val = self.value.lock().unwrap();
+        *val += 1;
+        Ok(*val)
+    }
+    
+    fn value(&self) -> Result<i64, Error> {
+        let val = self.value.lock().unwrap();
+        Ok(*val)
+    }
+}
+```
+
+## Custom Iterators
+
+### Ruby-Style Enumerator
+
+```rust
+use magnus::{class, block::Proc, RArray, Value, Error};
+
+#[magnus::wrap(class = "RangeIterator", free_immediately)]
+struct RangeIterator {
+    current: i64,
+    end: i64,
+    step: i64,
+}
+
+impl RangeIterator {
+    fn new(start: i64, end: i64, step: Option<i64>) -> Self {
+        RangeIterator {
+            current: start,
+            end,
+            step: step.unwrap_or(1),
+        }
+    }
+    
+    fn each(&mut self, block: Proc) -> Result<(), Error> {
+        while self.current < self.end {
+            block.call::<_, _, Value>((self.current,))?;
+            self.current += self.step;
+        }
+        Ok(())
+    }
+    
+    fn to_a(&mut self) -> Result<RArray, Error> {
+        let array = RArray::new();
+        while self.current < self.end {
+            array.push(self.current)?;
+            self.current += self.step;
+        }
+        Ok(array)
+    }
+}
+```
+
+---
+
+<div className="success-message">
+
+### 🍳 More Recipes Coming!
+
+Have a pattern you'd like to see? [Open an issue](https://github.com/oxidize-rb/rb-sys/issues) or contribute your own!
+
+</div>

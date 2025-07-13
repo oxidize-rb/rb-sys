@@ -5,16 +5,20 @@ const sidebars: SidebarsConfig = {
     'introduction',
     {
       type: 'category',
-      label: 'Getting Started',
-      items: ['getting-started', 'quick-start'],
+      label: '🚀 Getting Started',
+      collapsed: false,
+      items: [
+        'getting-started',
+        'quick-start',
+        'core-concepts',
+      ],
     },
     {
       type: 'category',
-      label: 'Core Concepts',
+      label: '🔨 Building Extensions',
       items: [
         'project-setup',
-        'hello-rusty-documentation',
-        'development-approaches',
+        'basic-patterns',
         'working-with-ruby-objects',
         'classes-and-modules',
         'error-handling',
@@ -22,16 +26,22 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Advanced Topics',
+      label: '🧠 Memory & Performance',
       items: [
         'memory-management',
         'build-process',
-        'cross-platform',
       ],
     },
     {
       type: 'category',
-      label: 'Practical Development',
+      label: '🌍 Real-World Patterns',
+      items: [
+        'examples',
+      ],
+    },
+    {
+      type: 'category',
+      label: '🧑‍💻 Development',
       items: [
         'testing',
         'debugging',
@@ -40,14 +50,31 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'API Reference',
+      label: '📦 Deployment',
+      items: [
+        'cross-platform',
+      ],
+    },
+    {
+      type: 'category',
+      label: '📖 Reference',
       items: [
         'api-reference/rb-sys-features',
         'api-reference/rb-sys-gem-config',
         'api-reference/test-helpers',
       ],
     },
-    'community-support',
+    {
+      type: 'category',
+      label: '📚 Resources',
+      items: [
+        'cookbook',
+        'faq',
+        'glossary',
+        'community-support',
+      ],
+    },
+    'contributing',
   ],
 };
 
