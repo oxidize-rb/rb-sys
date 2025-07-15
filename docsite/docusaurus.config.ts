@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'oxidize.rb',
   tagline: 'Building Ruby extensions with Rust using rb-sys',
-  favicon: 'img/favicon.png',
+  favicon: 'img/favicon.ico',
 
   url: 'https://oxidize-rb.org',
   baseUrl: '/',
@@ -24,6 +24,44 @@ const config: Config = {
   // No custom scripts needed
   scripts: [],
 
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'keywords',
+        content: 'ruby, rust, extensions, ffi, rb-sys, oxidize, native extensions, ruby gems',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'description',
+        content: 'Build high-performance Ruby extensions with Rust using rb-sys. The easiest way to create native Ruby gems with memory safety and performance.',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'robots',
+        content: 'index, follow',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'author',
+        content: 'oxidize-rb',
+      },
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'canonical',
+        href: 'https://oxidize-rb.org',
+      },
+    },
+  ],
+
   presets: [
     [
       'classic',
@@ -32,10 +70,18 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/oxidize-rb/rb-sys/tree/main/docsite/',
           routeBasePath: '/docs',
+          showLastUpdateAuthor: true,
+          showLastUpdateTime: true,
         },
         blog: false,
         theme: {
           customCss: './src/css/custom.css',
+        },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+          filename: 'sitemap.xml',
         },
       } satisfies Preset.Options,
     ],
@@ -43,6 +89,12 @@ const config: Config = {
 
   themeConfig: {
     image: 'img/social-card.png',
+    metadata: [
+      {name: 'twitter:card', content: 'summary_large_image'},
+      {name: 'twitter:site', content: '@oxidize_rb'},
+      {property: 'og:type', content: 'website'},
+      {property: 'og:locale', content: 'en_US'},
+    ],
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: false,

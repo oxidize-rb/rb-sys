@@ -114,7 +114,9 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+    <Layout 
+      title="Building Ruby extensions with Rust"
+      description={siteConfig.tagline}>
       <HomepageHeader />
       <HomepageCodeExample />
       <main>

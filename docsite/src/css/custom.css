@@ -877,21 +877,10 @@ hr {
   border-bottom-color: var(--ruby-accent);
 }
 
-/* Code language labels */
-.language-ruby::before {
-  content: "Ruby";
-  color: var(--ruby-accent);
-}
-
-.language-rust::before {
-  content: "Rust";
-  color: var(--rust-accent);
-}
-
-.language-bash::before,
-.language-sh::before {
-  content: "Shell";
-  color: var(--neutral-accent);
+/* Hide duplicate code language labels in Docusaurus */
+.codeBlockTitle_node_modules-\@docusaurus-theme-classic-lib-theme-CodeBlock-Content-styles-module,
+.codeBlockTitle {
+  display: none !important;
 }
 
 /* Platform-specific notes */
