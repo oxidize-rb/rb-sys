@@ -131,16 +131,10 @@ namespace :doctest do
         # Run clippy to check for lints
         puts "--- Running clippy on Rust examples ---"
 
-        # For doctests, we allow warnings since many functions/variables are unused in examples
-        # We also allow some clippy lints that are too strict for documentation
+        # Run clippy with strict checks
         sh("cargo", "clippy", "--all-targets", "--",
           "-A", "dead_code",
-          "-A", "unused_variables",
-          "-A", "unused_imports",
-          "-A", "unused_mut",
-          "-A", "clippy::needless_range_loop",
           "-A", "clippy::redundant_field_names",
-          "-A", "clippy::manual_c_str_literals",
           "-D", "clippy::unwrap_used",
           "-D", "clippy::expect_used")
         puts "✅ All Rust examples pass clippy checks."

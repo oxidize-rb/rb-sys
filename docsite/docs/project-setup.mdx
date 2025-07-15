@@ -191,6 +191,7 @@ rb-sys-env = "0.1"
 // ext/url_parser/src/lib.rs
 use magnus::{function, method, prelude::*, Error, Ruby};
 use url::Url;
+use std::fmt;
 
 // Simple URL wrapper class
 #[magnus::wrap(class = "UrlParser::URL")]
@@ -227,8 +228,14 @@ impl UrlWrapper {
     }
 
     // String representation of the URL
-    fn to_string(&self) -> String {
+    fn to_string_ruby(&self) -> String {
         self.inner.to_string()
+    }
+}
+
+impl fmt::Display for UrlWrapper {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.inner)
     }
 }
 
@@ -255,7 +262,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     class.define_method("host", method!(UrlWrapper::host, 0))?;
     class.define_method("path", method!(UrlWrapper::path, 0))?;
     class.define_method("query", method!(UrlWrapper::query, 0))?;
-    class.define_method("to_s", method!(UrlWrapper::to_string, 0))?;
+    class.define_method("to_s", method!(UrlWrapper::to_string_ruby, 0))?;
 
     Ok(())
 }

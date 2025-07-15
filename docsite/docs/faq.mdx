@@ -131,12 +131,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 // In your code
-#[cfg(ruby_version = "3.0")]
+// rb-sys-env automatically sets Ruby version cfg flags
+#[cfg(ruby_gte_3_0)]
 fn ruby3_only_feature() {
     // Ruby 3.0+ only code
 }
 
-#[cfg(not(ruby_version = "3.0"))]
+#[cfg(not(ruby_gte_3_0))]
 fn ruby2_compat() {
     // Ruby 2.x compatible code
 }

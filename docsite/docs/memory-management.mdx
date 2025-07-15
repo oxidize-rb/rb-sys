@@ -146,7 +146,7 @@ impl Person {
     }
 
     fn friend(&self) -> Option<Obj<Person>> {
-        self.0.borrow().friend.clone()
+        self.0.borrow().friend
     }
 }
 
@@ -512,15 +512,14 @@ fn efficient_string(ruby: &Ruby, data: &[u8]) -> RString {
 }
 
 // ALSO GOOD: Creating from string slice when UTF-8 is confirmed
-fn from_str(ruby: &Ruby, s: &str) -> RString {
+fn from_str(_ruby: &Ruby, s: &str) -> RString {
     RString::new(s)
 }
 
 // ALSO GOOD: Creating binary string with capacity then filling
-fn build_string(ruby: &Ruby, size: usize) -> RString {
-    let mut string = RString::with_capacity(size);
-    // Fill the string directly...
-    string
+fn build_string(_ruby: &Ruby, size: usize) -> RString {
+    // In a real implementation, you would fill the string here
+    RString::with_capacity(size)
 }
 ```
 

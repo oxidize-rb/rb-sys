@@ -53,13 +53,13 @@ unsafe extern "C" fn reverse(_: VALUE, s: VALUE) -> VALUE {
     let c_str = rb_string_value_cstr(&mut s_copy);
     let rust_str = match std::ffi::CStr::from_ptr(c_str).to_str() {
         Ok(s) => s,
-        Err(_) => return rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+        Err(_) => return rb_str_new_cstr(c"".as_ptr()),
     };
     let reversed = rust_str.chars().rev().collect::<String>();
 
     let c_string = match CString::new(reversed) {
         Ok(s) => s,
-        Err(_) => return rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+        Err(_) => return rb_str_new_cstr(c"".as_ptr()),
     };
     rb_str_new_cstr(c_string.as_ptr())
 }
@@ -346,7 +346,7 @@ unsafe extern "C" fn low_level(_: rb_sys::VALUE) -> rb_sys::VALUE {
     // Direct rb-sys implementation
     let c_string = match std::ffi::CString::new("Low level") {
         Ok(s) => s,
-        Err(_) => return rb_sys::rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+        Err(_) => return rb_sys::rb_str_new_cstr(c"".as_ptr()),
     };
     rb_sys::rb_str_new_cstr(c_string.as_ptr())
 }
