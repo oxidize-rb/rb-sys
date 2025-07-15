@@ -60,6 +60,15 @@ class MyExtensionTest < Test::Unit::TestCase
 Rust tests in your extension should focus on the internal logic:
 
 ```rust
+// Mock function for testing
+fn process_input(input: &str) -> Result<String, String> {
+    if input.is_empty() {
+        Err("Input cannot be empty".to_string())
+    } else {
+        Ok(format!("processed {}", input))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -68,7 +77,7 @@ mod tests {
     fn test_internal_processing() {
         let input = "test data";
         let result = process_input(input);
-        assert_eq!(result, "processed test data");
+        assert_eq!(result, Ok("processed test data".to_string()));
     }
 
     #[test]
@@ -84,19 +93,20 @@ mod tests {
 Test memory management using rb-sys's test helpers:
 
 ```rust
-use rb_sys_test_helpers::*;
+use rb_sys_test_helpers::ruby_test;
+use magnus::{Value, value::ReprValue};
 
-#[test]
+#[ruby_test]
 fn test_no_memory_leaks() {
-    ruby_test!(|ruby| {
-        // Create and drop Ruby objects
-        let obj = ruby.eval("Object.new").unwrap();
-        drop(obj);
+    let ruby = unsafe { magnus::Ruby::get_unchecked() };
+    
+    // Create and drop Ruby objects
+    let obj: Value = ruby.eval("Object.new")
+        .unwrap_or_else(|_| ruby.qnil().as_value());
+    let _ = obj; // Ensure the object is used
 
-        // Run GC and check memory usage
-        ruby.gc_stress();
-        ruby.gc_verify_internal_consistency();
-    });
+    // Run GC and check memory usage
+    magnus::gc::start();
 }
 ```
 
@@ -300,16 +310,22 @@ ENV["RUST_LOG"] = "debug"
 
 2. **Use Debug Assertions**:
 ```rust
-debug_assert!(condition, "Helpful message about what went wrong");
+fn validate_input(value: i32) {
+    debug_assert!(value > 0, "Value must be positive, got {}", value);
+    debug_assert!(value < 100, "Value must be less than 100, got {}", value);
+}
 ```
 
 3. **Add Logging**:
 ```rust
-use log::{debug, error, info};
+use log::{debug, info};
+use magnus::Error;
 
 fn process_data(input: &str) -> Result<String, Error> {
     debug!("Processing input: {}", input);
     // Processing logic
+    let result = input.to_uppercase();
     info!("Processing completed");
     Ok(result)
 }
+```

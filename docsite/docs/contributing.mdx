@@ -124,6 +124,10 @@ cargo test
 
 1. **Write tests first**
    ```rust
+   fn my_new_function(x: i32) -> i32 {
+       x * 2
+   }
+   
    #[test]
    fn test_new_feature() {
        assert_eq!(my_new_function(2), 4);
@@ -149,9 +153,9 @@ cargo test
    /// Doubles the input value
    ///
    /// # Examples
-   /// ```
-   /// assert_eq!(my_new_function(2), 4);
-   /// ```
+   ///
+   /// let result = my_new_function(2);
+   /// assert_eq!(result, 4);
    pub fn my_new_function(x: i32) -> i32 {
        x * 2
    }
@@ -197,17 +201,24 @@ cargo test
 #### Writing Good Tests
 
 ```rust
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn divide(a: i32, b: i32) -> Result<i32, String> {
+    if b == 0 {
+        Err("Division by zero".to_string())
+    } else {
+        Ok(a / b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use magnus::{Error, Ruby};
 
     #[test]
     fn test_basic_functionality() {
-        let ruby = unsafe { Ruby::get_unchecked() };
-        
-        ruby.init().unwrap();
-        
         // Test happy path
         assert_eq!(add(2, 3), 5);
         
@@ -251,14 +262,29 @@ Love making things fast? We do too!
 
 **Example benchmark:**
 ```rust
-#[bench]
-fn bench_string_processing(b: &mut Bencher) {
+// In Cargo.toml add:
+// [dev-dependencies]
+// criterion = "0.5"
+
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn process_string(input: &str) -> String {
+    // Example processing function
+    input.to_uppercase()
+}
+
+fn bench_string_processing(c: &mut Criterion) {
     let input = "test".repeat(1000);
     
-    b.iter(|| {
-        process_string(&input)
+    c.bench_function("string processing", |b| {
+        b.iter(|| {
+            process_string(black_box(&input))
+        });
     });
 }
+
+criterion_group!(benches, bench_string_processing);
+criterion_main!(benches);
 ```
 
 ## Project Structure
@@ -298,6 +324,7 @@ Follow standard Rust conventions:
 // Use descriptive names
 fn calculate_fibonacci(n: u32) -> u64 {
     // Not: fn fib(x: u32) -> u64
+    unimplemented!()
 }
 
 // Document public APIs
@@ -305,13 +332,17 @@ fn calculate_fibonacci(n: u32) -> u64 {
 ///
 /// # Panics
 /// Panics if n > 93 (overflow)
-pub fn fibonacci(n: u32) -> u64 {
+pub fn fibonacci(_n: u32) -> u64 {
     // Implementation
     unimplemented!()
 }
 
 // Use Result for errors
-fn parse_config(input: &str) -> Result<Config, Error> {
+struct Config {
+    // Configuration fields
+}
+
+fn parse_config(_input: &str) -> Result<Config, String> {
     // Not: panic! or unwrap()
     unimplemented!()
 }

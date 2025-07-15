@@ -35,14 +35,14 @@ is the recommended way to handle complex objects in Rust.
 Here's how to define a simple Ruby object that wraps a Rust struct:
 
 ```rust
-use magnus::{prelude::*, Error, Ruby, TypedData, DataTypeFunctions};
+use magnus::{prelude::*, Error, Ruby, TypedData, DataTypeFunctions, function, method, Value};
 
-// Define your Rust struct
+use std::cell::RefCell;
+
+// Define your Rust struct with interior mutability
 #[derive(TypedData)]
 #[magnus(class = "MyExtension::Counter", free_immediately)]
-struct Counter {
-    count: i64,
-}
+struct Counter(RefCell<i64>);
 
 // Implement required functions
 impl DataTypeFunctions for Counter {}
@@ -50,16 +50,17 @@ impl DataTypeFunctions for Counter {}
 // Implement methods for your struct
 impl Counter {
     fn new(initial_value: i64) -> Self {
-        Counter { count: initial_value }
+        Counter(RefCell::new(initial_value))
     }
 
-    fn increment(&mut self, amount: i64) -> i64 {
-        self.count += amount;
-        self.count
+    fn increment(&self, amount: i64) -> i64 {
+        let mut count = self.0.borrow_mut();
+        *count += amount;
+        *count
     }
 
     fn value(&self) -> i64 {
-        self.count
+        *self.0.borrow()
     }
 }
 
@@ -67,9 +68,7 @@ impl Counter {
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let class = ruby.define_class("Counter", ruby.class_object())?;
 
-    class.define_singleton_method("new", function!(|initial: i64| {
-        Ok(class.wrap(Counter::new(initial)))
-    }, 1))?;
+    class.define_singleton_method("new", function!(Counter::new, 1))?;
 
     class.define_method("increment", method!(Counter::increment, 1))?;
     class.define_method("value", method!(Counter::value, 0))?;
@@ -86,13 +85,13 @@ those references. Here's a simple example:
 ```rust
 use magnus::{
     prelude::*, Error, Ruby, Value, TypedData, DataTypeFunctions,
-    gc::Marker, typed_data::Obj
+    gc::Marker, typed_data::Obj, function, method
 };
 
-// A struct that holds references to Ruby objects
-#[derive(TypedData)]
-#[magnus(class = "MyExtension::Person", free_immediately, mark)]
-struct Person {
+use std::cell::RefCell;
+
+// Internal data structure
+struct PersonData {
     // Reference to a Ruby string (their name)
     name: Value,
     // Reference to Ruby array (their hobbies)
@@ -101,16 +100,25 @@ struct Person {
     friend: Option<Obj<Person>>,
 }
 
+// A struct that holds references to Ruby objects
+#[derive(TypedData)]
+#[magnus(class = "MyExtension::Person", free_immediately, mark)]
+struct Person(RefCell<PersonData>);
+
+// SAFETY: Person is only accessed from Ruby threads with the GVL
+unsafe impl Send for Person {}
+
 // Implement DataTypeFunctions with mark method
 impl DataTypeFunctions for Person {
     // This is called during GC mark phase
     fn mark(&self, marker: &Marker) {
+        let data = self.0.borrow();
         // Mark the Ruby objects we reference
-        marker.mark(self.name);
-        marker.mark(self.hobbies);
+        marker.mark(data.name);
+        marker.mark(data.hobbies);
 
         // If we have a friend, mark them too
-        if let Some(ref friend) = self.friend {
+        if let Some(ref friend) = data.friend {
             marker.mark(*friend);
         }
     }
@@ -118,27 +126,27 @@ impl DataTypeFunctions for Person {
 
 impl Person {
     fn new(name: Value, hobbies: Value) -> Self {
-        Self {
+        Self(RefCell::new(PersonData {
             name,
             hobbies,
             friend: None,
-        }
+        }))
     }
 
-    fn add_friend(&mut self, friend: Obj<Person>) {
-        self.friend = Some(friend);
+    fn add_friend(&self, friend: Obj<Person>) {
+        self.0.borrow_mut().friend = Some(friend);
     }
 
     fn name(&self) -> Value {
-        self.name
+        self.0.borrow().name
     }
 
     fn hobbies(&self) -> Value {
-        self.hobbies
+        self.0.borrow().hobbies
     }
 
     fn friend(&self) -> Option<Obj<Person>> {
-        self.friend.clone()
+        self.0.borrow().friend.clone()
     }
 }
 
@@ -146,9 +154,7 @@ impl Person {
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let class = ruby.define_class("Person", ruby.class_object())?;
 
-    class.define_singleton_method("new", function!(|name: Value, hobbies: Value| {
-        Ok(class.wrap(Person::new(name, hobbies)))
-    }, 2))?;
+    class.define_singleton_method("new", function!(Person::new, 2))?;
 
     class.define_method("name", method!(Person::name, 0))?;
     class.define_method("hobbies", method!(Person::hobbies, 0))?;
@@ -166,9 +172,9 @@ In this example:
 2. We implement the `mark` method to tell Ruby's GC about all these references
 3. During garbage collection, Ruby will know not to collect these objects as long as the `Person` is alive
 
-## A Real-World Example: Trap from wasmtime-rb
+## A Real-World Example: Error Handler
 
-Here's a slightly simplified version of a real-world example from the wasmtime-rb project:
+Here's an example of a real-world error handling pattern:
 
 ```rust
 use magnus::{
@@ -176,63 +182,75 @@ use magnus::{
     typed_data::Obj, Symbol
 };
 
-// A struct representing a WebAssembly trap (error)
+// Different error types that might occur
+#[derive(Debug, Clone)]
+pub enum ErrorKind {
+    StackOverflow,
+    MemoryOutOfBounds,
+    InvalidOperation(String),
+    Unknown,
+}
+
+// A struct representing an error with optional backtrace
 #[derive(TypedData)]
-#[magnus(class = "Wasmtime::Trap", size, free_immediately)]
-pub struct Trap {
-    trap: wasmtime::Trap,
-    wasm_backtrace: Option<wasmtime::WasmBacktrace>,
+#[magnus(class = "MyExtension::Error", size, free_immediately)]
+pub struct ErrorInfo {
+    kind: ErrorKind,
+    message: String,
+    backtrace: Option<String>,
 }
 
 // No references to Ruby objects, so mark is empty
-impl DataTypeFunctions for Trap {}
+impl DataTypeFunctions for ErrorInfo {}
 
-impl Trap {
-    pub fn new(trap: wasmtime::Trap, wasm_backtrace: Option<wasmtime::WasmBacktrace>) -> Self {
+impl ErrorInfo {
+    pub fn new(kind: ErrorKind, message: String, backtrace: Option<String>) -> Self {
         Self {
-            trap,
-            wasm_backtrace,
+            kind,
+            message,
+            backtrace,
         }
     }
 
-    // Return a text description of the trap error
+    // Return a text description of the error
     pub fn message(&self) -> String {
-        self.trap.to_string()
+        self.message.clone()
     }
 
-    // Return the wasm backtrace if available
-    pub fn wasm_backtrace_message(&self) -> Option<String> {
-        self.wasm_backtrace.as_ref().map(|bt| format!("{bt}"))
+    // Return the backtrace if available
+    pub fn backtrace_message(&self) -> Option<String> {
+        self.backtrace.clone()
     }
 
-    // Return the trap code as a Ruby symbol
+    // Return the error code as a Ruby symbol
     pub fn code(&self) -> Result<Option<Symbol>, Error> {
-        match self.trap {
-            wasmtime::Trap::StackOverflow => Ok(Some(Symbol::new("STACK_OVERFLOW"))),
-            wasmtime::Trap::MemoryOutOfBounds => Ok(Some(Symbol::new("MEMORY_OUT_OF_BOUNDS"))),
-            // More cases...
-            _ => Ok(Some(Symbol::new("UNKNOWN"))),
+        match &self.kind {
+            ErrorKind::StackOverflow => Ok(Some(Symbol::new("STACK_OVERFLOW"))),
+            ErrorKind::MemoryOutOfBounds => Ok(Some(Symbol::new("MEMORY_OUT_OF_BOUNDS"))),
+            ErrorKind::InvalidOperation(_) => Ok(Some(Symbol::new("INVALID_OPERATION"))),
+            ErrorKind::Unknown => Ok(Some(Symbol::new("UNKNOWN"))),
         }
     }
 
     // Custom inspect method
     pub fn inspect(rb_self: Obj<Self>) -> Result<String, Error> {
         Ok(format!(
-            "#<Wasmtime::Trap:0x{:016x} @trap_code={}>",
-            rb_self.as_raw(),
+            "#<MyExtension::Error:0x{:016x} @error_code={}>",
+            &rb_self as *const _ as usize,
             rb_self.code()?.map_or("nil".to_string(), |s| s.to_string())
         ))
     }
 }
 
 // Register with Ruby
-pub fn init(ruby: &Ruby) -> Result<(), Error> {
-    let class = ruby.define_class("Trap", ruby.class_object())?;
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("MyExtension")?;
+    let class = module.define_class("Error", ruby.class_object())?;
 
-    class.define_method("message", method!(Trap::message, 0))?;
-    class.define_method("wasm_backtrace_message", method!(Trap::wasm_backtrace_message, 0))?;
-    class.define_method("code", method!(Trap::code, 0))?;
-    class.define_method("inspect", method!(Trap::inspect, 0))?;
+    class.define_method("message", method!(ErrorInfo::message, 0))?;
+    class.define_method("backtrace_message", method!(ErrorInfo::backtrace_message, 0))?;
+    class.define_method("code", method!(ErrorInfo::code, 0))?;
+    class.define_method("inspect", method!(ErrorInfo::inspect, 0))?;
 
     Ok(())
 }
@@ -240,7 +258,7 @@ pub fn init(ruby: &Ruby) -> Result<(), Error> {
 
 This example shows:
 
-1. A Rust struct that wraps WebAssembly-specific types
+1. A Rust struct that wraps error information with an optional backtrace
 2. Methods that convert Rust values to Ruby-friendly types
 3. A simple implementation of `DataTypeFunctions` (since there are no Ruby object references to mark)
 
@@ -251,8 +269,18 @@ Let's look at a more complex scenario involving memory management:
 ```rust
 use magnus::{
     prelude::*, gc::Marker, Error, Ruby, TypedData, DataTypeFunctions,
-    typed_data::Obj, value::Opaque, RString
+    typed_data::Obj, value::Opaque, RString, Value
 };
+
+// Placeholder types for the example
+struct StoreContext(Value);
+struct WasmMemory;
+
+impl StoreContext {
+    fn mark(&self, marker: &Marker) {
+        marker.mark(self.0);
+    }
+}
 
 // Represents WebAssembly memory
 #[derive(TypedData)]
@@ -264,10 +292,27 @@ struct Memory {
     memory: WasmMemory,
 }
 
+// SAFETY: Memory is only accessed from Ruby threads with the GVL
+unsafe impl Send for Memory {}
+
 impl DataTypeFunctions for Memory {
     fn mark(&self, marker: &Marker) {
         // Mark the store so it stays alive
         self.store.mark(marker);
+    }
+}
+
+impl Memory {
+    fn size(&self) -> Result<u64, Error> {
+        Ok(65536) // Example: 64KB
+    }
+    
+    fn data_size(&self) -> Result<usize, Error> {
+        Ok(65536) // Example: 64KB
+    }
+    
+    fn data(&self) -> Result<Vec<u8>, Error> {
+        Ok(vec![0; 65536]) // Example: zero-filled memory
     }
 }
 
@@ -317,6 +362,9 @@ struct MemorySlice {
     offset: usize,
     size: usize,
 }
+
+// SAFETY: MemorySlice is only accessed from Ruby threads with the GVL
+unsafe impl Send for MemorySlice {}
 
 impl DataTypeFunctions for MemorySlice {
     fn mark(&self, marker: &Marker) {
@@ -402,45 +450,33 @@ If your Rust struct holds Ruby objects but doesn't implement marking, those obje
 use:
 
 ```rust
-use magnus::{gc::Marker, DataTypeFunctions, Value};
+use magnus::{Error, RString};
+use std::cell::RefCell;
 
-// BAD: No marking implementation
-struct BadExample {
-    ruby_object: Value,  // This reference won't be marked by GC
+// Example: Store Ruby data as Rust types instead of Value
+#[magnus::wrap(class = "DataHolder")]
+struct DataHolder {
+    // Store extracted data, not Ruby Values
+    strings: RefCell<Vec<String>>,
+    data: RefCell<std::collections::HashMap<String, String>>,
 }
 
-impl DataTypeFunctions for BadExample {
-    // Missing mark implementation!
-}
-
-// GOOD: Proper marking
-struct GoodExample {
-    ruby_object: Value,
-}
-
-impl DataTypeFunctions for GoodExample {
-    fn mark(&self, marker: &Marker) {
-        marker.mark(self.ruby_object);
-    }
-}
-
-// A more complex example with multiple references
-struct ComplexExample {
-    ruby_strings: Vec<Value>,
-    ruby_hash: Value,
-    ruby_object: Value,
-}
-
-impl DataTypeFunctions for ComplexExample {
-    fn mark(&self, marker: &Marker) {
-        // Mark each string in the vector
-        for string in &self.ruby_strings {
-            marker.mark(*string);
+impl DataHolder {
+    fn new() -> Self {
+        DataHolder {
+            strings: RefCell::new(Vec::new()),
+            data: RefCell::new(std::collections::HashMap::new()),
         }
-
-        // Mark the hash and object
-        marker.mark(self.ruby_hash);
-        marker.mark(self.ruby_object);
+    }
+    
+    fn add_string(&self, ruby_str: RString) -> Result<(), Error> {
+        self.strings.borrow_mut().push(ruby_str.to_string()?);
+        Ok(())
+    }
+    
+    fn add_data(&self, key: String, value: String) -> Result<(), Error> {
+        self.data.borrow_mut().insert(key, value);
+        Ok(())
     }
 }
 ```
@@ -466,7 +502,7 @@ use magnus::{Error, RString, Ruby};
 
 // BAD: Creates unnecessary temporary Rust String
 fn inefficient_string(data: &[u8]) -> Result<RString, Error> {
-    let temp_string = String::from_utf8(data.to_vec())?; // Unnecessary allocation
+    let temp_string = String::from_utf8(data.to_vec()).map_err(|e| Error::new(magnus::exception::type_error(), e.to_string()))?; // Unnecessary allocation
     Ok(RString::new(&temp_string))  // Another copy
 }
 
@@ -539,17 +575,30 @@ A common mistake when using `RefCell` is trying to borrow mutably when you alrea
 leads to a `BorrowMutError` panic:
 
 ```rust
+use magnus::{Error, Ruby};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+struct CounterInner {
+    count: i64,
+}
+
+struct Counter(Rc<RefCell<CounterInner>>);
+
 // BAD - will panic with "already borrowed: BorrowMutError"
-fn buggy_add(&self, val: i64) -> Result<i64, Error> {
-    // First borrow is still active when we try to borrow_mut below
-    if let Some(sum) = self.0.borrow().count.checked_add(val) {
-        self.0.borrow_mut().count = sum; // ERROR - already borrowed above
-        Ok(sum)
-    } else {
-        Err(Error::new(
-            ruby.exception_range_error(),
-            "result too large"
-        ))
+impl Counter {
+    fn buggy_add(&self, val: i64) -> Result<i64, Error> {
+        let ruby = unsafe { Ruby::get_unchecked() };
+        // First borrow is still active when we try to borrow_mut below
+        if let Some(sum) = self.0.borrow().count.checked_add(val) {
+            self.0.borrow_mut().count = sum; // ERROR - already borrowed above
+            Ok(sum)
+        } else {
+            Err(Error::new(
+                ruby.exception_range_error(),
+                "result too large"
+            ))
+        }
     }
 }
 ```
@@ -563,20 +612,33 @@ runtime, resulting in a panic.
 The solution is to complete all immutable borrows before starting mutable ones:
 
 ```rust
-// GOOD - copy the value first to complete the borrow
-fn safe_add(&self, val: i64) -> Result<i64, Error> {
-    // Get the current count, completing this borrow
-    let current_count = self.0.borrow().count;
+use magnus::{Error, Ruby};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-    // Now we can safely borrow mutably
-    if let Some(sum) = current_count.checked_add(val) {
-        self.0.borrow_mut().count = sum; // Safe now
-        Ok(sum)
-    } else {
-        Err(Error::new(
-            ruby.exception_range_error(),
-            "result too large"
-        ))
+struct CounterInner {
+    count: i64,
+}
+
+struct Counter(Rc<RefCell<CounterInner>>);
+
+// GOOD - copy the value first to complete the borrow
+impl Counter {
+    fn safe_add(&self, val: i64) -> Result<i64, Error> {
+        let ruby = unsafe { magnus::Ruby::get_unchecked() };
+        // Get the current count, completing this borrow
+        let current_count = self.0.borrow().count;
+
+        // Now we can safely borrow mutably
+        if let Some(sum) = current_count.checked_add(val) {
+            self.0.borrow_mut().count = sum; // Safe now
+            Ok(sum)
+        } else {
+            Err(Error::new(
+                ruby.exception_range_error(),
+                "result too large"
+            ))
+        }
     }
 }
 ```
@@ -589,6 +651,9 @@ runtime panic.
 When working with more complex data structures:
 
 ```rust
+use std::cell::RefCell;
+use magnus::Error;
+
 struct Game {
     players: Vec<String>,
     current_player: usize,
@@ -665,15 +730,29 @@ impl MutGame {
 If you prefer, you can use temporary variables instead of block scopes:
 
 ```rust
-fn add_player(&self, player: String) -> Result<usize, Error> {
-    // Get the current number of players first
-    let player_count = self.0.borrow().players.len();
+use magnus::{Error, Ruby};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-    // Now we can mutate
-    let mut game = self.0.borrow_mut();
-    game.players.push(player);
+struct GameState {
+    players: Vec<String>,
+    score: i64,
+    current_player: usize,
+}
 
-    Ok(player_count + 1) // Return new count
+struct Game(Rc<RefCell<GameState>>);
+
+impl Game {
+    fn add_player(&self, player: String) -> Result<usize, Error> {
+        // Get the current number of players first
+        let player_count = self.0.borrow().players.len();
+
+        // Now we can mutate
+        let mut game = self.0.borrow_mut();
+        game.players.push(player);
+
+        Ok(player_count + 1) // Return new count
+    }
 }
 ```
 

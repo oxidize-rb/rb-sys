@@ -19,7 +19,7 @@ extension:
 ### Creating a Basic Module
 
 ```rust
-use magnus::{define_module, function, prelude::*, Error, Ruby};
+use magnus::{function, prelude::*, Error, Ruby};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -58,7 +58,7 @@ end
 You can define constants in your modules:
 
 ```rust
-use magnus::{define_module, Module, Ruby, Error, Value, Symbol};
+use magnus::{Module, Ruby, Error, Symbol};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -78,7 +78,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 To maintain module state, a common pattern is storing attributes in the module itself:
 
 ```rust
-use magnus::{define_module, function, prelude::*, Error, Module, Ruby};
+use magnus::{function, prelude::*, Error, Ruby};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -93,14 +93,17 @@ fn increment_counter() -> usize {
 }
 
 fn get_config() -> Result<String, Error> {
-    match CONFIG.lock().unwrap().clone() {
+    match CONFIG.lock()
+        .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire lock"))?
+        .clone() {
         Some(config) => Ok(config),
         None => Ok("default".to_string()),
     }
 }
 
 fn set_config(value: String) -> Result<String, Error> {
-    let mut config = CONFIG.lock().unwrap();
+    let mut config = CONFIG.lock()
+        .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire lock"))?;
     *config = Some(value.clone());
     Ok(value)
 }
@@ -130,7 +133,7 @@ specific needs.
 For full control over memory management and Ruby integration:
 
 ```rust
-use magnus::{class, define_class, function, method, prelude::*, DataTypeFunctions, TypedData, Error, Ruby};
+use magnus::{function, method, prelude::*, DataTypeFunctions, TypedData, Error, Ruby};
 
 // Define a Rust struct
 #[derive(Debug, TypedData)]
@@ -191,7 +194,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 For a simpler approach with less boilerplate:
 
 ```rust
-use magnus::{define_class, function, method, prelude::*, Error, Ruby};
+use magnus::{function, method, prelude::*, Error, Ruby};
 
 // Define a Rust struct
 #[magnus::wrap(class = "MyExtension::Rectangle")]
@@ -248,7 +251,7 @@ For Ruby objects that need interior mutability:
 <LanguageCallout language="rust" title="Interior Mutability with RefCell">
 ```rust
 use std::cell::RefCell;
-use magnus::{define_class, function, method, prelude::*, Error, Ruby};
+use magnus::{function, method, prelude::*, Error, Ruby};
 
 struct Counter {
     count: usize,
@@ -310,7 +313,7 @@ Magnus provides two primary macros for defining callable Ruby code:
 Here's how to use each:
 
 ```rust
-use magnus::{function, method, define_class, prelude::*, Error, Ruby};
+use magnus::{function, method, prelude::*, Error, Ruby};
 
 #[magnus::wrap(class = "Calculator")]
 struct Calculator {}
@@ -441,7 +444,7 @@ this model in your Rust extension.
 ### Creating a Subclass
 
 ```rust
-use magnus::{Module, class, define_class, method, prelude::*, Error, Ruby, RArray, Value};
+use magnus::{method, prelude::*, Error, Ruby, RArray, Value};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -453,7 +456,8 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 
     // Override the << (push) method to keep the array sorted
     sorted_array.define_method("<<", method!(|rb_self: Value, item: Value| {
-        let array = RArray::from_value(rb_self).unwrap();
+        let array = RArray::from_value(rb_self)
+            .ok_or_else(|| Error::new(magnus::exception::type_error(), "not an array"))?;
         array.push(item)?;
 
         // Call sort! to keep the array sorted
@@ -469,64 +473,104 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 ### Including Modules (Mixins)
 
 ```rust
-use magnus::{Module, class, define_class, define_module, method, prelude::*, Error, Ruby};
+use magnus::{RModule, method, function, prelude::*, Error, Ruby, Value, RObject, TryConvert, value::ReprValue};
+use std::cmp::Ordering;
 
-fn make_comparable(ruby: &Ruby) -> Result<(), Error> {
+fn make_comparable(ruby: &Ruby) -> Result<RModule, Error> {
     let module = ruby.define_module("MyComparable")?;
 
     // Define methods for the module
-    module.define_method("<=>", method!(|_ruby, rb_self: Value, other: Value| {
+    module.define_method("<=>", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<Value, Error> {
         // Implementation of the spaceship operator for comparison
-        let self_num: Result<i64, _> = rb_self.try_convert();
-        let other_num: Result<i64, _> = other.try_convert();
+        let self_num: Result<i64, _> = TryConvert::try_convert(rb_self);
+        let other_num: Result<i64, _> = TryConvert::try_convert(other);
 
         match (self_num, other_num) {
-            (Ok(a), Ok(b)) => Ok(a.cmp(&b) as i8),
-            _ => Ok(nil()),
+            (Ok(a), Ok(b)) => Ok(ruby.integer_from_i64(match a.cmp(&b) {
+                Ordering::Less => -1,
+                Ordering::Equal => 0,
+                Ordering::Greater => 1,
+            }).as_value()),
+            _ => Ok(ruby.qnil().as_value()),
         }
     }, 1))?;
 
     // Define methods that depend on <=>
-    module.define_method("==", method!(|ruby, rb_self: Value, other: Value| {
-        let result: i8 = rb_self.funcall(ruby, "<=>", (other,))?;
-        Ok(result == 0)
+    module.define_method("==", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+        let result: Value = rb_self.funcall("<=>", (other,))?;
+        if result.is_nil() {
+            Ok(false)
+        } else {
+            let num: i64 = TryConvert::try_convert(result)?;
+            Ok(num == 0)
+        }
     }, 1))?;
 
-    module.define_method(">", method!(|ruby, rb_self: Value, other: Value| {
-        let result: i8 = rb_self.funcall(ruby, "<=>", (other,))?;
-        Ok(result > 0)
+    module.define_method(">", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+        let result: Value = rb_self.funcall("<=>", (other,))?;
+        if result.is_nil() {
+            Ok(false)
+        } else {
+            let num: i64 = TryConvert::try_convert(result)?;
+            Ok(num > 0)
+        }
     }, 1))?;
 
-    module.define_method("<", method!(|ruby, rb_self: Value, other: Value| {
-        let result: i8 = rb_self.funcall(ruby, "<=>", (other,))?;
-        Ok(result < 0)
+    module.define_method("<", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+        let result: Value = rb_self.funcall("<=>", (other,))?;
+        if result.is_nil() {
+            Ok(false)
+        } else {
+            let num: i64 = TryConvert::try_convert(result)?;
+            Ok(num < 0)
+        }
     }, 1))?;
 
-    Ok(())
+    Ok(module)
 }
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     // Create our module
-    make_comparable(ruby)?;
+    let module = make_comparable(ruby)?;
 
     // Create a class
     let score = ruby.define_class("Score", ruby.class_object())?;
 
     // Define methods
-    score.define_singleton_method("new", function!(|value: i64| {
-        let obj = RObject::new(ruby.class_object::<Score>())?;
-        obj.ivar_set(ruby, "@value", value)?;
-        Ok(obj)
+    score.define_singleton_method("new", function!(|ruby: &Ruby, value: i64| -> Result<Value, Error> {
+        let score_class = ruby.class_object().const_get::<_, Value>("Score")?;
+        let obj = RObject::try_convert(score_class.funcall("new", ())?)?;
+        obj.ivar_set("@value", value)?;
+        Ok(obj.as_value())
     }, 1))?;
 
-    score.define_method("value", method!(|ruby, rb_self: Value| {
-        rb_self.ivar_get::<_, i64>(ruby, "@value")
+    score.define_method("value", method!(|ruby: &Ruby, rb_self: Value| -> Result<i64, Error> {
+        let obj = RObject::try_convert(rb_self)?;
+        obj.ivar_get::<_, i64>("@value")
     }, 0))?;
 
+    // Define <=> for Score instances
+    score.define_method("<=>", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<Value, Error> {
+        let self_obj = RObject::try_convert(rb_self)?;
+        let self_value: i64 = self_obj.ivar_get::<_, i64>("@value")?;
+        
+        // Try to get value from other if it's a Score
+        if let Ok(other_score) = RObject::try_convert(other) {
+            if let Ok(other_value) = other_score.ivar_get::<_, i64>("@value") {
+                return Ok(ruby.integer_from_i64(match self_value.cmp(&other_value) {
+                    Ordering::Less => -1,
+                    Ordering::Equal => 0,
+                    Ordering::Greater => 1,
+                }).as_value());
+            }
+        }
+        
+        Ok(ruby.qnil().as_value())
+    }, 1))?;
+
     // Include our module
-    let comparable = ruby.define_module("MyComparable")?;
-    score.include_module(ruby, comparable)?;
+    score.include_module(module)?;
 
     Ok(())
 }
@@ -540,7 +584,7 @@ defining class methods, but they can be applied to any object.
 ### Defining a Class with Both Instance and Singleton Methods
 
 ```rust
-use magnus::{class, define_class, function, method, prelude::*, Error, Ruby, Value};
+use magnus::{function, method, prelude::*, Error, Ruby, Value};
 
 #[magnus::wrap(class = "Logger")]
 struct Logger {
@@ -562,9 +606,9 @@ impl Logger {
     }
 
     fn create_default(ruby: &Ruby) -> Result<Value, Error> {
-        let class = ruby.class_object::<Logger>()?;
+        let class = ruby.class_object().const_get::<_, Value>("Logger")?;
         let default_level = Self::default_level();
-        class.new_instance((default_level,))
+        class.funcall("new", (default_level,))
     }
 }
 
@@ -587,19 +631,22 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 ### Attaching Methods to a Specific Object (True Singleton Methods)
 
 ```rust
-use magnus::{module, function, prelude::*, Error, Ruby, Value};
+use magnus::{function, prelude::*, Error, Ruby, RObject};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     // Create a single object
-    let config = ruby.eval::<Value>("Object.new")?;
+    let config = ruby.eval::<RObject>("Object.new")?;
 
-    // Define singleton methods directly on that object
-    config.define_singleton_method(ruby, "get", function!(|| {
+    // Get the singleton class of the object
+    let singleton_class = config.singleton_class()?;
+
+    // Define singleton methods on the singleton class
+    singleton_class.define_method("get", function!(|| {
         "Configuration value"
     }, 0))?;
 
-    config.define_singleton_method(ruby, "enabled?", function!(|| {
+    singleton_class.define_method("enabled?", function!(|| {
         true
     }, 0))?;
 

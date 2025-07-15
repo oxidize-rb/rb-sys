@@ -145,15 +145,15 @@ fn example(
 ### Working with Ruby Objects
 
 ```rust
-use magnus::{RHash, RArray, Value, Symbol};
+use magnus::{RHash, RArray, Value, Symbol, Error, TryConvert};
 
 // Accept any Ruby object
 fn process_data(value: Value) -> Result<String, Error> {
     // Check type at runtime
     if let Ok(hash) = RHash::try_convert(value) {
         // Work with Ruby Hash
-        let keys: Vec<String> = hash.keys()?;
-        Ok(format!("Hash with keys: {:?}", keys))
+        let size = hash.len();
+        Ok(format!("Hash with {} entries", size))
     } else if let Ok(array) = RArray::try_convert(value) {
         // Work with Ruby Array
         Ok(format!("Array with {} elements", array.len()))
@@ -174,27 +174,45 @@ Ruby uses a Global VM Lock (GVL/GIL) that prevents true parallelism:
 
 ```rust
 use rb_sys::rb_thread_call_without_gvl;
+use std::os::raw::c_void;
+
+// Structure to hold data
+struct ProcessData {
+    input: Vec<u8>,
+    output: Vec<u8>,
+}
 
 // CPU-intensive operation
-fn expensive_computation(data: &[u8]) -> Vec<u8> {
-    // Process data...
-    data.to_vec()
+extern "C" fn expensive_computation(data: *mut c_void) -> *mut c_void {
+    unsafe {
+        let data = &mut *(data as *mut ProcessData);
+        // Process data...
+        data.output = data.input.clone();
+    }
+    std::ptr::null_mut()
 }
 
 // Release GVL for long operations
 fn process_large_file(data: Vec<u8>) -> Vec<u8> {
     // For operations > 100ms, release the GVL
     if data.len() > 1_000_000 {
+        let mut process_data = ProcessData {
+            input: data,
+            output: Vec::new(),
+        };
+        
         unsafe {
             rb_thread_call_without_gvl(
                 Some(expensive_computation),
-                &data as *const _ as *mut _,
+                &mut process_data as *mut _ as *mut c_void,
                 None,
                 std::ptr::null_mut(),
-            )
+            );
         }
+        
+        process_data.output
     } else {
-        expensive_computation(&data)
+        data
     }
 }
 ```
@@ -217,12 +235,12 @@ fn process_large_file(data: Vec<u8>) -> Vec<u8> {
 rb-sys embraces Rust's `Result` type for error handling:
 
 ```rust
-use magnus::{Error, exception};
+use magnus::{Error, exception, function, Ruby};
 
 fn divide(a: f64, b: f64) -> Result<f64, Error> {
     if b == 0.0 {
         Err(Error::new(
-            exception::zero_division_error(),
+            exception::zero_div_error(),
             "divided by 0"
         ))
     } else {
@@ -234,7 +252,7 @@ fn divide(a: f64, b: f64) -> Result<f64, Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MyMath")?;
-    module.define_singleton_method("divide", function!(divide, 2))?;
+    module.define_module_function("divide", function!(divide, 2))?;
     Ok(())
 }
 ```
@@ -340,6 +358,8 @@ When building extensions, think about:
 ### Performance Example
 
 ```rust
+use magnus::{RArray, Error, TryConvert};
+
 // ❌ Inefficient: Many Ruby allocations
 fn inefficient_sum(numbers: Vec<i64>) -> i64 {
     numbers.iter().sum()  // Converts entire Vec at once
@@ -368,14 +388,14 @@ Building safe extensions requires attention to:
 4. **Resource limits** - Prevent DoS attacks
 
 ```rust
-use magnus::Error;
+use magnus::{Error, Ruby};
 
-fn safe_operation(input: String) -> Result<String, Error> {
+fn safe_operation(ruby: &Ruby, input: String) -> Result<String, Error> {
     // Validate input length
     const MAX_LENGTH: usize = 1_000_000;
     if input.len() > MAX_LENGTH {
         return Err(Error::new(
-            exception::argument_error(),
+            ruby.exception_arg_error(),
             "input too large"
         ));
     }
@@ -383,7 +403,7 @@ fn safe_operation(input: String) -> Result<String, Error> {
     // Use checked arithmetic
     let count = input.chars().count();
     let doubled = count.checked_mul(2).ok_or_else(|| {
-        Error::new(exception::range_error(), "overflow")
+        Error::new(ruby.exception_range_error(), "overflow")
     })?;
     
     Ok(format!("Processed {} characters", doubled))

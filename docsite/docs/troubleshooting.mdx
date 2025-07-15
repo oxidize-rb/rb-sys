@@ -88,11 +88,17 @@ rb-sys = { version = "0.9.0", features = ["stable-api"] }
 
 **Solution**:
 ```rust
-#[magnus::wrap(class = "MyClass")]
+use magnus::{DataTypeFunctions, TypedData, Value, gc::Marker};
+
+#[derive(TypedData)]
+#[magnus(class = "MyClass", mark)]
 struct MyObject {
     // Hold references properly
     data: Value
 }
+
+// SAFETY: MyObject is only accessed from Ruby threads with the GVL
+unsafe impl Send for MyObject {}
 
 impl DataTypeFunctions for MyObject {
     fn mark(&self, marker: &Marker) {
@@ -111,6 +117,8 @@ impl DataTypeFunctions for MyObject {
 **Solution**:
 1. Enable debugging:
 ```rust
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 #[cfg(debug_assertions)]
 static ALLOCATION_COUNT: AtomicUsize = AtomicUsize::new(0);
 
@@ -136,14 +144,19 @@ ThreadError: deadlock detected
 1. Use proper thread safety patterns:
 ```rust
 use std::sync::Mutex;
+use magnus::{Error, Value};
 
 struct ThreadSafeObject {
     data: Mutex<Vec<Value>>
 }
 
+// SAFETY: ThreadSafeObject uses proper synchronization via Mutex
+unsafe impl Send for ThreadSafeObject {}
+unsafe impl Sync for ThreadSafeObject {}
+
 impl ThreadSafeObject {
     fn modify_data(&self) -> Result<(), Error> {
-        let mut data = self.data.lock().unwrap();
+        let mut data = self.data.lock().map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire lock"))?;
         // Modify data safely
         Ok(())
     }
@@ -152,13 +165,25 @@ impl ThreadSafeObject {
 
 2. Release GVL when appropriate:
 ```rust
-unsafe {
-    rb_thread_call_without_gvl(
-        Some(heavy_computation),
-        ptr::null_mut(),
-        None,
-        ptr::null_mut()
-    )
+use rb_sys::rb_thread_call_without_gvl;
+use std::ptr;
+use std::os::raw::c_void;
+
+extern "C" fn heavy_computation(data: *mut c_void) -> *mut c_void {
+    // Your CPU-intensive work here
+    // This runs without holding the GVL
+    ptr::null_mut()
+}
+
+fn release_gvl_example() {
+    unsafe {
+        rb_thread_call_without_gvl(
+            Some(heavy_computation),
+            ptr::null_mut(),
+            None,
+            ptr::null_mut()
+        );
+    }
 }
 ```
 
@@ -174,12 +199,17 @@ export RUST_LOG=debug
 
 2. Add logging to your code:
 ```rust
-use log::{debug, error, info};
+use log::{debug, error};
+use magnus::Error;
 
 fn process_data(input: &str) -> Result<String, Error> {
     debug!("Processing: {}", input);
     // Processing logic
+    let error_condition = false; // Example condition
+    let result = String::from("processed"); // Example result
+    
     if error_condition {
+        let error = "example error";
         error!("Failed to process: {}", error);
         return Err(Error::new(
             magnus::exception::runtime_error(),
@@ -286,6 +316,8 @@ ldd your_extension.so
 
 2. **Error Handling**:
 ```rust
+use magnus::Error;
+
 fn process_data(input: &str) -> Result<String, Error> {
     if input.is_empty() {
         return Err(Error::new(
@@ -294,17 +326,23 @@ fn process_data(input: &str) -> Result<String, Error> {
         ));
     }
     // Processing logic
+    let result = format!("Processed: {}", input);
     Ok(result)
 }
 ```
 
 3. **Memory Management**:
 ```rust
+use magnus::{TypedData, DataTypeFunctions, Value, gc::Marker};
+
 #[derive(TypedData)]
 #[magnus(class = "MyClass", mark)]
 struct MyObject {
     data: Value
 }
+
+// SAFETY: MyObject is only accessed from Ruby threads with the GVL
+unsafe impl Send for MyObject {}
 
 impl DataTypeFunctions for MyObject {
     fn mark(&self, marker: &Marker) {

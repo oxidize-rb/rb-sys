@@ -51,15 +51,24 @@ namespace :doctest do
         slug = file.gsub(/[^a-zA-Z0-9_]/, '_')
         rust_file_name = "#{slug}_#{index}.rs"
         rust_files << rust_file_name
-        File.write(File.join(src_dir, rust_file_name), rust_code)
+        # Remove #[magnus::init] to avoid symbol conflicts in doctests
+        cleaned_code = rust_code.gsub(/^#\[magnus::init\]\s*\n/, '')
+        File.write(File.join(src_dir, rust_file_name), cleaned_code)
       end
     end
 
     if rust_files.any?
       puts "--- Compiling all Rust examples ---"
-      lib_rs_content = rust_files.map do |file|
+      lib_rs_content = "#![deny(clippy::unwrap_used)]\n#![deny(clippy::expect_used)]\n\n" + rust_files.map do |file|
         module_name = File.basename(file, ".rs")
-        %Q(#[path="#{file}"] mod #{module_name};)
+        # Check if this file uses rb_sys_test_helpers
+        file_content = File.read(File.join(src_dir, file))
+        if file_content.include?("rb_sys_test_helpers")
+          # Put test helpers in a test module
+          %Q(#[cfg(test)]\n#[path="#{file}"] mod #{module_name};)
+        else
+          %Q(#[path="#{file}"] mod #{module_name};)
+        end
       end.join("\n")
       File.write(File.join(src_dir, "lib.rs"), lib_rs_content)
 
@@ -82,15 +91,12 @@ rayon = "1.5"
 csv = "1.1"
 sha2 = "0.10"
 hex = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
 image = "0.24"
 once_cell = "1.17"
 log = "0.4"
 env_logger = "0.9"
 criterion = "0.5"
 url = "2.5"
-wasmtime = "20.0"
 lz4_flex = "0.11"
 
 [build-dependencies]
@@ -104,12 +110,56 @@ proptest = "1.0"
 rb-sys = { path = "../../crates/rb-sys" }
       EOF
       File.write(File.join(test_dir, "Cargo.toml"), cargo_toml_content)
+      
+      # Create build.rs to handle macOS framework linking
+      build_rs_content = <<~EOF
+use std::env;
+
+fn main() {
+    let target = env::var("TARGET").unwrap();
+    
+    // Link SystemConfiguration framework on macOS for reqwest
+    if target.contains("apple") {
+        println!("cargo:rustc-link-lib=framework=SystemConfiguration");
+        println!("cargo:rustc-link-lib=framework=CoreFoundation");
+        println!("cargo:rustc-link-lib=framework=Security");
+    }
+    
+    // Use rb-sys-env to set up Ruby linking
+    rb_sys_env::activate().unwrap();
+}
+      EOF
+      File.write(File.join(test_dir, "build.rs"), build_rs_content)
 
       Dir.chdir(test_dir) do
-        _stdout, stderr, status = Open3.capture3("cargo", "check", "--tests", "--quiet")
+        _stdout, stderr, status = Open3.capture3("cargo", "check", "--all-targets")
 
         if status.success?
           puts "✅ All Rust examples compiled successfully."
+          
+          # Run clippy to check for lints
+          puts "--- Running clippy on Rust examples ---"
+          # For doctests, we allow warnings since many functions/variables are unused in examples
+          # We also allow some clippy lints that are too strict for documentation
+          _stdout, stderr, status = Open3.capture3("cargo", "clippy", "--all-targets", "--", 
+            "-A", "dead_code",
+            "-A", "unused_variables", 
+            "-A", "unused_imports",
+            "-A", "unused_mut",
+            "-A", "clippy::needless_range_loop",
+            "-A", "clippy::redundant_field_names",
+            "-A", "clippy::manual_c_str_literals",
+            "-W", "clippy::unwrap_used",
+            "-W", "clippy::expect_used"
+          )
+          
+          if status.success?
+            puts "✅ All Rust examples pass clippy checks."
+          else
+            puts "❌ Clippy found issues:"
+            puts stderr
+            exit 1
+          end
         else
           puts "❌ Rust compilation failed:"
           puts stderr

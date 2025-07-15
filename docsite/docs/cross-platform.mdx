@@ -374,7 +374,7 @@ To ensure compatibility, add a source gem to your release process:
 RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
   # Configure cross-platform gems as usual
   ext.cross_compile = true
-  ext.cross_platform = ['x86_64-linux', 'arm64-darwin', ...]
+  ext.cross_platform = ['x86_64-linux', 'arm64-darwin']
 
   # The default platform will build the source gem
 end
@@ -583,10 +583,12 @@ Windows presents unique challenges for Ruby extensions:
 
   ```rust
   // build.rs
-  #[cfg(target_os = "macos")]
-  {
-      println!("cargo:rustc-link-lib=framework=Security");
-      println!("cargo:rustc-link-lib=framework=CoreFoundation");
+  fn main() {
+      #[cfg(target_os = "macos")]
+      {
+          println!("cargo:rustc-link-lib=framework=Security");
+          println!("cargo:rustc-link-lib=framework=CoreFoundation");
+      }
   }
   ```
 
@@ -640,38 +642,52 @@ Windows presents unique challenges for Ruby extensions:
 ### Example: Good Platform Abstraction
 
 ```rust
+use std::io;
+
 // Platform abstraction module
 mod platform {
+    use std::io;
+    
+    // Define platform-specific handle types
+    #[cfg(target_os = "windows")]
+    type PlatformSpecificHandle = std::os::windows::io::RawHandle;
+    
+    #[cfg(unix)]
+    type PlatformSpecificHandle = std::os::unix::io::RawFd;
+    
+    #[cfg(not(any(target_os = "windows", unix)))]
+    type PlatformSpecificHandle = ();
+    
     pub struct FileHandle(PlatformSpecificHandle);
 
     impl FileHandle {
-        pub fn open(path: &str) -> Result<Self, Error> {
+        pub fn open(path: &str) -> Result<Self, io::Error> {
             #[cfg(target_os = "windows")]
             {
                 // Windows-specific implementation
-                // ...
+                unimplemented!()
             }
 
             #[cfg(unix)]
             {
                 // Unix-based implementation (Linux, macOS, etc.)
-                // ...
+                unimplemented!()
             }
 
             #[cfg(not(any(target_os = "windows", unix)))]
             {
-                return Err(Error::new("Unsupported platform"));
+                return Err(io::Error::new(io::ErrorKind::Other, "Unsupported platform"));
             }
         }
 
-        pub fn read(&self, buf: &mut [u8]) -> Result<usize, Error> {
+        pub fn read(&self, buf: &mut [u8]) -> Result<usize, io::Error> {
             // Platform-specific reading implementation
-            // ...
+            unimplemented!()
         }
 
-        pub fn write(&self, buf: &[u8]) -> Result<usize, Error> {
+        pub fn write(&self, buf: &[u8]) -> Result<usize, io::Error> {
             // Platform-specific writing implementation
-            // ...
+            unimplemented!()
         }
     }
 }
@@ -679,7 +695,7 @@ mod platform {
 // User code just uses the abstraction
 use platform::FileHandle;
 
-fn process_file(path: &str) -> Result<(), Error> {
+fn process_file(path: &str) -> Result<(), io::Error> {
     let file = FileHandle::open(path)?;
     // Common code without platform-specific details
     Ok(())
@@ -718,22 +734,30 @@ These projects demonstrate successful cross-platform strategies and can serve as
 wasmtime-rb wraps platform-specific functionality while presenting a consistent API:
 
 ```rust
+use std::io;
+
 #[cfg(unix)]
 mod unix {
-    pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), Error> {
+    use std::io;
+    
+    pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), io::Error> {
         // Unix-specific memory mapping
+        Ok(())
     }
 }
 
 #[cfg(windows)]
 mod windows {
-    pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), Error> {
+    use std::io;
+    
+    pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), io::Error> {
         // Windows-specific memory mapping
+        Ok(())
     }
 }
 
 // Public API uses the platform-specific implementation
-pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), Error> {
+pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), io::Error> {
     #[cfg(unix)]
     {
         return unix::map_memory(addr, len);
@@ -746,7 +770,7 @@ pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), Error> {
 
     #[cfg(not(any(unix, windows)))]
     {
-        return Err(Error::new("Unsupported platform"));
+        return Err(io::Error::new(io::ErrorKind::Other, "Unsupported platform"));
     }
 }
 ```

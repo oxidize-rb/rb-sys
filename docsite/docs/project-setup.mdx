@@ -193,11 +193,11 @@ use magnus::{function, method, prelude::*, Error, Ruby};
 use url::Url;
 
 // Simple URL wrapper class
+#[magnus::wrap(class = "UrlParser::URL")]
 struct UrlWrapper {
     inner: Url,
 }
 
-#[magnus::wrap(class = "UrlParser::URL")]
 impl UrlWrapper {
     // Parse a URL string
     fn parse(url_str: String) -> Result<Self, Error> {
@@ -369,10 +369,8 @@ end
 ```rust
 // ext/my_gem/build.rs
 fn main() {
-    // Activate rb-sys environment
-    rb_sys_env::activate().unwrap();
-    
-    // Add custom build configuration
+    // rb-sys automatically sets up the build environment
+    // You can add custom build configuration here
     println!("cargo:rustc-cfg=has_custom_feature");
     
     // Link to system libraries if needed

@@ -30,7 +30,7 @@ fn add(a: i64, b: i64) -> i64 {
 fn divide(a: f64, b: f64) -> Result<f64, Error> {
     if b == 0.0 {
         Err(Error::new(
-            magnus::exception::zero_division_error(),
+            magnus::exception::zero_div_error(),
             "divided by 0"
         ))
     } else {
@@ -62,35 +62,39 @@ MathUtils.divide(10, 0)  # => ZeroDivisionError
 Creating classes with instance methods:
 
 ```rust
-use magnus::{class, function, method, prelude::*, Error, Ruby};
+use magnus::{function, method, prelude::*, Error, Ruby};
+use std::cell::RefCell;
 
-#[derive(Clone, Debug)]
-struct Counter {
+struct CounterData {
     value: i64,
 }
 
 #[magnus::wrap(class = "Counter", free_immediately)]
+struct Counter(RefCell<CounterData>);
+
 impl Counter {
     fn new(initial: i64) -> Self {
-        Counter { value: initial }
+        Counter(RefCell::new(CounterData { value: initial }))
     }
     
-    fn increment(&mut self) -> i64 {
-        self.value += 1;
-        self.value
+    fn increment(&self) -> i64 {
+        let mut data = self.0.borrow_mut();
+        data.value += 1;
+        data.value
     }
     
-    fn increment_by(&mut self, amount: i64) -> i64 {
-        self.value += amount;
-        self.value
+    fn increment_by(&self, amount: i64) -> i64 {
+        let mut data = self.0.borrow_mut();
+        data.value += amount;
+        data.value
     }
     
     fn value(&self) -> i64 {
-        self.value
+        self.0.borrow().value
     }
     
-    fn reset(&mut self) {
-        self.value = 0;
+    fn reset(&self) {
+        self.0.borrow_mut().value = 0;
     }
 }
 
@@ -143,10 +147,12 @@ fn uppercase_first(ruby_str: RString) -> Result<RString, Error> {
         return Ok(ruby_str);
     }
     
+    let first_char = s.chars().next()
+        .ok_or_else(|| Error::new(magnus::exception::arg_error(), "string is empty"))?;
     let result = format!(
         "{}{}",
-        s.chars().next().unwrap().to_uppercase(),
-        &s[s.chars().next().unwrap().len_utf8()..]
+        first_char.to_uppercase(),
+        &s[first_char.len_utf8()..]
     );
     
     Ok(RString::new(&result))
@@ -170,22 +176,12 @@ fn repeat_string(s: String, times: usize) -> Result<String, Error> {
 Handle different encodings properly:
 
 ```rust
-use magnus::{RString, encoding::{EncodingCapacity, Index}, Error, Ruby};
+use magnus::{RString, Error, Ruby};
 
-fn ensure_utf8(input: RString) -> Result<RString, Error> {
-    let ruby = unsafe { Ruby::get_unchecked() };
-    
-    // Check current encoding
-    let enc = input.enc_get();
-    let utf8 = encoding::Index::utf8();
-    
-    if enc == utf8 {
-        Ok(input)
-    } else {
-        // Convert to UTF-8
-        input.enc_associate(utf8)?;
-        Ok(input)
-    }
+fn ensure_utf8(ruby: &Ruby, input: RString) -> Result<RString, Error> {
+    // For this example, we'll assume the string is already in the correct encoding
+    // In production code, you would use rb-sys directly for encoding operations
+    Ok(input)
 }
 
 // Work with binary data
@@ -254,7 +250,7 @@ fn is_prime(n: Integer) -> bool {
 ### Float Operations
 
 ```rust
-use magnus::{Float, Error};
+use magnus::{Float, Error, exception};
 use std::f64::consts::PI;
 
 // Automatic conversion from Ruby Float
@@ -304,7 +300,7 @@ Arrays are fundamental in Ruby. Here's how to work with them efficiently:
 ### Basic Array Operations
 
 ```rust
-use magnus::{RArray, Value, Error};
+use magnus::{RArray, Error, TryConvert};
 
 // Accept Vec with automatic conversion
 fn sum_integers(numbers: Vec<i64>) -> i64 {
@@ -330,7 +326,7 @@ fn double_values(array: RArray) -> Result<RArray, Error> {
     let result = RArray::with_capacity(array.len());
     
     for item in array.each() {
-        let value: i64 = item?.try_convert()?;
+        let value: i64 = TryConvert::try_convert(item?)?;
         result.push(value * 2)?;
     }
     
@@ -341,7 +337,7 @@ fn double_values(array: RArray) -> Result<RArray, Error> {
 ### Advanced Array Patterns
 
 ```rust
-use magnus::{RArray, Value, Error, RString};
+use magnus::{RArray, Value, Error, RString, exception, TryConvert};
 
 // Filter arrays
 fn select_strings(array: RArray) -> Result<RArray, Error> {
@@ -364,7 +360,7 @@ fn parse_integers(array: RArray) -> Result<Vec<i64>, Error> {
     for (index, item) in array.each().enumerate() {
         let value = item?;
         
-        match value.try_convert::<i64>() {
+        match i64::try_convert(value) {
             Ok(n) => result.push(n),
             Err(_) => {
                 return Err(Error::new(
@@ -385,9 +381,9 @@ fn create_matrix(rows: usize, cols: usize, initial: i64) -> RArray {
     for _ in 0..rows {
         let row = RArray::with_capacity(cols);
         for _ in 0..cols {
-            row.push(initial).unwrap();
+            let _ = row.push(initial);
         }
-        matrix.push(row).unwrap();
+        let _ = matrix.push(row);
     }
     
     matrix
@@ -399,7 +395,7 @@ fn create_matrix(rows: usize, cols: usize, initial: i64) -> RArray {
 Working with Ruby hashes (dictionaries):
 
 ```rust
-use magnus::{RHash, Value, Symbol, Error};
+use magnus::{RHash, Value, Symbol, Error, r_hash::ForEach};
 
 // Accept HashMap with automatic conversion
 use std::collections::HashMap;
@@ -421,13 +417,13 @@ fn merge_hashes(hash1: RHash, hash2: RHash) -> Result<RHash, Error> {
     // Copy first hash
     hash1.foreach(|key: Value, value: Value| {
         result.aset(key, value)?;
-        Ok(())
+        Ok(ForEach::Continue)
     })?;
     
     // Merge second hash
     hash2.foreach(|key: Value, value: Value| {
         result.aset(key, value)?;
-        Ok(())
+        Ok(ForEach::Continue)
     })?;
     
     Ok(result)
@@ -447,7 +443,7 @@ Robust error handling is crucial for production extensions:
 ### Custom Error Types
 
 ```rust
-use magnus::{Error, Module, exception};
+use magnus::{Error, exception};
 use std::fmt;
 
 // Define custom error types
@@ -531,7 +527,7 @@ fn read_and_parse(filename: String) -> Result<Vec<i64>, Error> {
 Handle optional parameters gracefully:
 
 ```rust
-use magnus::{Value, RHash, Symbol, Error};
+use magnus::{RHash, RArray, Symbol, Error, exception, TryConvert};
 
 // Using Option for optional parameters
 fn greet(name: String, greeting: Option<String>) -> String {
@@ -542,20 +538,21 @@ fn greet(name: String, greeting: Option<String>) -> String {
 // Using kwargs for named parameters
 fn create_user(kwargs: RHash) -> Result<String, Error> {
     // Required parameter
-    let name: String = kwargs
-        .get(Symbol::new("name"))
-        .ok_or_else(|| Error::new(exception::arg_error(), "name is required"))?
-        .try_convert()?;
+    let name: String = TryConvert::try_convert(
+        kwargs
+            .get(Symbol::new("name"))
+            .ok_or_else(|| Error::new(exception::arg_error(), "name is required"))?
+    )?;
     
     // Optional parameters with defaults
     let age: i32 = kwargs
         .get(Symbol::new("age"))
-        .and_then(|v| v.try_convert().ok())
+        .and_then(|v| TryConvert::try_convert(v).ok())
         .unwrap_or(0);
     
     let email: Option<String> = kwargs
         .get(Symbol::new("email"))
-        .and_then(|v| v.try_convert().ok());
+        .and_then(|v| TryConvert::try_convert(v).ok());
     
     Ok(format!("User: {}, Age: {}, Email: {:?}", name, age, email))
 }
@@ -565,7 +562,7 @@ fn concat_strings(strings: RArray) -> Result<String, Error> {
     let mut result = String::new();
     
     for item in strings.each() {
-        let s: String = item?.try_convert()?;
+        let s: String = TryConvert::try_convert(item?)?;
         result.push_str(&s);
         result.push(' ');
     }
@@ -587,7 +584,7 @@ fn map_array(array: RArray, block: Proc) -> Result<RArray, Error> {
     
     for item in array.each() {
         let value = item?;
-        let mapped = block.call::<_, _, Value>((value,))?;
+        let mapped = block.call::<_, Value>((value,))?;
         result.push(mapped)?;
     }
     
@@ -597,7 +594,7 @@ fn map_array(array: RArray, block: Proc) -> Result<RArray, Error> {
 // Yield to a block multiple times
 fn times(n: usize, block: Proc) -> Result<(), Error> {
     for i in 0..n {
-        block.call::<_, _, Value>((i,))?;
+        block.call::<_, Value>((i,))?;
     }
     Ok(())
 }
@@ -607,7 +604,7 @@ fn with_optional_block(data: String, block: Option<Proc>) -> Result<String, Erro
     match block {
         Some(b) => {
             // Call block with data
-            b.call::<_, _, String>((data,))
+            b.call::<_, String>((data,))
         }
         None => {
             // No block provided

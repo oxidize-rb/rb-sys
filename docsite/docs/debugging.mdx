@@ -51,7 +51,7 @@ compilation terminated.
 **Solution:**
 
 - Ensure Ruby development headers are installed
-- Check that `rb_sys_env::activate()` is being called in your `build.rs`
+- Check that `rb_sys::activate()` is being called in your `build.rs`
 - Verify that your Ruby installation is accessible to your build environment
 
 #### Incompatible Ruby Version
@@ -82,7 +82,7 @@ error: linking with `cc` failed: exit status: 1
 **Solution:**
 
 - Ensure proper linking configuration in `build.rs`
-- Make sure you've called `rb_sys_env::activate()`
+- Make sure you've called `rb_sys::activate()`
 - Verify that your Ruby installation is correctly detected
 
 ### Runtime Errors

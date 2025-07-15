@@ -23,13 +23,11 @@ rb-sys-test-helpers = { version = "0.2" }
 Then, in your crate's `build.rs`:
 
 ```rust,ignore
-```rust,ignore
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = rb_sys_env::activate()?;
+    let _ = rb_sys::activate()?;
 
     Ok(())
 }
-```
 ```
 
 Then, you can use the `ruby_test` attribute macro in your tests. All of your tests can be placed in a single `mod tests` block, with all the necessary imports at the top.
@@ -58,8 +56,9 @@ mod tests {
     fn test_value_conversion() {
         unsafe {
             let obj = rb_cObject;
-            let name = CString::new("test").unwrap();
-            let value = rb_str_new_cstr(name.as_ptr());
+            // Use a literal C string for tests
+            let name_ptr = b"test\0".as_ptr() as *const i8;
+            let value = rb_str_new_cstr(name_ptr);
 
             rb_iv_set(obj, b"@name\0".as_ptr() as *const _, value);
 
@@ -75,7 +74,7 @@ mod tests {
         let _ruby = unsafe { Ruby::get_unchecked() };
         let string = RString::new("Hello, world!");
 
-        assert_eq!(string.to_string().unwrap(), "Hello, world!");
+        assert_eq!(string.to_string().unwrap_or_default(), "Hello, world!");
     }
 
     #[ruby_test]
@@ -83,7 +82,7 @@ mod tests {
         proptest!(|(s in "[a-zA-Z0-9]*")| {
             let _ruby = unsafe { Ruby::get_unchecked() };
             let ruby_string = RString::new(&s);
-            assert_eq!(ruby_string.to_string().unwrap(), s);
+            assert_eq!(ruby_string.to_string().unwrap_or_default(), s);
         });
     }
 }

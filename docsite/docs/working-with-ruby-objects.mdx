@@ -17,21 +17,21 @@ When writing Ruby extensions in Rust, one of the most common tasks is converting
 ### Primitive Types
 
 ```rust
-use magnus::{RString, Ruby, Value, Integer, Float, Boolean};
+use magnus::{RString, Ruby, Integer, Float};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Convert Rust types to Ruby 
-    let rb_string: RString = RString::new(ruby, "Hello, Ruby!");  // Rust &str to Ruby String
+    let rb_string: RString = RString::new("Hello, Ruby!");        // Rust &str to Ruby String
     let rb_int: Integer = Integer::from_i64(42);                 // Rust i64 to Ruby Integer
-    let rb_float: Float = Float::from_f64(3.14159);             // Rust f64 to Ruby Float
-    let rb_bool: Boolean = Boolean::from(true);                 // Rust bool to Ruby true/false
+    let rb_float: Float = Float::from_f64(std::f64::consts::PI); // Rust f64 to Ruby Float
+    let rb_bool = ruby.qtrue();  // Rust bool to Ruby true/false
 
     // Convert Ruby types to Rust
     let rust_string: String = rb_string.to_string()?;           // Ruby String to Rust String
     let rust_int: i64 = rb_int.to_i64()?;                       // Ruby Integer to Rust i64 
-    let rust_float: f64 = rb_float.to_f64()?;                   // Ruby Float to Rust f64
-    let rust_bool: bool = rb_bool.to_bool();                    // Ruby true/false to Rust bool
+    let rust_float: f64 = rb_float.to_f64();                    // Ruby Float to Rust f64
+    // To check if a value is true/false, compare with qtrue/qfalse
 
     Ok(())
 }
@@ -42,17 +42,18 @@ fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
 When working with Ruby objects, you often need to check their types:
 
 ```rust
-use magnus::{RString, Ruby, Value, check_type};
+use magnus::{RString, Ruby, Value, Integer, TryConvert};
 
 fn process_value(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
-    if val.is_nil() {
-        println!("Got nil");
-    } else if let Ok(s) = RString::try_convert(val) {
+    // Try converting to different types
+    if let Ok(s) = TryConvert::try_convert(val) {
+        let s: RString = s;
         println!("Got string: {}", s.to_string()?);
-    } else if check_type::<Integer>(val) {
-        println!("Got integer: {}", Integer::from_value(val)?.to_i64()?);
+    } else if let Ok(i) = TryConvert::try_convert(val) {
+        let i: Integer = i;
+        println!("Got integer: {}", i.to_i64()?);
     } else {
-        println!("Got some other type");
+        println!("Got some other type (could be nil or another type)");
     }
 
     Ok(())
@@ -66,32 +67,24 @@ fn process_value(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
 Ruby strings are encoded and have more complex behavior than Rust strings:
 
 ```rust
-use magnus::{RString, Ruby, Encoding};
+use magnus::{RString, Ruby, Value, value::ReprValue};
 
 fn string_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new Ruby string
-    let hello = RString::new(ruby, "Hello");
+    let mut hello = RString::new("Hello");
 
-    // Concatenate strings
-    let world = RString::new(ruby, " World!");
-    let message = hello.concat(ruby, world)?;
+    // Concatenate strings (using funcall)
+    let world = RString::new(" World!");
+    hello.as_value().funcall::<_, _, Value>("concat", (world,))?;
+    let message = hello;
 
-    // Get the encoding
-    let encoding = message.encoding();
-    println!("String encoding: {}", encoding.name());
-
-    // Convert to different encoding
-    let utf16 = Encoding::find("UTF-16BE").unwrap();
-    let utf16_str = message.encode(ruby, utf16, None)?;
-
-    // Get bytes
-    let bytes = message.as_bytes();
+    // Get bytes  
+    let bytes = unsafe { message.as_slice() };
     println!("Bytes: {:?}", bytes);
 
-    // Create from bytes with specific encoding
-    let latin1 = Encoding::find("ISO-8859-1").unwrap();
-    let bytes = [72, 101, 108, 108, 111]; // "Hello" in ASCII/Latin1
-    let latin1_str = RString::from_slice(ruby, &bytes, Some(latin1));
+    // Create from bytes
+    let bytes = [72, 101, 108, 108, 111]; // "Hello" in ASCII
+    let new_str = RString::from_slice(&bytes);
 
     Ok(())
 }
@@ -106,37 +99,36 @@ use magnus::{RArray, Ruby, Value};
 
 fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new empty array
-    let array = RArray::new(ruby);
+    let array = RArray::new();
 
     // Push elements
-    array.push(ruby, 1)?;
-    array.push(ruby, "two")?;
-    array.push(ruby, 3.0)?;
+    array.push(1)?;
+    array.push("two")?;
+    array.push(3.0)?;
 
     // Get length
     let length = array.len();
     println!("Array length: {}", length);
 
     // Access elements
-    let first: i64 = array.get(0)?;
-    let second: String = array.get(1)?;
-    let third: f64 = array.get(2)?;
+    let first: i64 = array.entry(0)?;
+    let second: String = array.entry(1)?;
+    let third: f64 = array.entry(2)?;
 
     // Iterate through elements
     for i in 0..array.len() {
-        let item: Value = array.get(i)?;
+        let item: Value = array.entry(i as isize)?;
         println!("Item {}: {:?}", i, item);
     }
 
     // Another way to iterate
-    array.each(|val| {
+    array.each().for_each(|val| {
         println!("Item: {:?}", val);
-        Ok(())
-    })?;
+    });
 
     // Create an array from Rust Vec
     let numbers = vec![1, 2, 3, 4, 5];
-    let rb_array = RArray::from_iter(ruby, numbers);
+    let rb_array = RArray::from_iter(numbers);
 
     // Convert to a Rust Vec
     let vec: Vec<i64> = rb_array.to_vec()?;
@@ -150,38 +142,54 @@ fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
 Ruby hashes are similar to Rust's HashMap but can use any Ruby object as keys:
 
 ```rust
-use magnus::{RHash, Value, Symbol, Ruby};
+use magnus::{RHash, Value, Symbol, Ruby, r_hash::ForEach, TryConvert, Error};
 
 fn hash_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new hash
-    let hash = RHash::new(ruby);
+    let hash = RHash::new();
 
     // Add key-value pairs
-    hash.aset(ruby, "name", "Alice")?;
-    hash.aset(ruby, Symbol::new("age"), 30)?;
-    hash.aset(ruby, 1, "one")?;
+    hash.aset("name", "Alice")?;
+    hash.aset(Symbol::new("age"), 30)?;
+    hash.aset(1, "one")?;
 
     // Get values
-    let name: String = hash.get(ruby, "name")?;
-    let age: i64 = hash.get(ruby, Symbol::new("age"))?;
-    let one: String = hash.get(ruby, 1)?;
+    let name: String = TryConvert::try_convert(
+        hash.get("name")
+            .ok_or_else(|| Error::new(magnus::exception::key_error(), "name not found"))?
+    )?;
+    let age: i64 = TryConvert::try_convert(
+        hash.get(Symbol::new("age"))
+            .ok_or_else(|| Error::new(magnus::exception::key_error(), "age not found"))?
+    )?;
+    let one: String = TryConvert::try_convert(
+        hash.get(1)
+            .ok_or_else(|| Error::new(magnus::exception::key_error(), "1 not found"))?
+    )?;
 
     // Check if key exists
-    if hash.has_key(ruby, "name")? {
+    if hash.get("name").is_some() {
         println!("Has key 'name'");
     }
 
     // Delete a key
-    hash.delete(ruby, 1)?;
+    let _deleted: Value = hash.delete(1)?;
 
     // Iterate over key-value pairs
-    hash.foreach(|k, v| {
+    hash.foreach(|k: Value, v: Value| {
         println!("Key: {:?}, Value: {:?}", k, v);
-        Ok(())
+        Ok(ForEach::Continue)
     })?;
 
     // Convert to a Rust HashMap (if keys and values are convertible)
-    let map: std::collections::HashMap<String, String> = hash.to_hash()?;
+    // Convert to Rust HashMap by iterating
+    let mut map = std::collections::HashMap::new();
+    hash.foreach(|k: Value, v: Value| {
+        if let (Ok(key), Ok(value)) = (String::try_convert(k), String::try_convert(v)) {
+            map.insert(key, value);
+        }
+        Ok(ForEach::Continue)
+    })?;
 
     Ok(())
 }
@@ -192,27 +200,19 @@ fn hash_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
 Ruby's `nil` is a special value that requires careful handling:
 
 ```rust
-use magnus::{Value, Ruby, RNil};
+use magnus::{Value, Ruby, RString, value::ReprValue, TryConvert};
 
 fn handle_nil(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
-    // Check if a value is nil
-    if val.is_nil() {
-        println!("Value is nil");
-    }
-
-    // Get nil
-    let nil = ruby.nil();
-
-    // Options and nil
-    let maybe_string: Option<String> = val.try_convert()?;
+    // Try to convert value - returns None if nil or wrong type
+    let maybe_string: Option<RString> = TryConvert::try_convert(val).ok();
     match maybe_string {
-        Some(s) => println!("Got string: {}", s),
+        Some(s) => println!("Got string: {}", s.to_string()?),
         None => println!("No string (was nil or couldn't convert)"),
     }
 
-    // Explicitly return nil from a function
-    fn returns_nil() -> RNil {
-        RNil::get()
+    // Return nil from a function
+    fn returns_nil(ruby: &Ruby) -> Value {
+        ruby.qnil().as_value()
     }
 
     Ok(())
@@ -226,7 +226,7 @@ Magnus provides powerful type conversion traits that make it easy to convert bet
 ### From Rust to Ruby (TryConvert)
 
 ```rust
-use magnus::{Value, Ruby, TryConvert, Error};
+use magnus::{Value, Ruby, TryConvert, Error, RHash};
 
 // Convert custom Rust types to Ruby objects
 struct Person {
@@ -239,8 +239,8 @@ impl TryConvert for Person {
         let ruby = unsafe { Ruby::get_unchecked() };
         let hash = RHash::try_convert(val)?;
 
-        let name: String = hash.get(ruby, "name")?;
-        let age: u32 = hash.get(ruby, "age")?;
+        let name: String = TryConvert::try_convert(hash.get("name").ok_or_else(|| Error::new(ruby.exception_key_error(), "name not found"))?)?;
+        let age: u32 = TryConvert::try_convert(hash.get("age").ok_or_else(|| Error::new(ruby.exception_key_error(), "age not found"))?)?;
 
         Ok(Person { name, age })
     }
@@ -248,7 +248,7 @@ impl TryConvert for Person {
 
 // Usage
 fn process_person(val: Value) -> Result<(), Error> {
-    let person: Person = val.try_convert()?;
+    let person: Person = Person::try_convert(val)?;
     println!("Person: {} ({})", person.name, person.age);
     Ok(())
 }
@@ -257,7 +257,7 @@ fn process_person(val: Value) -> Result<(), Error> {
 ### From Ruby to Rust (IntoValue)
 
 ```rust
-use magnus::{Value, Ruby, IntoValue, Error};
+use magnus::{Value, Ruby, IntoValue, Error, RHash, value::ReprValue};
 
 struct Point {
     x: f64,
@@ -265,18 +265,18 @@ struct Point {
 }
 
 impl IntoValue for Point {
-    fn into_value_with(self, ruby: &Ruby) -> Result<Value, Error> {
-        let hash = RHash::new(ruby);
-        hash.aset(ruby, "x", self.x)?;
-        hash.aset(ruby, "y", self.y)?;
-        Ok(hash.as_value())
+    fn into_value_with(self, ruby: &Ruby) -> Value {
+        let hash = RHash::new();
+        let _ = hash.aset("x", self.x);
+        let _ = hash.aset("y", self.y);
+        hash.as_value()
     }
 }
 
 // Usage
 fn create_point(ruby: &Ruby) -> Result<Value, Error> {
     let point = Point { x: 10.5, y: 20.7 };
-    point.into_value_with(ruby)
+    Ok(point.into_value_with(ruby))
 }
 ```
 

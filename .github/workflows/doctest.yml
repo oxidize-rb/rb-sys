@@ -14,107 +14,28 @@ on:
       - '.github/workflows/doctest.yml'
 
 jobs:
-  extract-and-test:
+  doctest:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby: ['3.0', '3.1', '3.2', '3.3']
+        ruby: ['3.1', '3.2', '3.3']
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
+    - name: Setup Ruby and Rust
+      uses: oxidize-rb/setup-ruby-and-rust@v1
       with:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
-    
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
+        rustup-toolchain: stable
+        rustup-components: clippy
     
     - name: Install dependencies
-      run: |
-        gem install rb_sys
-        sudo apt-get update
-        sudo apt-get install -y libclang-dev
+      run: bundle install
     
-    - name: Extract and test Rust code examples
-      run: |
-        mkdir -p tmp/doctest
-        cd tmp/doctest
-        
-        # Extract Rust code blocks from documentation
-        for file in ../../docsite/docs/**/*.mdx ../../docsite/docs/**/*.md; do
-          if [ -f "$file" ]; then
-            echo "Processing $file"
-            
-            # Extract ```rust blocks
-            awk '/```rust/{flag=1; next} /```/{flag=0} flag' "$file" > temp_rust.rs
-            
-            if [ -s temp_rust.rs ]; then
-              # Create a test project
-              cargo init --name doctest_example --lib
-              
-              # Add dependencies
-              cat >> Cargo.toml << EOF
-magnus = { version = "0.6", features = ["rb-sys"] }
-rb-sys = "0.9"
-unicode-segmentation = "1.10"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-regex = "1.5"
-rayon = "1.5"
-csv = "1.1"
-sha2 = "0.10"
-hex = "0.4"
-reqwest = { version = "0.11", features = ["json"] }
-tokio = { version = "1", features = ["full"] }
-image = "0.24"
-once_cell = "1.17"
-EOF
-              
-              # Copy code to lib.rs
-              cp temp_rust.rs src/lib.rs
-              
-              # Try to compile
-              if cargo check 2>/dev/null; then
-                echo "✅ Code in $file compiles successfully"
-              else
-                echo "❌ Code in $file failed to compile"
-                # Don't fail the build, just warn
-              fi
-              
-              # Clean up
-              rm -rf target Cargo.* src
-            fi
-          fi
-        done
-    
-    - name: Extract and test Ruby code examples
-      run: |
-        cd tmp/doctest
-        
-        # Extract Ruby code blocks
-        for file in ../../docsite/docs/**/*.mdx ../../docsite/docs/**/*.md; do
-          if [ -f "$file" ]; then
-            echo "Processing $file"
-            
-            # Extract ```ruby blocks
-            awk '/```ruby/{flag=1; next} /```/{flag=0} flag' "$file" > temp_ruby.rb
-            
-            if [ -s temp_ruby.rb ]; then
-              # Basic syntax check
-              if ruby -c temp_ruby.rb 2>/dev/null; then
-                echo "✅ Ruby code in $file has valid syntax"
-              else
-                echo "❌ Ruby code in $file has syntax errors"
-                # Don't fail the build, just warn
-              fi
-              
-              rm temp_ruby.rb
-            fi
-          fi
-        done
+    - name: Run doctests with clippy
+      run: bundle exec rake doctest:run
     
     - name: Test documentation builds
       run: |

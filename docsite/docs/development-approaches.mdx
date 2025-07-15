@@ -49,11 +49,18 @@ macro_rules! cstr {
 
 // Reverse a string
 unsafe extern "C" fn reverse(_: VALUE, s: VALUE) -> VALUE {
-    let c_str = rb_string_value_cstr(&s);
-    let rust_str = std::ffi::CStr::from_ptr(c_str).to_str().unwrap();
+    let mut s_copy = s;
+    let c_str = rb_string_value_cstr(&mut s_copy);
+    let rust_str = match std::ffi::CStr::from_ptr(c_str).to_str() {
+        Ok(s) => s,
+        Err(_) => return rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+    };
     let reversed = rust_str.chars().rev().collect::<String>();
 
-    let c_string = CString::new(reversed).unwrap();
+    let c_string = match CString::new(reversed) {
+        Ok(s) => s,
+        Err(_) => return rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+    };
     rb_str_new_cstr(c_string.as_ptr())
 }
 
@@ -66,7 +73,7 @@ pub extern "C" fn Init_string_utils() {
         rb_define_module_function(
             module,
             cstr!("reverse"),
-            Some(reverse as unsafe extern "C" fn(VALUE, VALUE) -> VALUE),
+            Some(std::mem::transmute::<unsafe extern "C" fn(VALUE, VALUE) -> VALUE, _>(reverse)),
             1,
         );
     }
@@ -221,7 +228,28 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 Looking at a more complex example from a real-world project (lz4-flex-rb):
 
 ```rust
-use magnus::{function, prelude::*, Error, RModule, Ruby};
+use magnus::{function, prelude::*, Error, RModule, Ruby, RString};
+
+// Placeholder functions for the example
+fn compress(input: RString) -> Result<RString, Error> {
+    // Compression implementation would go here
+    Ok(input)
+}
+
+fn decompress(input: RString) -> Result<RString, Error> {
+    // Decompression implementation would go here
+    Ok(input)
+}
+
+fn compress_varint(input: RString) -> Result<RString, Error> {
+    // VarInt compression implementation would go here
+    Ok(input)
+}
+
+fn decompress_varint(input: RString) -> Result<RString, Error> {
+    // VarInt decompression implementation would go here
+    Ok(input)
+}
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -300,17 +328,26 @@ You can also mix the two approaches when appropriate. Magnus provides access to 
 needed:
 
 ```rust
-use magnus::{function, prelude::*, Error, Ruby};
-use rb_sys;
+use magnus::{function, prelude::*, Error, Ruby, value::ReprValue, IntoValue};
 use std::os::raw::c_char;
 
 fn high_level() -> String {
     "High level".to_string()
 }
 
+// Helper macro for C strings
+macro_rules! cstr {
+    ($s:expr) => {
+        concat!($s, "\0").as_ptr() as *const c_char
+    };
+}
+
 unsafe extern "C" fn low_level(_: rb_sys::VALUE) -> rb_sys::VALUE {
     // Direct rb-sys implementation
-    let c_string = std::ffi::CString::new("Low level").unwrap();
+    let c_string = match std::ffi::CString::new("Low level") {
+        Ok(s) => s,
+        Err(_) => return rb_sys::rb_str_new_cstr(b"\0".as_ptr() as *const i8),
+    };
     rb_sys::rb_str_new_cstr(c_string.as_ptr())
 }
 
@@ -324,21 +361,14 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     // Use rb-sys directly for special cases
     unsafe {
         rb_sys::rb_define_module_function(
-            module.as_raw(),
+            unsafe { std::mem::transmute::<_, rb_sys::VALUE>(module.as_value()) },
             cstr!("low_level"),
-            Some(low_level as unsafe extern "C" fn(rb_sys::VALUE) -> rb_sys::VALUE),
+            Some(std::mem::transmute::<unsafe extern "C" fn(rb_sys::VALUE) -> rb_sys::VALUE, _>(low_level)),
             0,
         );
     }
 
     Ok(())
-}
-
-// Helper macro for C strings
-macro_rules! cstr {
-    ($s:expr) => {
-        concat!($s, "\0").as_ptr() as *const c_char
-    };
 }
 ```
 
@@ -377,43 +407,54 @@ Let's look at how real projects decide between these approaches:
 Blake3-Ruby is a cryptographic hashing library that uses direct rb-sys to achieve maximum performance:
 
 ```rust
-// Based on blake3-ruby
+// Based on blake3-ruby - simplified example showing direct rb-sys usage
 use rb_sys::{
-    rb_define_module, rb_define_module_function, rb_string_value_cstr,
-    rb_str_new_cstr, VALUE,
+    rb_define_module, rb_define_module_function,
+    rb_str_new, VALUE, RSTRING_LEN, RSTRING_PTR,
 };
+use std::os::raw::c_char;
+
+// Helper macro for creating C strings
+macro_rules! cstr {
+    ($s:expr) => {
+        concat!($s, "\0").as_ptr() as *const c_char
+    };
+}
 
 #[no_mangle]
-pub extern "C" fn Init_blake3_ext() {
+pub extern "C" fn Init_digest_ext() {
     unsafe {
-        // Create module and class hierarchy
-        let digest_module = /* ... */;
-        let blake3_class = /* ... */;
+        // Create module hierarchy
+        let digest_module = rb_define_module(cstr!("Digest"));
 
         // Define methods directly using rb-sys for maximum performance
         rb_define_module_function(
-            blake3_class,
-            cstr!("digest"),
-            Some(rb_blake3_digest as unsafe extern "C" fn(VALUE, VALUE) -> VALUE),
+            digest_module,
+            cstr!("simple_hash"),
+            Some(std::mem::transmute::<unsafe extern "C" fn(VALUE, VALUE) -> VALUE, _>(rb_simple_hash)),
             1,
         );
-
-        // More method definitions...
     }
 }
 
-unsafe extern "C" fn rb_blake3_digest(_klass: VALUE, string: VALUE) -> VALUE {
+unsafe extern "C" fn rb_simple_hash(_klass: VALUE, string: VALUE) -> VALUE {
     // Extract data from Ruby VALUE
-    let data_ptr = rb_string_value_cstr(&string);
-    let data_len = /* ... */;
+    let data_ptr = RSTRING_PTR(string) as *const u8;
+    let data_len = RSTRING_LEN(string) as usize;
+    let data_slice = std::slice::from_raw_parts(data_ptr, data_len);
 
-    // Release GVL for CPU-intensive operation
-    let hash = nogvl(|| {
-        blake3::hash(/* ... */)
-    });
+    // Simple hash calculation (just for demonstration)
+    let mut hash: u32 = 0;
+    for &byte in data_slice {
+        hash = hash.wrapping_mul(31).wrapping_add(byte as u32);
+    }
+    
+    // Convert hash to string
+    let hash_str = format!("{:08x}", hash);
+    let hash_bytes = hash_str.as_bytes();
 
     // Return result as Ruby string
-    rb_str_new_cstr(/* ... */)
+    rb_str_new(hash_bytes.as_ptr() as *const c_char, hash_bytes.len() as i64)
 }
 ```
 
@@ -423,8 +464,8 @@ The LZ4-Flex-RB gem demonstrates a more sophisticated approach mixing Magnus wit
 
 ```rust
 // Based on lz4-flex-rb
-use magnus::{function, prelude::*, Error, RModule, Ruby};
-use rb_sys::{rb_str_locktmp, rb_str_unlocktmp, rb_thread_call_without_gvl};
+use magnus::{function, prelude::*, Error, RModule, Ruby, RString, value::ReprValue, IntoValue};
+use rb_sys::{rb_str_locktmp, rb_str_unlocktmp, RSTRING_PTR, RSTRING_LEN};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -438,17 +479,38 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 }
 
 // Functions that mix high-level Magnus with low-level rb-sys
-fn compress(input: LockedRString) -> Result<RString, Error> {
-    let bufsize = get_maximum_output_size(input.len());
-    let mut output = RStringMut::buf_new(bufsize);
+fn compress(input: RString) -> Result<RString, Error> {
+    let input_locked = LockedRString::new(input);
+    let bufsize = lz4_flex::block::get_maximum_output_size(input_locked.as_slice().len());
+    
+    // Create output buffer
+    let mut output_vec = vec![0u8; bufsize];
 
-    // Use nogvl_if_large to release GVL for large inputs
-    let outsize = nogvl_if_large(input.len(), || {
-        lz4_flex::block::compress_into(input.as_slice(), output.as_mut_slice())
-    }).map_err(|e| Error::new(encode_error_class(), e.to_string()))?;
+    // Compress the data
+    let outsize = lz4_flex::block::compress_into(
+        input_locked.as_slice(), 
+        &mut output_vec
+    ).map_err(|e| Error::new(magnus::exception::standard_error(), e.to_string()))?;
 
-    output.set_len(outsize);
-    Ok(output.into_inner())
+    // Resize to actual output size
+    output_vec.truncate(outsize);
+    
+    // Convert to Ruby string
+    let ruby = unsafe { magnus::Ruby::get_unchecked() };
+    Ok(RString::from_slice(&output_vec))
+}
+
+fn decompress(input: RString) -> Result<RString, Error> {
+    let input_locked = LockedRString::new(input);
+    
+    // Decompress the data (need to provide max output size)
+    let max_size = input_locked.as_slice().len() * 20; // Conservative estimate
+    let decompressed = lz4_flex::block::decompress(input_locked.as_slice(), max_size)
+        .map_err(|e| Error::new(magnus::exception::standard_error(), e.to_string()))?;
+    
+    // Convert to Ruby string
+    let ruby = unsafe { magnus::Ruby::get_unchecked() };
+    Ok(RString::from_slice(&decompressed))
 }
 
 // Helper for locked RString (uses rb-sys directly)
@@ -456,18 +518,22 @@ struct LockedRString(RString);
 
 impl LockedRString {
     fn new(string: RString) -> Self {
-        unsafe { rb_str_locktmp(string.as_raw()) };
+        unsafe { rb_str_locktmp(std::mem::transmute::<_, rb_sys::VALUE>(string.as_value())) };
         Self(string)
     }
 
     fn as_slice(&self) -> &[u8] {
-        // Implementation using rb-sys functions
+        unsafe {
+            let ptr = RSTRING_PTR(std::mem::transmute::<_, rb_sys::VALUE>(self.0.as_value())) as *const u8;
+            let len = RSTRING_LEN(std::mem::transmute::<_, rb_sys::VALUE>(self.0.as_value())) as usize;
+            std::slice::from_raw_parts(ptr, len)
+        }
     }
 }
 
 impl Drop for LockedRString {
     fn drop(&mut self) {
-        unsafe { rb_str_unlocktmp(self.0.as_raw()) };
+        unsafe { rb_str_unlocktmp(std::mem::transmute::<_, rb_sys::VALUE>(self.0.as_value())) };
     }
 }
 ```
