@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img">
+  <title>Focus on What Matters</title>
+  <defs>
+    <linearGradient id="rustGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(217,154,108,0.8)"/>
+      <stop offset="100%" stop-color="rgba(217,154,108,0.5)"/>
+    </linearGradient>
+    <filter id="a" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+      <feColorMatrix in="blur" result="glow"
+        values="0 0 0 0 0.85  0 0 0 0 0.6  0 0 0 0 0.4  0 0 0 0.3 0"/>
+      <feComposite in="SourceGraphic" in2="glow"/>
+    </filter>
+  </defs>
+
+  <!-- center everything at (60,60) -->
+  <g transform="translate(60,60)" fill="none" fill-rule="evenodd">
+    <!-- outer circle -->
+    <circle r="50" fill="#1E2228" stroke="rgba(84,91,105,0.3)" stroke-width="0.5"/>
+
+    <!-- glow group -->
+    <g filter="url(#a)">
+      <!-- Document background -->
+      <rect x="-30" y="-40" width="60" height="80" rx="4" 
+            fill="#22262E" 
+            stroke="rgba(255,255,255,0.1)" 
+            stroke-width="0.5"/>
+      
+      <!-- Code lines -->
+      <g stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-linecap="round">
+        <line x1="-20" y1="-25" x2="25" y2="-25" />
+        <line x1="-20" y1="-15" x2="10" y2="-15" />
+        <line x1="-20" y1="-5" x2="15" y2="-5" />
+        <line x1="-20" y1="5" x2="-5" y2="5" />
+        <line x1="-20" y1="15" x2="15" y2="15" />
+        <line x1="-20" y1="25" x2="5" y2="25" />
+        <line x1="-20" y1="35" x2="0" y2="35" />
+      </g>
+      
+      <!-- Highlighted section -->
+      <rect x="-15" y="0" width="25" height="10" rx="1" 
+            fill="rgba(209,91,86,0.2)" 
+            stroke="rgba(209,91,86,0.3)" 
+            stroke-width="0.5"/>
+    </g>
+    
+    <!-- Magnifying glass -->
+    <g transform="translate(15,0)">
+      <circle r="18" 
+              fill="transparent" 
+              stroke="rgba(217,154,108,0.6)" 
+              stroke-width="2"/>
+      <circle r="10" 
+              fill="transparent" 
+              stroke="url(#rustGrad)" 
+              stroke-width="1.5"/>
+              
+      <!-- Handle -->
+      <line x1="14" y1="14" x2="20" y2="20" 
+            stroke="rgba(217,154,108,0.6)" 
+            stroke-width="2.5" 
+            stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

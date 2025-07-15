@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img">
+  <title>Ruby-Gear Icon</title>
+  <defs>
+    <!-- single gear tooth -->
+    <rect id="tooth" x="-1" y="-9" width="2" height="4" rx="0.5" />
+  </defs>
+  <!-- center at (16,16) -->
+  <g transform="translate(16 16)" fill="none">
+    <!-- ruby hexagon -->
+    <polygon
+      points="0,-13 -10,-7.5 -10,3.5 0,9 10,3.5 10,-7.5"
+      fill="#D15B56" fill-opacity="0.85" />
+    <!-- top facet highlight -->
+    <polygon
+      points="0,-13 10,-7.5 0,-2 -10,-7.5"
+      fill="#D15B56" fill-opacity="0.95" />
+
+    <!-- gear ring (even-odd fill) -->
+    <path
+      fill="#D99A6C" fill-opacity="0.9" fill-rule="evenodd"
+      d="
+        M0,-9
+        A9,9 0 1,1 0,9
+        A9,9 0 1,1 0,-9
+        M0,-5
+        A5,5 0 1,0 0,5
+        A5,5 0 1,0 0,-5" />
+
+    <!-- center hole -->
+    <circle r="5" fill="#1A1D23" />
+    <circle r="5" stroke="#D99A6C" stroke-opacity="0.9" stroke-width="0.5" />
+
+    <!-- eight identical teeth at 45° increments -->
+    <g fill="#D99A6C" fill-opacity="0.9">
+      <use href="#tooth" transform="rotate(0)" />
+      <use href="#tooth" transform="rotate(45)" />
+      <use href="#tooth" transform="rotate(90)" />
+      <use href="#tooth" transform="rotate(135)" />
+      <use href="#tooth" transform="rotate(180)" />
+      <use href="#tooth" transform="rotate(225)" />
+      <use href="#tooth" transform="rotate(270)" />
+      <use href="#tooth" transform="rotate(315)" />
+    </g>
+
+    <!-- center ruby dot -->
+    <circle r="2" fill="#D15B56" fill-opacity="0.95" />
+
+    <!-- subtle highlight ring -->
+    <path
+      fill="#D99A6C" fill-opacity="0.5" fill-rule="evenodd"
+      d="
+        M0,-8.5
+        A8.5,8.5 0 1,1 0,8.5
+        A8.5,8.5 0 1,1 0,-8.5
+        M0,-7.5
+        A7.5,7.5 0 1,0 0,7.5
+        A7.5,7.5 0 1,0 0,-7.5" />
+  </g>
+</svg>

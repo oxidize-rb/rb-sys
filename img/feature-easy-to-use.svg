@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img">
+  <title>Easy to Use</title>
+  <defs>
+    <linearGradient id="rubyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(209,91,86,0.8)"/>
+      <stop offset="100%" stop-color="rgba(209,91,86,0.5)"/>
+    </linearGradient>
+    <filter id="a" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+      <feColorMatrix in="blur" result="glow"
+        values="0 0 0 0 0.85  0 0 0 0 0.6  0 0 0 0 0.4  0 0 0 0.3 0"/>
+      <feComposite in="SourceGraphic" in2="glow"/>
+    </filter>
+  </defs>
+
+  <!-- center everything at (60,60) -->
+  <g transform="translate(60,60)" fill="none" fill-rule="evenodd">
+    <!-- outer circle -->
+    <circle r="50" fill="#1E2228" stroke="rgba(84,91,105,0.3)" stroke-width="0.5"/>
+
+    <!-- Ruby hexagon -->
+    <g filter="url(#a)">
+      <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" 
+               fill="url(#rubyGrad)"
+               stroke="rgba(255,255,255,0.1)"
+               stroke-width="0.5"/>
+      
+      <!-- Interface lines -->
+      <g stroke="rgba(255,255,255,0.7)" stroke-width="2" stroke-linecap="round">
+        <line x1="-20" y1="-10" x2="20" y2="-10" />
+        <line x1="-20" y1="0" x2="20" y2="0" />
+        <line x1="-20" y1="10" x2="5" y2="10" />
+      </g>
+    </g>
+    
+    <!-- Small Rust gear (integration) -->
+    <g transform="translate(20,15)">
+      <circle r="9" fill="rgba(217,154,108,0.7)" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" />
+      <g stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round">
+        <path d="M0,-9 V-6 M0,6 V9 M-9,0 H-6 M6,0 H9" />
+        <path d="M-6,-6 L-4,-4 M4,4 L6,6 M-6,6 L-4,4 M4,-4 L6,-6" />
+      </g>
+    </g>
+  </g>
+</svg>

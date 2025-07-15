@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Option 3: Bridge/Connection Icon -->
+  
+  <!-- Ruby platform (left) -->
+  <rect x="2" y="18" width="8" height="4" fill="#D15B56" fill-opacity="0.9"/>
+  <path d="M2 18L6 12L10 18H2Z" fill="#D15B56" fill-opacity="0.9"/>
+  
+  <!-- Rust platform (right) -->
+  <rect x="22" y="18" width="8" height="4" fill="#D99A6C" fill-opacity="0.9"/>
+  <path d="M22 18C22 18 22 12 26 12C30 12 30 18 30 18H22Z" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Bridge connecting platforms -->
+  <path d="M10 18H22" stroke="#D99A6C" stroke-width="1.5" stroke-dasharray="2 1"/>
+  <path d="M10 22H22" stroke="#D15B56" stroke-width="1.5" stroke-dasharray="2 1"/>
+  
+  <!-- Oxide particles/elements -->
+  <circle cx="13" cy="15" r="1.5" fill="#D15B56" fill-opacity="0.7"/>
+  <circle cx="16" cy="13" r="1.5" fill="#D99A6C" fill-opacity="0.7"/>
+  <circle cx="19" cy="15" r="1.5" fill="#D15B56" fill-opacity="0.7"/>
+  <circle cx="16" cy="17" r="1.5" fill="#D99A6C" fill-opacity="0.7"/>
+  
+  <!-- Central binding element -->
+  <circle cx="16" cy="15" r="3" stroke="#D15B56" stroke-width="1.5" fill="none"/>
+</svg>
