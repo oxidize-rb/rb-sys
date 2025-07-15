@@ -2,7 +2,7 @@ name: Documentation Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, doctest-stabilize]
     paths:
       - "docsite/docs/**/*.mdx"
       - "docsite/docs/**/*.md"
