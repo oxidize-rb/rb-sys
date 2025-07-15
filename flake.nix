@@ -24,6 +24,7 @@
             rust-bin.stable.latest.default
             bundler
             zsh
+            nodejs
           ];
 
           # Make is so nix develop --impure uses zsh config

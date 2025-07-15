@@ -1,0 +1,414 @@
+/**
+ * Homepage styles for Ruby on Rust - Enhanced with authoritative, heritage design
+ * @author rb-sys team
+ */
+
+/* Hero section - Dark scholarly aesthetic with subtle drama */
+.heroBanner {
+  padding: 3rem 0 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--ifm-background-color);
+  min-height: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* Subtle paper grain texture overlay */
+.heroTexture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cfilter id='a' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='18' result='blur'/%3E%3CfeBlend in='SourceGraphic' in2='blur' mode='color-burn' result='final'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23a)'%3E%3Crect width='100%25' height='100%25' fill='%23ffffff' opacity='0.1'/%3E%3Ccircle cx='42' cy='82' r='10' fill='%23ffffff' opacity='0.15'/%3E%3Ccircle cx='84' cy='42' r='10' fill='%23ffffff' opacity='0.15'/%3E%3Ccircle cx='126' cy='84' r='10' fill='%23ffffff' opacity='0.15'/%3E%3Ccircle cx='84' cy='126' r='10' fill='%23ffffff' opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
+  z-index: 1;
+  pointer-events: none;
+}
+
+.heroOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.2) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 3;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.titleWrapper {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 1rem;
+  padding: 0;
+}
+
+.titleAccent {
+  position: absolute;
+  height: 2px;
+  width: 40%;
+  background: linear-gradient(90deg,
+    rgba(209, 91, 86, 0.7) 0%,
+    rgba(217, 154, 108, 0.7) 100%);
+  bottom: -8px;
+  left: 30%;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(209, 91, 86, 0.3);
+}
+
+.title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+  background: linear-gradient(90deg,
+    var(--ruby-accent) 0%,
+    var(--rust-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+  position: relative;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: var(--ifm-font-family-heading);
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  margin: 1rem auto;
+  font-family: var(--ifm-font-family-base);
+  font-weight: 400;
+  color: var(--muted-text);
+  max-width: 600px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.subtitleDivider {
+  width: 60px;
+  height: 1px;
+  background-color: var(--neutral-accent);
+  opacity: 0.6;
+  margin: 1.5rem auto;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  position: relative;
+}
+
+/* Button styling with refined micro-interactions */
+.primaryButton,
+.secondaryButton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-out;
+  background-color: transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.primaryButton {
+  color: #fff;
+  background-color: rgba(209, 91, 86, 0.85);
+  border-color: rgba(209, 91, 86, 0.3);
+}
+
+.secondaryButton {
+  color: #fff;
+  background-color: rgba(217, 154, 108, 0.85);
+  border-color: rgba(217, 154, 108, 0.3);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+
+.primaryButton:hover {
+  background-color: rgba(209, 91, 86, 0.95);
+}
+
+.secondaryButton:hover {
+  background-color: rgba(217, 154, 108, 0.95);
+}
+
+.buttonText {
+  position: relative;
+  z-index: 1;
+}
+
+.buttonSheen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.primaryButton:hover .buttonSheen,
+.secondaryButton:hover .buttonSheen {
+  transform: translateX(100%);
+  transition: transform 0.6s ease;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 4rem 1rem 3rem;
+    min-height: auto;
+  }
+
+  .title {
+    font-size: 3rem;
+  }
+
+  .subtitle {
+    font-size: 1.25rem;
+    margin: 1rem auto;
+  }
+
+  .subtitleDivider {
+    margin: 1.5rem auto;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .title {
+    font-size: 2.5rem;
+  }
+}
+
+/* Code example section - with scholarly aesthetics */
+.codeExampleContainer {
+  padding: 3rem 0;
+  position: relative;
+  background-color: var(--ifm-background-surface-color);
+  border-top: 1px solid rgba(84, 91, 105, 0.2);
+  border-bottom: 1px solid rgba(84, 91, 105, 0.2);
+  overflow: hidden;
+}
+
+.codeExampleBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23232935' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.sectionHeading {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-family: var(--ifm-font-family-heading);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  letter-spacing: -0.015em;
+  margin-bottom: 0.5rem;
+}
+
+.sectionDivider {
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(209, 91, 86, 0.6) 0%,
+    rgba(217, 154, 108, 0.6) 100%);
+  margin: 0.5rem auto 0.75rem;
+  border-radius: 1px;
+}
+
+.sectionSubtitle {
+  font-family: var(--ifm-font-family-base);
+  font-size: 1.125rem;
+  max-width: 500px;
+  margin: 0 auto;
+  color: var(--muted-text);
+}
+
+.codeExample {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.codeExampleFrame {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(84, 91, 105, 0.3);
+  background-color: var(--code-background);
+  position: relative;
+}
+
+.codeExampleLegend {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.25rem;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(84, 91, 105, 0.3);
+  gap: 1rem;
+}
+
+.codeLanguageBadge {
+  display: flex;
+  align-items: center;
+  font-family: var(--ifm-font-family-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-text);
+}
+
+.rubyDot, .rustDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.rubyDot {
+  background-color: var(--ruby-accent);
+  box-shadow: 0 0 4px rgba(209, 91, 86, 0.5);
+}
+
+.rustDot {
+  background-color: var(--rust-accent);
+  box-shadow: 0 0 4px rgba(217, 154, 108, 0.5);
+}
+
+.codeTabs {
+  margin: 0;
+}
+
+.codeBlockWrapper {
+  position: relative;
+}
+
+.codeMeta {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.7rem;
+  color: var(--muted-text);
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.codeBlock {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+.codeBlock pre {
+  padding: 1.5rem !important;
+}
+
+/* Add a subtle page-turn effect to code tabs */
+.codeTabs [role="tablist"] {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(84, 91, 105, 0.3);
+  padding: 0.5rem 1rem 0;
+}
+
+.codeTabs [role="tab"] {
+  padding: 0.5rem 1.25rem;
+  margin-right: 0.25rem;
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(84, 91, 105, 0.3);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  font-family: var(--ifm-font-family-heading);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-text);
+  transition: all 0.15s ease-out;
+  transform: translateY(1px);
+}
+
+.codeTabs [role="tab"][aria-selected="true"] {
+  background-color: var(--code-background);
+  color: var(--ifm-font-color-base);
+  transform: translateY(0);
+}
+
+@media screen and (max-width: 768px) {
+  .codeExampleContainer {
+    padding: 4rem 1rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 1.1rem;
+  }
+
+  .codeBlock pre {
+    padding: 1.25rem !important;
+    font-size: 0.85rem !important;
+  }
+}

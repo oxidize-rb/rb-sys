@@ -1,0 +1,546 @@
+---
+id: project-setup
+title: Project Setup & Structure
+sidebar_position: 4
+keywords: [project setup, gem structure, cargo workspace, bundler, rake]
+description: Learn how to properly structure a Ruby gem with Rust extensions, including workspace setup, dependency management, and build configuration.
+---
+
+# Project Setup & Structure
+
+**Time:** 25 minutes | **Difficulty:** Intermediate
+
+Learn how to structure production-ready Ruby gems with Rust extensions. We'll build a URL parser that showcases real-world patterns.
+
+## Project Anatomy
+
+A production rb-sys project has a specific structure. Let's understand each component:
+
+```
+my_gem/
+├── 📦 Cargo.toml              # Workspace configuration
+├── 💎 Gemfile                 # Ruby dependencies
+├── 🔨 Rakefile                # Build automation
+├── 📋 my_gem.gemspec          # Gem specification
+├── 📝 README.md               # Documentation
+├── 🔒 Gemfile.lock            # Locked dependencies
+├── 📂 ext/
+│   └── my_gem/
+│       ├── 🦀 Cargo.toml      # Extension dependencies
+│       ├── 🔧 extconf.rb      # Build configuration
+│       ├── 🏗️ build.rs        # Build script (optional)
+│       └── 📂 src/
+│           ├── 📄 lib.rs      # Rust entry point
+│           └── 📄 *.rs        # Additional modules
+├── 📂 lib/
+│   ├── 💎 my_gem.rb           # Ruby entry point
+│   └── 📂 my_gem/
+│       ├── 📄 version.rb      # Version constant
+│       └── 📄 *.rb            # Ruby modules
+├── 🧪 test/                   # Test files
+├── 📊 benchmark/              # Performance tests
+└── 📚 examples/               # Usage examples
+```
+
+### Key Files Explained
+
+<details>
+<summary><strong>🦀 Cargo.toml (Workspace)</strong></summary>
+
+```toml
+# Root Cargo.toml - Defines the workspace
+[workspace]
+members = ["ext/*"]
+resolver = "2"
+
+# Shared dependencies for all crates
+[workspace.dependencies]
+magnus = { version = "0.7", features = ["rb-sys"] }
+rb-sys = "0.9"
+```
+
+</details>
+
+<details>
+<summary><strong>📋 Gemspec Configuration</strong></summary>
+
+```ruby
+# my_gem.gemspec
+Gem::Specification.new do |spec|
+  spec.name = "my_gem"
+  spec.version = MyGem::VERSION
+  spec.authors = ["Your Name"]
+  spec.email = ["you@example.com"]
+  
+  spec.summary = "Fast URL parsing for Ruby"
+  spec.description = "A Ruby gem using Rust for blazing-fast URL parsing"
+  spec.homepage = "https://github.com/you/my_gem"
+  spec.license = "MIT"
+  
+  # Gem files
+  spec.files = Dir[
+    "ext/**/*.{rs,toml,rb,lock}",
+    "lib/**/*.rb",
+    "LICENSE",
+    "README.md"
+  ]
+  
+  # Extension configuration
+  spec.extensions = ["ext/my_gem/extconf.rb"]
+  spec.require_paths = ["lib"]
+  
+  # Ruby version requirement
+  spec.required_ruby_version = ">= 3.0"
+  
+  # Dependencies
+  spec.add_dependency "rb_sys", "~> 0.9"
+  
+  # Development dependencies
+  spec.add_development_dependency "rake", "~> 13.0"
+  spec.add_development_dependency "minitest", "~> 5.0"
+end
+```
+
+</details>
+
+<details>
+<summary><strong>🔨 Rakefile with rb-sys</strong></summary>
+
+```ruby
+# Rakefile
+require "bundler/gem_tasks"
+require "minitest/test_task"
+
+Minitest::TestTask.create
+
+# Add rb-sys extension task
+require "rb_sys/extensiontask"
+
+RbSys::ExtensionTask.new("my_gem") do |ext|
+  ext.lib_dir = "lib/my_gem"
+end
+
+task default: [:compile, :test]
+
+# Custom tasks
+desc "Run benchmarks"
+task :bench => :compile do
+  ruby "benchmark/run.rb"
+end
+
+desc "Open console with extension loaded"
+task :console => :compile do
+  exec "irb -r ./lib/my_gem.rb"
+end
+```
+
+</details>
+
+## Real Example: URL Parser Gem
+
+Let's build a production-ready URL parser using the Rust [url](https://crates.io/crates/url) crate. This demonstrates key patterns you'll use in real projects.
+
+### Step 1: Create the Gem Structure
+
+```bash
+# Create gem with Rust extension
+bundle gem --ext=rust url_parser
+cd url_parser
+
+# Set up workspace
+cat > Cargo.toml << 'EOF'
+[workspace]
+members = ["ext/*"]
+resolver = "2"
+
+[workspace.dependencies]
+magnus = { version = "0.7", features = ["rb-sys"] }
+url = "2.5"
+EOF
+```
+
+### Step 2: Configure the Extension
+
+```toml
+# ext/url_parser/Cargo.toml
+[package]
+name = "url_parser"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# High-level Ruby bindings with rb-sys feature
+magnus = { version = "0.7", features = ["rb-sys"] }
+
+# The main Rust library we're wrapping
+url = "2.4"
+
+[build-dependencies]
+rb-sys-env = "0.1"
+```
+
+### Step 3: Implement the Rust Extension
+
+```rust
+// ext/url_parser/src/lib.rs
+use magnus::{function, method, prelude::*, Error, Ruby};
+use url::Url;
+
+// Simple URL wrapper class
+struct UrlWrapper {
+    inner: Url,
+}
+
+#[magnus::wrap(class = "UrlParser::URL")]
+impl UrlWrapper {
+    // Parse a URL string
+    fn parse(url_str: String) -> Result<Self, Error> {
+        match Url::parse(&url_str) {
+            Ok(url) => Ok(UrlWrapper { inner: url }),
+            Err(err) => {
+                Err(Error::new(magnus::exception::arg_error(), format!("Invalid URL: {}", err)))
+            }
+        }
+    }
+
+    // Basic getters
+    fn scheme(&self) -> String {
+        self.inner.scheme().to_string()
+    }
+
+    fn host(&self) -> Option<String> {
+        self.inner.host_str().map(|s| s.to_string())
+    }
+
+    fn path(&self) -> String {
+        self.inner.path().to_string()
+    }
+
+    fn query(&self) -> Option<String> {
+        self.inner.query().map(|s| s.to_string())
+    }
+
+    // String representation of the URL
+    fn to_string(&self) -> String {
+        self.inner.to_string()
+    }
+}
+
+// Module-level utilities
+fn is_valid_url(url_str: String) -> bool {
+    Url::parse(&url_str).is_ok()
+}
+
+// Module init function - Ruby extension entry point
+#[magnus::init]
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    // Define the main module
+    let module = ruby.define_module("UrlParser")?;
+
+    // Add utility function at module level
+    module.define_singleton_method("valid_url?", function!(is_valid_url, 1))?;
+
+    // Define and configure the URL class
+    let class = module.define_class("URL", ruby.class_object())?;
+    class.define_singleton_method("parse", function!(UrlWrapper::parse, 1))?;
+
+    // Instance methods
+    class.define_method("scheme", method!(UrlWrapper::scheme, 0))?;
+    class.define_method("host", method!(UrlWrapper::host, 0))?;
+    class.define_method("path", method!(UrlWrapper::path, 0))?;
+    class.define_method("query", method!(UrlWrapper::query, 0))?;
+    class.define_method("to_s", method!(UrlWrapper::to_string, 0))?;
+
+    Ok(())
+}
+```
+
+### Step 4: Create Ruby Wrapper
+
+The Ruby side provides a clean API and additional conveniences:
+
+```ruby
+# lib/url_parser.rb
+require_relative "url_parser/version"
+require_relative "url_parser/url_parser"
+
+module UrlParser
+  class Error < StandardError; end
+
+  # Parse a URL string and return a URL object
+  def self.parse(url_string)
+    URL.parse(url_string)
+  rescue => e
+    raise Error, "Failed to parse URL: #{e.message}"
+  end
+
+  # Check if a URL has an HTTPS scheme
+  def self.https?(url_string)
+    return false unless valid_url?(url_string)
+    url = parse(url_string)
+    url.scheme == "https"
+  end
+end
+```
+
+### Step 5: Add Comprehensive Tests
+
+```ruby
+# test/test_url_parser.rb
+require "test_helper"
+
+class TestUrlParser < Minitest::Test
+  def test_basic_url_parsing
+    url = UrlParser::URL.parse("https://example.com/path?query=value")
+
+    assert_equal "https", url.scheme
+    assert_equal "example.com", url.host
+    assert_equal "/path", url.path
+    assert_equal "query=value", url.query
+  end
+
+  def test_url_validation
+    assert UrlParser.valid_url?("https://example.com")
+    refute UrlParser.valid_url?("not a url")
+  end
+
+  def test_https_check
+    assert UrlParser.https?("https://example.com")
+    refute UrlParser.https?("http://example.com")
+  end
+
+  def test_invalid_url_raises_error
+    assert_raises UrlParser::Error do
+      UrlParser.parse("not://a.valid/url")
+    end
+  end
+end
+```
+
+## Advanced Project Patterns
+
+### Workspace Benefits
+
+Using a Cargo workspace provides:
+
+1. **Shared dependencies** - One `Cargo.lock` for reproducible builds
+2. **Faster compilation** - Dependencies compiled once
+3. **Multiple extensions** - Easy to add more Rust crates
+4. **Unified testing** - Run all Rust tests together
+
+### Build Configuration
+
+<details>
+<summary><strong>Custom extconf.rb Options</strong></summary>
+
+```ruby
+# ext/my_gem/extconf.rb
+require "mkmf"
+require "rb_sys/mkmf"
+
+create_rust_makefile("my_gem/my_gem") do |r|
+  # Enable link-time optimization
+  r.profile = ENV.fetch("RB_SYS_CARGO_PROFILE", "release")
+  
+  # Add feature flags
+  r.features = ["performance"] if ENV["ENABLE_PERF"]
+  
+  # Extra Rust flags
+  r.extra_rustflags = ["--cfg", "ruby_3_0"] if RUBY_VERSION >= "3.0"
+  
+  # Target specific configuration
+  if RbConfig::CONFIG["target_os"] == "darwin"
+    r.target = "x86_64-apple-darwin"
+  end
+end
+```
+
+</details>
+
+<details>
+<summary><strong>Build Script (build.rs)</strong></summary>
+
+```rust
+// ext/my_gem/build.rs
+fn main() {
+    // Activate rb-sys environment
+    rb_sys_env::activate().unwrap();
+    
+    // Add custom build configuration
+    println!("cargo:rustc-cfg=has_custom_feature");
+    
+    // Link to system libraries if needed
+    #[cfg(target_os = "macos")]
+    println!("cargo:rustc-link-lib=framework=Security");
+}
+```
+
+</details>
+
+### Dependency Management
+
+```toml
+# ext/my_gem/Cargo.toml
+[dependencies]
+# Required dependencies
+magnus = { version = "0.7", features = ["rb-sys"] }
+
+# Feature-gated dependencies
+serde = { version = "1.0", optional = true }
+serde_json = { version = "1.0", optional = true }
+
+[features]
+default = []
+json = ["serde", "serde_json"]
+performance = ["lto"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+```
+
+### Error Handling Strategy
+
+```rust
+use magnus::{Error, exception};
+use std::fmt;
+
+// Custom error type
+#[derive(Debug)]
+enum UrlError {
+    InvalidScheme(String),
+    InvalidHost(String),
+    ParseError(url::ParseError),
+}
+
+impl fmt::Display for UrlError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            UrlError::InvalidScheme(s) => write!(f, "Invalid scheme: {}", s),
+            UrlError::InvalidHost(h) => write!(f, "Invalid host: {}", h),
+            UrlError::ParseError(e) => write!(f, "Parse error: {}", e),
+        }
+    }
+}
+
+// Convert to Ruby exceptions
+impl From<UrlError> for Error {
+    fn from(err: UrlError) -> Self {
+        match err {
+            UrlError::InvalidScheme(_) | UrlError::InvalidHost(_) => {
+                Error::new(exception::arg_error(), err.to_string())
+            }
+            UrlError::ParseError(_) => {
+                Error::new(exception::runtime_error(), err.to_string())
+            }
+        }
+    }
+}
+```
+
+## Project Organization Best Practices
+
+### 1. Module Structure
+
+```
+ext/my_gem/src/
+├── lib.rs          # Entry point and module declarations
+├── types.rs        # Type definitions and conversions
+├── errors.rs       # Error types and handling
+├── implementation/ # Core functionality
+│   ├── mod.rs
+│   ├── parser.rs
+│   └── validator.rs
+└── ruby_api.rs     # Ruby class/module definitions
+```
+
+### 2. Testing Strategy
+
+```
+test/
+├── test_helper.rb      # Common test utilities
+├── unit/               # Unit tests
+│   ├── test_parser.rb
+│   └── test_errors.rb
+├── integration/        # Integration tests
+│   └── test_api.rb
+└── performance/        # Benchmark tests
+    └── bench_parser.rb
+```
+
+### 3. Documentation
+
+```ruby
+# Document Ruby methods with YARD
+module UrlParser
+  # Parses a URL string into components
+  # 
+  # @param url_string [String] the URL to parse
+  # @return [URL] parsed URL object
+  # @raise [Error] if URL is invalid
+  # 
+  # @example Parse a simple URL
+  #   url = UrlParser.parse("https://example.com")
+  #   url.scheme #=> "https"
+  def self.parse(url_string)
+    # Implementation
+  end
+end
+```
+
+## Shipping Your Gem
+
+### Pre-release Checklist
+
+- [ ] All tests passing
+- [ ] Benchmarks show expected performance
+- [ ] Documentation complete (README, YARD)
+- [ ] CHANGELOG updated
+- [ ] Version bumped
+- [ ] Platform compatibility verified
+
+### Building Platform Gems
+
+```bash
+# Build native gems for multiple platforms
+rake native gem
+
+# This creates:
+# - url_parser-1.0.0.gem (source gem)
+# - url_parser-1.0.0-x86_64-linux.gem
+# - url_parser-1.0.0-x86_64-darwin.gem
+# - url_parser-1.0.0-arm64-darwin.gem
+```
+
+## 🎯 Key Takeaways
+
+1. **Use workspaces** for better dependency management
+2. **Structure for growth** - organize code into modules
+3. **Handle errors gracefully** - map to Ruby exceptions
+4. **Test comprehensively** - unit, integration, performance
+5. **Document thoroughly** - both Ruby and Rust code
+6. **Plan for platforms** - test across OS and Ruby versions
+
+## 📚 Next Steps
+
+- [**Basic Patterns**](basic-patterns) - Common implementation patterns
+- [**Working with Ruby Objects**](working-with-ruby-objects) - Manipulating Ruby data
+- [**Testing Extensions**](testing) - Comprehensive testing strategies
+- [**Cross-Platform Development**](cross-platform) - Building for all platforms
+
+---
+
+<div className="success-message">
+
+### 🏗️ Ready to Build!
+
+You now understand how to structure production-ready Ruby gems with Rust. Start building!
+
+</div>

@@ -1,0 +1,59 @@
+.languageCallout {
+  border-radius: var(--border-radius-md);
+  border-left-width: var(--border-width-thick);
+  border-left-style: solid;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+  background-color: var(--ifm-background-surface-color);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.ruby {
+  border-left-color: var(--ruby-accent);
+}
+
+.rust {
+  border-left-color: var(--rust-accent);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: var(--border-width) solid var(--neutral-accent);
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+}
+
+.ruby .header {
+  color: var(--ruby-accent);
+  background-color: rgba(209, 91, 86, 0.05);
+}
+
+.rust .header {
+  color: var(--rust-accent);
+  background-color: rgba(217, 154, 108, 0.05);
+}
+
+.icon {
+  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.content {
+  padding: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.content p:last-child {
+  margin-bottom: 0;
+}

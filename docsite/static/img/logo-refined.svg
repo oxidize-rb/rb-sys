@@ -1,0 +1,37 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ruby hexagonal prism (perfectly proportioned) -->
+  <path d="M16 2L5 8V20L16 26L27 20V8L16 2Z" fill="#D15B56" fill-opacity="0.9"/>
+  
+  <!-- Outer gear ring -->
+  <path d="M16 5.5C10.201 5.5 5.5 10.201 5.5 16C5.5 21.799 10.201 26.5 16 26.5C21.799 26.5 26.5 21.799 26.5 16C26.5 10.201 21.799 5.5 16 5.5ZM16 10.5C18.9812 10.5 21.5 13.0188 21.5 16C21.5 18.9812 18.9812 21.5 16 21.5C13.0188 21.5 10.5 18.9812 10.5 16C10.5 13.0188 13.0188 10.5 16 10.5Z" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Inner gear hole (perfectly centered) -->
+  <circle cx="16" cy="16" r="5.5" fill="#1A1D23" stroke="#D99A6C" stroke-opacity="0.9"/>
+  
+  <!-- Gear teeth (mathematically precise positioning) -->
+  <!-- Top tooth -->
+  <path d="M16 4V7.5" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  <!-- Bottom tooth -->
+  <path d="M16 24.5V28" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Left tooth -->
+  <path d="M4 16H7.5" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  <!-- Right tooth -->
+  <path d="M24.5 16H28" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Top-left tooth (45° angle) -->
+  <path d="M8.343 8.343L10.828 10.828" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  <!-- Bottom-right tooth (45° angle) -->
+  <path d="M21.172 21.172L23.657 23.657" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Bottom-left tooth (45° angle) -->
+  <path d="M8.343 23.657L10.828 21.172" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  <!-- Top-right tooth (45° angle) -->
+  <path d="M21.172 10.828L23.657 8.343" stroke="#D99A6C" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Ruby facet highlight (subtle glow) -->
+  <path d="M16 2L27 8L16 14L5 8L16 2Z" fill="#D15B56" fill-opacity="0.7"/>
+  
+  <!-- Center dot (Ruby core) -->
+  <circle cx="16" cy="16" r="2" fill="#D15B56" fill-opacity="0.9"/>
+</svg>

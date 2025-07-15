@@ -1,0 +1,13 @@
+.docItemContainer {
+  /* Let Docusaurus handle layout */
+}
+
+.docItemCol {
+  /* Let Docusaurus handle layout */
+}
+
+@media (min-width: 997px) {
+  .docItemCol {
+    /* Let Docusaurus handle layout */
+  }
+}

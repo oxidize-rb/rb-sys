@@ -1,0 +1,35 @@
+.sidebar {
+  max-height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  padding-top: var(--ifm-navbar-height);
+  /* Use Docusaurus defaults for width */
+  transition: opacity 50ms ease;
+}
+
+.sidebarWithHideableNavbar {
+  padding-top: 0;
+}
+
+.sidebarHidden {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.sidebarLogo {
+  display: flex;
+  align-items: center;
+  margin: 0 var(--ifm-navbar-padding-horizontal);
+  min-height: var(--ifm-navbar-height);
+  max-height: var(--ifm-navbar-height);
+  color: inherit;
+  text-decoration: none;
+}
+
+.sidebarLogo img {
+  margin-right: 0.5rem;
+  height: 2rem;
+}

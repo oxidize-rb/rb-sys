@@ -1,0 +1,37 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ruby hexagonal gem base shape -->
+  <path d="M16 2.5L5.5 8.25V19.75L16 25.5L26.5 19.75V8.25L16 2.5Z" fill="#D15B56" fill-opacity="0.85"/>
+  
+  <!-- Outer gear ring - perfect circle with gear pattern -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M16 6C10.477 6 6 10.477 6 16C6 21.523 10.477 26 16 26C21.523 26 26 21.523 26 16C26 10.477 21.523 6 16 6ZM16 11C13.791 11 12 12.791 12 16C12 19.209 13.791 21 16 21C18.209 21 20 19.209 20 16C20 12.791 18.209 11 16 11Z" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Inner gear hole with thin border -->
+  <circle cx="16" cy="16" r="5" fill="#1A1D23" stroke="#D99A6C" stroke-opacity="0.9" stroke-width="0.5"/>
+  
+  <!-- Gear teeth - mathematically positioned at 45° increments -->
+  <!-- Top tooth -->
+  <rect x="15" y="3.5" width="2" height="3.5" rx="0.5" fill="#D99A6C" fill-opacity="0.9"/>
+  <!-- Bottom tooth -->
+  <rect x="15" y="25" width="2" height="3.5" rx="0.5" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Left tooth -->
+  <rect x="3.5" y="15" width="3.5" height="2" rx="0.5" fill="#D99A6C" fill-opacity="0.9"/>
+  <!-- Right tooth -->
+  <rect x="25" y="15" width="3.5" height="2" rx="0.5" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Top-left tooth (45° angle) -->
+  <rect x="7.05" y="7.05" width="3.5" height="2" rx="0.5" transform="rotate(45 7.05 7.05)" fill="#D99A6C" fill-opacity="0.9"/>
+  <!-- Bottom-right tooth (45° angle) -->
+  <rect x="24.95" y="24.95" width="3.5" height="2" rx="0.5" transform="rotate(225 24.95 24.95)" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Bottom-left tooth (45° angle) -->
+  <rect x="7.05" y="24.95" width="3.5" height="2" rx="0.5" transform="rotate(-45 7.05 24.95)" fill="#D99A6C" fill-opacity="0.9"/>
+  <!-- Top-right tooth (45° angle) -->
+  <rect x="24.95" y="7.05" width="3.5" height="2" rx="0.5" transform="rotate(135 24.95 7.05)" fill="#D99A6C" fill-opacity="0.9"/>
+  
+  <!-- Ruby facet highlight - subtle top face -->
+  <path d="M16 2.5L26.5 8.25L16 14L5.5 8.25L16 2.5Z" fill="#D15B56" fill-opacity="0.95"/>
+  
+  <!-- Center dot (Ruby core) -->
+  <circle cx="16" cy="16" r="2" fill="#D15B56" fill-opacity="0.95"/>
+</svg>

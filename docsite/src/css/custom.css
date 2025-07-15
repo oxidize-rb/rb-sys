@@ -1,0 +1,1035 @@
+/**
+ * oxidize.rb - Design System
+ *
+ * Important overrides for specific elements
+ */
+
+/* Fix spacing issues with the title wrapper */
+div[class*="titleWrapper"] {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+div[class*="titleWrapper"] h1 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/**
+ *
+ * A design system for the oxidize.rb documentation site.
+ * Focused on creating a developer documentation site with clarity and readability.
+ */
+
+/* Google Fonts for IBM Plex family */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap');
+
+/**
+ * CSS Variables
+ * 
+ * Defining our design system's color palette, typography, and other variables.
+ * Dark mode is our primary theme, with light mode as a secondary option.
+ */
+:root {
+  /* Typography */
+  --ifm-font-family-base: 'IBM Plex Serif', 'Times New Roman', Times, serif;
+  --ifm-font-family-heading: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  --ifm-font-size-base: 1.125rem; /* 18px */
+  --ifm-line-height-base: 1.65;
+  --ifm-code-font-size: 0.9375rem; /* 15px */
+
+  /* Layout - Use Docusaurus variables */
+  --ifm-container-width: 1400px; /* Slightly wider container */
+  --ifm-sidebar-width: 280px; /* Standard sidebar width */
+
+  /* Spacing */
+  --ifm-spacing-horizontal: 1.5rem;
+
+  /* Color Palette - Light Mode */
+  --primary-background: hsl(220, 18%, 95%); /* Light background */
+  --secondary-background: hsl(220, 16%, 90%); /* Slightly darker for contrast */
+  --primary-text: hsl(220, 18%, 12%); /* Dark text for readability */
+  --muted-text: hsl(220, 10%, 40%); /* Muted text for secondary information */
+  
+  /* Accent Colors */
+  --ruby-accent: hsl(5, 65%, 55%); /* #D15B56 - Ruby accent */
+  --rust-accent: hsl(28, 60%, 60%); /* #D99A6C - Rust accent */
+  --neutral-accent: hsl(220, 12%, 38%); /* #545B69 - Neutral accent for UI elements */
+  
+  /* UI Elements */
+  --border-radius-sm: 3px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 6px;
+  --border-width: 1px;
+  --border-width-thick: 3px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.1);
+  
+  /* Docusaurus Specific */
+  --ifm-color-primary: var(--neutral-accent);
+  --ifm-color-primary-dark: hsl(220, 12%, 33%);
+  --ifm-color-primary-darker: hsl(220, 12%, 28%);
+  --ifm-color-primary-darkest: hsl(220, 12%, 23%);
+  --ifm-color-primary-light: hsl(220, 12%, 43%);
+  --ifm-color-primary-lighter: hsl(220, 12%, 48%);
+  --ifm-color-primary-lightest: hsl(220, 12%, 53%);
+  
+  --ifm-code-background: hsla(220, 16%, 90%, 0.6);
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.05);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease-out;
+  --transition-base: 0.2s ease-out;
+}
+
+/* Dark Mode Variables - Our Primary Theme */
+[data-theme='dark'] {
+  /* Color Palette - Dark Mode */
+  --primary-background: hsl(220, 18%, 12%); /* #1A1D23 */
+  --secondary-background: hsl(220, 16%, 16%); /* #22262E */
+  --code-background: hsl(220, 18%, 10%); /* #15171C */
+  --primary-text: hsl(35, 15%, 88%); /* #E4E0DB */
+  --muted-text: hsl(220, 10%, 65%); /* #9CA3B0 */
+  
+  /* Docusaurus Specific - Dark Mode */
+  --ifm-background-color: var(--primary-background);
+  --ifm-background-surface-color: var(--secondary-background);
+  --ifm-footer-background-color: hsl(220, 20%, 10%); /* #161A21 */
+  --ifm-font-color-base: var(--primary-text);
+  
+  --ifm-color-primary: hsl(220, 12%, 65%); /* Lighter neutral for dark mode */
+  --ifm-color-primary-dark: hsl(220, 12%, 60%);
+  --ifm-color-primary-darker: hsl(220, 12%, 55%);
+  --ifm-color-primary-darkest: hsl(220, 12%, 50%);
+  --ifm-color-primary-light: hsl(220, 12%, 70%);
+  --ifm-color-primary-lighter: hsl(220, 12%, 75%);
+  --ifm-color-primary-lightest: hsl(220, 12%, 80%);
+  
+  /* Links and accents */
+  --ifm-link-color: hsl(28, 70%, 70%); /* Lighter Rust Accent */
+  --ifm-link-hover-color: hsl(28, 80%, 75%); /* Even lighter on hover */
+  
+  /* Code blocks */
+  --ifm-code-background: var(--code-background);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+  
+  /* Other elements */
+  --ifm-breadcrumb-color-active: var(--ruby-accent);
+  --ifm-menu-color-active: var(--ruby-accent);
+  --ifm-navbar-link-hover-color: var(--ruby-accent);
+}
+
+/**
+ * Layout & Grid
+ *
+ * Let Docusaurus handle the main layout structure, we'll just customize the styling.
+ */
+
+ /* Add some max-width to content for readability */
+.container {
+  max-width: min(var(--ifm-container-width), 100vw);
+}
+
+/* Add comfortable reading width to main content*/
+article {
+  max-width: 65rem;
+}
+
+/**
+ * Typography
+ * 
+ * Establishing a clear typographic hierarchy using the IBM Plex family.
+ */
+body {
+  font-family: var(--ifm-font-family-base);
+  font-size: var(--ifm-font-size-base);
+  line-height: var(--ifm-line-height-base);
+  color: var(--ifm-font-color-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.5em;
+  color: var(--ifm-font-color-base);
+}
+
+h1, .h1 {
+  font-size: 2.441rem;
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  letter-spacing: -0.02em;
+}
+
+h2, .h2 {
+  font-size: 1.953rem;
+  margin-top: 1.3em;
+  margin-bottom: 0.7em;
+  letter-spacing: -0.015em;
+}
+
+h3, .h3 {
+  font-size: 1.563rem;
+  margin-top: 1.1em;
+  margin-bottom: 0.6em;
+  letter-spacing: -0.01em;
+}
+
+h4, .h4 {
+  font-size: 1.25rem;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+h5, .h5 {
+  font-size: 1rem;
+  margin-top: 0.9em;
+  margin-bottom: 0.4em;
+}
+
+h6, .h6 {
+  font-size: 0.875rem;
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Paragraphs and spacing */
+p {
+  margin-top: 0;
+  margin-bottom: 1.5em;
+}
+
+/* Lists */
+ul, ol {
+  padding-left: 1.5em;
+  margin-bottom: 1.5em;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+/* Subtle texture for dark mode background */
+[data-theme='dark'] body {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23232935' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+
+/**
+ * Code Blocks
+ * 
+ * Styling for code blocks and inline code with a focus on readability.
+ */
+.theme-code-block {
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5em;
+}
+
+/* Code block header */
+.theme-code-block-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: var(--border-width) solid var(--neutral-accent);
+  padding: 0.75rem 1rem;
+  font-family: var(--ifm-font-family-heading);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Language badge */
+.theme-code-block-header-language {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-text);
+}
+
+/* Copy button */
+.theme-code-block-header button {
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.theme-code-block-header button:hover {
+  opacity: 1;
+  background-color: transparent;
+}
+
+/* Code content */
+.theme-code-block pre {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: var(--ifm-code-font-size);
+  line-height: 1.5;
+  padding: 1rem;
+}
+
+/* Inline code */
+:not(pre) > code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--ifm-code-background);
+  color: var(--ruby-accent);
+  font-weight: 500;
+}
+
+/**
+ * Admonitions
+ * 
+ * Callout boxes for important information, warnings, tips, etc.
+ */
+.admonition {
+  border-radius: var(--border-radius-md);
+  border-left: var(--border-width-thick) solid var(--neutral-accent);
+  background-color: var(--ifm-background-surface-color);
+  margin-bottom: 1.5em;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.admonition-heading {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.admonition-heading h5 {
+  margin: 0;
+  margin-left: 0.5rem;
+  font-size: 1rem;
+}
+
+.admonition-icon {
+  display: inline-flex;
+}
+
+.admonition-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2px;
+}
+
+.admonition-content {
+  font-size: 0.9375rem;
+}
+
+/* Admonition types */
+.admonition-note {
+  border-left-color: var(--ifm-color-primary);
+}
+
+.admonition-tip {
+  border-left-color: hsl(142, 76%, 36%); /* Green */
+}
+
+.admonition-info {
+  border-left-color: hsl(200, 85%, 45%); /* Blue */
+}
+
+.admonition-caution {
+  border-left-color: hsl(40, 90%, 50%); /* Yellow/Orange */
+}
+
+.admonition-warning,
+.admonition-danger {
+  border-left-color: var(--ruby-accent);
+}
+
+/**
+ * Navigation & Sidebar
+ * 
+ * Styling for the sidebar navigation with a focus on clarity and hierarchy.
+ */
+.navbar {
+  background-color: var(--ifm-background-color);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  height: 4rem;
+}
+
+.navbar__brand {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+}
+
+.navbar__logo {
+  height: 2rem;
+  margin-right: 0.75rem;
+}
+
+/* Sidebar - Only apply styling, not structure */
+.menu {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 400;
+  font-size: 0.9375rem;
+}
+
+.menu__link {
+  border-radius: var(--border-radius-sm);
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.menu__link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+}
+
+[data-theme='dark'] .menu__link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.menu__link--active {
+  font-weight: 500;
+  color: var(--ruby-accent);
+  position: relative;
+}
+
+.menu__link--active:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 3px;
+  background-color: var(--ruby-accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.menu__list-item-collapsible:hover {
+  background-color: transparent;
+}
+
+.menu__list-item-collapsible .menu__link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .menu__list-item-collapsible .menu__link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.menu__list-item-collapsible--active {
+  background-color: transparent;
+}
+
+/**
+ * Buttons & Links
+ * 
+ * Styling for buttons and links with a focus on clarity and feedback.
+ */
+a {
+  color: var(--ifm-link-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration: underline;
+}
+
+/* Buttons */
+.button {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-md);
+  border: var(--border-width) solid transparent;
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+  /* Common active styling */
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}
+
+.button--primary, 
+.button--secondary {
+  /* Active styling for both buttons */
+  background-color: #d97706; /* amber-600 */
+  color: white;
+}
+
+.button--primary:hover, 
+.button--secondary:hover {
+  background-color: #b45309; /* amber-700 */
+  color: white;
+  text-decoration: none;
+}
+
+/**
+ * Tables
+ * 
+ * Clean, readable tables with clear headers and borders.
+ */
+table {
+  width: 100%;
+  margin: 1.5em 0;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+table th,
+table td {
+  padding: 0.75rem 1rem;
+  border: var(--border-width) solid var(--neutral-accent);
+  text-align: left;
+}
+
+table th {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+  background-color: var(--ifm-background-surface-color);
+}
+
+table tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme='dark'] table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/**
+ * Footer
+ *
+ * Sidebar-like footer with consistent styling and layout
+ */
+.footer {
+  background-color: var(--primary-background);
+  color: var(--muted-text);
+  padding: 0;
+  font-size: 0.875rem;
+  border-top: 1px solid rgba(84, 91, 105, 0.2);
+}
+
+.footer__container {
+  max-width: var(--ifm-container-width);
+  padding: 0;
+  margin: 0 auto;
+}
+
+.footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  padding: 1.5rem 1.5rem 0;
+  justify-content: space-between;
+}
+
+.footer__links .col {
+  flex: 0 0 auto;
+  width: 200px;
+  margin-right: 0;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem 0 0;
+}
+
+.footer__col {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer__title {
+  font-family: var(--ifm-font-family-heading);
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary-text);
+  margin-bottom: 1rem;
+  padding: 0;
+  opacity: 0.9;
+  line-height: 1;
+}
+
+.footer__item {
+  margin: 0;
+  padding: 0;
+}
+
+.footer__items {
+  padding-left: 0;
+}
+
+.footer__link-item {
+  display: block;
+  color: var(--muted-text);
+  transition: color var(--transition-fast);
+  padding: 0.35rem 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-family: var(--ifm-font-family-heading);
+}
+
+.footer__link-item:hover {
+  color: var(--ruby-accent);
+  text-decoration: none;
+}
+
+.footer__link-item svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.2rem;
+  height: 0.7rem;
+  width: 0.7rem;
+  opacity: 0.6;
+}
+
+.footer__copyright {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  opacity: 0.7;
+  text-align: center;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(84, 91, 105, 0.2);
+}
+
+@media (max-width: 996px) {
+  .footer__links .col {
+    width: 170px;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer__links .col {
+    width: 50%;
+    padding-right: 0;
+  }
+
+  .footer__links {
+    padding: 1.5rem 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer__links .col {
+    width: 100%;
+  }
+}
+
+/**
+ * Misc Elements
+ * 
+ * Styling for various other elements like blockquotes, horizontal rules, etc.
+ */
+blockquote {
+  border-left: var(--border-width-thick) solid var(--neutral-accent);
+  padding: 0 1rem;
+  margin: 0 0 1.5rem 0;
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+hr {
+  border: 0;
+  border-top: var(--border-width) solid var(--neutral-accent);
+  margin: 2rem 0;
+}
+
+/* Ruby/Rust specific styling */
+.ruby-color {
+  color: var(--ruby-accent);
+}
+
+.rust-color {
+  color: var(--rust-accent);
+}
+
+/**
+ * Utility Classes
+ * 
+ * Helpful utility classes for common styling needs.
+ */
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--muted-text);
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.mb-5 {
+  margin-bottom: 3rem;
+}
+
+/**
+ * Focus States
+ * 
+ * Ensuring clear focus states for accessibility.
+ */
+:focus {
+  outline: 2px solid var(--ruby-accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ruby-accent);
+  outline-offset: 2px;
+}
+
+/**
+ * Custom Components for rb-sys Documentation
+ */
+
+/* Architecture diagram container */
+.architecture-diagram {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.architecture-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Comparison table */
+.comparison-table {
+  font-size: 0.9rem;
+  margin: 2rem 0;
+}
+
+.comparison-table td:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.comparison-table td {
+  vertical-align: middle;
+}
+
+/* Community links grid */
+.community-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.community-links a {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: var(--border-radius-md);
+  transition: background-color var(--transition-fast);
+}
+
+.community-links a:hover {
+  background-color: var(--ifm-background-surface-color);
+  text-decoration: none;
+}
+
+/* CTA buttons */
+.cta-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.cta-buttons a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--rust-accent);
+  color: white;
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.cta-buttons a:hover {
+  transform: translateY(-2px);
+  background-color: var(--ruby-accent);
+  text-decoration: none;
+}
+
+/* Demo preview box */
+.demo-preview {
+  background-color: var(--ifm-background-surface-color);
+  border: 2px solid var(--rust-accent);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+.demo-preview code {
+  background-color: transparent;
+}
+
+/* Success output */
+.success-output {
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 2px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+[data-theme='dark'] .success-output {
+  background-color: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Success message */
+.success-message {
+  background-color: var(--ifm-background-surface-color);
+  border: 2px solid var(--rust-accent);
+  border-radius: var(--border-radius-lg);
+  padding: 2rem;
+  margin: 3rem 0;
+  text-align: center;
+}
+
+.success-message h3 {
+  margin-top: 0;
+  color: var(--rust-accent);
+}
+
+/* Next steps grid */
+.next-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.next-step-card {
+  background-color: var(--ifm-background-surface-color);
+  border: 1px solid var(--neutral-accent);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.next-step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.next-step-card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.next-step-card a {
+  font-weight: 600;
+  color: var(--rust-accent);
+}
+
+/* Tabs component enhancement */
+.tabs-container {
+  margin: 1.5rem 0;
+}
+
+.tabs {
+  border-bottom: 2px solid var(--neutral-accent);
+}
+
+.tabs__item {
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tabs__item--active {
+  color: var(--ruby-accent);
+  border-bottom-color: var(--ruby-accent);
+}
+
+/* Code language labels */
+.language-ruby::before {
+  content: "Ruby";
+  color: var(--ruby-accent);
+}
+
+.language-rust::before {
+  content: "Rust";
+  color: var(--rust-accent);
+}
+
+.language-bash::before,
+.language-sh::before {
+  content: "Shell";
+  color: var(--neutral-accent);
+}
+
+/* Platform-specific notes */
+.platform-note {
+  background-color: var(--ifm-background-surface-color);
+  border-left: 3px solid var(--neutral-accent);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.platform-note h4 {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Emoji enhancements for docs */
+.emoji-icon {
+  font-size: 1.5em;
+  margin-right: 0.5rem;
+}
+
+/* Terminal/console output styling */
+.console-output {
+  background-color: var(--code-background);
+  color: #00ff00;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  font-family: var(--ifm-font-family-monospace);
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+[data-theme='light'] .console-output {
+  background-color: #1a1a1a;
+}
+
+/* Progress indicators */
+.progress-step {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.progress-step::before {
+  content: attr(data-step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background-color: var(--rust-accent);
+  color: white;
+  border-radius: 50%;
+  margin-right: 1rem;
+  font-weight: 600;
+}
+
+/* Performance benchmark styling */
+.benchmark-result {
+  font-family: var(--ifm-font-family-monospace);
+  background-color: var(--ifm-background-surface-color);
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  margin: 1rem 0;
+}
+
+.benchmark-result .faster {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.benchmark-result .slower {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* File tree representation */
+.file-tree {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  background-color: var(--ifm-background-surface-color);
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  overflow-x: auto;
+}
+
+/* Keyboard shortcut */
+kbd {
+  display: inline-block;
+  padding: 0.2em 0.4em;
+  font-size: 0.875em;
+  font-family: var(--ifm-font-family-monospace);
+  background-color: var(--ifm-background-surface-color);
+  border: 1px solid var(--neutral-accent);
+  border-radius: var(--border-radius-sm);
+  box-shadow: inset 0 -1px 0 var(--neutral-accent);
+}
+
+/* Sidebar emoji icons */
+.menu__link {
+  display: flex;
+  align-items: center;
+}
+
+.menu__link .emoji {
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
+/* Make details/summary more prominent */
+details {
+  background-color: var(--ifm-background-surface-color);
+  border: 1px solid var(--neutral-accent);
+  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  border-radius: var(--border-radius-md);
+  transition: background-color var(--transition-fast);
+}
+
+summary:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] summary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+details[open] summary {
+  margin-bottom: 0.5rem;
+}

@@ -1,0 +1,11 @@
+.mainWrapper {
+  /* Keep this style to ensure min-height calculation works properly */
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--ifm-navbar-height));
+}
+
+.mainContent {
+  /* Let Docusaurus handle layout */
+  flex: 1;
+}
