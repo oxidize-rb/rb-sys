@@ -334,14 +334,16 @@ their Ruby code.
 Include relevant details in error messages:
 
 ```rust
-// ✅ GOOD: Descriptive error with context
-let err_msg = format!(
-    "Cannot parse '{}' as a number in range {}-{}",
-    input, min, max
-);
+fn dummy() {
+    // ✅ GOOD: Descriptive error with context
+    let err_msg = format!(
+        "Cannot parse '{}' as a number in range {}-{}",
+        "input", 0, 100
+    );
 
-// ❌ BAD: Vague error message
-let err_msg = "Invalid input";
+    // ❌ BAD: Vague error message
+    let err_msg = "Invalid input";
+}
 ```
 
 ### 3. Maintain Ruby Error Hierarchies
@@ -349,13 +351,19 @@ let err_msg = "Invalid input";
 Respect Ruby's exception hierarchy:
 
 ```rust
-// ✅ GOOD: Proper exception hierarchy
-let io_error = ruby.exception_io_error();
-let file_error = module.define_class("FileError", io_error)?;
-let format_error = module.define_class("FormatError", file_error)?;
+use magnus::{Error, Ruby, class, Module};
 
-// ❌ BAD: Improper exception hierarchy
-let format_error = module.define_class("FormatError", ruby.class_object())?; // Not inheriting from StandardError
+fn dummy(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("MyExtension")?;
+    // ✅ GOOD: Proper exception hierarchy
+    let io_error = ruby.exception_io_error();
+    let file_error = module.define_class("FileError", io_error)?;
+    let format_error = module.define_class("FormatError", file_error)?;
+
+    // ❌ BAD: Improper exception hierarchy
+    let format_error = module.define_class("FormatError", ruby.class_object())?; // Not inheriting from StandardError
+    Ok(())
+}
 ```
 
 ### 4. Avoid Panicking
@@ -363,8 +371,10 @@ let format_error = module.define_class("FormatError", ruby.class_object())?; // 
 Use `Result` instead of panic:
 
 ```rust
+use magnus::{Error, Ruby};
+
 // ✅ GOOD: Return Result for expected error conditions
-fn process(value: i64) -> Result<i64, Error> {
+fn process(ruby: &Ruby, value: i64) -> Result<i64, Error> {
     if value < 0 {
         return Err(Error::new(
             ruby.exception_arg_error(),
@@ -375,7 +385,7 @@ fn process(value: i64) -> Result<i64, Error> {
 }
 
 // ❌ BAD: Panicking on expected error condition
-fn process(value: i64) -> i64 {
+fn process_bad(value: i64) -> i64 {
     if value < 0 {
         panic!("Value must be positive"); // Will crash the Ruby VM!
     }
@@ -388,17 +398,24 @@ fn process(value: i64) -> i64 {
 When calling Ruby methods, always handle exceptions:
 
 ```rust
-// ✅ GOOD: Catch exceptions from Ruby method calls
-let result = match obj.funcall(ruby, "some_method", ()) {
-    Ok(val) => val,
-    Err(err) => {
-        // Handle or re-raise the error
-        return Err(err);
-    }
-};
+use magnus::{Error, Ruby, Value};
 
-// ❌ BAD: Not handling potential Ruby exceptions
-let result = obj.funcall(ruby, "some_method", ()).unwrap(); // May panic!
+fn catch_exception(ruby: &Ruby, obj: Value) -> Result<Value, Error> {
+    // ✅ GOOD: Catch exceptions from Ruby method calls
+    let result = match obj.funcall("some_method", ()) {
+        Ok(val) => val,
+        Err(err) => {
+            // Handle or re-raise the error
+            return Err(err);
+        }
+    };
+    Ok(result)
+}
+
+fn unhandled_exception(ruby: &Ruby, obj: Value) {
+    // ❌ BAD: Not handling potential Ruby exceptions
+    let result = obj.funcall("some_method", ()).unwrap(); // May panic!
+}
 ```
 
 ## Error Handling with RefCell

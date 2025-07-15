@@ -19,7 +19,7 @@ extension:
 ### Creating a Basic Module
 
 ```rust
-use magnus::{define_module, prelude::*, Error, Ruby};
+use magnus::{define_module, function, prelude::*, Error, Ruby};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
@@ -65,9 +65,9 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Config")?;
 
     // Define constants
-    module.const_set::<_, _, Value>(ruby, "VERSION", "1.0.0")?;
-    module.const_set::<_, _, Value>(ruby, "MAX_CONNECTIONS", 100)?;
-    module.const_set::<_, _, Value>(ruby, "DEFAULT_MODE", Symbol::new("production"))?;
+    module.const_set("VERSION", "1.0.0")?;
+    module.const_set("MAX_CONNECTIONS", 100)?;
+    module.const_set("DEFAULT_MODE", Symbol::new("production"))?;
 
     Ok(())
 }
@@ -130,7 +130,7 @@ specific needs.
 For full control over memory management and Ruby integration:
 
 ```rust
-use magnus::{class, define_class, method, prelude::*, DataTypeFunctions, TypedData, Error, Ruby};
+use magnus::{class, define_class, function, method, prelude::*, DataTypeFunctions, TypedData, Error, Ruby};
 
 // Define a Rust struct
 #[derive(Debug, TypedData)]
@@ -194,13 +194,13 @@ For a simpler approach with less boilerplate:
 use magnus::{define_class, function, method, prelude::*, Error, Ruby};
 
 // Define a Rust struct
+#[magnus::wrap(class = "MyExtension::Rectangle")]
 struct Rectangle {
     width: f64,
     height: f64,
 }
 
 // Use the wrap macro to handle the Ruby class mapping
-#[magnus::wrap(class = "MyExtension::Rectangle")]
 impl Rectangle {
     // Constructor
     fn new(width: f64, height: f64) -> Self {
@@ -312,9 +312,9 @@ Here's how to use each:
 ```rust
 use magnus::{function, method, define_class, prelude::*, Error, Ruby};
 
+#[magnus::wrap(class = "Calculator")]
 struct Calculator {}
 
-#[magnus::wrap(class = "Calculator")]
 impl Calculator {
     // Constructor - a class method
     fn new() -> Self {
@@ -441,23 +441,23 @@ this model in your Rust extension.
 ### Creating a Subclass
 
 ```rust
-use magnus::{Module, class, define_class, method, prelude::*, Error, Ruby};
+use magnus::{Module, class, define_class, method, prelude::*, Error, Ruby, RArray, Value};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     // Get the parent class (Ruby's built-in Array)
-    let array_class = ruby.class_object::<RArray>()?;
+    let array_class = ruby.class_array();
 
     // Create a subclass
     let sorted_array = ruby.define_class("SortedArray", array_class)?;
 
     // Override the << (push) method to keep the array sorted
-    sorted_array.define_method("<<", method!(|ruby, rb_self: Value, item: Value| {
-        let array = RArray::from_value(rb_self)?;
-        array.push(ruby, item)?;
+    sorted_array.define_method("<<", method!(|rb_self: Value, item: Value| {
+        let array = RArray::from_value(rb_self).unwrap();
+        array.push(item)?;
 
         // Call sort! to keep the array sorted
-        array.funcall(ruby, "sort!", ())?;
+        let _: Value = array.funcall("sort!", ())?;
 
         Ok(rb_self) // Return self for method chaining
     }, 1))?;

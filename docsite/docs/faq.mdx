@@ -91,7 +91,7 @@ use magnus::Ruby;
 
 fn debug_function(value: String) {
     eprintln!("Debug: value = {:?}", value);
-    
+
     // Or use Ruby's puts
     let ruby = unsafe { Ruby::get_unchecked() };
     ruby.eval(&format!("puts 'Debug: {}'", value)).unwrap();
@@ -110,12 +110,12 @@ gdb --args ruby -r ./lib/my_extension.rb -e "MyExtension.method"
 **3. Logging:**
 ```rust
 // Add to Cargo.toml
-[dependencies]
-log = "0.4"
-env_logger = "0.10"
+// [dependencies]
+// log = "0.4"
+// env_logger = "0.10"
 
 // In your code
-log::debug!("Processing {} items", items.len());
+// log::debug!("Processing {} items", items.len());
 ```
 
 ### Q: How do I handle Ruby version compatibility?
@@ -126,7 +126,7 @@ log::debug!("Processing {} items", items.len());
 // In build.rs
 fn main() {
     let ruby_version = rb_sys_env::ruby_version();
-    
+
     if ruby_version.major >= 3 {
         println!("cargo:rustc-cfg=ruby3");
     }
@@ -152,36 +152,46 @@ fn ruby2_compat() {
 use magnus::{Error, Ruby};
 use tokio::runtime::Runtime;
 
+async fn perform_async_work() -> String {
+    "done".to_string()
+}
+
 fn async_operation() -> Result<String, Error> {
     // Create a tokio runtime
     let rt = Runtime::new().unwrap();
-    
+
     // Block on async code
     let result = rt.block_on(async {
         // Your async code here
         perform_async_work().await
     });
-    
+
     Ok(result)
+}
+
+async fn process_async(data: &[u8]) -> Vec<u8> {
+    data.to_vec()
 }
 
 // For long-running operations, release the GVL
 fn long_async_operation(data: Vec<u8>) -> Result<Vec<u8>, Error> {
     use rb_sys::rb_thread_call_without_gvl;
-    
+
     unsafe {
         rb_thread_call_without_gvl(
             Some(|data: *mut Vec<u8>| {
                 let rt = Runtime::new().unwrap();
                 rt.block_on(async {
                     process_async(&*data).await
-                })
+                }) as *mut _
             }),
             &data as *const _ as *mut _,
             None,
             std::ptr::null_mut(),
-        )
+        );
     }
+
+    Ok(data)
 }
 ```
 
@@ -192,14 +202,14 @@ fn long_async_operation(data: Vec<u8>) -> Result<Vec<u8>, Error> {
 **1. Source gems (easiest):**
 ```ruby
 # In gemspec
-spec.extensions = ["ext/my_gem/extconf.rb"]
-spec.files = Dir["ext/**/*.{rs,toml,rb}", "lib/**/*.rb"]
+# spec.extensions = ["ext/my_gem/extconf.rb"]
+# spec.files = Dir["ext/**/*.{rs,toml,rb}", "lib/**/*.rb"]
 
 # Users need Rust installed
 ```
 
 **2. Pre-compiled gems (best UX):**
-```ruby
+```bash
 # Use rake-compiler-dock
 rake gem:native
 
@@ -233,13 +243,15 @@ jobs:
 
 **1. Too many conversions:**
 ```rust
+use magnus::{Error, RArray, TryConvert};
+
 // ❌ Bad: Converts entire array upfront
 fn sum(numbers: Vec<i64>) -> i64 {
     numbers.iter().sum()
 }
 
 // ✅ Good: Iterates without conversion
-fn sum(array: RArray) -> Result<i64, Error> {
+fn sum_good(array: RArray) -> Result<i64, Error> {
     let mut total = 0;
     for item in array.each() {
         total += i64::try_convert(item?)?;
@@ -250,25 +262,29 @@ fn sum(array: RArray) -> Result<i64, Error> {
 
 **2. Not releasing the GVL:**
 ```rust
-// ✅ Release GVL for operations > 100ms
-if data.len() > 1_000_000 {
-    // Use rb_thread_call_without_gvl
+fn release_gvl_example(data: &[u8]) {
+    // ✅ Release GVL for operations > 100ms
+    if data.len() > 1_000_000 {
+        // Use rb_thread_call_without_gvl
+    }
 }
 ```
 
 **3. Excessive allocations:**
 ```rust
-// ❌ Bad: Allocates repeatedly
-for i in 0..1000 {
-    let mut vec = Vec::new();
-    // ...
-}
+fn excessive_allocations() {
+    // ❌ Bad: Allocates repeatedly
+    for i in 0..1000 {
+        let mut vec = Vec::new();
+        // ...
+    }
 
-// ✅ Good: Reuse allocation
-let mut vec = Vec::with_capacity(1000);
-for i in 0..1000 {
-    vec.clear();
-    // ...
+    // ✅ Good: Reuse allocation
+    let mut vec = Vec::with_capacity(1000);
+    for i in 0..1000 {
+        vec.clear();
+        // ...
+    }
 }
 ```
 
@@ -278,15 +294,15 @@ for i in 0..1000 {
 
 ```bash
 # Add to Cargo.toml
-[profile.release]
-debug = true
+# [profile.release]
+# debug = true
 
 # Profile with flamegraph
 cargo install flamegraph
-sudo cargo flamegraph --bin my_extension
+# sudo cargo flamegraph --bin my_extension
 
 # Or use Ruby's profiling tools
-ruby -r profile -r ./lib/my_extension.rb -e "MyExtension.slow_method"
+# ruby -r profile -r ./lib/my_extension.rb -e "MyExtension.slow_method"
 ```
 
 ## Memory Questions
@@ -297,6 +313,8 @@ ruby -r profile -r ./lib/my_extension.rb -e "MyExtension.slow_method"
 
 **1. Always mark Ruby references:**
 ```rust
+use magnus::{DataTypeFunctions, gc::Marker, TypedData, Value};
+
 #[magnus::wrap(class = "MyClass", mark)]
 struct MyClass {
     ruby_string: Value,
@@ -311,6 +329,8 @@ impl DataTypeFunctions for MyClass {
 
 **2. Use RAII patterns:**
 ```rust
+use std::path::PathBuf;
+
 // Resources are automatically cleaned up
 struct TempFile {
     path: PathBuf,
@@ -326,9 +346,9 @@ impl Drop for TempFile {
 **3. Test with GC stress:**
 ```ruby
 # In your tests
-GC.stress = true
-YourExtension.method_that_allocates
-GC.stress = false
+# GC.stress = true
+# YourExtension.method_that_allocates
+# GC.stress = false
 ```
 
 ### Q: Can I share memory between Ruby and Rust?
@@ -336,6 +356,8 @@ GC.stress = false
 **A:** Yes, but carefully:
 
 ```rust
+use magnus::{Error, RString};
+
 // Zero-copy string access
 fn process_string(ruby_str: RString) -> Result<(), Error> {
     let bytes = unsafe { ruby_str.as_slice() };
@@ -362,6 +384,8 @@ impl SharedBuffer {
 **A:** Avoid them entirely:
 
 ```rust
+use magnus::{Error, exception};
+
 // ❌ Bad: Panics crash Ruby
 fn bad_function(index: usize, data: Vec<String>) -> String {
     data[index].clone()  // Panics on out of bounds
@@ -377,10 +401,12 @@ fn good_function(index: usize, data: Vec<String>) -> Result<String, Error> {
         ))
 }
 
+fn potentially_panicking_code() {}
+
 // If you must use code that might panic
 use std::panic;
 
-fn safe_wrapper() -> Result<String, Error> {
+fn safe_wrapper() -> Result<(), Error> {
     panic::catch_unwind(|| {
         potentially_panicking_code()
     }).map_err(|_| Error::new(
@@ -409,7 +435,7 @@ fn safe_wrapper() -> Result<String, Error> {
 gem install rb_sys
 
 # Build for multiple platforms
-bundle exec rb-sys-dock --platforms x86_64-linux,aarch64-linux
+# bundle exec rb-sys-dock --platforms x86_64-linux,aarch64-linux
 
 # Or use GitHub Actions
 # See oxidize-rb/cross-gem-action
@@ -421,8 +447,8 @@ bundle exec rb-sys-dock --platforms x86_64-linux,aarch64-linux
 
 ```toml
 # Cargo.toml
-[dependencies]
-rb-sys = { version = "0.9", features = ["stable-api-compiled-fallback"] }
+# [dependencies]
+# rb-sys = { version = "0.9", features = ["stable-api-compiled-fallback"] }
 
 # Supports Ruby 2.6 through 3.3+
 ```

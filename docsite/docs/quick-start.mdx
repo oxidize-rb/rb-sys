@@ -66,12 +66,10 @@ Replace the default code with our fast string implementation:
 ```rust
 // ext/fast_strings/src/lib.rs
 use magnus::{function, prelude::*, Error, Ruby};
+use unicode_segmentation::UnicodeSegmentation;
 
 /// Reverses a string preserving Unicode grapheme clusters
 fn reverse_string(input: String) -> String {
-    // Using unicode-segmentation for correct emoji handling
-    use unicode_segmentation::UnicodeSegmentation;
-    
     input
         .graphemes(true)  // true = extended grapheme clusters
         .rev()
@@ -107,6 +105,28 @@ fn levenshtein_distance(s1: String, s2: String) -> usize {
     matrix[len1][len2]
 }
 
+fn is_palindrome(input: String) -> bool {
+    let normalized: String = input
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(|c| c.to_lowercase())
+        .collect();
+    
+    let reversed: String = normalized.chars().rev().collect();
+    normalized == reversed
+}
+
+fn similarity(s1: String, s2: String) -> f64 {
+    let distance = levenshtein_distance(s1.clone(), s2.clone());
+    let max_len = std::cmp::max(s1.len(), s2.len());
+    
+    if max_len == 0 {
+        100.0
+    } else {
+        (1.0 - (distance as f64 / max_len as f64)) * 100.0
+    }
+}
+
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("FastStrings")?;
@@ -114,6 +134,8 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     // Define our module methods
     module.define_singleton_method("reverse", function!(reverse_string, 1))?;
     module.define_singleton_method("distance", function!(levenshtein_distance, 2))?;
+    module.define_singleton_method("palindrome?", function!(is_palindrome, 1))?;
+    module.define_singleton_method("similarity", function!(similarity, 2))?;
     
     Ok(())
 }
@@ -285,20 +307,9 @@ Want to extend your gem? Here are some ideas:
 <details>
 <summary><strong>Add a method to check palindromes</strong></summary>
 
-```rust
-fn is_palindrome(input: String) -> bool {
-    let normalized: String = input
-        .chars()
-        .filter(|c| c.is_alphanumeric())
-        .flat_map(|c| c.to_lowercase())
-        .collect();
-    
-    let reversed: String = normalized.chars().rev().collect();
-    normalized == reversed
-}
-
-// In init():
-module.define_singleton_method("palindrome?", function!(is_palindrome, 1))?;
+```diff
++ // In init():
++ module.define_singleton_method("palindrome?", function!(is_palindrome, 1))?;
 ```
 
 </details>
@@ -306,20 +317,9 @@ module.define_singleton_method("palindrome?", function!(is_palindrome, 1))?;
 <details>
 <summary><strong>Add string similarity percentage</strong></summary>
 
-```rust
-fn similarity(s1: String, s2: String) -> f64 {
-    let distance = levenshtein_distance(s1.clone(), s2.clone());
-    let max_len = std::cmp::max(s1.len(), s2.len());
-    
-    if max_len == 0 {
-        100.0
-    } else {
-        (1.0 - (distance as f64 / max_len as f64)) * 100.0
-    }
-}
-
-// In init():
-module.define_singleton_method("similarity", function!(similarity, 2))?;
+```diff
++ // In init():
++ module.define_singleton_method("similarity", function!(similarity, 2))?;
 ```
 
 </details>

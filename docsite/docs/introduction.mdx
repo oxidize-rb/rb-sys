@@ -39,6 +39,7 @@ fn process_data(data: Vec<String>) -> Result<String, Error> {
     // Your fast, safe Rust code here
     Ok(format!("Processed {} records", data.len()))
 }
+```
 
 ## Why Choose Rust for Ruby Extensions?
 
@@ -46,10 +47,10 @@ fn process_data(data: Vec<String>) -> Result<String, Error> {
 
 C extensions are notorious for segfaults and memory leaks. Rust eliminates entire categories of bugs:
 
-- **No segmentation faults** - Rust's compiler prevents them
-- **No memory leaks** - Automatic memory management without GC overhead  
-- **No data races** - Thread safety guaranteed at compile time
-- **No buffer overflows** - Bounds checking prevents security vulnerabilities
+- No segmentation faults
+- No memory leaks
+- No data races
+- No buffer overflows
 
 ### 🚀 Production Success Stories
 

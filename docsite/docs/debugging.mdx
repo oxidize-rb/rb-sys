@@ -294,15 +294,24 @@ GDB offers similar capabilities to LLDB on Linux systems:
 
 Strategic use of Rust's debug facilities can help identify issues:
 
-```rust
+```rust,ignore
 // Debug prints only included in debug builds
 #[cfg(debug_assertions)]
 println!("Debug: counter value = {}", counter);
+```
 
+```rust
 // More structured logging
 use log::{debug, error, info};
+use std::error::Error;
+use magnus::Ruby;
 
-fn some_function() -> Result<(), Error> {
+fn fallible_operation() -> Result<(), Box<dyn Error>> {
+    // Simulate a fallible operation
+    Ok(())
+}
+
+fn some_function() -> Result<(), Box<dyn Error>> {
     debug!("Entering some_function");
 
     if let Err(e) = fallible_operation() {
@@ -313,15 +322,17 @@ fn some_function() -> Result<(), Error> {
     info!("Operation succeeded");
     Ok(())
 }
-```
 
-To enable logging output, add a logger like `env_logger`:
-
-```rust
-fn init(ruby: &Ruby) -> Result<(), Error> {
+fn init(ruby: &Ruby) -> Result<(), Box<dyn Error>> {
     env_logger::init();
     // Rest of initialization...
     Ok(())
+}
+
+fn main() {
+    // Example usage
+    let _ = some_function();
+    let _ = init(&unsafe { Ruby::get_unchecked() });
 }
 ```
 

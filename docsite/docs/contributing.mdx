@@ -147,7 +147,7 @@ cargo test
 4. **Update documentation**
    ```rust
    /// Doubles the input value
-   /// 
+   ///
    /// # Examples
    /// ```
    /// assert_eq!(my_new_function(2), 4);
@@ -298,23 +298,23 @@ Follow standard Rust conventions:
 // Use descriptive names
 fn calculate_fibonacci(n: u32) -> u64 {
     // Not: fn fib(x: u32) -> u64
+}
 
 // Document public APIs
 /// Calculates the nth Fibonacci number
-/// 
+///
 /// # Panics
 /// Panics if n > 93 (overflow)
 pub fn fibonacci(n: u32) -> u64 {
     // Implementation
+    unimplemented!()
 }
 
 // Use Result for errors
 fn parse_config(input: &str) -> Result<Config, Error> {
     // Not: panic! or unwrap()
+    unimplemented!()
 }
-
-// Format with rustfmt
-cargo fmt
 ```
 
 ### Ruby Code Style

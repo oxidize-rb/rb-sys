@@ -533,13 +533,7 @@ Windows presents unique challenges for Ruby extensions:
 
 - **Path Handling**: Use forward slashes (`/`) in paths, not backslashes (`\`)
 
-  ```rust
-  // Instead of this:
-  let path = "C:\\Users\\Name\\file.txt";
-
-  // Do this:
-  let path = "C:/Users/Name/file.txt";
-  ```
+  
 
 - **DLL Loading**: Handle DLL loading carefully
 
@@ -566,7 +560,7 @@ Windows presents unique challenges for Ruby extensions:
 
 - **Asynchronous I/O**: Windows has different async I/O APIs
 
-  ```rust
+  ```text
   #[cfg(target_os = "windows")]
   use windows_specific_io::read_file;
 
