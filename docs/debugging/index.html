@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Debugging &amp; Troubleshooting | oxidize.rb</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://oxidize-rb.org/img/social-card.png"><meta data-rh="true" name="twitter:image" content="https://oxidize-rb.org/img/social-card.png"><meta data-rh="true" property="og:url" content="https://oxidize-rb.org/docs/debugging"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Debugging &amp; Troubleshooting | oxidize.rb"><meta data-rh="true" name="description" content="This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to"><meta data-rh="true" property="og:description" content="This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to"><link data-rh="true" rel="icon" href="/img/favicon.png"><link data-rh="true" rel="canonical" href="https://oxidize-rb.org/docs/debugging"><link data-rh="true" rel="alternate" href="https://oxidize-rb.org/docs/debugging" hreflang="en"><link data-rh="true" rel="alternate" href="https://oxidize-rb.org/docs/debugging" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.3a8f2e98.css">
-<script src="/assets/js/runtime~main.51f19b32.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.49feba8f.js" defer="defer"></script>
 <script src="/assets/js/main.bbfa9ded.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -26,7 +26,7 @@ this easier:</p>
 <p><strong>Solution:</strong></p>
 <ul>
 <li>Ensure Ruby development headers are installed</li>
-<li>Check that <code>rb_sys_env::activate()</code> is being called in your <code>build.rs</code></li>
+<li>Check that <code>rb_sys::activate()</code> is being called in your <code>build.rs</code></li>
 <li>Verify that your Ruby installation is accessible to your build environment</li>
 </ul>
 <h4 class="anchor anchorWithStickyNavbar_LWe7" id="incompatible-ruby-version">Incompatible Ruby Version<a href="#incompatible-ruby-version" class="hash-link" aria-label="Direct link to Incompatible Ruby Version" title="Direct link to Incompatible Ruby Version">​</a></h4>
@@ -45,7 +45,7 @@ this easier:</p>
 <p><strong>Solution:</strong></p>
 <ul>
 <li>Ensure proper linking configuration in <code>build.rs</code></li>
-<li>Make sure you&#x27;ve called <code>rb_sys_env::activate()</code></li>
+<li>Make sure you&#x27;ve called <code>rb_sys::activate()</code></li>
 <li>Verify that your Ruby installation is correctly detected</li>
 </ul>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="runtime-errors">Runtime Errors<a href="#runtime-errors" class="hash-link" aria-label="Direct link to Runtime Errors" title="Direct link to Runtime Errors">​</a></h3>
