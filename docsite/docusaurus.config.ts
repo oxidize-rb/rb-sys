@@ -7,7 +7,7 @@ const config: Config = {
   tagline: 'Building Ruby extensions with Rust using rb-sys',
   favicon: 'img/favicon.png',
 
-  url: 'https://oxidize-rb.github.io',
+  url: 'https://oxidize-rb.org',
   baseUrl: '/',
 
   organizationName: 'oxidize-rb',
