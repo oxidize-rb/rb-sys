@@ -166,9 +166,6 @@ Cargo.toml supports platform-specific dependencies:
 [dependencies]
 # Common dependencies...
 
-[target.'cfg(target_os = "linux")'.dependencies]
-jemallocator = { version = "0.5", features = ["disable_initial_exec_tls"] }
-
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3", features = ["winbase"] }
 
@@ -176,18 +173,6 @@ winapi = { version = "0.3", features = ["winbase"] }
 core-foundation = "0.9"
 ```
 
-### Example: System-specific Memory Allocation
-
-```rust
-#[cfg(target_os = "linux")]
-use jemallocator::Jemalloc;
-
-#[cfg(target_os = "linux")]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
-
-// Rest of your code...
-```
 
 ## Using build.rs for Platform Detection
 
@@ -218,6 +203,7 @@ fn main() {
 Then in your code:
 
 ```rust
+// Note: These features would need to be defined in your Cargo.toml
 #[cfg(feature = "windows_specific")]
 fn platform_init() {
     // Windows initialization code

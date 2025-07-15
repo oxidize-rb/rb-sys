@@ -251,7 +251,7 @@ For Ruby objects that need interior mutability:
 <LanguageCallout language="rust" title="Interior Mutability with RefCell">
 ```rust
 use std::cell::RefCell;
-use magnus::{function, method, prelude::*, Error, Ruby};
+use magnus::{Error};
 
 struct Counter {
     count: usize,
@@ -496,7 +496,7 @@ fn make_comparable(ruby: &Ruby) -> Result<RModule, Error> {
     }, 1))?;
 
     // Define methods that depend on <=>
-    module.define_method("==", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+    module.define_method("==", method!(|_ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
         let result: Value = rb_self.funcall("<=>", (other,))?;
         if result.is_nil() {
             Ok(false)
@@ -506,7 +506,7 @@ fn make_comparable(ruby: &Ruby) -> Result<RModule, Error> {
         }
     }, 1))?;
 
-    module.define_method(">", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+    module.define_method(">", method!(|_ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
         let result: Value = rb_self.funcall("<=>", (other,))?;
         if result.is_nil() {
             Ok(false)
@@ -516,7 +516,7 @@ fn make_comparable(ruby: &Ruby) -> Result<RModule, Error> {
         }
     }, 1))?;
 
-    module.define_method("<", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
+    module.define_method("<", method!(|_ruby: &Ruby, rb_self: Value, other: Value| -> Result<bool, Error> {
         let result: Value = rb_self.funcall("<=>", (other,))?;
         if result.is_nil() {
             Ok(false)

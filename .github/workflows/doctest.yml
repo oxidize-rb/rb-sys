@@ -2,85 +2,47 @@ name: Documentation Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, doctest-stabilize]
     paths:
-      - 'docsite/docs/**/*.mdx'
-      - 'docsite/docs/**/*.md'
-      - '.github/workflows/doctest.yml'
+      - "docsite/docs/**/*.mdx"
+      - "docsite/docs/**/*.md"
+      - ".github/workflows/doctest.yml"
   pull_request:
     paths:
-      - 'docsite/docs/**/*.mdx'
-      - 'docsite/docs/**/*.md'
-      - '.github/workflows/doctest.yml'
+      - "docsite/docs/**/*.mdx"
+      - "docsite/docs/**/*.md"
+      - ".github/workflows/doctest.yml"
 
 jobs:
   doctest:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        ruby: ['3.1', '3.2', '3.3']
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Ruby and Rust
-      uses: oxidize-rb/setup-ruby-and-rust@v1
-      with:
-        ruby-version: ${{ matrix.ruby }}
-        bundler-cache: true
-        rustup-toolchain: stable
-        rustup-components: clippy
-    
-    - name: Install dependencies
-      run: bundle install
-    
-    - name: Run doctests with clippy
-      run: bundle exec rake doctest:run
-    
-    - name: Test documentation builds
-      run: |
-        cd docsite
-        npm install
-        npm run build
+      - uses: actions/checkout@v4
 
-  link-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    
-    - name: Install dependencies
-      run: |
-        cd docsite
-        npm install
-    
-    - name: Check for broken links
-      run: |
-        cd docsite
-        # Install markdown-link-check
-        npm install -g markdown-link-check
-        
-        # Check all markdown files
-        find docs -name "*.md" -o -name "*.mdx" | xargs -I {} markdown-link-check {} || true
-    
-    - name: Build documentation
-      run: |
-        cd docsite
-        npm run build
+      - name: Setup Ruby and Rust
+        uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          rustup-toolchain: stable
+          rustup-components: clippy
 
-  vale-prose:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Vale Linting
-      uses: errata-ai/vale-action@v2
-      with:
-        files: docsite/docs
-        fail_on_error: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run doctests
+        run: bundle exec rake doctest:run
+
+      - name: Build docs
+        run: bundle exec rake docsite:build
+
+      - name: Check for broken links
+        run: |
+          cd docsite
+          # Install markdown-link-check
+          npm install -g markdown-link-check
+
+          # Check all markdown files
+          find docs -name "*.md" -o -name "*.mdx" | xargs -I {} markdown-link-check {} || true

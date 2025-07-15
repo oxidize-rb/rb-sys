@@ -178,7 +178,7 @@ Handle different encodings properly:
 ```rust
 use magnus::{RString, Error, Ruby};
 
-fn ensure_utf8(ruby: &Ruby, input: RString) -> Result<RString, Error> {
+fn ensure_utf8(_ruby: &Ruby, input: RString) -> Result<RString, Error> {
     // For this example, we'll assume the string is already in the correct encoding
     // In production code, you would use rb-sys directly for encoding operations
     Ok(input)
@@ -337,7 +337,7 @@ fn double_values(array: RArray) -> Result<RArray, Error> {
 ### Advanced Array Patterns
 
 ```rust
-use magnus::{RArray, Value, Error, RString, exception, TryConvert};
+use magnus::{RArray, Error, RString, exception, TryConvert};
 
 // Filter arrays
 fn select_strings(array: RArray) -> Result<RArray, Error> {

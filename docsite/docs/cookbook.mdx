@@ -66,7 +66,7 @@ fn batch_replace(text: String, patterns: Vec<(String, String)>) -> Result<String
 ### Parallel Array Processing
 
 ```rust
-use magnus::{RArray, Value, Error, TryConvert};
+use magnus::{RArray, Error, TryConvert};
 use rayon::prelude::*;
 use rb_sys::rb_thread_call_without_gvl;
 use std::os::raw::c_void;
@@ -287,7 +287,7 @@ fn sha256_raw(input: RString) -> Result<RString, Error> {
 ### Connection Pool Pattern
 
 ```rust
-use magnus::{class, Error, Ruby};
+use magnus::{Error};
 use std::sync::{Arc, Mutex};
 use once_cell::sync::Lazy;
 
@@ -341,7 +341,7 @@ impl DatabasePool {
 ### Simple URL Operations
 
 ```rust
-use magnus::{RString, RHash, Error};
+use magnus::{RHash, Error};
 use url::Url;
 
 fn parse_url_components(url_string: String) -> Result<RHash, Error> {
@@ -488,7 +488,7 @@ impl ThreadSafeCounter {
 ### Ruby-Style Enumerator
 
 ```rust
-use magnus::{class, block::Proc, RArray, Value, Error};
+use magnus::{block::Proc, RArray, Value, Error};
 
 #[magnus::wrap(class = "RangeIterator", free_immediately)]
 struct RangeIterator {
