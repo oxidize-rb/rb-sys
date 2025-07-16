@@ -1,13 +1,23 @@
-.docItemContainer {
-  /* Let Docusaurus handle layout */
+.docItemCol {
+  /* margin: 0 auto; */
+  /* max-width: 75ch; */
+  width: 100%;
+  padding: 0;
 }
 
-.docItemCol {
-  /* Let Docusaurus handle layout */
+.docItemContainer {
+  padding: 0 var(--ifm-spacing-horizontal);
 }
 
 @media (min-width: 997px) {
   .docItemCol {
-    /* Let Docusaurus handle layout */
+    padding: 0;
+  }
+
+  .docItemContainer {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: var(--ifm-background-surface-color);
+    border: 1px solid var(--ifm-color-emphasis-200);
   }
 }

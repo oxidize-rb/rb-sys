@@ -1,13 +1,13 @@
 ---
 id: introduction
-title: Ruby + Rust = ❤️
+title: Ruby & Rust
 slug: /
 sidebar_position: 1
 keywords: [ruby, rust, extensions, native, performance, safety]
-description: Build blazing-fast, memory-safe Ruby extensions with Rust. Get started in 15 minutes with rb-sys.
+description: Build fast, memory-safe Ruby extensions with Rust.
 ---
 
-# Ruby + Rust = ❤️
+# Ruby & Rust
 
 **Ship safer, faster Ruby code by writing performance-critical parts in Rust.**
 
@@ -19,7 +19,7 @@ rb-sys makes building Ruby extensions in Rust easier than C, with memory safety 
 # Ruby code
 require "my_gem"
 
-# Call Rust from Ruby - it's that simple!
+# Call Rust from Ruby
 result = MyGem.process_data(large_dataset)
 # => Processed 1M records in 0.2s
 ```
@@ -43,7 +43,7 @@ fn process_data(data: Vec<String>) -> Result<String, Error> {
 
 ## Why Choose Rust for Ruby Extensions?
 
-### 🛡️ Memory Safety Without the Pain
+### Memory Safety
 
 C extensions are notorious for segfaults and memory leaks. Rust eliminates entire categories of bugs:
 
@@ -52,27 +52,26 @@ C extensions are notorious for segfaults and memory leaks. Rust eliminates entir
 - No data races
 - No buffer overflows
 
-### 🚀 Production Success Stories
+### Production Success Stories
 
 These gems trust rb-sys in production:
 
-- **[wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb)** - WebAssembly runtime serving millions of requests
-- **[lz4-flex-rb](https://github.com/Shopify/lz4-flex-rb)** - 10x faster compression at Shopify scale
-- **[blake3-rb](https://github.com/Shopify/blake3-rb)** - Cryptographic hashing 30x faster than OpenSSL
+- **[wasmtime-rb](https://github.com/bytecodealliance/wasmtime-rb)** - WebAssembly runtime
+- **[lz4-flex-rb](https://github.com/Shopify/lz4-flex-rb)** - LZ4 compression
+- **[blake3-rb](https://github.com/Shopify/blake3-rb)** - BLAKE3 hashing
 
-### ⚡ When to Use Rust
+### When to Use Rust
 
-✅ **Perfect for:**
 - CPU-intensive algorithms (parsing, compression, cryptography)
 - Memory-intensive operations (data processing, image manipulation)
 - System integration (FFI, hardware access, OS APIs)
 - Concurrent operations (parallel processing, async I/O)
 
-❌ **Keep Ruby for:**
+### When to use Ruby
+
 - Business logic and application flow
 - Simple CRUD operations
 - Glue code and integrations
-- Anything that's "fast enough" (YJIT makes Ruby faster than ever!)
 
 ## How It Works
 
@@ -111,102 +110,77 @@ graph TD
 <tbody>
 <tr>
 <td><strong>Memory Safety</strong></td>
-<td>❌ Manual, error-prone</td>
-<td>✅ Guaranteed by compiler</td>
+<td>Manual, error-prone</td>
+<td>Guaranteed by compiler</td>
 </tr>
 <tr>
 <td><strong>Segfaults</strong></td>
-<td>😱 Common in production</td>
-<td>🛡️ Impossible*</td>
+<td>Common in production</td>
+<td>Impossible*</td>
 </tr>
 <tr>
 <td><strong>Development Speed</strong></td>
-<td>🐌 Debug crashes for hours</td>
-<td>🚀 Compiler catches errors</td>
+<td>Slow</td>
+<td>Fast</td>
 </tr>
 <tr>
 <td><strong>Ecosystem</strong></td>
-<td>📦 C libraries only</td>
-<td>🎁 130,000+ crates on crates.io</td>
+<td>C libraries only</td>
+<td>130,000+ crates on crates.io</td>
 </tr>
 <tr>
 <td><strong>Learning Curve</strong></td>
-<td>📈 Ruby C API is complex</td>
-<td>📊 Magnus API feels like Ruby</td>
+<td>High</td>
+<td>Low</td>
 </tr>
 <tr>
 <td><strong>Cross-compilation</strong></td>
-<td>🔧 Manual, platform-specific</td>
-<td>🐳 Automated with Docker</td>
+<td>Manual, platform-specific</td>
+<td>Automated with Docker</td>
 </tr>
 </tbody>
 </table>
 
 <small>* When using safe Rust. Unsafe blocks require careful review.</small>
 
-## Your First Extension in 15 Minutes
-
-```bash
-# 1. Install prerequisites (Ruby + Rust)
-gem install rb_sys
-
-# 2. Create a new gem with Rust support
-bundle gem --ext=rust my_fast_gem
-cd my_fast_gem
-
-# 3. Build and test
-bundle install
-bundle exec rake compile
-bundle exec rake test
-
-# 🎉 You just built your first Ruby+Rust extension!
-```
-
-<details>
-<summary>📺 <strong>See it in action</strong> (click to expand)</summary>
-
-```bash
-$ bundle exec bin/console
-irb> MyFastGem.hello
-=> "Hello from Rust!"
-```
-
-</details>
-
 ## Platform Support
 
 ### Supported Rubies
-- ✅ Ruby 3.0+ (recommended)
-- ✅ Ruby 2.6+ (minimum)
-- ✅ TruffleRuby
-- ✅ JRuby (experimental)
+- Ruby 3.0+ (recommended)
+- Ruby 2.6+ (minimum)
+- TruffleRuby
+- JRuby (experimental)
 
 ### Supported Platforms
-- ✅ Linux (x86_64, aarch64)
-- ✅ macOS (Intel & Apple Silicon)
-- ✅ Windows (MSVC)
-- ✅ Cross-compilation to all platforms
+- Linux (x86_64, aarch64)
+- macOS (Intel & Apple Silicon)
+- Windows (MSVC)
+- Cross-compilation to all platforms
 
 ## Join the Community
 
 <div className="community-links">
 
-- 💬 **[Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Get help and share experiences
-- 🐛 **[GitHub Issues](https://github.com/oxidize-rb/rb-sys/issues)** - Report bugs or request features
-- 📚 **[Examples](https://github.com/oxidize-rb/examples)** - Learn from working code
-- 🎥 **[YouTube](https://www.youtube.com/watch?v=HT2JivOZ9zI)** - Watch talks and tutorials
+- **[Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Get help and share experiences
+- **[GitHub Issues](https://github.com/oxidize-rb/rb-sys/issues)** - Report bugs or request features
+- **[Examples](https://github.com/oxidize-rb/examples)** - Learn from working code
+- **[YouTube](https://www.youtube.com/watch?v=HT2JivOZ9zI)** - Watch talks and tutorials
 
 </div>
 
-## Ready to Build Something Amazing?
+## Get Started
 
 <div className="cta-buttons">
 
-[🚀 **Start with the Quickstart** →](quick-start)
+<div class="cta-buttons">
 
-[📖 **Read the Installation Guide** →](getting-started)
+[**Getting Started** →](getting-started)
 
-[🔬 **Explore Real Examples** →](examples)
+[**Quick Start Guide** →](quick-start)
+
+[**Explore Real Examples** →](examples)
+
+</div>
 
 </div>
 

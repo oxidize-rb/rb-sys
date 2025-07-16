@@ -16,20 +16,12 @@ Find answers to common questions about building Ruby extensions with Rust.
 
 **A:** Consider Rust when you need:
 
-✅ **Good fit for Rust:**
 - CPU-intensive algorithms (parsing, compression, cryptography)
 - Memory-intensive operations (image processing, data transformation)
 - System-level integration (OS APIs, hardware access)
 - Concurrent/parallel processing
 - Security-critical code
 - Wrapping existing Rust libraries
-
-❌ **Keep in Ruby:**
-- Simple business logic
-- Database queries (use Ruby's ORM)
-- Web framework code
-- Glue code between services
-- Anything that's "fast enough" in Ruby
 
 ### Q: Is Rust harder to learn than C?
 
@@ -45,24 +37,24 @@ Find answers to common questions about building Ruby extensions with Rust.
 - Better error messages
 - Modern tooling (Cargo, rustfmt, clippy)
 - Comprehensive standard library
-- Amazing documentation
+- Good documentation
 
 Most developers find Rust's learning curve worth it for the safety guarantees.
 
 ### Q: How much faster will my code be?
 
-**A:** It depends on what you're doing:
+**A:** It depends on what you're doing.
 
 - **CPU-bound operations**: Often 10-100x faster
 - **Memory allocation heavy**: 5-20x faster
 - **String processing**: 5-50x faster
 - **Simple operations**: May be slower due to FFI overhead
 
-**Remember:** With Ruby's YJIT, pure Ruby is faster than ever. Profile first!
+With Ruby's YJIT, pure Ruby is faster than ever. Profile first.
 
 ### Q: Will this work with Rails?
 
-**A:** Yes! rb-sys extensions work perfectly with Rails:
+**A:** Yes, rb-sys extensions work with Rails.
 
 ```ruby
 # Gemfile
@@ -83,7 +75,7 @@ Many production Rails apps use Rust extensions for performance-critical paths.
 
 ### Q: How do I debug Rust extensions?
 
-**A:** Several approaches:
+**A:** There are several approaches:
 
 **1. Print debugging:**
 ```rust
@@ -121,7 +113,7 @@ gdb --args ruby -r ./lib/my_extension.rb -e "MyExtension.method"
 
 ### Q: How do I handle Ruby version compatibility?
 
-**A:** rb-sys provides version detection:
+**A:** rb-sys provides version detection.
 
 ```rust
 // In build.rs
@@ -145,7 +137,7 @@ fn ruby2_compat() {
 
 ### Q: Can I use async/await in Ruby extensions?
 
-**A:** Yes, but you need to properly handle async runtimes. Since Ruby extensions are synchronous, you'll need to block on async code:
+**A:** Yes, but you need to properly handle async runtimes. Since Ruby extensions are synchronous, you'll need to block on async code.
 
 ```rust
 use magnus::{Error, Ruby};
@@ -196,7 +188,7 @@ fn parallel_operation(data: Vec<u8>) -> Result<Vec<u8>, Error> {
 
 ### Q: How do I distribute my gem?
 
-**A:** Multiple strategies:
+**A:** There are multiple strategies:
 
 **1. Source gems (easiest):**
 ```ruby
@@ -238,18 +230,18 @@ jobs:
 
 ### Q: Why is my extension slower than expected?
 
-**A:** Common causes:
+**A:** There are common causes:
 
 **1. Too many conversions:**
 ```rust
 use magnus::{Error, RArray, TryConvert};
 
-// ❌ Bad: Converts entire array upfront
+// Bad: Converts entire array upfront
 fn sum(numbers: Vec<i64>) -> i64 {
     numbers.iter().sum()
 }
 
-// ✅ Good: Iterates without conversion
+// Good: Iterates without conversion
 fn sum_good(array: RArray) -> Result<i64, Error> {
     let mut total = 0;
     for item in array.each() {
@@ -262,7 +254,7 @@ fn sum_good(array: RArray) -> Result<i64, Error> {
 **2. Not releasing the GVL:**
 ```rust
 fn release_gvl_example(data: &[u8]) {
-    // ✅ Release GVL for operations > 100ms
+    // Release GVL for operations > 100ms
     if data.len() > 1_000_000 {
         // Use rb_thread_call_without_gvl
     }
@@ -272,13 +264,13 @@ fn release_gvl_example(data: &[u8]) {
 **3. Excessive allocations:**
 ```rust
 fn excessive_allocations() {
-    // ❌ Bad: Allocates repeatedly
+    // Bad: Allocates repeatedly
     for i in 0..1000 {
         let mut vec: Vec<i32> = Vec::new();
         // ...
     }
 
-    // ✅ Good: Reuse allocation
+    // Good: Reuse allocation
     let mut vec: Vec<i32> = Vec::with_capacity(1000);
     for i in 0..1000 {
         vec.clear();
@@ -289,7 +281,7 @@ fn excessive_allocations() {
 
 ### Q: How do I profile my extension?
 
-**A:** Use cargo's built-in profiling:
+**A:** Use cargo's built-in profiling.
 
 ```bash
 # Add to Cargo.toml
@@ -355,7 +347,7 @@ impl Drop for TempFile {
 
 ### Q: Can I share memory between Ruby and Rust?
 
-**A:** Yes, but carefully:
+**A:** Yes, but carefully.
 
 ```rust
 use magnus::{Error, RString};
@@ -383,17 +375,17 @@ impl SharedBuffer {
 
 ### Q: How should I handle panics?
 
-**A:** Avoid them entirely:
+**A:** Avoid them entirely.
 
 ```rust
 use magnus::{Error, exception};
 
-// ❌ Bad: Panics crash Ruby
+// Bad: Panics crash Ruby
 fn bad_function(index: usize, data: Vec<String>) -> String {
     data[index].clone()  // Panics on out of bounds
 }
 
-// ✅ Good: Return errors
+// Good: Return errors
 fn good_function(index: usize, data: Vec<String>) -> Result<String, Error> {
     data.get(index)
         .cloned()
@@ -422,7 +414,7 @@ fn safe_wrapper() -> Result<(), Error> {
 
 ### Q: Do users need Rust installed?
 
-**A:** Depends on distribution method:
+**A:** It depends on the distribution method:
 
 - **Source gems**: Yes, users need Rust
 - **Pre-compiled gems**: No, includes compiled binary
@@ -430,7 +422,7 @@ fn safe_wrapper() -> Result<(), Error> {
 
 ### Q: How do I support multiple platforms?
 
-**A:** Use rb-sys's cross-compilation:
+**A:** Use rb-sys's cross-compilation.
 
 ```bash
 # Install cross-compilation tool
@@ -445,7 +437,7 @@ gem install rb_sys
 
 ### Q: What about Ruby version compatibility?
 
-**A:** rb-sys handles most differences:
+**A:** rb-sys handles most differences.
 
 ```toml
 # Cargo.toml
@@ -459,7 +451,7 @@ gem install rb_sys
 
 ### Q: "undefined symbol" errors?
 
-**A:** Common causes:
+**A:** There are common causes:
 
 1. **Missing rb-sys dependency**
 2. **Wrong library type in Cargo.toml** - use `crate-type = ["cdylib"]`
@@ -467,7 +459,7 @@ gem install rb_sys
 
 ### Q: "libclang not found" during installation?
 
-**A:** Install libclang:
+**A:** Install libclang.
 
 ```bash
 # macOS
@@ -482,7 +474,7 @@ gem install libclang
 
 ### Q: Extension works locally but fails in production?
 
-**A:** Check:
+**A:** Check the following:
 
 1. **Platform compatibility** - build for production architecture
 2. **Ruby version** - ensure compatibility
@@ -493,7 +485,7 @@ gem install libclang
 
 ### Q: Where can I get help?
 
-**A:** Multiple resources:
+**A:** There are multiple resources:
 
 1. **[Oxidize Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Active community
 2. **[GitHub Discussions](https://github.com/oxidize-rb/rb-sys/discussions)** - Q&A forum
@@ -502,7 +494,7 @@ gem install libclang
 
 ### Q: How can I contribute?
 
-**A:** We love contributions!
+**A:** We welcome contributions.
 
 - **Documentation**: Fix typos, add examples
 - **Code**: Fix bugs, add features
@@ -515,8 +507,8 @@ See our [Contributing Guide](contributing) for details.
 
 <div className="success-message">
 
-### 🤝 Still Have Questions?
+### Still Have Questions?
 
-Join our [Slack community](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) - we're happy to help!
+Join our [Slack community](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) - we are happy to help.
 
 </div>

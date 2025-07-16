@@ -66,7 +66,7 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: '📚 Resources',
+      label: 'Resources',
       items: [
         'cookbook',
         'faq',

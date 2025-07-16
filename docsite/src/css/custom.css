@@ -162,8 +162,6 @@ h1, h2, h3, h4, h5, h6,
 
 h1, .h1 {
   font-size: 2.441rem;
-  margin-top: 1.5em;
-  margin-bottom: 0.8em;
   letter-spacing: -0.02em;
 }
 
@@ -1021,4 +1019,74 @@ summary:hover {
 
 details[open] summary {
   margin-bottom: 0.5rem;
+}
+
+/* Mermaid Diagram Styling */
+.mermaid {
+  font-family: var(--ifm-font-family-monospace) !important;
+  font-size: 0.9rem;
+  background-color: var(--code-background);
+  padding: 1.5rem;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--neutral-accent);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+}
+
+.mermaid:hover {
+  border-color: var(--rust-accent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme='dark'] .mermaid {
+  background-color: hsl(220, 18%, 10%);
+}
+
+/* Node Styling */
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+  fill: var(--secondary-background);
+  stroke: var(--neutral-accent);
+  stroke-width: 2px;
+  transition: all var(--transition-fast);
+}
+
+.mermaid .node:hover rect,
+.mermaid .node:hover circle,
+.mermaid .node:hover ellipse,
+.mermaid .node:hover polygon {
+  fill: hsl(220, 16%, 20%);
+  stroke: var(--ruby-accent);
+}
+
+/* Text Styling */
+.mermaid .node .label {
+  font-family: var(--ifm-font-family-heading) !important;
+  font-weight: 500;
+  color: var(--primary-text);
+}
+
+/* Edge (arrow) styling */
+.mermaid .edgePath .path {
+  stroke: var(--neutral-accent);
+  stroke-width: 1.5px;
+  opacity: 0.8;
+}
+
+.mermaid .arrowheadPath {
+  fill: var(--neutral-accent);
+}
+
+/* Subgraph Styling */
+.mermaid .cluster rect {
+  fill: rgba(0, 0, 0, 0.1);
+  stroke: var(--neutral-accent);
+  stroke-dasharray: 4;
+}
+
+.mermaid .cluster-label {
+  font-weight: 600;
+  color: var(--muted-text);
 }
