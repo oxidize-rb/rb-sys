@@ -164,6 +164,7 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .layout_tests(enable_layout_tests)
         .blocklist_item("^__darwin_pthread.*")
         .blocklist_item("^_opaque_pthread.*")
+        .blocklist_item("^__pthread_.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
         .opaque_type("^__sFILE$")
