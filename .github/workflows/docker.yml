@@ -60,7 +60,7 @@ jobs:
           repository: "oxidize-rb/oxi-test"
           path: "tmp/oxi-test"
 
-      - uses: ruby/setup-ruby@e34163cd15f4bb403dcd72d98e295997e6a55798 # v1
+      - uses: ruby/setup-ruby@efbf473cab83af4468e8606cc33eca9281bb213f # v1
         with:
           ruby-version: "3.1"
 
