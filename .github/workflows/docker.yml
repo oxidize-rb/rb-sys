@@ -193,7 +193,7 @@ jobs:
           exit-code: "0" # Changed from "1" to "0" to prevent failing on EOL OS warnings
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@60168efe1c415ce0f5521ea06d5c2062adbeed1b # v3
+        uses: github/codeql-action/upload-sarif@2d92b76c45b91eb80fc44c74ce3fce0ee94e8f9d # v3
         with:
           sarif_file: "trivy-results-${{ env.ruby_platform }}.sarif"
           category: "docker-${{ env.ruby_platform }}"
