@@ -8,8 +8,8 @@ module RbSys
   class PackageNotFoundError < Error
     def initialize(name)
       msg = <<~MSG.chomp.tr("\n", " ")
-        Could not find Cargo package metadata for #{@name.inspect}. Please
-        check that #{@name.inspect} matches the crate name in your
+        Could not find Cargo package metadata for #{name.inspect}. Please
+        check that #{name.inspect} matches the crate name in your
         Cargo.toml."
       MSG
 
