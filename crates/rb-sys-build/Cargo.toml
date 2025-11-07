@@ -6,7 +6,7 @@ description = "Build system for rb-sys"
 homepage = "https://github.com/oxidize-rb/rb-sys"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/oxidize-rb/rb-sys"
-rust-version = "1.65"
+rust-version = "1.71"
 
 [lib]
 bench = false

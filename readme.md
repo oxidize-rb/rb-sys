@@ -29,7 +29,7 @@ covers:
 ## Supported Toolchains
 
 - Ruby: <!-- toolchains .policy.minimum-supported-ruby-version -->2.6<!-- /toolchains -->+
-- Rust: <!-- toolchains .policy.minimum-supported-rust-version -->1.65<!-- /toolchains -->+
+- Rust: <!-- toolchains .policy.minimum-supported-rust-version -->1.71<!-- /toolchains -->+
 
 ## Real-World Examples
 
