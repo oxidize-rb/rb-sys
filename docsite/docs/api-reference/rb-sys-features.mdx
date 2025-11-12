@@ -49,4 +49,18 @@ rb-sys = { version = "0.9", features = ["link-ruby"] }
 
 ## Ruby Version Compatibility
 
-`rb-sys` is compatible with Ruby 2.6+. It detects the Ruby version at compile time and generates appropriate bindings. Ruby 3.2+ requires `ruby_abi_version` function, which `rb-sys` provides automatically.
+`rb-sys` is compatible with Ruby 2.7 and later. The crate detects the Ruby version at compile time and adapts the
+bindings accordingly.
+
+For Ruby 3.2 and later, `rb-sys` provides a `ruby_abi_version` function that is required for native extensions.
+
+## Integration with Magnus
+
+If you're building a Ruby extension, it's recommended to use the [Magnus](https://github.com/matsadler/magnus) crate on
+top of `rb-sys`. Magnus provides a high-level, safe API for interacting with Ruby:
+
+```toml
+[dependencies]
+magnus = { version = "0.7", features = ["rb-sys"] }
+rb-sys = "0.9"
+```

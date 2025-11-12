@@ -21,6 +21,10 @@
       "rust-target": "x86_64-pc-windows-gnu"
     },
     {
+      "ruby-platform": "aarch64-mingw-ucrt",
+      "rust-target": "aarch64-pc-windows-gnu"
+    },
+    {
       "ruby-platform": "x64-mingw32",
       "rust-target": "x86_64-pc-windows-gnu"
     },

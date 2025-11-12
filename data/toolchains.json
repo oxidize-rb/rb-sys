@@ -1,6 +1,6 @@
 {
   "policy": {
-    "minimum-supported-ruby-version": "2.6",
+    "minimum-supported-ruby-version": "2.7",
     "minimum-supported-rust-version": "1.71"
   },
   "toolchains": [
@@ -51,6 +51,16 @@
       "dockerfile": "docker/Dockerfile.x64-mingw-ucrt",
       "rake-compiler-dock": {
         "cc": "x86_64-windows-gnu-gcc"
+      },
+      "docker-platform": "linux/amd64",
+      "supported": true
+    },
+    {
+      "ruby-platform": "aarch64-mingw-ucrt",
+      "rust-target": "aarch64-pc-windows-gnu",
+      "dockerfile": "docker/Dockerfile.aarch64-mingw-ucrt",
+      "rake-compiler-dock": {
+        "cc": "aarch64-w64-mingw32-clang"
       },
       "docker-platform": "linux/amd64",
       "supported": true
