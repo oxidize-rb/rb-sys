@@ -177,7 +177,7 @@ jobs:
         run: |
           set -ex
           ulimit -c unlimited
-          gem update --system 3.7.2 > /dev/null
+          gem update --system 3.4.22 > /dev/null
           export RUBYOPT="-I$PWD/gem/lib"
           pushd examples/rust_reverse
           bundle exec rake build
