@@ -38,6 +38,10 @@ jobs:
           - repo:
               slug: magnus-0.5
             ruby: "3.4"
+          - repo:
+              slug: oxi-test
+            os: windows-latest
+            ruby: "3.4"
 
     runs-on: ${{ matrix.os }}
     steps:

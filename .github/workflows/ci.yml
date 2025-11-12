@@ -91,9 +91,17 @@ jobs:
             sys:
               os: macos-latest
               rust_toolchain: stable
+          - ruby_version: "3.1"
+            sys:
+              os: windows-2025
+              rust_toolchain: stable
           - ruby_version: "3.4"
             sys:
               os: windows-2022
+              rust_toolchain: stable
+          - ruby_version: "3.4"
+            sys:
+              os: windows-2025
               rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
