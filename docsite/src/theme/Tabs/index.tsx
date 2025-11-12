@@ -14,11 +14,7 @@ interface TabItemProps {
 // Export TabItem as a named export
 export function TabItem({ children, hidden, className }: TabItemProps): React.ReactElement {
   return (
-    <div
-      role="tabpanel"
-      className={clsx(styles.tabItem, className)}
-      hidden={hidden}
-    >
+    <div role="tabpanel" className={clsx(styles.tabItem, className)} hidden={hidden}>
       {children}
     </div>
   );
@@ -33,17 +29,14 @@ interface TabsProps {
 
 function Tabs(props: TabsProps): React.ReactElement {
   const { children, className, defaultValue } = props;
-  const childrenArray = React.Children.toArray(children)
-    .filter((child): child is ReactElement<TabItemProps> => {
-      if (!React.isValidElement(child)) return false;
-      const childProps = child.props as Partial<TabItemProps>;
-      return 'value' in childProps && 'label' in childProps;
-    });
+  const childrenArray = React.Children.toArray(children).filter((child): child is ReactElement<TabItemProps> => {
+    if (!React.isValidElement(child)) return false;
+    const childProps = child.props as Partial<TabItemProps>;
+    return "value" in childProps && "label" in childProps;
+  });
 
   // Find the default tab index
-  const defaultIndex = defaultValue
-    ? childrenArray.findIndex((tabItem) => tabItem.props.value === defaultValue)
-    : 0;
+  const defaultIndex = defaultValue ? childrenArray.findIndex((tabItem) => tabItem.props.value === defaultValue) : 0;
 
   const [selectedValue, setSelectedValue] = useState<string | null>(
     defaultIndex !== -1 ? childrenArray[defaultIndex].props.value : null,
@@ -60,20 +53,13 @@ function Tabs(props: TabsProps): React.ReactElement {
 
   return (
     <div className={clsx("tabs-container", styles.tabsContainer, className)}>
-      <div
-        role="tablist"
-        aria-orientation="horizontal"
-        className={styles.tabList}
-      >
+      <div role="tablist" aria-orientation="horizontal" className={styles.tabList}>
         {tabLabels.map(({ value, label }) => (
           <button
             role="tab"
             key={value}
             aria-selected={selectedValue === value}
-            className={clsx(
-              styles.tabItem,
-              selectedValue === value && styles.tabItemActive,
-            )}
+            className={clsx(styles.tabItem, selectedValue === value && styles.tabItemActive)}
             onClick={() => handleTabChange(value)}
           >
             {label}

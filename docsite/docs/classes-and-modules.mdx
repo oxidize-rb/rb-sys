@@ -4,12 +4,13 @@ title: Ruby Classes and Modules
 sidebar_position: 10
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
-import CodeComparison from '../src/components/CodeComparison';
+import LanguageCallout from "../src/components/LanguageCallout";
+import CodeComparison from "../src/components/CodeComparison";
 
 # Ruby Classes and Modules
 
-This guide explains how to define and work with Ruby classes and modules from Rust. It covers approaches for creating Ruby objects, defining methods, and organizing code.
+This guide explains how to define and work with Ruby classes and modules from Rust. It covers approaches for creating
+Ruby objects, defining methods, and organizing code.
 
 ## Defining Modules
 
@@ -253,17 +254,11 @@ For Ruby objects that need interior mutability:
 use std::cell::RefCell;
 use magnus::{Error};
 
-struct Counter {
-    count: usize,
-}
+struct Counter { count: usize, }
 
-#[magnus::wrap(class = "MyExtension::Counter")]
-struct MutCounter(RefCell<Counter>);
+#[magnus::wrap(class = "MyExtension::Counter")] struct MutCounter(RefCell<Counter>);
 
-impl MutCounter {
-    fn new(initial: usize) -> Self {
-        MutCounter(RefCell::new(Counter { count: initial }))
-    }
+impl MutCounter { fn new(initial: usize) -> Self { MutCounter(RefCell::new(Counter { count: initial })) }
 
     fn count(&self) -> usize {
         self.0.borrow().count
@@ -295,8 +290,10 @@ impl MutCounter {
 
         Ok(self.0.borrow().count)
     }
+
 }
-```
+
+````
 </LanguageCallout>
 
 ## Implementing Ruby Methods
@@ -362,7 +359,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 
     Ok(())
 }
-```
+````
 
 ### Method Signature Patterns
 
@@ -379,62 +376,21 @@ def add(a, b)
 end
 
 # Method that raises exceptions
-def divide(a, b)
-  raise ZeroDivisionError, "Division by zero" if b == 0
-  a / b
-end
+
+def divide(a, b) raise ZeroDivisionError, "Division by zero" if b == 0 a / b end
 
 # Method that takes a block
-def with_retries(max_retries)
-  retries = 0
-  begin
-    yield
-  rescue => e
-    if retries < max_retries
-      retries += 1
-      retry
-    else
-      raise e
-    end
-  end
-end
-\`\`\`
-  `}
-  rust={`
-\`\`\`rust
-// Basic Method (no Ruby access, no exceptions)
-fn add(&self, a: i64, b: i64) -> i64 {
-    a + b
-}
 
-// Method that Raises Exceptions
-fn divide(ruby: &Ruby, _rb_self: &Self, a: i64, b: i64) -> Result<i64, Error> {
-    if b == 0 {
-        return Err(Error::new(
-            ruby.exception_zero_div_error(),
-            "Division by zero"
-        ));
-    }
-    Ok(a / b)
-}
+def with_retries(max_retries) retries = 0 begin yield rescue => e if retries < max_retries retries += 1 retry else raise
+e end end end \`\`\` `}   rust={` \`\`\`rust // Basic Method (no Ruby access, no exceptions) fn add(&self, a: i64, b:
+i64) -> i64 { a + b }
 
-// Method with Ruby Block
-fn with_retries(ruby: &Ruby, _rb_self: &Self, max_retries: usize, block: Proc) -> Result<Value, Error> {
-    let mut retries = 0;
-    loop {
-        match block.call(ruby, ()) {
-            Ok(result) => return Ok(result),
-            Err(e) if retries < max_retries => {
-                retries += 1;
-                // Maybe backoff or log error
-            },
-            Err(e) => return Err(e),
-        }
-    }
-}
-\`\`\`
-  `}
-/>
+// Method that Raises Exceptions fn divide(ruby: &Ruby, \_rb_self: &Self, a: i64, b: i64) -> Result<i64, Error> { if b
+== 0 { return Err(Error::new( ruby.exception_zero_div_error(), "Division by zero" )); } Ok(a / b) }
+
+// Method with Ruby Block fn with_retries(ruby: &Ruby, \_rb_self: &Self, max_retries: usize, block: Proc) ->
+Result<Value, Error> { let mut retries = 0; loop { match block.call(ruby, ()) { Ok(result) => return Ok(result), Err(e)
+if retries < max_retries => { retries += 1; // Maybe backoff or log error }, Err(e) => return Err(e), } } } \`\`\` `} />
 
 ## Class Inheritance and Mixins
 
@@ -554,7 +510,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     score.define_method("<=>", method!(|ruby: &Ruby, rb_self: Value, other: Value| -> Result<Value, Error> {
         let self_obj = RObject::try_convert(rb_self)?;
         let self_value: i64 = self_obj.ivar_get::<_, i64>("@value")?;
-        
+
         // Try to get value from other if it's a Score
         if let Ok(other_score) = RObject::try_convert(other) {
             if let Ok(other_value) = other_score.ivar_get::<_, i64>("@value") {
@@ -565,7 +521,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
                 }).as_value());
             }
         }
-        
+
         Ok(ruby.qnil().as_value())
     }, 1))?;
 

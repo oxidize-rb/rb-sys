@@ -4,7 +4,7 @@ title: Cross-Platform Development
 sidebar_position: 9
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
+import LanguageCallout from "../src/components/LanguageCallout";
 
 # Cross-Platform Development
 
@@ -108,19 +108,9 @@ Here's a real-world example of handling paths differently across platforms:
 ```rust
 use std::path::PathBuf;
 
-fn get_config_path() -> PathBuf {
-    #[cfg(target_os = "windows")]
-    {
-        let mut path = PathBuf::new();
-        if let Some(profile) = std::env::var_os("USERPROFILE") {
-            path.push(profile);
-            path.push("AppData");
-            path.push("Roaming");
-            path.push("MyApp");
-            path.push("config.toml");
-        }
-        path
-    }
+fn get_config_path() -> PathBuf { #[cfg(target_os = "windows")] { let mut path = PathBuf::new(); if let Some(profile) =
+std::env::var_os("USERPROFILE") { path.push(profile); path.push("AppData"); path.push("Roaming"); path.push("MyApp");
+path.push("config.toml"); } path }
 
     #[cfg(target_os = "macos")]
     {
@@ -154,8 +144,10 @@ fn get_config_path() -> PathBuf {
         // Default for other platforms
         PathBuf::from("config.toml")
     }
+
 }
-```
+
+````
 </LanguageCallout>
 
 ## Platform-Specific Dependencies
@@ -171,8 +163,7 @@ winapi = { version = "0.3", features = ["winbase"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9"
-```
-
+````
 
 ## Using build.rs for Platform Detection
 
@@ -347,7 +338,8 @@ jobs:
 
 ### Ruby-Head Compatibility
 
-When supporting `ruby-head` or development versions of Ruby, you must publish a source gem alongside your precompiled gems. This is necessary because:
+When supporting `ruby-head` or development versions of Ruby, you must publish a source gem alongside your precompiled
+gems. This is necessary because:
 
 1. The Ruby ABI (Application Binary Interface) can change between development versions
 2. Precompiled binary gems built against one ruby-head version may be incompatible with newer ruby-head versions
@@ -519,8 +511,6 @@ Windows presents unique challenges for Ruby extensions:
 
 - **Path Handling**: Use forward slashes (`/`) in paths, not backslashes (`\`)
 
-  
-
 - **DLL Loading**: Handle DLL loading carefully
 
   ```rust
@@ -633,17 +623,17 @@ use std::io;
 // Platform abstraction module
 mod platform {
     use std::io;
-    
+
     // Define platform-specific handle types
     #[cfg(target_os = "windows")]
     type PlatformSpecificHandle = std::os::windows::io::RawHandle;
-    
+
     #[cfg(unix)]
     type PlatformSpecificHandle = std::os::unix::io::RawFd;
-    
+
     #[cfg(not(any(target_os = "windows", unix)))]
     type PlatformSpecificHandle = ();
-    
+
     pub struct FileHandle(PlatformSpecificHandle);
 
     impl FileHandle {
@@ -725,7 +715,7 @@ use std::io;
 #[cfg(unix)]
 mod unix {
     use std::io;
-    
+
     pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), io::Error> {
         // Unix-specific memory mapping
         Ok(())
@@ -735,7 +725,7 @@ mod unix {
 #[cfg(windows)]
 mod windows {
     use std::io;
-    
+
     pub unsafe fn map_memory(addr: *mut u8, len: usize) -> Result<(), io::Error> {
         // Windows-specific memory mapping
         Ok(())

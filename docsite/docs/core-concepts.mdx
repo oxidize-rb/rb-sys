@@ -3,7 +3,9 @@ id: core-concepts
 title: Core Concepts
 sidebar_position: 3
 keywords: [core concepts, ruby c api, magnus, rb-sys, memory, ffi]
-description: Understand the fundamental concepts of building Ruby extensions with Rust, including how rb-sys bridges the two languages.
+description:
+  Understand the fundamental concepts of building Ruby extensions with Rust, including how rb-sys bridges the two
+  languages.
 ---
 
 # Core Concepts
@@ -24,26 +26,26 @@ graph TB
         A[Ruby Application]
         B[Rust Extension]
     end
-    
+
     subgraph "High-Level API"
         C[Magnus]
     end
-    
+
     subgraph "Low-Level Bindings"
         D[rb-sys]
     end
-    
+
     subgraph "Ruby Runtime"
         E[Ruby C API]
         F[Ruby VM]
     end
-    
+
     A -->|calls| B
     B -->|uses| C
     C -->|wraps| D
     D -->|binds to| E
     E -->|interfaces with| F
-    
+
     style A fill:#CC342D,color:#fff
     style B fill:#000,color:#fff
     style C fill:#D99A6C,color:#fff
@@ -57,6 +59,7 @@ style D fill:#545B69,color:#fff
 ### Layer 1: Ruby C API
 
 Ruby exposes a C API that allows native extensions to:
+
 - Create Ruby objects
 - Call Ruby methods
 - Define new classes and modules
@@ -65,6 +68,7 @@ Ruby exposes a C API that allows native extensions to:
 ### Layer 2: rb-sys (Low-Level)
 
 rb-sys provides:
+
 - **Safe Rust bindings** to Ruby's C API
 - **Automatic header generation** using bindgen
 - **Cross-platform compatibility**
@@ -73,6 +77,7 @@ rb-sys provides:
 ### Layer 3: Magnus (High-Level)
 
 Magnus provides:
+
 - **Ergonomic Rust API** that feels like Ruby
 - **Type safety** with compile-time checks
 - **Memory safety** guarantees
@@ -83,40 +88,49 @@ Magnus provides:
 Understanding how memory works in both languages is crucial:
 
 <table className="comparison-table">
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Ruby</th>
-<th>Rust</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Memory Management</strong></td>
-<td>Garbage Collection (GC)</td>
-<td>Ownership & Borrowing</td>
-</tr>
-<tr>
-<td><strong>Allocation</strong></td>
-<td>Automatic on object creation</td>
-<td>Explicit with ownership</td>
-</tr>
-<tr>
-<td><strong>Deallocation</strong></td>
-<td>GC decides when</td>
-<td>When owner goes out of scope</td>
-</tr>
-<tr>
-<td><strong>References</strong></td>
-<td>All references are valid</td>
-<td>Compiler enforces validity</td>
-</tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Aspect</th>
+      <th>Ruby</th>
+      <th>Rust</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <strong>Memory Management</strong>
+      </td>
+      <td>Garbage Collection (GC)</td>
+      <td>Ownership & Borrowing</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Allocation</strong>
+      </td>
+      <td>Automatic on object creation</td>
+      <td>Explicit with ownership</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Deallocation</strong>
+      </td>
+      <td>GC decides when</td>
+      <td>When owner goes out of scope</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>References</strong>
+      </td>
+      <td>All references are valid</td>
+      <td>Compiler enforces validity</td>
+    </tr>
+  </tbody>
 </table>
 
 ### The Bridge Challenge
 
 When Rust holds Ruby objects:
+
 1. Ruby's GC doesn't know about Rust's references
 2. Objects might be collected while Rust still uses them
 3. This causes segmentation faults
@@ -200,7 +214,7 @@ fn process_large_file(data: Vec<u8>) -> Vec<u8> {
             input: data,
             output: Vec::new(),
         };
-        
+
         unsafe {
             rb_thread_call_without_gvl(
                 Some(expensive_computation),
@@ -209,7 +223,7 @@ fn process_large_file(data: Vec<u8>) -> Vec<u8> {
                 std::ptr::null_mut(),
             );
         }
-        
+
         process_data.output
     } else {
         data
@@ -220,12 +234,14 @@ fn process_large_file(data: Vec<u8>) -> Vec<u8> {
 ### When to Release the GVL
 
 ✅ **Release for:**
+
 - CPU-intensive computations
 - Network I/O operations
 - File system operations
 - Cryptographic operations
 
 ❌ **Don't release for:**
+
 - Ruby object manipulation
 - Quick operations (< 10ms)
 - Memory allocation/deallocation
@@ -274,7 +290,7 @@ flowchart LR
     B --> C[cargo build]
     C --> D[lib.rs → .so/.bundle]
     D --> E[Ruby loads extension]
-    
+
     F[Cargo.toml] --> C
     G[build.rs] --> C
 ```
@@ -282,6 +298,7 @@ flowchart LR
 ### Key Files
 
 **extconf.rb**
+
 ```ruby
 require "mkmf"
 require "rb_sys/mkmf"
@@ -289,13 +306,14 @@ require "rb_sys/mkmf"
 create_rust_makefile("my_gem/my_gem") do |r|
   # Optional: specify Rust edition
   r.extra_rustflags = ["--edition", "2021"]
-  
+
   # Optional: enable specific features
   r.features = ["performance"]
 end
 ```
 
 **Cargo.toml**
+
 ```toml
 [dependencies]
 magnus = { version = "0.7", features = ["embed"] }
@@ -367,12 +385,12 @@ fn inefficient_sum(numbers: Vec<i64>) -> i64 {
 // ✅ Efficient: Process without conversions
 fn efficient_sum(array: RArray) -> Result<i64, Error> {
     let mut sum = 0i64;
-    
+
     // Iterate without converting to Vec
     for item in array.each() {
         sum += i64::try_convert(item?)?;
     }
-    
+
     Ok(sum)
 }
 ```
@@ -398,13 +416,13 @@ fn safe_operation(ruby: &Ruby, input: String) -> Result<String, Error> {
             "input too large"
         ));
     }
-    
+
     // Use checked arithmetic
     let count = input.chars().count();
     let doubled = count.checked_mul(2).ok_or_else(|| {
         Error::new(ruby.exception_range_error(), "overflow")
     })?;
-    
+
     Ok(format!("Processed {} characters", doubled))
 }
 ```
