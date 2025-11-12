@@ -12,189 +12,149 @@ Quick reference for terms used throughout rb-sys documentation.
 
 ## A
 
-**ABI (Application Binary Interface)**
-: The low-level interface between compiled code and the system. Defines how functions are called, how data is represented in memory, etc.
+**ABI (Application Binary Interface)** : The low-level interface between compiled code and the system. Defines how
+functions are called, how data is represented in memory, etc.
 
-**API (Application Programming Interface)**
-: The high-level interface for using a library or system. In rb-sys context, refers to Ruby's C API or Magnus's Rust API.
+**API (Application Programming Interface)** : The high-level interface for using a library or system. In rb-sys context,
+refers to Ruby's C API or Magnus's Rust API.
 
-**Arity**
-: The number of arguments a function accepts. In Ruby, this determines how Magnus registers methods.
+**Arity** : The number of arguments a function accepts. In Ruby, this determines how Magnus registers methods.
 
 ## B
 
-**Bindgen**
-: A Rust tool that automatically generates FFI bindings from C header files. Used by rb-sys to create Ruby C API bindings.
+**Bindgen** : A Rust tool that automatically generates FFI bindings from C header files. Used by rb-sys to create Ruby C
+API bindings.
 
-**Borrowing**
-: Rust's mechanism for temporary access to data without taking ownership. Prevents data races at compile time.
+**Borrowing** : Rust's mechanism for temporary access to data without taking ownership. Prevents data races at compile
+time.
 
-**Build Script (build.rs)**
-: Rust code that runs before compilation. Used to configure the build process, generate code, or link to external libraries.
+**Build Script (build.rs)** : Rust code that runs before compilation. Used to configure the build process, generate
+code, or link to external libraries.
 
 ## C
 
-**C API**
-: Ruby's native extension interface, written in C. Provides functions for creating Ruby objects, calling methods, etc.
+**C API** : Ruby's native extension interface, written in C. Provides functions for creating Ruby objects, calling
+methods, etc.
 
-**Cargo**
-: Rust's package manager and build tool. Similar to Bundler for Ruby.
+**Cargo** : Rust's package manager and build tool. Similar to Bundler for Ruby.
 
-**Cargo.toml**
-: Rust's project configuration file. Specifies dependencies, metadata, and build settings.
+**Cargo.toml** : Rust's project configuration file. Specifies dependencies, metadata, and build settings.
 
-**cdylib**
-: A type of Rust library that produces a C-compatible dynamic library. Required for Ruby extensions.
+**cdylib** : A type of Rust library that produces a C-compatible dynamic library. Required for Ruby extensions.
 
-**CFG**
-: Conditional compilation in Rust. Allows code to be included/excluded based on configuration.
+**CFG** : Conditional compilation in Rust. Allows code to be included/excluded based on configuration.
 
-**Crate**
-: A Rust package or library. Can be published to crates.io.
+**Crate** : A Rust package or library. Can be published to crates.io.
 
 ## D
 
-**DataTypeFunctions**
-: Magnus trait for defining how Ruby's GC interacts with Rust structs. Includes marking and deallocation.
+**DataTypeFunctions** : Magnus trait for defining how Ruby's GC interacts with Rust structs. Includes marking and
+deallocation.
 
-**Drop**
-: Rust trait for cleanup when a value goes out of scope. Similar to Ruby's finalizers but deterministic.
+**Drop** : Rust trait for cleanup when a value goes out of scope. Similar to Ruby's finalizers but deterministic.
 
 ## E
 
-**extconf.rb**
-: Ruby script that configures extension compilation. Creates a Makefile for building native extensions.
+**extconf.rb** : Ruby script that configures extension compilation. Creates a Makefile for building native extensions.
 
-**Extension**
-: Native code (C, Rust, etc.) compiled into a shared library that Ruby can load.
+**Extension** : Native code (C, Rust, etc.) compiled into a shared library that Ruby can load.
 
 ## F
 
-**FFI (Foreign Function Interface)**
-: Mechanism for calling functions across language boundaries. How Rust calls Ruby's C API.
+**FFI (Foreign Function Interface)** : Mechanism for calling functions across language boundaries. How Rust calls Ruby's
+C API.
 
-**Feature Flags**
-: Compile-time options in Rust. Enable/disable functionality or dependencies.
+**Feature Flags** : Compile-time options in Rust. Enable/disable functionality or dependencies.
 
 ## G
 
-**GC (Garbage Collector)**
-: Ruby's automatic memory management system. Cleans up unused objects.
+**GC (Garbage Collector)** : Ruby's automatic memory management system. Cleans up unused objects.
 
-**Gem**
-: Ruby package format. Can include pure Ruby code and/or native extensions.
+**Gem** : Ruby package format. Can include pure Ruby code and/or native extensions.
 
-**Gemspec**
-: Ruby gem specification file. Defines metadata, dependencies, and files.
+**Gemspec** : Ruby gem specification file. Defines metadata, dependencies, and files.
 
-**GVL (Global VM Lock)**
-: Ruby's Global VM Lock (also called GIL). Prevents true parallelism in Ruby threads.
+**GVL (Global VM Lock)** : Ruby's Global VM Lock (also called GIL). Prevents true parallelism in Ruby threads.
 
 ## I
 
-**Interior Mutability**
-: Rust pattern allowing mutation through shared references. Often uses `RefCell` or `Mutex`.
+**Interior Mutability** : Rust pattern allowing mutation through shared references. Often uses `RefCell` or `Mutex`.
 
 ## L
 
-**Lifetime**
-: Rust's way of tracking how long references are valid. Prevents use-after-free errors.
+**Lifetime** : Rust's way of tracking how long references are valid. Prevents use-after-free errors.
 
-**Link-Time Optimization (LTO)**
-: Optimization across compilation units. Can significantly improve performance but increases build time.
+**Link-Time Optimization (LTO)** : Optimization across compilation units. Can significantly improve performance but
+increases build time.
 
 ## M
 
-**Magnus**
-: High-level Rust library for Ruby extensions. Provides safe, ergonomic API over rb-sys.
+**Magnus** : High-level Rust library for Ruby extensions. Provides safe, ergonomic API over rb-sys.
 
-**Makefile**
-: Build instructions generated by extconf.rb. Used by Ruby to compile extensions.
+**Makefile** : Build instructions generated by extconf.rb. Used by Ruby to compile extensions.
 
-**Marking**
-: Process of telling Ruby's GC about references from Rust to Ruby objects. Prevents premature collection.
+**Marking** : Process of telling Ruby's GC about references from Rust to Ruby objects. Prevents premature collection.
 
-**mkmf**
-: Ruby's makefile generator library. Used by extconf.rb.
+**mkmf** : Ruby's makefile generator library. Used by extconf.rb.
 
 ## O
 
-**Ownership**
-: Rust's memory management model. Each value has one owner, and is freed when the owner goes out of scope.
+**Ownership** : Rust's memory management model. Each value has one owner, and is freed when the owner goes out of scope.
 
 ## P
 
-**Panic**
-: Rust's unrecoverable error. Should be avoided in Ruby extensions as it can crash Ruby.
+**Panic** : Rust's unrecoverable error. Should be avoided in Ruby extensions as it can crash Ruby.
 
-**Platform Triple**
-: Target specification like `x86_64-apple-darwin`. Identifies CPU architecture, vendor, and OS.
+**Platform Triple** : Target specification like `x86_64-apple-darwin`. Identifies CPU architecture, vendor, and OS.
 
 ## R
 
-**rb-sys**
-: Low-level Rust bindings to Ruby's C API. Foundation for building Ruby extensions in Rust.
+**rb-sys** : Low-level Rust bindings to Ruby's C API. Foundation for building Ruby extensions in Rust.
 
-**rb_sys gem**
-: Ruby gem that helps compile Rust extensions. Companion to the rb-sys crate.
+**rb_sys gem** : Ruby gem that helps compile Rust extensions. Companion to the rb-sys crate.
 
-**RAII (Resource Acquisition Is Initialization)**
-: Pattern where resource lifetime is tied to object lifetime. Used extensively in Rust.
+**RAII (Resource Acquisition Is Initialization)** : Pattern where resource lifetime is tied to object lifetime. Used
+extensively in Rust.
 
-**Rake**
-: Ruby's build automation tool. Similar to Make but written in Ruby.
+**Rake** : Ruby's build automation tool. Similar to Make but written in Ruby.
 
-**RefCell**
-: Rust type providing interior mutability with runtime borrow checking.
+**RefCell** : Rust type providing interior mutability with runtime borrow checking.
 
-**Result**
-: Rust's error handling type. Either `Ok(value)` or `Err(error)`.
+**Result** : Rust's error handling type. Either `Ok(value)` or `Err(error)`.
 
-**RSTRING**
-: Ruby's internal string representation. Accessed through rb-sys for zero-copy operations.
+**RSTRING** : Ruby's internal string representation. Accessed through rb-sys for zero-copy operations.
 
-**Rustup**
-: Rust toolchain installer and version manager.
+**Rustup** : Rust toolchain installer and version manager.
 
 ## S
 
-**Segfault (Segmentation Fault)**
-: Memory access violation causing program crash. Rust helps prevent these.
+**Segfault (Segmentation Fault)** : Memory access violation causing program crash. Rust helps prevent these.
 
-**Symbol**
-: Ruby's immutable string identifiers. Often used as hash keys or method names.
+**Symbol** : Ruby's immutable string identifiers. Often used as hash keys or method names.
 
-**Static**
-: In Rust, either compile-time constants or values that live for the program's lifetime.
+**Static** : In Rust, either compile-time constants or values that live for the program's lifetime.
 
 ## T
 
-**Target**
-: Platform being compiled for. Can cross-compile for different targets.
+**Target** : Platform being compiled for. Can cross-compile for different targets.
 
-**Trait**
-: Rust's interface mechanism. Defines shared behavior across types.
+**Trait** : Rust's interface mechanism. Defines shared behavior across types.
 
-**TypedData**
-: Ruby's way of wrapping C/Rust structs with type information and GC integration.
+**TypedData** : Ruby's way of wrapping C/Rust structs with type information and GC integration.
 
 ## U
 
-**Unsafe**
-: Rust code that bypasses safety checks. Required for FFI but should be minimized.
+**Unsafe** : Rust code that bypasses safety checks. Required for FFI but should be minimized.
 
 ## V
 
-**VALUE**
-: Ruby's generic object type in the C API. Represents any Ruby object.
+**VALUE** : Ruby's generic object type in the C API. Represents any Ruby object.
 
 ## W
 
-**Workspace**
-: Cargo feature for managing multiple related packages. Shares dependencies and build cache.
+**Workspace** : Cargo feature for managing multiple related packages. Shares dependencies and build cache.
 
-**Wrapper**
-: Code that provides a higher-level interface over low-level functionality.
+**Wrapper** : Code that provides a higher-level interface over low-level functionality.
 
 ## Common Acronyms
 

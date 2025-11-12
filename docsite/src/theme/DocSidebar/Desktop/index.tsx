@@ -1,10 +1,10 @@
-import React from 'react';
-import clsx from 'clsx';
-import { useThemeConfig } from '@docusaurus/theme-common';
-import Logo from '@theme/Logo';
-import CollapseButton from '@theme/DocSidebar/Desktop/CollapseButton';
-import Content from '@theme/DocSidebar/Desktop/Content';
-import styles from './styles.module.css';
+import React from "react";
+import clsx from "clsx";
+import { useThemeConfig } from "@docusaurus/theme-common";
+import Logo from "@theme/Logo";
+import CollapseButton from "@theme/DocSidebar/Desktop/CollapseButton";
+import Content from "@theme/DocSidebar/Desktop/Content";
+import styles from "./styles.module.css";
 
 interface DocSidebarDesktopProps {
   path: string;
@@ -26,7 +26,7 @@ function DocSidebarDesktop({ path, sidebar, onCollapse, isHidden }: DocSidebarDe
       className={clsx(
         styles.sidebar,
         hideOnScroll && styles.sidebarWithHideableNavbar,
-        isHidden && styles.sidebarHidden
+        isHidden && styles.sidebarHidden,
       )}
     >
       {hideOnScroll && <Logo tabIndex={-1} className={styles.sidebarLogo} />}

@@ -4,15 +4,14 @@ title: Error Handling in Rust Ruby Extensions
 sidebar_position: 11
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
+import LanguageCallout from "../src/components/LanguageCallout";
 
 # Error Handling in Rust Ruby Extensions
 
 This guide covers how to handle errors in Rust and map them to appropriate Ruby exceptions.
 
-:::warning
-Improper error handling can lead to crashes that take down the entire Ruby VM. Learn how to properly raise and handle exceptions in your Rust extensions.
-:::
+:::warning Improper error handling can lead to crashes that take down the entire Ruby VM. Learn how to properly raise
+and handle exceptions in your Rust extensions. :::
 
 ## Overview of Error Handling Approaches
 
@@ -22,14 +21,13 @@ When building Ruby extensions with Rust, you'll typically use one of these error
 2. **Ruby exception raising**: Converting Rust errors into Ruby exceptions
 3. **Panic catching**: Handling unexpected Rust panics and converting them to Ruby exceptions
 
-:::note
-In rb-sys extensions, Rust's `Result<T, magnus::Error>` type is typically used, where the `Error` type represents a Ruby exception.
-:::
+:::note In rb-sys extensions, Rust's `Result<T, magnus::Error>` type is typically used, where the `Error` type
+represents a Ruby exception. :::
 
 ## The Result Type and Magnus::Error
 
-Magnus uses `Result&lt;T, Error&gt;` as the standard way to handle errors. The `Error` type represents a Ruby exception that
-can be raised:
+Magnus uses `Result&lt;T, Error&gt;` as the standard way to handle errors. The `Error` type represents a Ruby exception
+that can be raised:
 
 ```rust
 use magnus::{Error, Ruby};
@@ -283,27 +281,15 @@ use magnus::{Error, Ruby, Value, RArray, value::ReprValue};
 use std::fs::File;
 use std::io::{self, Read};
 
-struct TempResource {
-    data: Vec<u8>,
-}
+struct TempResource { data: Vec<u8>, }
 
-impl TempResource {
-    fn new() -> Self {
-        // Allocate resource
-        TempResource { data: Vec::new() }
-    }
-}
+impl TempResource { fn new() -> Self { // Allocate resource TempResource { data: Vec::new() } } }
 
-impl Drop for TempResource {
-    fn drop(&mut self) {
-        // Clean up will happen automatically, even if an error occurs
-        println!("Cleaning up resource");
-    }
-}
+impl Drop for TempResource { fn drop(&mut self) { // Clean up will happen automatically, even if an error occurs
+println!("Cleaning up resource"); } }
 
-fn process_with_resource(ruby: &Ruby) -> Result<Value, Error> {
-    // Resource is created
-    let mut resource = TempResource::new();
+fn process_with_resource(ruby: &Ruby) -> Result<Value, Error> { // Resource is created let mut resource =
+TempResource::new();
 
     // If an error occurs here, resource will still be cleaned up
     let file_result = File::open("data.txt");
@@ -321,8 +307,10 @@ fn process_with_resource(ruby: &Ruby) -> Result<Value, Error> {
     arr.push(2)?;
     arr.push(3)?;
     Ok(arr.as_value())
+
 }
-```
+
+````
 </LanguageCallout>
 
 ## Best Practices for Error Handling
@@ -349,12 +337,10 @@ fn example(ruby: &Ruby, index: usize, array: &[i32]) -> Result<i32, Error> {
 
     Ok(array[index])
 }
-```
+````
 
-:::note
-Ruby has a rich hierarchy of exception types. Using the specific exception type helps users handle errors properly in
-their Ruby code.
-:::
+:::note Ruby has a rich hierarchy of exception types. Using the specific exception type helps users handle errors
+properly in their Ruby code. :::
 
 ### 2. Provide Clear Error Messages
 
@@ -484,10 +470,8 @@ impl MutCounter {
 
 ## Conclusion
 
-:::warning
-Never use `unwrap()` or `expect()` in production code for your Ruby extensions. These can cause panics that will crash
-the Ruby VM. Always use proper error handling with `Result` and `Error` types.
-:::
+:::warning Never use `unwrap()` or `expect()` in production code for your Ruby extensions. These can cause panics that
+will crash the Ruby VM. Always use proper error handling with `Result` and `Error` types. :::
 
 Effective error handling makes your Ruby extensions more robust and user-friendly. By using the right exception types
 and providing clear error messages, you create a better experience for users of your extension.
@@ -500,6 +484,4 @@ Remember these key points:
 - Handle Rust panics to prevent VM crashes
 - Respect Ruby's exception hierarchy
 
-:::tip
-Test your extension with invalid inputs to ensure it throws appropriate Ruby exceptions instead of crashing.
-:::
+:::tip Test your extension with invalid inputs to ensure it throws appropriate Ruby exceptions instead of crashing. :::

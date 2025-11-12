@@ -26,7 +26,7 @@ fn reverse_preserving_graphemes(input: String) -> String {
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("StringUtils")?;
     module.define_singleton_method(
-        "reverse_unicode", 
+        "reverse_unicode",
         function!(reverse_preserving_graphemes, 1)
     )?;
     Ok(())
@@ -34,6 +34,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 ```
 
 **Usage:**
+
 ```ruby
 StringUtils.reverse_unicode("Hello 👨‍👩‍👧‍👦!")  # => "!👨‍👩‍👧‍👦 olleH"
 ```
@@ -46,17 +47,17 @@ use regex::Regex;
 
 fn batch_replace(text: String, patterns: Vec<(String, String)>) -> Result<String, Error> {
     let mut result = text;
-    
+
     for (pattern, replacement) in patterns {
         let re = Regex::new(&pattern)
             .map_err(|e| Error::new(
                 magnus::exception::arg_error(),
                 format!("Invalid regex: {}", e)
             ))?;
-        
+
         result = re.replace_all(&result, replacement.as_str()).to_string();
     }
-    
+
     Ok(result)
 }
 ```
@@ -94,12 +95,12 @@ fn parallel_map(array: RArray) -> Result<RArray, Error> {
         let val: i64 = TryConvert::try_convert(item?)?;
         items.push(val);
     }
-    
+
     let mut data = ProcessData {
         items,
         result: Vec::new(),
     };
-    
+
     // Process in parallel (release GVL)
     unsafe {
         rb_thread_call_without_gvl(
@@ -109,13 +110,13 @@ fn parallel_map(array: RArray) -> Result<RArray, Error> {
             std::ptr::null_mut(),
         );
     }
-    
+
     // Convert back to Ruby array
     let result = RArray::new();
     for val in data.result {
         result.push(val)?;
     }
-    
+
     Ok(result)
 }
 ```
@@ -133,23 +134,23 @@ fn parse_csv_to_hashes(csv_string: String) -> Result<RArray, Error> {
             e.to_string()
         ))?
         .clone();
-    
+
     let result = RArray::new();
-    
+
     for record in reader.records() {
         let record = record.map_err(|e| Error::new(
             magnus::exception::runtime_error(),
             e.to_string()
         ))?;
-        
+
         let hash = RHash::new();
         for (header, value) in headers.iter().zip(record.iter()) {
             hash.aset(Symbol::new(header), value)?;
         }
-        
+
         result.push(hash)?;
     }
-    
+
     Ok(result)
 }
 ```
@@ -167,13 +168,13 @@ fn parse_json(ruby: &Ruby, json_string: String) -> Result<Value, Error> {
             magnus::exception::runtime_error(),
             format!("JSON parse error: {}", e)
         ))?;
-    
+
     json_to_ruby(ruby, value)
 }
 
 fn json_to_ruby(ruby: &Ruby, value: serde_json::Value) -> Result<Value, Error> {
     use serde_json::Value as J;
-    
+
     match value {
         J::Null => Ok(ruby.qnil().as_value()),
         J::Bool(b) => Ok(if b { ruby.qtrue().as_value() } else { ruby.qfalse().as_value() }),
@@ -223,21 +224,21 @@ fn process_large_file(path: String, pattern: String) -> Result<i64, Error> {
             magnus::exception::runtime_error(),
             format!("Cannot open file: {}", e)
         ))?;
-    
+
     let reader = BufReader::new(file);
     let mut count = 0i64;
-    
+
     for line in reader.lines() {
         let line = line.map_err(|e| Error::new(
             magnus::exception::runtime_error(),
             format!("Read error: {}", e)
         ))?;
-        
+
         if line.contains(&pattern) {
             count += 1;
         }
     }
-    
+
     Ok(count)
 }
 
@@ -247,7 +248,7 @@ fn read_binary_file(path: String) -> Result<RString, Error> {
             magnus::exception::runtime_error(),
             format!("Cannot read file: {}", e)
         ))?;
-    
+
     // Return as binary string
     Ok(RString::from_slice(&data))
 }
@@ -263,21 +264,21 @@ use sha2::{Sha256, Digest};
 
 fn sha256_hexdigest(input: RString) -> Result<String, Error> {
     let data = unsafe { input.as_slice() };
-    
+
     let mut hasher = Sha256::new();
     hasher.update(data);
     let result = hasher.finalize();
-    
+
     Ok(hex::encode(result))
 }
 
 fn sha256_raw(input: RString) -> Result<RString, Error> {
     let data = unsafe { input.as_slice() };
-    
+
     let mut hasher = Sha256::new();
     hasher.update(data);
     let result = hasher.finalize();
-    
+
     Ok(RString::from_slice(&result))
 }
 ```
@@ -308,7 +309,7 @@ impl DatabasePool {
     fn acquire() -> Result<Connection, Error> {
         let mut pool = POOL.lock()
             .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire pool lock"))?;
-        
+
         if let Some(conn) = pool.pop() {
             Ok(conn)
         } else {
@@ -316,14 +317,14 @@ impl DatabasePool {
             Ok(Connection { id: pool.len() })
         }
     }
-    
+
     fn release(conn: Connection) -> Result<(), Error> {
         let mut pool = POOL.lock()
             .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire pool lock"))?;
         pool.push(conn);
         Ok(())
     }
-    
+
     fn with_connection<F, R>(f: F) -> Result<R, Error>
     where
         F: FnOnce(&Connection) -> Result<R, Error>,
@@ -350,7 +351,7 @@ fn parse_url_components(url_string: String) -> Result<RHash, Error> {
             magnus::exception::arg_error(),
             format!("Invalid URL: {}", e)
         ))?;
-    
+
     let result = RHash::new();
     result.aset("scheme", parsed.scheme())?;
     if let Some(host) = parsed.host_str() {
@@ -360,7 +361,7 @@ fn parse_url_components(url_string: String) -> Result<RHash, Error> {
     if let Some(port) = parsed.port() {
         result.aset("port", port)?;
     }
-    
+
     Ok(result)
 }
 ```
@@ -374,20 +375,20 @@ use magnus::{RString, Error};
 use image::ImageFormat;
 
 fn resize_image(
-    image_data: RString, 
-    width: u32, 
+    image_data: RString,
+    width: u32,
     height: u32
 ) -> Result<RString, Error> {
     let bytes = unsafe { image_data.as_slice() };
-    
+
     let img = image::load_from_memory(bytes)
         .map_err(|e| Error::new(
             magnus::exception::runtime_error(),
             format!("Invalid image: {}", e)
         ))?;
-    
+
     let resized = img.resize_exact(width, height, image::imageops::FilterType::Lanczos3);
-    
+
     let mut output = Vec::new();
     use std::io::Cursor;
     resized.write_to(&mut Cursor::new(&mut output), ImageFormat::Png)
@@ -395,7 +396,7 @@ fn resize_image(
             magnus::exception::runtime_error(),
             format!("Failed to encode image: {}", e)
         ))?;
-    
+
     Ok(RString::from_slice(&output))
 }
 ```
@@ -410,11 +411,11 @@ use std::time::Instant;
 
 fn benchmark_block(iterations: usize, block: Proc) -> Result<f64, Error> {
     let start = Instant::now();
-    
+
     for _ in 0..iterations {
         block.call::<_, Value>(())?;
     }
-    
+
     let duration = start.elapsed();
     Ok(duration.as_secs_f64())
 }
@@ -426,7 +427,7 @@ where
     let before = get_memory_usage();
     let result = f()?;
     let after = get_memory_usage();
-    
+
     Ok((result, after - before))
 }
 
@@ -440,7 +441,7 @@ fn get_memory_usage() -> usize {
         // Parse VmRSS from status
         0 // Placeholder
     }
-    
+
     #[cfg(not(target_os = "linux"))]
     {
         0 // Placeholder
@@ -467,14 +468,14 @@ impl ThreadSafeCounter {
             value: Arc::new(Mutex::new(0)),
         }
     }
-    
+
     fn increment(&self) -> Result<i64, Error> {
         let mut val = self.value.lock()
             .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire lock"))?;
         *val += 1;
         Ok(*val)
     }
-    
+
     fn value(&self) -> Result<i64, Error> {
         let val = self.value.lock()
             .map_err(|_| Error::new(magnus::exception::runtime_error(), "Failed to acquire lock"))?;
@@ -505,7 +506,7 @@ impl RangeIterator {
             step: step.unwrap_or(1),
         }
     }
-    
+
     fn each(&mut self, block: Proc) -> Result<(), Error> {
         while self.current < self.end {
             block.call::<_, Value>((self.current,))?;
@@ -513,7 +514,7 @@ impl RangeIterator {
         }
         Ok(())
     }
-    
+
     fn to_a(&mut self) -> Result<RArray, Error> {
         let array = RArray::new();
         while self.current < self.end {

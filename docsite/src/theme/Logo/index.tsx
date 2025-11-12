@@ -1,9 +1,9 @@
-import React from 'react';
-import Link from '@docusaurus/Link';
-import useBaseUrl from '@docusaurus/useBaseUrl';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import {useThemeConfig} from '@docusaurus/theme-common';
-import ThemedImage from '@theme/ThemedImage';
+import React from "react";
+import Link from "@docusaurus/Link";
+import useBaseUrl from "@docusaurus/useBaseUrl";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import { useThemeConfig } from "@docusaurus/theme-common";
+import ThemedImage from "@theme/ThemedImage";
 
 interface LogoProps {
   className?: string;
@@ -15,28 +15,29 @@ interface LogoProps {
  */
 export default function Logo(props: LogoProps): React.ReactElement {
   const {
-    siteConfig: {title},
+    siteConfig: { title },
   } = useDocusaurusContext();
   const themeConfig = useThemeConfig();
-  const navbarTitle = themeConfig.navbar?.title || '';
+  const navbarTitle = themeConfig.navbar?.title || "";
   const navbarLogo = themeConfig.navbar?.logo?.src || null;
 
-  const {className, imageClassName} = props;
+  const { className, imageClassName } = props;
 
   return (
     <Link
-      to={useBaseUrl('/')}
+      to={useBaseUrl("/")}
       className={className}
       {...(navbarTitle
         ? {
-            'aria-label': `${navbarTitle} home page`,
+            "aria-label": `${navbarTitle} home page`,
           }
-        : {})}>
+        : {})}
+    >
       {navbarLogo && (
         <img
           className={imageClassName}
           src={useBaseUrl(navbarLogo)}
-          alt={themeConfig.navbar?.logo?.alt || 'Logo'}
+          alt={themeConfig.navbar?.logo?.alt || "Logo"}
           width="32"
           height="32"
         />

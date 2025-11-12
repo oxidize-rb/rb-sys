@@ -24,9 +24,7 @@
 .features :global(.section-divider) {
   width: 50px;
   height: 2px;
-  background: linear-gradient(90deg,
-    rgba(209, 91, 86, 0.6) 0%,
-    rgba(217, 154, 108, 0.6) 100%);
+  background: linear-gradient(90deg, rgba(209, 91, 86, 0.6) 0%, rgba(217, 154, 108, 0.6) 100%);
   margin: 0.5rem auto 1.5rem;
   border-radius: 1px;
 }
@@ -81,9 +79,7 @@
 .featureDivider {
   width: 30px;
   height: 1px;
-  background: linear-gradient(90deg,
-    rgba(209, 91, 86, 0.6) 0%,
-    rgba(217, 154, 108, 0.6) 100%);
+  background: linear-gradient(90deg, rgba(209, 91, 86, 0.6) 0%, rgba(217, 154, 108, 0.6) 100%);
   margin: 0.5rem auto 1rem;
 }
 

@@ -1,11 +1,11 @@
 // Add small arrow icons to external links in the footer
 export default function setupFooterIcons() {
   const footerLinks = document.querySelectorAll('.footer__link-item[target="_blank"]');
-  
-  footerLinks.forEach(link => {
+
+  footerLinks.forEach((link) => {
     // Don't add icon if it already has one
-    if (!link.querySelector('svg')) {
-      const icon = document.createElement('span');
+    if (!link.querySelector("svg")) {
+      const icon = document.createElement("span");
       icon.innerHTML = `
         <svg width="12" height="12" aria-hidden="true" viewBox="0 0 24 24" style="margin-left: 4px; display: inline-block; vertical-align: middle; opacity: 0.7;">
           <path

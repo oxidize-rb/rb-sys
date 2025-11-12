@@ -4,8 +4,8 @@ title: Development Approaches
 sidebar_position: 6
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
-import CodeComparison from '../src/components/CodeComparison';
+import LanguageCallout from "../src/components/LanguageCallout";
+import CodeComparison from "../src/components/CodeComparison";
 
 # Development Approaches
 
@@ -91,26 +91,12 @@ use magnus::{Error, Ruby, RString};
 use rb_sys::rb_thread_call_without_gvl;
 use std::{ffi::c_void, panic::{self, AssertUnwindSafe}, ptr::null_mut};
 
-/// Execute a function without holding the Global VM Lock (GVL).
-/// This allows other Ruby threads to run while performing CPU-intensive tasks.
-///
-/// # Safety
-///
-/// The passed function must not interact with the Ruby VM or Ruby objects
-/// as it runs without the GVL, which is required for safe Ruby operations.
-///
-/// # Returns
-///
-/// Returns the result of the function or a magnus::Error if the function panics.
-pub fn nogvl<F, R>(func: F) -> Result<R, Error>
-where
-    F: FnOnce() -> R,
-    R: Send + 'static,
-{
-    struct CallbackData<F, R> {
-        func: Option<F>,
-        result: Option<Result<R, String>>, // Store either the result or a panic message
-    }
+/// Execute a function without holding the Global VM Lock (GVL). /// This allows other Ruby threads to run while
+performing CPU-intensive tasks. /// /// # Safety /// /// The passed function must not interact with the Ruby VM or Ruby
+objects /// as it runs without the GVL, which is required for safe Ruby operations. /// /// # Returns /// /// Returns
+the result of the function or a magnus::Error if the function panics. pub fn nogvl<F, R>(func: F) -> Result<R, Error>
+where F: FnOnce() -> R, R: Send + 'static, { struct CallbackData<F, R> { func: Option<F>, result: Option<Result<R,
+String>>, // Store either the result or a panic message }
 
     extern "C" fn call_without_gvl<F, R>(data: *mut c_void) -> *mut c_void
     where
@@ -179,8 +165,10 @@ where
             ))
         }
     }
+
 }
-```
+
+````
 </LanguageCallout>
 
 ### How Direct rb-sys Works
@@ -223,7 +211,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     module.define_singleton_method("hello", function!(hello, 1))?;
     Ok(())
 }
-```
+````
 
 Looking at a more complex example from a real-world project (lz4-flex-rb):
 
@@ -300,27 +288,12 @@ Direct rb-sys:
 ✅ Fine-grained GVL management
 ✅ Version-specific behavior
 
-❌ Lots of unsafe code
-❌ Manual memory management
-❌ More verbose type conversions
-❌ Steeper learning curve
-\`\`\`
-  `}
-  rust={`
-\`\`\`
-Magnus Wrapper:
-✅ Higher developer productivity
-✅ Better memory safety
-✅ Ergonomic Ruby class integration
-✅ Idiomatic Rust error handling
+❌ Lots of unsafe code ❌ Manual memory management ❌ More verbose type conversions ❌ Steeper learning curve \`\`\`
+`}   rust={` \`\`\` Magnus Wrapper: ✅ Higher developer productivity ✅ Better memory safety ✅ Ergonomic Ruby class
+integration ✅ Idiomatic Rust error handling
 
-❌ Small performance overhead
-❌ Less control over Ruby internals
-❌ Slightly higher learning curve for Ruby devs
-❌ Fewer GVL optimization opportunities
-\`\`\`
-  `}
-/>
+❌ Small performance overhead ❌ Less control over Ruby internals ❌ Slightly higher learning curve for Ruby devs ❌
+Fewer GVL optimization opportunities \`\`\` `} />
 
 ## Mixing Approaches
 
@@ -385,12 +358,10 @@ magnus = { version = "0.7", features = ["rb-sys"] }
 ### Common Mixing Patterns
 
 1. **Use Magnus for most functionality, rb-sys for specific optimizations**:
-
    - Define your public API using Magnus for safety and ease
    - Drop down to rb-sys in critical performance paths, especially when using `nogvl`
 
 2. **Use rb-sys for core functionality, Magnus for complex conversions**:
-
    - Build core functionality with rb-sys for maximum control
    - Use Magnus for handling complex Ruby objects or collections
 
@@ -448,7 +419,7 @@ unsafe extern "C" fn rb_simple_hash(_klass: VALUE, string: VALUE) -> VALUE {
     for &byte in data_slice {
         hash = hash.wrapping_mul(31).wrapping_add(byte as u32);
     }
-    
+
     // Convert hash to string
     let hash_str = format!("{:08x}", hash);
     let hash_bytes = hash_str.as_bytes();
@@ -482,19 +453,19 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 fn compress(input: RString) -> Result<RString, Error> {
     let input_locked = LockedRString::new(input);
     let bufsize = lz4_flex::block::get_maximum_output_size(input_locked.as_slice().len());
-    
+
     // Create output buffer
     let mut output_vec = vec![0u8; bufsize];
 
     // Compress the data
     let outsize = lz4_flex::block::compress_into(
-        input_locked.as_slice(), 
+        input_locked.as_slice(),
         &mut output_vec
     ).map_err(|e| Error::new(magnus::exception::standard_error(), e.to_string()))?;
 
     // Resize to actual output size
     output_vec.truncate(outsize);
-    
+
     // Convert to Ruby string
     let ruby = unsafe { magnus::Ruby::get_unchecked() };
     Ok(RString::from_slice(&output_vec))
@@ -502,12 +473,12 @@ fn compress(input: RString) -> Result<RString, Error> {
 
 fn decompress(input: RString) -> Result<RString, Error> {
     let input_locked = LockedRString::new(input);
-    
+
     // Decompress the data (need to provide max output size)
     let max_size = input_locked.as_slice().len() * 20; // Conservative estimate
     let decompressed = lz4_flex::block::decompress(input_locked.as_slice(), max_size)
         .map_err(|e| Error::new(magnus::exception::standard_error(), e.to_string()))?;
-    
+
     // Convert to Ruby string
     let ruby = unsafe { magnus::Ruby::get_unchecked() };
     Ok(RString::from_slice(&decompressed))

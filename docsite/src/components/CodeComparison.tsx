@@ -1,8 +1,8 @@
-import React from 'react';
-import styles from './CodeComparison.module.css';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import CodeBlock from '@theme/CodeBlock';
+import React from "react";
+import styles from "./CodeComparison.module.css";
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import CodeBlock from "@theme/CodeBlock";
 
 type CodeComparisonProps = {
   ruby: string;
@@ -22,26 +22,22 @@ type CodeComparisonProps = {
 export default function CodeComparison({
   ruby,
   rust,
-  rubyTitle = 'Ruby',
-  rustTitle = 'Rust',
-  rubyLanguage = 'ruby',
-  rustLanguage = 'rust',
+  rubyTitle = "Ruby",
+  rustTitle = "Rust",
+  rubyLanguage = "ruby",
+  rustLanguage = "rust",
 }: CodeComparisonProps): React.ReactElement {
   return (
     <div className={styles.codeComparison}>
       <Tabs>
         <TabItem value="ruby" label={rubyTitle} default>
           <div className={styles.codeBlock}>
-            <CodeBlock language={rubyLanguage}>
-              {ruby}
-            </CodeBlock>
+            <CodeBlock language={rubyLanguage}>{ruby}</CodeBlock>
           </div>
         </TabItem>
         <TabItem value="rust" label={rustTitle}>
           <div className={styles.codeBlock}>
-            <CodeBlock language={rustLanguage}>
-              {rust}
-            </CodeBlock>
+            <CodeBlock language={rustLanguage}>{rust}</CodeBlock>
           </div>
         </TabItem>
       </Tabs>

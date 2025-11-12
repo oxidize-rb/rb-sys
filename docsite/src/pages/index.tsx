@@ -17,7 +17,7 @@ function HomepageHeader() {
     <header className={clsx("hero", styles.heroBanner)}>
       <div className={styles.heroTexture}></div>
       <div className={styles.heroOverlay}></div>
-      <div className="container" style={{padding: 0, margin: '0 auto'}}>
+      <div className="container" style={{ padding: 0, margin: "0 auto" }}>
         <div className={styles.heroContent}>
           <div className={styles.titleWrapper}>
             <div className={styles.titleAccent}></div>
@@ -28,17 +28,11 @@ function HomepageHeader() {
           <p className={styles.subtitle}>{siteConfig.tagline}</p>
           <div className={styles.subtitleDivider}></div>
           <div className={styles.buttons}>
-            <Link
-              className={clsx("button button--lg", styles.primaryButton)}
-              to="/docs/getting-started"
-            >
+            <Link className={clsx("button button--lg", styles.primaryButton)} to="/docs/getting-started">
               <span className={styles.buttonText}>Get Started</span>
               <span className={styles.buttonSheen}></span>
             </Link>
-            <Link
-              className={clsx("button button--lg", styles.secondaryButton)}
-              to="/docs/project-setup"
-            >
+            <Link className={clsx("button button--lg", styles.secondaryButton)} to="/docs/project-setup">
               <span className={styles.buttonText}>Installation Guide</span>
               <span className={styles.buttonSheen}></span>
             </Link>
@@ -62,8 +56,12 @@ function HomepageCodeExample() {
         <div className={styles.codeExample}>
           <div className={styles.codeExampleFrame}>
             <div className={styles.codeExampleLegend}>
-              <div className={styles.codeLanguageBadge}><span className={styles.rubyDot}></span>Ruby</div>
-              <div className={styles.codeLanguageBadge}><span className={styles.rustDot}></span>Rust</div>
+              <div className={styles.codeLanguageBadge}>
+                <span className={styles.rubyDot}></span>Ruby
+              </div>
+              <div className={styles.codeLanguageBadge}>
+                <span className={styles.rustDot}></span>Rust
+              </div>
             </div>
             <Tabs className={styles.codeTabs}>
               <TabItem value="ruby" label="Ruby">
@@ -114,9 +112,7 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout 
-      title="Building Ruby extensions with Rust"
-      description={siteConfig.tagline}>
+    <Layout title="Building Ruby extensions with Rust" description={siteConfig.tagline}>
       <HomepageHeader />
       <HomepageCodeExample />
       <main>

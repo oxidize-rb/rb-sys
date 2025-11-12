@@ -3,7 +3,7 @@ id: test-helpers
 title: rb-sys-test-helpers
 ---
 
-import LanguageCallout from '../../src/components/LanguageCallout';
+import LanguageCallout from "../../src/components/LanguageCallout";
 
 # rb-sys-test-helpers
 
@@ -30,7 +30,8 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Then, you can use the `ruby_test` attribute macro in your tests. All of your tests can be placed in a single `mod tests` block, with all the necessary imports at the top.
+Then, you can use the `ruby_test` attribute macro in your tests. All of your tests can be placed in a single `mod tests`
+block, with all the necessary imports at the top.
 
 ```rust
 #[cfg(test)]

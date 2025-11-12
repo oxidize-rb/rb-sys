@@ -8,7 +8,8 @@ sidebar_position: 9
 import LanguageCallout from '@site/src/components/LanguageCallout';
 ```
 
-Testing Ruby extensions written in Rust requires consideration of both the Ruby and Rust sides of your code. This chapter covers best practices and tools for comprehensive testing.
+Testing Ruby extensions written in Rust requires consideration of both the Ruby and Rust sides of your code. This
+chapter covers best practices and tools for comprehensive testing.
 
 <LanguageCallout />
 
@@ -99,7 +100,7 @@ use magnus::{Value, value::ReprValue};
 #[ruby_test]
 fn test_no_memory_leaks() {
     let ruby = unsafe { magnus::Ruby::get_unchecked() };
-    
+
     // Create and drop Ruby objects
     let obj: Value = ruby.eval("Object.new")
         .unwrap_or_else(|_| ruby.qnil().as_value());
@@ -303,12 +304,14 @@ jobs:
 Useful techniques for debugging test failures:
 
 1. **Enable Verbose Output**:
+
 ```ruby
 ENV["RUST_BACKTRACE"] = "1"
 ENV["RUST_LOG"] = "debug"
 ```
 
 2. **Use Debug Assertions**:
+
 ```rust
 fn validate_input(value: i32) {
     debug_assert!(value > 0, "Value must be positive, got {}", value);
@@ -317,6 +320,7 @@ fn validate_input(value: i32) {
 ```
 
 3. **Add Logging**:
+
 ```rust
 use log::{debug, info};
 use magnus::Error;

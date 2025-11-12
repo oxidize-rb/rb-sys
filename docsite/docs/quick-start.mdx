@@ -10,11 +10,13 @@ description: Build your first Ruby extension with Rust. Step-by-step tutorial wi
 
 **Time:** 15 minutes | **Difficulty:** Beginner | **Prerequisites:** [Installation complete](getting-started)
 
-Let's build a working Ruby gem with Rust. We'll create a string manipulation library that showcases Rust's speed and safety.
+Let's build a working Ruby gem with Rust. We'll create a string manipulation library that showcases Rust's speed and
+safety.
 
 ## What We're Building
 
 A `FastStrings` gem that provides:
+
 - String reversal
 - Safe Unicode handling
 
@@ -76,10 +78,10 @@ fn reverse_string(input: String) -> String {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("FastStrings")?;
-    
+
     // Define our module methods
     module.define_singleton_method("reverse", function!(reverse_string, 1))?;
-    
+
     Ok(())
 }
 ```
@@ -132,7 +134,7 @@ class TestFastStrings < Minitest::Test
   def test_reverse_simple
     assert_equal "dlrow olleh", FastStrings.reverse("hello world")
   end
-  
+
   def test_reverse_unicode
     assert_equal "!dlroW olleH", FastStrings.reverse("Hello World!")
   end
@@ -188,6 +190,7 @@ gem push fast_strings-0.1.0.gem
 <div className="next-step-card">
 
 ### [Core Concepts](core-concepts)
+
 Understand how rb-sys bridges Ruby and Rust
 
 </div>
@@ -195,6 +198,7 @@ Understand how rb-sys bridges Ruby and Rust
 <div className="next-step-card">
 
 ### [Project Setup](project-setup)
+
 Structure larger projects properly
 
 </div>
@@ -202,6 +206,7 @@ Structure larger projects properly
 <div className="next-step-card">
 
 ### [Working with Ruby Objects](working-with-ruby-objects)
+
 Manipulate arrays, hashes, and more
 
 </div>

@@ -9,11 +9,14 @@ import LanguageCallout from '@site/src/components/LanguageCallout';
 ```
 
 <LanguageCallout language="rust">
-  The Rust code in this gem is a native extension for Ruby. It is compiled into a dynamic library that can be loaded by Ruby.
+  The Rust code in this gem is a native extension for Ruby. It is compiled into a dynamic library that can be loaded by
+  Ruby.
 </LanguageCallout>
 ```
 
-This section serves as companion documentation to the [Hello Rusty](https://github.com/oxidize-rb/rb-sys/tree/main/examples/hello_rusty) example project. It provides detailed explanations of the project's structure and implementation.
+This section serves as companion documentation to the
+[Hello Rusty](https://github.com/oxidize-rb/rb-sys/tree/main/examples/hello_rusty) example project. It provides detailed
+explanations of the project's structure and implementation.
 
 <LanguageCallout />
 
@@ -66,6 +69,7 @@ RbSys::ExtensionTask.new('hello_rusty') do |ext|
 ```
 
 This configuration:
+
 1. Requires the `rb_sys` gem
 2. Creates a new extension task named 'hello_rusty'
 3. Sets the output directory for our compiled extension
@@ -81,7 +85,7 @@ use rb_sys::{ rb_define_module, rb_define_module_function };
 #[no_mangle]
 pub extern "C" fn Init_hello_rusty() {
     let module = unsafe { rb_define_module("HelloRusty") };
-    
+
     unsafe {
         rb_define_module_function(
             module,
@@ -98,6 +102,7 @@ unsafe extern "C" fn greet() -> VALUE {
 ```
 
 This code:
+
 1. Imports necessary functions from `rb_sys`
 2. Defines the initialization function (`Init_hello_rusty`)
 3. Creates a Ruby module named "HelloRusty"
@@ -117,6 +122,7 @@ end
 ```
 
 This provides:
+
 1. Version information
 2. The native extension
 3. A custom error class

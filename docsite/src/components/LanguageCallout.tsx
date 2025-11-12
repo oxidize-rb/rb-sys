@@ -1,9 +1,9 @@
-import React from 'react';
-import styles from './LanguageCallout.module.css';
-import clsx from 'clsx';
+import React from "react";
+import styles from "./LanguageCallout.module.css";
+import clsx from "clsx";
 
 type LanguageCalloutProps = {
-  language: 'ruby' | 'rust';
+  language: "ruby" | "rust";
   icon?: boolean;
   title?: string;
   children: React.ReactNode;
@@ -11,7 +11,7 @@ type LanguageCalloutProps = {
 
 /**
  * LanguageCallout component
- * 
+ *
  * A component that displays language-specific information in a callout box,
  * with appropriate styling for Ruby or Rust.
  */
@@ -21,15 +21,15 @@ export default function LanguageCallout({
   title,
   children,
 }: LanguageCalloutProps): React.ReactElement {
-  const defaultTitle = language === 'ruby' ? 'Ruby' : 'Rust';
+  const defaultTitle = language === "ruby" ? "Ruby" : "Rust";
   const displayTitle = title || defaultTitle;
-  
+
   return (
     <div className={clsx(styles.languageCallout, styles[language])}>
       <div className={styles.header}>
         {icon && (
           <div className={styles.icon}>
-            {language === 'ruby' ? (
+            {language === "ruby" ? (
               // Ruby icon - simplified gem shape
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" height="20" width="20">
                 <path d="M6 3h12l4 6-10 12L2 9l4-6z" strokeLinejoin="round" />

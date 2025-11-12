@@ -22,12 +22,7 @@ export default function TabItem({
   ...props
 }: TabItemProps): React.ReactElement {
   return (
-    <div
-      role="tabpanel"
-      className={clsx(styles.tabItem, className)}
-      hidden={hidden}
-      {...props}
-    >
+    <div role="tabpanel" className={clsx(styles.tabItem, className)} hidden={hidden} {...props}>
       {children}
     </div>
   );

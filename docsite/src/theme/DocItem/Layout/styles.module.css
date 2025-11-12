@@ -9,6 +9,10 @@
   padding: 0 var(--ifm-spacing-horizontal);
 }
 
+.copyButton {
+  margin-bottom: 0.5rem;
+}
+
 @media (min-width: 997px) {
   .docItemCol {
     padding: 0;

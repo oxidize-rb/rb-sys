@@ -4,7 +4,7 @@ title: Debugging & Troubleshooting
 sidebar_position: 14
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
+import LanguageCallout from "../src/components/LanguageCallout";
 
 # Debugging & Troubleshooting
 
@@ -29,9 +29,8 @@ task "compile:debug" do
 end
 ```
 
-:::tip
-[Join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to ask questions and get help from the community!
-:::
+:::tip [Join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)
+to ask questions and get help from the community! :::
 
 ## Common Errors and Solutions
 
@@ -216,7 +215,8 @@ with debug symbols, any calls into the Ruby C API become a black box. Luckily, i
 $ RUBY_CFLAGS="-Og -ggdb" ruby-build --keep 3.1.2 /opt/rubies/3.1.2-debug
 
 # Make sure your .vscode/launch.json file is configured to use /opt/rubies/3.1.2-debug/bin/ruby.
-```
+
+````
 </LanguageCallout>
 
 <LanguageCallout language="ruby" title="Using rbenv">
@@ -225,7 +225,8 @@ $ RUBY_CFLAGS="-Og -ggdb" ruby-build --keep 3.1.2 /opt/rubies/3.1.2-debug
 $ RUBY_CFLAGS="-Og -ggdb" rbenv install --keep 3.1.2
 
 # Make sure your .vscode/launch.json file is configured to use $RBENV_ROOT/versions/3.1.2/bin/ruby.
-```
+````
+
 </LanguageCallout>
 
 ### LLDB from the Command Line
@@ -395,4 +396,6 @@ For more detailed instructions and configuration options, refer to the
 - Build your extension with `RB_SYS_CARGO_PROFILE=dev` and practice setting breakpoints.
 - Explore GDB as an alternative to LLDB for low-level debugging.
 - See the Memory Management & Safety chapter for GC-related troubleshooting.
-- If you're still stuck, [join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to ask questions and get help from the community!
+- If you're still stuck,
+  [join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to ask
+  questions and get help from the community!

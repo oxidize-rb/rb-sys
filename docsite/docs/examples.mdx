@@ -1,10 +1,10 @@
 ---
 id: examples
-title: Examples 
+title: Examples
 ---
 
-import LanguageCallout from '../src/components/LanguageCallout';
-import CodeComparison from '../src/components/CodeComparison';
+import LanguageCallout from "../src/components/LanguageCallout";
+import CodeComparison from "../src/components/CodeComparison";
 
 # Examples Using Custom Components
 
@@ -80,17 +80,13 @@ struct Point {
     y: f64,
 }
 
-impl Point {
-    fn new(x: f64, y: f64) -> Self {
-        Point { x, y }
-    }
-    
+impl Point { fn new(x: f64, y: f64) -> Self { Point { x, y } }
+
     fn distance_from_origin(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
-}
-\`\`\`
-  `}
-/>
 
-These components make it easier to create consistent, well-designed documentation that highlights the relationship between Ruby and Rust code.
+} \`\`\` `} />
+
+These components make it easier to create consistent, well-designed documentation that highlights the relationship
+between Ruby and Rust code.

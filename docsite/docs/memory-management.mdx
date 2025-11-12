@@ -1,6 +1,7 @@
 # Memory Management & Safety
 
-This guide covers how Ruby's garbage collector interacts with Rust objects and how to prevent memory leaks and segmentation faults in your extensions.
+This guide covers how Ruby's garbage collector interacts with Rust objects and how to prevent memory leaks and
+segmentation faults in your extensions.
 
 :::warning
 
@@ -306,11 +307,11 @@ impl Memory {
     fn size(&self) -> Result<u64, Error> {
         Ok(65536) // Example: 64KB
     }
-    
+
     fn data_size(&self) -> Result<usize, Error> {
         Ok(65536) // Example: 64KB
     }
-    
+
     fn data(&self) -> Result<Vec<u8>, Error> {
         Ok(vec![0; 65536]) // Example: zero-filled memory
     }
@@ -468,12 +469,12 @@ impl DataHolder {
             data: RefCell::new(std::collections::HashMap::new()),
         }
     }
-    
+
     fn add_string(&self, ruby_str: RString) -> Result<(), Error> {
         self.strings.borrow_mut().push(ruby_str.to_string()?);
         Ok(())
     }
-    
+
     fn add_data(&self, key: String, value: String) -> Result<(), Error> {
         self.data.borrow_mut().insert(key, value);
         Ok(())
