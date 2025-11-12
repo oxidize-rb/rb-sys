@@ -286,9 +286,18 @@ module RbSys
     end
 
     def fixup_libnames
-      return unless find_executable("install_name_tool")
+      # Try to find install_name_tool, checking multiple possible names:
+      # 1. Native macOS install_name_tool
+      # 2. Target-prefixed version from osxcross (e.g., aarch64-apple-darwin-install_name_tool)
+      tool = if find_executable("install_name_tool")
+        "install_name_tool"
+      elsif find_executable("$(CARGO_BUILD_TARGET)-install_name_tool")
+        "$(CARGO_BUILD_TARGET)-install_name_tool"
+      else
+        return
+      end
 
-      '$(Q) install_name_tool -id "" $(DLLIB)'
+      %($(Q) #{tool} -id "" $(DLLIB))
     end
 
     def if_eq_stmt(a, b)
