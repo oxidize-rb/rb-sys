@@ -11,7 +11,7 @@ use crate::once_cell::OnceCell;
 use rb_sys::rb_ext_ractor_safe;
 use rb_sys::{
     rb_errinfo, rb_inspect, rb_protect, rb_set_errinfo, rb_string_value_cstr, ruby_exec_node,
-    ruby_init_stack, ruby_process_options, ruby_setup, Qnil, VALUE,
+    ruby_init_stack, ruby_process_options, ruby_setup, ruby_sysinit, Qnil, VALUE,
 };
 
 static mut GLOBAL_EXECUTOR: OnceCell<RubyTestExecutor> = OnceCell::new();
@@ -134,13 +134,12 @@ pub fn global_executor() -> &'static RubyTestExecutor {
 pub unsafe fn setup_ruby_unguarded() {
     trick_the_linker();
 
-    #[cfg(windows)]
-    {
-        let mut argc = 0;
-        let mut argv: [*mut std::os::raw::c_char; 0] = [];
-        let mut argv = argv.as_mut_ptr();
-        rb_sys::rb_w32_sysinit(&mut argc, &mut argv);
-    }
+    // Call ruby_sysinit which handles platform-specific initialization
+    // (rb_w32_sysinit on Windows) and sets up standard file descriptors
+    let mut argc = 0;
+    let mut argv: [*mut std::os::raw::c_char; 0] = [];
+    let mut argv_ptr = argv.as_mut_ptr();
+    ruby_sysinit(&mut argc, &mut argv_ptr);
 
     let mut stack_marker: VALUE = 0;
     ruby_init_stack(addr_of_mut!(stack_marker) as *mut _);

@@ -29,11 +29,19 @@ jobs:
             run: cargo test
           - name: "matsadler/magnus"
             slug: magnus-head
-            ref: "52a0817d4327cf78f91958f6b84f66946251fc9c"
+            ref: "49f2d7f4c5f8d0de9fdceb83982aa616ddb92190"
             run: cargo test
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
-        ruby: ["3.0", "3.2", "3.3"]
+        ruby: ["3.2", "3.3", "3.4"]
+        exclude:
+          - repo:
+              slug: magnus-0.5
+            ruby: "3.4"
+          - repo:
+              slug: oxi-test
+            os: windows-latest
+            ruby: "3.4"
 
     runs-on: ${{ matrix.os }}
     steps:

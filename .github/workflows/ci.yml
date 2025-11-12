@@ -67,7 +67,7 @@ jobs:
             rust_toolchain: stable
           - os: macos-latest
             rust_toolchain: stable
-          - os: windows-2022
+          - os: windows-2025
             rust_toolchain: stable
         include:
           - ruby_version: "truffleruby"
@@ -91,9 +91,17 @@ jobs:
             sys:
               os: macos-latest
               rust_toolchain: stable
+          - ruby_version: "3.1"
+            sys:
+              os: windows-2025
+              rust_toolchain: stable
           - ruby_version: "3.4"
             sys:
               os: windows-2022
+              rust_toolchain: stable
+          - ruby_version: "3.4"
+            sys:
+              os: windows-2025
               rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
     steps:
@@ -177,7 +185,7 @@ jobs:
         run: |
           set -ex
           ulimit -c unlimited
-          gem update --system 3.3.22 > /dev/null
+          gem update --system 3.4.22 > /dev/null
           export RUBYOPT="-I$PWD/gem/lib"
           pushd examples/rust_reverse
           bundle exec rake build

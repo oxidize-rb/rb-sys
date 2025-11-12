@@ -66,8 +66,7 @@ where
 /// ```
 pub fn with_gc_stress<R, F>(f: F) -> R
 where
-    R: Send + 'static,
-    F: FnOnce() -> R + UnwindSafe + Send + 'static,
+    F: FnOnce() -> R,
 {
     unsafe {
         let stress_intern = rb_intern("stress\0".as_ptr() as _);
@@ -76,7 +75,7 @@ where
 
         let old_gc_stress = rb_sys::rb_funcall(gc_module, stress_intern, 0);
         rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, rb_sys::Qtrue);
-        let result = std::panic::catch_unwind(f);
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
         rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, old_gc_stress);
 
         match result {
