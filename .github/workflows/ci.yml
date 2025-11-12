@@ -67,7 +67,7 @@ jobs:
             rust_toolchain: stable
           - os: macos-latest
             rust_toolchain: stable
-          - os: windows-2022
+          - os: windows-2025
             rust_toolchain: stable
         include:
           - ruby_version: "truffleruby"
