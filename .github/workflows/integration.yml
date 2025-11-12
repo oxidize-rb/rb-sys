@@ -34,6 +34,10 @@ jobs:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["stable"]
         ruby: ["3.2", "3.3", "3.4"]
+        exclude:
+          - repo:
+              slug: magnus-0.5
+            ruby: "3.4"
 
     runs-on: ${{ matrix.os }}
     steps:
