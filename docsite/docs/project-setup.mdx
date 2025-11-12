@@ -3,14 +3,17 @@ id: project-setup
 title: Project Setup & Structure
 sidebar_position: 4
 keywords: [project setup, gem structure, cargo workspace, bundler, rake]
-description: Learn how to properly structure a Ruby gem with Rust extensions, including workspace setup, dependency management, and build configuration.
+description:
+  Learn how to properly structure a Ruby gem with Rust extensions, including workspace setup, dependency management, and
+  build configuration.
 ---
 
 # Project Setup & Structure
 
 **Time:** 25 minutes | **Difficulty:** Intermediate
 
-Learn how to structure production-ready Ruby gems with Rust extensions. We'll build a URL parser that showcases real-world patterns.
+Learn how to structure production-ready Ruby gems with Rust extensions. We'll build a URL parser that showcases
+real-world patterns.
 
 ## Project Anatomy
 
@@ -71,12 +74,12 @@ Gem::Specification.new do |spec|
   spec.version = MyGem::VERSION
   spec.authors = ["Your Name"]
   spec.email = ["you@example.com"]
-  
+
   spec.summary = "Fast URL parsing for Ruby"
   spec.description = "A Ruby gem using Rust for blazing-fast URL parsing"
   spec.homepage = "https://github.com/you/my_gem"
   spec.license = "MIT"
-  
+
   # Gem files
   spec.files = Dir[
     "ext/**/*.{rs,toml,rb,lock}",
@@ -84,17 +87,17 @@ Gem::Specification.new do |spec|
     "LICENSE",
     "README.md"
   ]
-  
+
   # Extension configuration
   spec.extensions = ["ext/my_gem/extconf.rb"]
   spec.require_paths = ["lib"]
-  
+
   # Ruby version requirement
   spec.required_ruby_version = ">= 3.0"
-  
+
   # Dependencies
   spec.add_dependency "rb_sys", "~> 0.9"
-  
+
   # Development dependencies
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
@@ -138,7 +141,8 @@ end
 
 ## Real Example: URL Parser Gem
 
-Let's build a production-ready URL parser using the Rust [url](https://crates.io/crates/url) crate. This demonstrates key patterns you'll use in real projects.
+Let's build a production-ready URL parser using the Rust [url](https://crates.io/crates/url) crate. This demonstrates
+key patterns you'll use in real projects.
 
 ### Step 1: Create the Gem Structure
 
@@ -354,13 +358,13 @@ require "rb_sys/mkmf"
 create_rust_makefile("my_gem/my_gem") do |r|
   # Enable link-time optimization
   r.profile = ENV.fetch("RB_SYS_CARGO_PROFILE", "release")
-  
+
   # Add feature flags
   r.features = ["performance"] if ENV["ENABLE_PERF"]
-  
+
   # Extra Rust flags
   r.extra_rustflags = ["--cfg", "ruby_3_0"] if RUBY_VERSION >= "3.0"
-  
+
   # Target specific configuration
   if RbConfig::CONFIG["target_os"] == "darwin"
     r.target = "x86_64-apple-darwin"
@@ -379,7 +383,7 @@ fn main() {
     // rb-sys automatically sets up the build environment
     // You can add custom build configuration here
     println!("cargo:rustc-cfg=has_custom_feature");
-    
+
     // Link to system libraries if needed
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-lib=framework=Security");
@@ -486,11 +490,11 @@ test/
 # Document Ruby methods with YARD
 module UrlParser
   # Parses a URL string into components
-  # 
+  #
   # @param url_string [String] the URL to parse
   # @return [URL] parsed URL object
   # @raise [Error] if URL is invalid
-  # 
+  #
   # @example Parse a simple URL
   #   url = UrlParser.parse("https://example.com")
   #   url.scheme #=> "https"

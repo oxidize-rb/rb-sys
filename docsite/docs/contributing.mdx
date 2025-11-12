@@ -3,7 +3,9 @@ id: contributing
 title: Contributing
 sidebar_position: 30
 keywords: [contributing, code of conduct, development, pull request]
-description: Learn how to contribute to rb-sys and the oxidize-rb ecosystem. Includes our Code of Conduct and development guidelines.
+description:
+  Learn how to contribute to rb-sys and the oxidize-rb ecosystem. Includes our Code of Conduct and development
+  guidelines.
 ---
 
 # Contributing to rb-sys
@@ -14,7 +16,10 @@ Thank you for your interest in contributing to rb-sys! This guide will help you 
 
 ### Our Pledge
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for
+everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity
+and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste,
+color, religion, or sexual identity and orientation.
 
 We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
@@ -39,7 +44,9 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 ### Enforcement
 
-Community leaders are responsible for clarifying and enforcing our standards. All complaints will be reviewed and investigated promptly and fairly. All community leaders are obligated to respect the privacy and security of the reporter.
+Community leaders are responsible for clarifying and enforcing our standards. All complaints will be reviewed and
+investigated promptly and fairly. All community leaders are obligated to respect the privacy and security of the
+reporter.
 
 ## Ways to Contribute
 
@@ -48,6 +55,7 @@ Community leaders are responsible for clarifying and enforcing our standards. Al
 Found a bug? Have a feature request? [Open an issue](https://github.com/oxidize-rb/rb-sys/issues)!
 
 **Good issue reports include:**
+
 - Clear, descriptive title
 - Steps to reproduce
 - Expected vs actual behavior
@@ -55,23 +63,29 @@ Found a bug? Have a feature request? [Open an issue](https://github.com/oxidize-
 - Minimal reproduction code
 
 **Example issue:**
+
 ```markdown
 ## Bug: Segfault when passing nil to parse_json
 
 ### Description
+
 The extension crashes when passing nil to the parse_json method.
 
 ### Steps to Reproduce
+
 1. Install gem: `gem install my_extension`
 2. Run: `MyExtension.parse_json(nil)`
 
 ### Expected Behavior
+
 Should raise an ArgumentError
 
 ### Actual Behavior
+
 Segmentation fault
 
 ### System Info
+
 - Ruby: 3.2.0
 - OS: macOS 13.0
 - rb-sys: 0.9.85
@@ -82,6 +96,7 @@ Segmentation fault
 Documentation contributions are highly valued!
 
 **Areas to help:**
+
 - Fix typos and grammar
 - Add examples
 - Clarify confusing sections
@@ -89,6 +104,7 @@ Documentation contributions are highly valued!
 - Write tutorials
 
 **Documentation standards:**
+
 - Use clear, simple language
 - Include working code examples
 - Test all code snippets
@@ -123,11 +139,12 @@ cargo test
 #### Development Workflow
 
 1. **Write tests first**
+
    ```rust
    fn my_new_function(x: i32) -> i32 {
        x * 2
    }
-   
+
    #[test]
    fn test_new_feature() {
        assert_eq!(my_new_function(2), 4);
@@ -135,6 +152,7 @@ cargo test
    ```
 
 2. **Implement the feature**
+
    ```rust
    pub fn my_new_function(x: i32) -> i32 {
        x * 2
@@ -142,6 +160,7 @@ cargo test
    ```
 
 3. **Run tests and linting**
+
    ```bash
    cargo test
    cargo clippy
@@ -171,21 +190,27 @@ cargo test
    - [ ] Branch is up to date with main
 
 2. **PR description template:**
+
    ```markdown
    ## Description
+
    Brief description of changes
 
    ## Motivation
+
    Why are these changes needed?
 
    ## Changes
+
    - Change 1
    - Change 2
 
    ## Testing
+
    How were these changes tested?
 
    ## Checklist
+
    - [ ] Tests added/updated
    - [ ] Documentation updated
    - [ ] CHANGELOG updated
@@ -221,11 +246,11 @@ mod tests {
     fn test_basic_functionality() {
         // Test happy path
         assert_eq!(add(2, 3), 5);
-        
+
         // Test edge cases
         assert_eq!(add(0, 0), 0);
         assert_eq!(add(-1, 1), 0);
-        
+
         // Test error conditions
         let result = divide(10, 0);
         assert!(result.is_err());
@@ -244,7 +269,7 @@ class IntegrationTest < Minitest::Test
     # Test actual usage patterns
     data = load_test_data
     result = MyExtension.process(data)
-    
+
     assert_equal expected_output, result
     assert_performance_criteria_met(result)
   end
@@ -256,11 +281,13 @@ end
 Love making things fast? We do too!
 
 **Performance PR guidelines:**
+
 1. Include benchmarks showing improvement
 2. Ensure no functionality regression
 3. Document any trade-offs
 
 **Example benchmark:**
+
 ```rust
 // In Cargo.toml add:
 // [dev-dependencies]
@@ -275,7 +302,7 @@ fn process_string(input: &str) -> String {
 
 fn bench_string_processing(c: &mut Criterion) {
     let input = "test".repeat(1000);
-    
+
     c.bench_function("string processing", |b| {
         b.iter(|| {
             process_string(black_box(&input))
@@ -306,11 +333,13 @@ rb-sys/
 ### Key Areas
 
 **rb-sys crate:**
+
 - `src/value.rs` - VALUE type handling
 - `src/api.rs` - Ruby C API bindings
 - `src/macros.rs` - Helpful macros
 
 **Magnus integration:**
+
 - Examples of high-level API usage
 - Type conversion implementations
 
@@ -356,7 +385,7 @@ Follow Ruby community standards:
 # Use 2 spaces for indentation
 def process_data(input)
   return [] if input.empty?
-  
+
   input.map do |item|
     transform(item)
   end
@@ -411,6 +440,7 @@ Releases happen approximately monthly or as needed.
 ## Recognition
 
 Contributors are recognized in:
+
 - CHANGELOG.md
 - GitHub contributors page
 - Release notes
@@ -428,6 +458,7 @@ Contributors are recognized in:
 ### Mentorship
 
 New to Rust or Ruby extensions? We offer:
+
 - Pairing sessions
 - Code review mentorship
 - Good first issues
@@ -436,6 +467,7 @@ New to Rust or Ruby extensions? We offer:
 ## Thank You!
 
 Every contribution matters:
+
 - 🐛 Bug reports help us improve
 - 📝 Documentation helps others learn
 - 💻 Code makes rb-sys better
@@ -447,8 +479,11 @@ Every contribution matters:
 
 ### Ready to Contribute?
 
-Check out our [good first issues](https://github.com/oxidize-rb/rb-sys/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to get started!
+Check out our
+[good first issues](https://github.com/oxidize-rb/rb-sys/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+to get started!
 
-Join our [Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to discuss ideas.
+Join our [Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to discuss
+ideas.
 
 </div>

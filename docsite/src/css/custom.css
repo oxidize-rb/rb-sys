@@ -22,7 +22,7 @@ div[class*="titleWrapper"] h1 {
  */
 
 /* Google Fonts for IBM Plex family */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&display=swap");
 
 /**
  * CSS Variables
@@ -32,9 +32,9 @@ div[class*="titleWrapper"] h1 {
  */
 :root {
   /* Typography */
-  --ifm-font-family-base: 'IBM Plex Serif', 'Times New Roman', Times, serif;
-  --ifm-font-family-heading: 'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --ifm-font-family-monospace: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  --ifm-font-family-base: "IBM Plex Serif", "Times New Roman", Times, serif;
+  --ifm-font-family-heading: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ifm-font-family-monospace: "IBM Plex Mono", "Courier New", Courier, monospace;
   --ifm-font-size-base: 1.125rem; /* 18px */
   --ifm-line-height-base: 1.65;
   --ifm-code-font-size: 0.9375rem; /* 15px */
@@ -51,12 +51,12 @@ div[class*="titleWrapper"] h1 {
   --secondary-background: hsl(220, 16%, 90%); /* Slightly darker for contrast */
   --primary-text: hsl(220, 18%, 12%); /* Dark text for readability */
   --muted-text: hsl(220, 10%, 40%); /* Muted text for secondary information */
-  
+
   /* Accent Colors */
   --ruby-accent: hsl(5, 65%, 55%); /* #D15B56 - Ruby accent */
   --rust-accent: hsl(28, 60%, 60%); /* #D99A6C - Rust accent */
   --neutral-accent: hsl(220, 12%, 38%); /* #545B69 - Neutral accent for UI elements */
-  
+
   /* UI Elements */
   --border-radius-sm: 3px;
   --border-radius-md: 4px;
@@ -65,7 +65,7 @@ div[class*="titleWrapper"] h1 {
   --border-width-thick: 3px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.1);
-  
+
   /* Docusaurus Specific */
   --ifm-color-primary: var(--neutral-accent);
   --ifm-color-primary-dark: hsl(220, 12%, 33%);
@@ -74,30 +74,30 @@ div[class*="titleWrapper"] h1 {
   --ifm-color-primary-light: hsl(220, 12%, 43%);
   --ifm-color-primary-lighter: hsl(220, 12%, 48%);
   --ifm-color-primary-lightest: hsl(220, 12%, 53%);
-  
+
   --ifm-code-background: hsla(220, 16%, 90%, 0.6);
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.05);
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease-out;
   --transition-base: 0.2s ease-out;
 }
 
 /* Dark Mode Variables - Our Primary Theme */
-[data-theme='dark'] {
+[data-theme="dark"] {
   /* Color Palette - Dark Mode */
   --primary-background: hsl(220, 18%, 12%); /* #1A1D23 */
   --secondary-background: hsl(220, 16%, 16%); /* #22262E */
   --code-background: hsl(220, 18%, 10%); /* #15171C */
   --primary-text: hsl(35, 15%, 88%); /* #E4E0DB */
   --muted-text: hsl(220, 10%, 65%); /* #9CA3B0 */
-  
+
   /* Docusaurus Specific - Dark Mode */
   --ifm-background-color: var(--primary-background);
   --ifm-background-surface-color: var(--secondary-background);
   --ifm-footer-background-color: hsl(220, 20%, 10%); /* #161A21 */
   --ifm-font-color-base: var(--primary-text);
-  
+
   --ifm-color-primary: hsl(220, 12%, 65%); /* Lighter neutral for dark mode */
   --ifm-color-primary-dark: hsl(220, 12%, 60%);
   --ifm-color-primary-darker: hsl(220, 12%, 55%);
@@ -105,15 +105,15 @@ div[class*="titleWrapper"] h1 {
   --ifm-color-primary-light: hsl(220, 12%, 70%);
   --ifm-color-primary-lighter: hsl(220, 12%, 75%);
   --ifm-color-primary-lightest: hsl(220, 12%, 80%);
-  
+
   /* Links and accents */
   --ifm-link-color: hsl(28, 70%, 70%); /* Lighter Rust Accent */
   --ifm-link-hover-color: hsl(28, 80%, 75%); /* Even lighter on hover */
-  
+
   /* Code blocks */
   --ifm-code-background: var(--code-background);
   --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
-  
+
   /* Other elements */
   --ifm-breadcrumb-color-active: var(--ruby-accent);
   --ifm-menu-color-active: var(--ruby-accent);
@@ -126,7 +126,7 @@ div[class*="titleWrapper"] h1 {
  * Let Docusaurus handle the main layout structure, we'll just customize the styling.
  */
 
- /* Add some max-width to content for readability */
+/* Add some max-width to content for readability */
 .container {
   max-width: min(var(--ifm-container-width), 100vw);
 }
@@ -151,8 +151,18 @@ body {
 }
 
 /* Headings */
-h1, h2, h3, h4, h5, h6,
-.h1, .h2, .h3, .h4, .h5, .h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
   font-family: var(--ifm-font-family-heading);
   font-weight: 600;
   line-height: 1.2;
@@ -160,38 +170,44 @@ h1, h2, h3, h4, h5, h6,
   color: var(--ifm-font-color-base);
 }
 
-h1, .h1 {
+h1,
+.h1 {
   font-size: 2.441rem;
   letter-spacing: -0.02em;
 }
 
-h2, .h2 {
+h2,
+.h2 {
   font-size: 1.953rem;
   margin-top: 1.3em;
   margin-bottom: 0.7em;
   letter-spacing: -0.015em;
 }
 
-h3, .h3 {
+h3,
+.h3 {
   font-size: 1.563rem;
   margin-top: 1.1em;
   margin-bottom: 0.6em;
   letter-spacing: -0.01em;
 }
 
-h4, .h4 {
+h4,
+.h4 {
   font-size: 1.25rem;
   margin-top: 1em;
   margin-bottom: 0.5em;
 }
 
-h5, .h5 {
+h5,
+.h5 {
   font-size: 1rem;
   margin-top: 0.9em;
   margin-bottom: 0.4em;
 }
 
-h6, .h6 {
+h6,
+.h6 {
   font-size: 0.875rem;
   margin-top: 0.8em;
   margin-bottom: 0.3em;
@@ -206,7 +222,8 @@ p {
 }
 
 /* Lists */
-ul, ol {
+ul,
+ol {
   padding-left: 1.5em;
   margin-bottom: 1.5em;
 }
@@ -216,7 +233,7 @@ li {
 }
 
 /* Subtle texture for dark mode background */
-[data-theme='dark'] body {
+[data-theme="dark"] body {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23232935' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   background-attachment: fixed;
 }
@@ -376,7 +393,9 @@ li {
 
 .menu__link {
   border-radius: var(--border-radius-sm);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .menu__link:hover {
@@ -384,7 +403,7 @@ li {
   text-decoration: none;
 }
 
-[data-theme='dark'] .menu__link:hover {
+[data-theme="dark"] .menu__link:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -395,7 +414,7 @@ li {
 }
 
 .menu__link--active:before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0.5rem;
@@ -413,7 +432,7 @@ li {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-[data-theme='dark'] .menu__list-item-collapsible .menu__link:hover {
+[data-theme="dark"] .menu__list-item-collapsible .menu__link:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -446,21 +465,24 @@ a:hover {
   padding: 0.5rem 1rem;
   border-radius: var(--border-radius-md);
   border: var(--border-width) solid transparent;
-  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base);
   /* Common active styling */
   padding: 0.5rem 1rem;
   font-weight: 500;
   border-radius: 0.25rem;
 }
 
-.button--primary, 
+.button--primary,
 .button--secondary {
   /* Active styling for both buttons */
   background-color: #d97706; /* amber-600 */
   color: white;
 }
 
-.button--primary:hover, 
+.button--primary:hover,
 .button--secondary:hover {
   background-color: #b45309; /* amber-700 */
   color: white;
@@ -496,7 +518,7 @@ table tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-[data-theme='dark'] table tr:nth-child(even) {
+[data-theme="dark"] table tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
@@ -770,7 +792,9 @@ hr {
   color: white;
   border-radius: var(--border-radius-md);
   font-weight: 600;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .cta-buttons a:hover {
@@ -801,7 +825,7 @@ hr {
   margin: 1rem 0;
 }
 
-[data-theme='dark'] .success-output {
+[data-theme="dark"] .success-output {
   background-color: rgba(34, 197, 94, 0.05);
   border-color: rgba(34, 197, 94, 0.2);
 }
@@ -834,7 +858,9 @@ hr {
   border: 1px solid var(--neutral-accent);
   border-radius: var(--border-radius-md);
   padding: 1.5rem;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .next-step-card:hover {
@@ -867,7 +893,9 @@ hr {
   padding: 0.75rem 1rem;
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
-  transition: color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .tabs__item--active {
@@ -913,7 +941,7 @@ hr {
   margin: 1rem 0;
 }
 
-[data-theme='light'] .console-output {
+[data-theme="light"] .console-output {
   background-color: #1a1a1a;
 }
 
@@ -1013,7 +1041,7 @@ summary:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
-[data-theme='dark'] summary:hover {
+[data-theme="dark"] summary:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
@@ -1038,7 +1066,7 @@ details[open] summary {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-[data-theme='dark'] .mermaid {
+[data-theme="dark"] .mermaid {
   background-color: hsl(220, 18%, 10%);
 }
 

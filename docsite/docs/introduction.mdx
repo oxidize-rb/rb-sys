@@ -80,9 +80,9 @@ graph TD
     A[Your Ruby Code] --> B[Magnus API]
     B --> C[rb-sys Core]
     C --> D[Ruby VM]
-    
+
     E[Rust Ecosystem<br/>crates.io] --> B
-    
+
     style A fill:#CC342D,color:#fff
     style B fill:#CE422B,color:#fff
     style C fill:#f9f9f9
@@ -100,45 +100,57 @@ graph TD
 ## Quick Comparison
 
 <table className="comparison-table">
-<thead>
-<tr>
-<th>Feature</th>
-<th>C Extensions</th>
-<th>Rust + rb-sys</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Memory Safety</strong></td>
-<td>Manual, error-prone</td>
-<td>Guaranteed by compiler</td>
-</tr>
-<tr>
-<td><strong>Segfaults</strong></td>
-<td>Common in production</td>
-<td>Impossible*</td>
-</tr>
-<tr>
-<td><strong>Development Speed</strong></td>
-<td>Slow</td>
-<td>Fast</td>
-</tr>
-<tr>
-<td><strong>Ecosystem</strong></td>
-<td>C libraries only</td>
-<td>130,000+ crates on crates.io</td>
-</tr>
-<tr>
-<td><strong>Learning Curve</strong></td>
-<td>High</td>
-<td>Low</td>
-</tr>
-<tr>
-<td><strong>Cross-compilation</strong></td>
-<td>Manual, platform-specific</td>
-<td>Automated with Docker</td>
-</tr>
-</tbody>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>C Extensions</th>
+      <th>Rust + rb-sys</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <strong>Memory Safety</strong>
+      </td>
+      <td>Manual, error-prone</td>
+      <td>Guaranteed by compiler</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Segfaults</strong>
+      </td>
+      <td>Common in production</td>
+      <td>Impossible*</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Development Speed</strong>
+      </td>
+      <td>Slow</td>
+      <td>Fast</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Ecosystem</strong>
+      </td>
+      <td>C libraries only</td>
+      <td>130,000+ crates on crates.io</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Learning Curve</strong>
+      </td>
+      <td>High</td>
+      <td>Low</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Cross-compilation</strong>
+      </td>
+      <td>Manual, platform-specific</td>
+      <td>Automated with Docker</td>
+    </tr>
+  </tbody>
 </table>
 
 <small>* When using safe Rust. Unsafe blocks require careful review.</small>
@@ -146,12 +158,14 @@ graph TD
 ## Platform Support
 
 ### Supported Rubies
+
 - Ruby 3.0+ (recommended)
 - Ruby 2.6+ (minimum)
 - TruffleRuby
 - JRuby (experimental)
 
 ### Supported Platforms
+
 - Linux (x86_64, aarch64)
 - macOS (Intel & Apple Silicon)
 - Windows (MSVC)
@@ -161,7 +175,8 @@ graph TD
 
 <div className="community-links">
 
-- **[Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Get help and share experiences
+- **[Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)** - Get help and
+  share experiences
 - **[GitHub Issues](https://github.com/oxidize-rb/rb-sys/issues)** - Report bugs or request features
 - **[Examples](https://github.com/oxidize-rb/examples)** - Learn from working code
 - **[YouTube](https://www.youtube.com/watch?v=HT2JivOZ9zI)** - Watch talks and tutorials

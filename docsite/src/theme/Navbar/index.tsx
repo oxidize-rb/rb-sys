@@ -1,12 +1,9 @@
-import React, { useCallback } from 'react';
-import { useThemeConfig } from '@docusaurus/theme-common';
-import {
-  splitNavbarItems,
-  useNavbarMobileSidebar,
-} from '@docusaurus/theme-common/internal';
-import NavbarItem from '@theme/NavbarItem';
-import NavbarLogo from '@theme/Logo';
-import styles from './styles.module.css';
+import React, { useCallback } from "react";
+import { useThemeConfig } from "@docusaurus/theme-common";
+import { splitNavbarItems, useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
+import NavbarItem from "@theme/NavbarItem";
+import NavbarLogo from "@theme/Logo";
+import styles from "./styles.module.css";
 
 interface NavbarItemType {
   label?: string;
@@ -21,13 +18,7 @@ interface NavbarItemsProps {
 }
 
 function NavbarItems({ items }: NavbarItemsProps): React.ReactElement {
-  return (
-    <>
-      {items && items.map ? items.map((item, i) => (
-        <NavbarItem {...item} key={i} />
-      )) : null}
-    </>
-  );
+  return <>{items && items.map ? items.map((item, i) => <NavbarItem {...item} key={i} />) : null}</>;
 }
 
 export default function Navbar(): React.ReactElement {

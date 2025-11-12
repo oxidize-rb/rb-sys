@@ -8,7 +8,8 @@ sidebar_position: 7
 import LanguageCallout from '@site/src/components/LanguageCallout';
 ```
 
-When writing Ruby extensions in Rust, one of the most common tasks is converting between Ruby and Rust types. The magnus crate provides a comprehensive set of conversion functions for this purpose.
+When writing Ruby extensions in Rust, one of the most common tasks is converting between Ruby and Rust types. The magnus
+crate provides a comprehensive set of conversion functions for this purpose.
 
 <LanguageCallout />
 
@@ -21,7 +22,7 @@ use magnus::{RString, Ruby, Integer, Float};
 
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
-    // Convert Rust types to Ruby 
+    // Convert Rust types to Ruby
     let rb_string: RString = RString::new("Hello, Ruby!");        // Rust &str to Ruby String
     let rb_int: Integer = Integer::from_i64(42);                 // Rust i64 to Ruby Integer
     let rb_float: Float = Float::from_f64(std::f64::consts::PI); // Rust f64 to Ruby Float
@@ -29,7 +30,7 @@ fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
 
     // Convert Ruby types to Rust
     let rust_string: String = rb_string.to_string()?;           // Ruby String to Rust String
-    let rust_int: i64 = rb_int.to_i64()?;                       // Ruby Integer to Rust i64 
+    let rust_int: i64 = rb_int.to_i64()?;                       // Ruby Integer to Rust i64
     let rust_float: f64 = rb_float.to_f64();                    // Ruby Float to Rust f64
     // To check if a value is true/false, compare with qtrue/qfalse
 
@@ -78,7 +79,7 @@ fn string_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     hello.as_value().funcall::<_, _, Value>("concat", (world,))?;
     let message = hello;
 
-    // Get bytes  
+    // Get bytes
     let bytes = unsafe { message.as_slice() };
     println!("Bytes: {:?}", bytes);
 
@@ -288,12 +289,16 @@ fn create_point(ruby: &Ruby) -> Result<Value, Error> {
 
 3. **Remember Boxing Rules**: All Ruby objects are reference types, while many Rust types are value types.
 
-4. **Be Careful with Magic Methods**: Some Ruby methods like `method_missing` might not behave as expected when called from Rust.
+4. **Be Careful with Magic Methods**: Some Ruby methods like `method_missing` might not behave as expected when called
+   from Rust.
 
-5. **Cache Ruby Objects**: If you're repeatedly using the same Ruby objects (like classes or symbols), consider caching them using `Lazy` or similar mechanisms.
+5. **Cache Ruby Objects**: If you're repeatedly using the same Ruby objects (like classes or symbols), consider caching
+   them using `Lazy` or similar mechanisms.
 
 6. **Check for nil**: Always check for nil values before attempting conversions that don't handle nil.
 
-7. **Use Type Annotations**: Explicitly specifying types when converting Ruby values to Rust can make your code clearer and avoid potential runtime errors.
+7. **Use Type Annotations**: Explicitly specifying types when converting Ruby values to Rust can make your code clearer
+   and avoid potential runtime errors.
 
-8. **Pass Ruby State**: Always pass the `Ruby` instance through your functions when needed rather than using `Ruby::get()` repeatedly, as this is more performant and clearer about dependencies.
+8. **Pass Ruby State**: Always pass the `Ruby` instance through your functions when needed rather than using
+   `Ruby::get()` repeatedly, as this is more performant and clearer about dependencies.

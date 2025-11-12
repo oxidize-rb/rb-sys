@@ -21,6 +21,7 @@ Compilation failed: Cannot find ruby.h
 ```
 
 **Solution**:
+
 1. Install Ruby development files:
    - **Ubuntu/Debian**: `apt-get install ruby-dev`
    - **Fedora/RHEL**: `dnf install ruby-devel`
@@ -28,6 +29,7 @@ Compilation failed: Cannot find ruby.h
    - **Windows**: Headers come with Ruby installation
 
 2. Verify Ruby installation:
+
 ```bash
 ruby -v
 which ruby
@@ -40,13 +42,16 @@ Undefined reference to `rb_define_module`
 ```
 
 **Solution**:
+
 1. Check your Cargo.toml:
+
 ```toml
 [dependencies]
 rb-sys = { version = "0.9", features = ["stable-api"] }
 ```
 
 2. Verify extconf.rb:
+
 ```ruby
 require "rb_sys/mkmf"
 
@@ -59,8 +64,7 @@ create_rust_makefile("my_extension")
 Error: Incompatible rb-sys version
 ```
 
-**Solution**:
-Ensure consistent versions:
+**Solution**: Ensure consistent versions:
 
 ```ruby
 # Gemfile
@@ -82,11 +86,13 @@ rb-sys = { version = "0.9.0", features = ["stable-api"] }
 ```
 
 **Common Causes**:
+
 1. Accessing deallocated Ruby objects
 2. Missing GC mark implementation
 3. Thread safety issues
 
 **Solution**:
+
 ```rust
 use magnus::{DataTypeFunctions, TypedData, Value, gc::Marker};
 
@@ -111,11 +117,14 @@ impl DataTypeFunctions for MyObject {
 ### Memory Leaks
 
 **Symptoms**:
+
 - Growing memory usage
 - Slow performance over time
 
 **Solution**:
+
 1. Enable debugging:
+
 ```rust
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -129,6 +138,7 @@ fn track_allocation() {
 ```
 
 2. Use memory profiling:
+
 ```ruby
 GC.start
 GC.stat
@@ -141,7 +151,9 @@ ThreadError: deadlock detected
 ```
 
 **Solution**:
+
 1. Use proper thread safety patterns:
+
 ```rust
 use std::sync::Mutex;
 use magnus::{Error, Value};
@@ -164,6 +176,7 @@ impl ThreadSafeObject {
 ```
 
 2. Release GVL when appropriate:
+
 ```rust
 use rb_sys::rb_thread_call_without_gvl;
 use std::ptr;
@@ -192,12 +205,14 @@ fn release_gvl_example() {
 ### Enable Debug Logging
 
 1. Set environment variables:
+
 ```bash
 export RUST_BACKTRACE=1
 export RUST_LOG=debug
 ```
 
 2. Add logging to your code:
+
 ```rust
 use log::{debug, error};
 use magnus::Error;
@@ -207,7 +222,7 @@ fn process_data(input: &str) -> Result<String, Error> {
     // Processing logic
     let error_condition = false; // Example condition
     let result = String::from("processed"); // Example result
-    
+
     if error_condition {
         let error = "example error";
         error!("Failed to process: {}", error);
@@ -223,17 +238,20 @@ fn process_data(input: &str) -> Result<String, Error> {
 ### GDB/LLDB Debugging
 
 1. Compile with debug symbols:
+
 ```toml
 [profile.dev]
 debug = true
 ```
 
 2. Run with debugger:
+
 ```bash
 lldb -- ruby -I lib test/my_test.rb
 ```
 
 3. Set breakpoints:
+
 ```bash
 (lldb) b my_extension.c:42
 (lldb) continue
@@ -242,6 +260,7 @@ lldb -- ruby -I lib test/my_test.rb
 ### Memory Analysis
 
 1. Use Ruby's memory profiler:
+
 ```ruby
 require "memory_profiler"
 
@@ -251,6 +270,7 @@ end.pretty_print
 ```
 
 2. Track object allocations:
+
 ```ruby
 GC.stat
 object_count = ObjectSpace.count_objects
@@ -266,8 +286,10 @@ Error linking with `link.exe`
 ```
 
 **Solution**:
+
 1. Install Visual Studio build tools
 2. Set environment:
+
 ```batch
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 ```
@@ -279,12 +301,15 @@ Dyld Error: Library not loaded
 ```
 
 **Solution**:
+
 1. Check library paths:
+
 ```bash
 otool -L your_extension.bundle
 ```
 
 2. Fix rpath issues:
+
 ```ruby
 # extconf.rb
 append_ldflags("-Wl,-rpath,@loader_path/")
@@ -297,12 +322,15 @@ Error loading shared library
 ```
 
 **Solution**:
+
 1. Update ldconfig:
+
 ```bash
 sudo ldconfig
 ```
 
 2. Check library dependencies:
+
 ```bash
 ldd your_extension.so
 ```
@@ -315,6 +343,7 @@ ldd your_extension.so
    - Profile memory for leaks
 
 2. **Error Handling**:
+
 ```rust
 use magnus::Error;
 
@@ -332,6 +361,7 @@ fn process_data(input: &str) -> Result<String, Error> {
 ```
 
 3. **Memory Management**:
+
 ```rust
 use magnus::{TypedData, DataTypeFunctions, Value, gc::Marker};
 
@@ -352,6 +382,7 @@ impl DataTypeFunctions for MyObject {
 ```
 
 4. **Cross-Platform Compatibility**:
+
 ```rust
 #[cfg(target_os = "windows")]
 fn platform_specific() {

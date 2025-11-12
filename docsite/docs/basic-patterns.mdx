@@ -3,14 +3,17 @@ id: basic-patterns
 title: Basic Patterns
 sidebar_position: 5
 keywords: [patterns, functions, methods, strings, numbers, arrays, errors]
-description: Learn essential patterns for building Ruby extensions with Rust, including functions, type conversions, and error handling.
+description:
+  Learn essential patterns for building Ruby extensions with Rust, including functions, type conversions, and error
+  handling.
 ---
 
 # Basic Patterns
 
 **Time:** 30 minutes | **Difficulty:** Beginner to Intermediate
 
-Master the fundamental patterns for building Ruby extensions with Rust. These patterns form the foundation of every rb-sys project.
+Master the fundamental patterns for building Ruby extensions with Rust. These patterns form the foundation of every
+rb-sys project.
 
 ## Functions & Methods
 
@@ -41,16 +44,17 @@ fn divide(a: f64, b: f64) -> Result<f64, Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MathUtils")?;
-    
+
     // Register functions with their arity
     module.define_singleton_method("add", function!(add, 2))?;
     module.define_singleton_method("divide", function!(divide, 2))?;
-    
+
     Ok(())
 }
 ```
 
 **Ruby usage:**
+
 ```ruby
 MathUtils.add(5, 3)      # => 8
 MathUtils.divide(10, 2)  # => 5.0
@@ -76,23 +80,23 @@ impl Counter {
     fn new(initial: i64) -> Self {
         Counter(RefCell::new(CounterData { value: initial }))
     }
-    
+
     fn increment(&self) -> i64 {
         let mut data = self.0.borrow_mut();
         data.value += 1;
         data.value
     }
-    
+
     fn increment_by(&self, amount: i64) -> i64 {
         let mut data = self.0.borrow_mut();
         data.value += amount;
         data.value
     }
-    
+
     fn value(&self) -> i64 {
         self.0.borrow().value
     }
-    
+
     fn reset(&self) {
         self.0.borrow_mut().value = 0;
     }
@@ -101,21 +105,22 @@ impl Counter {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let class = ruby.define_class("Counter", ruby.class_object())?;
-    
+
     // Constructor
     class.define_singleton_method("new", function!(Counter::new, 1))?;
-    
+
     // Instance methods
     class.define_method("increment", method!(Counter::increment, 0))?;
     class.define_method("increment_by", method!(Counter::increment_by, 1))?;
     class.define_method("value", method!(Counter::value, 0))?;
     class.define_method("reset", method!(Counter::reset, 0))?;
-    
+
     Ok(())
 }
 ```
 
 **Ruby usage:**
+
 ```ruby
 counter = Counter.new(10)
 counter.value         # => 10
@@ -142,11 +147,11 @@ fn reverse_string(input: String) -> String {
 // Work with Ruby strings directly
 fn uppercase_first(ruby_str: RString) -> Result<RString, Error> {
     let s = ruby_str.to_string()?;
-    
+
     if s.is_empty() {
         return Ok(ruby_str);
     }
-    
+
     let first_char = s.chars().next()
         .ok_or_else(|| Error::new(magnus::exception::arg_error(), "string is empty"))?;
     let result = format!(
@@ -154,7 +159,7 @@ fn uppercase_first(ruby_str: RString) -> Result<RString, Error> {
         first_char.to_uppercase(),
         &s[first_char.len_utf8()..]
     );
-    
+
     Ok(RString::new(&result))
 }
 
@@ -166,7 +171,7 @@ fn repeat_string(s: String, times: usize) -> Result<String, Error> {
             "too many repetitions"
         ));
     }
-    
+
     Ok(s.repeat(times))
 }
 ```
@@ -188,7 +193,7 @@ fn ensure_utf8(_ruby: &Ruby, input: RString) -> Result<RString, Error> {
 fn process_binary(data: RString) -> Result<Vec<u8>, Error> {
     // Get bytes regardless of encoding
     let bytes = unsafe { data.as_slice() };
-    
+
     // Process the bytes...
     Ok(bytes.to_vec())
 }
@@ -214,14 +219,14 @@ fn safe_multiply(a: i64, b: i64) -> Result<i64, Error> {
 // Work with Ruby Integer objects
 fn factorial(n: Integer) -> Result<Integer, Error> {
     let num: i64 = n.to_i64()?;
-    
+
     if num < 0 {
         return Err(Error::new(
             exception::arg_error(),
             "factorial of negative number"
         ));
     }
-    
+
     let result = (1..=num).product::<i64>();
     Ok(Integer::from_i64(result))
 }
@@ -232,17 +237,17 @@ fn is_prime(n: Integer) -> bool {
         Ok(n) => n,
         Err(_) => return false, // Negative or too large
     };
-    
+
     if num < 2 {
         return false;
     }
-    
+
     for i in 2..=(num as f64).sqrt() as u64 {
         if num % i == 0 {
             return false;
         }
     }
-    
+
     true
 }
 ```
@@ -266,17 +271,17 @@ fn calculate_mean(numbers: Vec<f64>) -> Result<Float, Error> {
             "empty array"
         ));
     }
-    
+
     let sum: f64 = numbers.iter().sum();
     let mean = sum / numbers.len() as f64;
-    
+
     Ok(Float::from_f64(mean))
 }
 
 // Handle special float values
 fn safe_divide(a: f64, b: f64) -> Result<f64, Error> {
     let result = a / b;
-    
+
     if result.is_nan() {
         Err(Error::new(
             exception::float_domain_error(),
@@ -310,26 +315,26 @@ fn sum_integers(numbers: Vec<i64>) -> i64 {
 // Work with Ruby arrays directly
 fn first_n_elements(array: RArray, n: usize) -> Result<RArray, Error> {
     let result = RArray::new();
-    
+
     for (i, item) in array.each().enumerate() {
         if i >= n {
             break;
         }
         result.push(item?)?;
     }
-    
+
     Ok(result)
 }
 
 // Modify arrays efficiently
 fn double_values(array: RArray) -> Result<RArray, Error> {
     let result = RArray::with_capacity(array.len());
-    
+
     for item in array.each() {
         let value: i64 = TryConvert::try_convert(item?)?;
         result.push(value * 2)?;
     }
-    
+
     Ok(result)
 }
 ```
@@ -342,24 +347,24 @@ use magnus::{RArray, Error, RString, exception, TryConvert};
 // Filter arrays
 fn select_strings(array: RArray) -> Result<RArray, Error> {
     let result = RArray::new();
-    
+
     for item in array.each() {
         let value = item?;
         if RString::try_convert(value).is_ok() {
             result.push(value)?;
         }
     }
-    
+
     Ok(result)
 }
 
 // Transform arrays with error handling
 fn parse_integers(array: RArray) -> Result<Vec<i64>, Error> {
     let mut result = Vec::with_capacity(array.len());
-    
+
     for (index, item) in array.each().enumerate() {
         let value = item?;
-        
+
         match i64::try_convert(value) {
             Ok(n) => result.push(n),
             Err(_) => {
@@ -370,14 +375,14 @@ fn parse_integers(array: RArray) -> Result<Vec<i64>, Error> {
             }
         }
     }
-    
+
     Ok(result)
 }
 
 // Create nested arrays
 fn create_matrix(rows: usize, cols: usize, initial: i64) -> RArray {
     let matrix = RArray::with_capacity(rows);
-    
+
     for _ in 0..rows {
         let row = RArray::with_capacity(cols);
         for _ in 0..cols {
@@ -385,7 +390,7 @@ fn create_matrix(rows: usize, cols: usize, initial: i64) -> RArray {
         }
         let _ = matrix.push(row);
     }
-    
+
     matrix
 }
 ```
@@ -402,30 +407,30 @@ use std::collections::HashMap;
 
 fn count_words(text: String) -> HashMap<String, usize> {
     let mut counts = HashMap::new();
-    
+
     for word in text.split_whitespace() {
         *counts.entry(word.to_string()).or_insert(0) += 1;
     }
-    
+
     counts
 }
 
 // Work with Ruby hashes directly
 fn merge_hashes(hash1: RHash, hash2: RHash) -> Result<RHash, Error> {
     let result = RHash::new();
-    
+
     // Copy first hash
     hash1.foreach(|key: Value, value: Value| {
         result.aset(key, value)?;
         Ok(ForEach::Continue)
     })?;
-    
+
     // Merge second hash
     hash2.foreach(|key: Value, value: Value| {
         result.aset(key, value)?;
         Ok(ForEach::Continue)
     })?;
-    
+
     Ok(result)
 }
 
@@ -486,7 +491,7 @@ fn process_data(input: String) -> Result<String, Error> {
     if input.is_empty() {
         return Err(ProcessingError::InvalidInput("input cannot be empty".to_string()).into());
     }
-    
+
     // Processing logic...
     Ok(input.to_uppercase())
 }
@@ -506,7 +511,7 @@ fn read_and_parse(filename: String) -> Result<Vec<i64>, Error> {
             exception::runtime_error(),
             format!("Failed to read file '{}': {}", filename, e)
         ))?;
-    
+
     // Parse numbers
     let mut numbers = Vec::new();
     for (line_no, line) in contents.lines().enumerate() {
@@ -517,7 +522,7 @@ fn read_and_parse(filename: String) -> Result<Vec<i64>, Error> {
             ))?;
         numbers.push(num);
     }
-    
+
     Ok(numbers)
 }
 ```
@@ -543,30 +548,30 @@ fn create_user(kwargs: RHash) -> Result<String, Error> {
             .get(Symbol::new("name"))
             .ok_or_else(|| Error::new(exception::arg_error(), "name is required"))?
     )?;
-    
+
     // Optional parameters with defaults
     let age: i32 = kwargs
         .get(Symbol::new("age"))
         .and_then(|v| TryConvert::try_convert(v).ok())
         .unwrap_or(0);
-    
+
     let email: Option<String> = kwargs
         .get(Symbol::new("email"))
         .and_then(|v| TryConvert::try_convert(v).ok());
-    
+
     Ok(format!("User: {}, Age: {}, Email: {:?}", name, age, email))
 }
 
 // Variadic arguments
 fn concat_strings(strings: RArray) -> Result<String, Error> {
     let mut result = String::new();
-    
+
     for item in strings.each() {
         let s: String = TryConvert::try_convert(item?)?;
         result.push_str(&s);
         result.push(' ');
     }
-    
+
     Ok(result.trim().to_string())
 }
 ```
@@ -581,13 +586,13 @@ use magnus::{block::Proc, Value, RArray, Error};
 // Accept a block and call it
 fn map_array(array: RArray, block: Proc) -> Result<RArray, Error> {
     let result = RArray::with_capacity(array.len());
-    
+
     for item in array.each() {
         let value = item?;
         let mapped = block.call::<_, Value>((value,))?;
         result.push(mapped)?;
     }
-    
+
     Ok(result)
 }
 
@@ -644,6 +649,7 @@ fn with_optional_block(data: String, block: Option<Proc>) -> Result<String, Erro
 
 ### Patterns Mastered
 
-You now know the essential patterns for building Ruby extensions with Rust. Practice these patterns to build robust, efficient extensions.
+You now know the essential patterns for building Ruby extensions with Rust. Practice these patterns to build robust,
+efficient extensions.
 
 </div>
