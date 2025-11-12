@@ -14,7 +14,7 @@ require "tmpdir"
 
 OPTIONS = {
   docker_platform: "linux/amd64",
-  version: RbSys::VERSION,
+  version: ENV["RCD_IMAGE_VERSION"] || RbSys::VERSION,
   directory: Dir.pwd
 }
 
@@ -99,28 +99,30 @@ OptionParser.new do |opts|
     OPTIONS[:toolchain_info] = toolchain_info
   end
 
-  opts.on("-r", "--ruby-versions LIST", "List all supported Ruby versions") do |arg|
-    vers = arg.split(/[^0-9.]+/).map do |v|
-      override = RakeCompilerDock.cross_rubies[v]
+  opts.on("-r", "--ruby-versions LIST", "Comma- or colon-separated Ruby requirements (e.g., '3.4,~> 3.1')") do |arg|
+    requirements = arg.tr(":", ",").split(",").map(&:strip).reject(&:empty?)
 
-      next override if override
-
-      parts = v.split(".")
-      parts[2] = "0" if parts[2].nil?
-      parts.join(".")
+    begin
+      resolved = RakeCompilerDock.ruby_cc_version(*requirements)
+    rescue => error
+      logger.error("Could not resolve requested Ruby versions: #{error.message}")
+      exit(1)
     end
 
-    OPTIONS[:ruby_versions] = vers
+    resolved_versions = resolved.split(":")
+    OPTIONS[:ruby_version_requirements] = requirements
+    OPTIONS[:ruby_versions] = resolved_versions
 
-    logger.info("Building for Ruby requested versions: #{vers}")
+    logger.info("Building for Ruby requested versions: #{resolved_versions.join(":")}")
 
-    ENV["RUBY_CC_VERSION"] = vers.join(":")
+    RakeCompilerDock.set_ruby_cc_version(*requirements)
   end
 
   opts.on("--tag TAG", "Use a specific version of the Docker image") do |tag|
     logger.info("Using version #{tag} of the Docker image")
     OPTIONS[:version] = tag
     OPTIONS[:no_cache] = tag == "latest"
+    ENV["RCD_IMAGE_VERSION"] = tag
   end
 
   opts.on("--list-platforms", "--list", "List all supported platforms") do
@@ -445,7 +447,9 @@ def log_some_useful_info
 end
 
 def set_env
-  ENV["RCD_IMAGE"] ||= "rbsys/#{ruby_platform}:#{OPTIONS[:version]}"
+  ENV["RCD_IMAGE_VERSION"] ||= OPTIONS[:version]
+  version = ENV.fetch("RCD_IMAGE_VERSION")
+  ENV["RCD_IMAGE"] ||= "rbsys/#{ruby_platform}:#{version}"
 end
 
 def lint_rb_sys

@@ -7,7 +7,9 @@ namespace :doctest do
   desc "Run documentation code examples tests"
   task :run do
     test_dir = "tmp/doctests"
+    FileUtils.rm_rf(test_dir)
     src_dir = File.join(test_dir, "src")
+    FileUtils.mkdir_p(src_dir)
     puts "--- Created temporary directory for doctests at #{test_dir} ---"
 
     files_to_check = ENV["FILE"] ? [ENV["FILE"]] : Dir.glob("docsite/docs/**/*.{mdx,md}")
