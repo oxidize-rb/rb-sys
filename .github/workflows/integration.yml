@@ -31,7 +31,7 @@ jobs:
             slug: magnus-head
             ref: "49f2d7f4c5f8d0de9fdceb83982aa616ddb92190"
             run: cargo test
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os: ["ubuntu-latest", "windows-latest", "macos-14"]
         rust: ["stable"]
         ruby: ["3.2", "3.3", "3.4"]
         exclude:
