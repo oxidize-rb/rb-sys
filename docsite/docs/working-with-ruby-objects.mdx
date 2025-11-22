@@ -4,34 +4,28 @@ sidebar_position: 7
 
 # Working with Ruby Objects
 
-```mdx-code-block
-import LanguageCallout from '@site/src/components/LanguageCallout';
-```
-
 When writing Ruby extensions in Rust, one of the most common tasks is converting between Ruby and Rust types. The magnus
 crate provides a comprehensive set of conversion functions for this purpose.
-
-<LanguageCallout />
 
 ## Basic Type Conversions
 
 ### Primitive Types
 
 ```rust
-use magnus::{RString, Ruby, Integer, Float};
+use magnus::{RString, Ruby, Integer, Float, Error};
 
 #[magnus::init]
-fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
+fn init(ruby: &Ruby) -> Result<(), Error> {
     // Convert Rust types to Ruby
-    let rb_string: RString = RString::new("Hello, Ruby!");        // Rust &str to Ruby String
-    let rb_int: Integer = Integer::from_i64(42);                 // Rust i64 to Ruby Integer
-    let rb_float: Float = Float::from_f64(std::f64::consts::PI); // Rust f64 to Ruby Float
-    let rb_bool = ruby.qtrue();  // Rust bool to Ruby true/false
+    let rb_string: RString = ruby.str_new("Hello, Ruby!");        // Rust &str to Ruby String
+    let rb_int: Integer = ruby.integer_from_i64(42);                 // Rust i64 to Ruby Integer
+    let rb_float: Float = ruby.float_from_f64(std::f64::consts::PI); // Rust f64 to Ruby Float
+    let _rb_bool = ruby.qtrue();  // Rust bool to Ruby true/false
 
     // Convert Ruby types to Rust
-    let rust_string: String = rb_string.to_string()?;           // Ruby String to Rust String
-    let rust_int: i64 = rb_int.to_i64()?;                       // Ruby Integer to Rust i64
-    let rust_float: f64 = rb_float.to_f64();                    // Ruby Float to Rust f64
+    let _rust_string: String = rb_string.to_string()?;          // Ruby String to Rust String
+    let _rust_int: i64 = rb_int.to_i64()?;                      // Ruby Integer to Rust i64
+    let _rust_float: f64 = rb_float.to_f64();                   // Ruby Float to Rust f64
     // To check if a value is true/false, compare with qtrue/qfalse
 
     Ok(())
@@ -40,23 +34,46 @@ fn init(ruby: &Ruby) -> Result<(), magnus::Error> {
 
 ### Checking Types
 
-When working with Ruby objects, you often need to check their types:
+When working with a generic `magnus::Value`, you often need to determine what kind of object it is before you can work with it. The `is_kind_of` method, combined with `TryConvert`, provides a robust way to do this.
 
 ```rust
-use magnus::{RString, Ruby, Value, Integer, TryConvert};
+use magnus::{function, method, prelude::*, Error, Ruby, Value, TryConvert};
 
-fn process_value(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
-    // Try converting to different types
-    if let Ok(s) = TryConvert::try_convert(val) {
-        let s: RString = s;
-        println!("Got string: {}", s.to_string()?);
-    } else if let Ok(i) = TryConvert::try_convert(val) {
-        let i: Integer = i;
-        println!("Got integer: {}", i.to_i64()?);
+// An example of a simple wrapped struct.
+#[magnus::wrap(class = "MyNumber")]
+struct MyNumber(i64);
+
+impl MyNumber {
+    fn new(val: i64) -> Self { Self(val) }
+    fn get(&self) -> i64 { self.0 }
+}
+
+// A function that can accept different types from Ruby.
+fn process_value(ruby: &Ruby, val: Value) -> Result<(), Error> {
+    // We can use `is_kind_of` to check the class of a Ruby object before
+    // attempting a conversion.
+    if val.is_kind_of(ruby.class_integer()) {
+        let i = i64::try_convert(val)?;
+        println!("Got a built-in Integer: {}", i);
+    } else if val.is_kind_of(ruby.class_string()) {
+        let s = String::try_convert(val)?;
+        println!("Got a built-in String: '{}'", s);
+    } else if let Ok(n) = <&MyNumber>::try_convert(val) {
+        // For our own wrapped types, we can convert to a reference.
+        println!("Got our custom MyNumber with value: {}", n.get());
     } else {
-        println!("Got some other type (could be nil or another type)");
+        // As a fallback, print a generic message.
+        println!("Got some other type.");
     }
+    Ok(())
+}
 
+#[magnus::init]
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let my_number_class = ruby.define_class("MyNumber", ruby.class_object())?;
+    my_number_class.define_singleton_method("new", function!(MyNumber::new, 1))?;
+    my_number_class.define_method("get", method!(MyNumber::get, 0))?;
+    ruby.define_global_function("process_value", function!(process_value, 1));
     Ok(())
 }
 ```
@@ -68,16 +85,15 @@ fn process_value(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
 Ruby strings are encoded and have more complex behavior than Rust strings:
 
 ```rust
-use magnus::{RString, Ruby, Value, value::ReprValue};
+use magnus::{RString, Ruby, value::ReprValue};
 
 fn string_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new Ruby string
-    let mut hello = RString::new("Hello");
+    let mut hello = ruby.str_new("Hello");
 
     // Concatenate strings (using funcall)
-    let world = RString::new(" World!");
-    hello.as_value().funcall::<_, _, Value>("concat", (world,))?;
-    let message = hello;
+    let world = ruby.str_new(" World!");
+    let message: RString = hello.as_value().funcall("concat", (world,))?;
 
     // Get bytes
     let bytes = unsafe { message.as_slice() };
@@ -85,7 +101,7 @@ fn string_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
 
     // Create from bytes
     let bytes = [72, 101, 108, 108, 111]; // "Hello" in ASCII
-    let new_str = RString::from_slice(&bytes);
+    let _new_str = ruby.str_from_slice(&bytes);
 
     Ok(())
 }
@@ -100,7 +116,7 @@ use magnus::{RArray, Ruby, Value};
 
 fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new empty array
-    let array = RArray::new();
+    let array: RArray = ruby.ary_new();
 
     // Push elements
     array.push(1)?;
@@ -108,13 +124,12 @@ fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     array.push(3.0)?;
 
     // Get length
-    let length = array.len();
-    println!("Array length: {}", length);
+    let _length = array.len();
 
     // Access elements
-    let first: i64 = array.entry(0)?;
-    let second: String = array.entry(1)?;
-    let third: f64 = array.entry(2)?;
+    let _first: i64 = array.entry(0)?;
+    let _second: String = array.entry(1)?;
+    let _third: f64 = array.entry(2)?;
 
     // Iterate through elements
     for i in 0..array.len() {
@@ -123,16 +138,16 @@ fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     }
 
     // Another way to iterate
-    array.each().for_each(|val| {
+    array.into_iter().for_each(|val| {
         println!("Item: {:?}", val);
     });
 
     // Create an array from Rust Vec
     let numbers = vec![1, 2, 3, 4, 5];
-    let rb_array = RArray::from_iter(numbers);
+    let rb_array = ruby.ary_from_vec(numbers);
 
     // Convert to a Rust Vec
-    let vec: Vec<i64> = rb_array.to_vec()?;
+    let _vec: Vec<i64> = rb_array.to_vec()?;
 
     Ok(())
 }
@@ -143,29 +158,29 @@ fn array_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
 Ruby hashes are similar to Rust's HashMap but can use any Ruby object as keys:
 
 ```rust
-use magnus::{RHash, Value, Symbol, Ruby, r_hash::ForEach, TryConvert, Error};
+use magnus::{RHash, Value, Ruby, r_hash::ForEach, TryConvert, Error};
 
 fn hash_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
     // Create a new hash
-    let hash = RHash::new();
+    let hash: RHash = ruby.hash_new();
 
     // Add key-value pairs
     hash.aset("name", "Alice")?;
-    hash.aset(Symbol::new("age"), 30)?;
+    hash.aset(ruby.to_symbol("age"), 30)?;
     hash.aset(1, "one")?;
 
     // Get values
-    let name: String = TryConvert::try_convert(
+    let _name: String = TryConvert::try_convert(
         hash.get("name")
-            .ok_or_else(|| Error::new(magnus::exception::key_error(), "name not found"))?
+            .ok_or_else(|| Error::new(ruby.exception_key_error(), "name not found"))?
     )?;
-    let age: i64 = TryConvert::try_convert(
-        hash.get(Symbol::new("age"))
-            .ok_or_else(|| Error::new(magnus::exception::key_error(), "age not found"))?
+    let _age: i64 = TryConvert::try_convert(
+        hash.get(ruby.to_symbol("age"))
+            .ok_or_else(|| Error::new(ruby.exception_key_error(), "age not found"))?
     )?;
-    let one: String = TryConvert::try_convert(
+    let _one: String = TryConvert::try_convert(
         hash.get(1)
-            .ok_or_else(|| Error::new(magnus::exception::key_error(), "1 not found"))?
+            .ok_or_else(|| Error::new(ruby.exception_key_error(), "1 not found"))?
     )?;
 
     // Check if key exists
@@ -201,9 +216,9 @@ fn hash_operations(ruby: &Ruby) -> Result<(), magnus::Error> {
 Ruby's `nil` is a special value that requires careful handling:
 
 ```rust
-use magnus::{Value, Ruby, RString, value::ReprValue, TryConvert};
+use magnus::{Value, Ruby, RString, value::ReprValue, TryConvert, Error};
 
-fn handle_nil(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
+fn handle_nil(_ruby: &Ruby, val: Value) -> Result<(), Error> {
     // Try to convert value - returns None if nil or wrong type
     let maybe_string: Option<RString> = TryConvert::try_convert(val).ok();
     match maybe_string {
@@ -215,6 +230,7 @@ fn handle_nil(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
     fn returns_nil(ruby: &Ruby) -> Value {
         ruby.qnil().as_value()
     }
+    let _ = returns_nil; // silence unused warning
 
     Ok(())
 }
@@ -224,7 +240,7 @@ fn handle_nil(ruby: &Ruby, val: Value) -> Result<(), magnus::Error> {
 
 Magnus provides powerful type conversion traits that make it easy to convert between Ruby and Rust types.
 
-### From Rust to Ruby (TryConvert)
+### From Ruby to Rust (TryConvert)
 
 ```rust
 use magnus::{Value, Ruby, TryConvert, Error, RHash};
@@ -255,10 +271,10 @@ fn process_person(val: Value) -> Result<(), Error> {
 }
 ```
 
-### From Ruby to Rust (IntoValue)
+### From Rust to Ruby (IntoValue)
 
 ```rust
-use magnus::{Value, Ruby, IntoValue, Error, RHash, value::ReprValue};
+use magnus::{Value, Ruby, IntoValue, Error, value::ReprValue};
 
 struct Point {
     x: f64,
@@ -267,7 +283,7 @@ struct Point {
 
 impl IntoValue for Point {
     fn into_value_with(self, ruby: &Ruby) -> Value {
-        let hash = RHash::new();
+        let hash = ruby.hash_new();
         let _ = hash.aset("x", self.x);
         let _ = hash.aset("y", self.y);
         hash.as_value()

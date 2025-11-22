@@ -5,38 +5,33 @@ const sidebars: SidebarsConfig = {
     "introduction",
     {
       type: "category",
-      label: "🚀 Getting Started",
+      label: "Getting Started",
       collapsed: false,
       items: ["getting-started", "quick-start", "core-concepts"],
     },
     {
       type: "category",
-      label: "🔨 Building Extensions",
+      label: "Building Extensions",
       items: ["project-setup", "basic-patterns", "working-with-ruby-objects", "classes-and-modules", "error-handling"],
     },
     {
       type: "category",
-      label: "🧠 Memory & Performance",
-      items: ["memory-management", "build-process"],
-    },
-    {
-      type: "category",
-      label: "🌍 Real-World Patterns",
-      items: ["examples"],
-    },
-    {
-      type: "category",
-      label: "🧑‍💻 Development",
+      label: "Development",
       items: ["testing", "debugging", "troubleshooting"],
     },
     {
       type: "category",
-      label: "📦 Deployment",
-      items: ["cross-platform"],
+      label: "Performance & Memory",
+      items: ["performance", "memory-management", "build-process"],
     },
     {
       type: "category",
-      label: "📖 Reference",
+      label: "Deployment & Distribution",
+      items: ["deployment"],
+    },
+    {
+      type: "category",
+      label: "Reference",
       items: ["api-reference/rb-sys-features", "api-reference/rb-sys-gem-config", "api-reference/test-helpers"],
     },
     {

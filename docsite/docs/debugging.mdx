@@ -1,27 +1,26 @@
 ---
 id: debugging
-title: Debugging & Troubleshooting
-sidebar_position: 14
+title: Debugging
 ---
 
-import LanguageCallout from "../src/components/LanguageCallout";
+# Debugging
 
-# Debugging & Troubleshooting
+This guide provides techniques for debugging Rust-based Ruby extensions, covering debuggers, memory analysis, and logging.
 
-This chapter covers techniques for debugging Rust-based Ruby extensions, common error patterns, and approaches to
-solving the most frequent issues.
+## Compiling with Debug Symbols
 
-## Overview
+To effectively debug your extension, compile it with debug symbols. Use the `dev` Cargo profile.
 
-To debug Rust extensions, you can use either LLDB or GDB. First, you will need to compile with the `dev` Cargo profile,
-so debug symbols are available.
+Set the profile with an environment variable:
 
-To do that you can run: `RB_SYS_CARGO_PROFILE=dev rake compile`. Alternatively, you can add a helper Rake task to make
-this easier:
+```bash
+RB_SYS_CARGO_PROFILE=dev bundle exec rake compile
+```
+
+Or create a Rake task:
 
 ```ruby
 # Rakefile
-
 desc "Compile the extension with debug symbols"
 task "compile:debug" do
   ENV["RB_SYS_CARGO_PROFILE"] = "dev"
@@ -29,156 +28,47 @@ task "compile:debug" do
 end
 ```
 
-:::tip [Join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw)
-to ask questions and get help from the community! :::
+## Using a Debugger (GDB/LLDB)
 
-## Common Errors and Solutions
+### Live Session
 
-### Compilation Errors
+Run your Ruby process inside `gdb` or `lldb` to catch crashes and inspect state.
 
-#### Missing Ruby Headers
+1.  **Start the debugger:**
 
-**Error:**
+    ```bash
+    # LLDB on macOS
+    lldb -- ruby -Ilib -e 'require "my_extension"; MyExtension.method_to_debug'
 
-```
-fatal error: ruby.h: No such file or directory
-#include <ruby.h>
-         ^~~~~~~~
-compilation terminated.
-```
+    # GDB on Linux
+    gdb --args ruby -Ilib -e 'require "my_extension"; MyExtension.method_to_debug'
+    ```
 
-**Solution:**
+2.  **Set a breakpoint and run:**
+    Set breakpoints on Rust functions (e.g., by file and line number).
 
-- Ensure Ruby development headers are installed
-- Check that `rb_sys::activate()` is being called in your `build.rs`
-- Verify that your Ruby installation is accessible to your build environment
+    ```
+    (lldb) breakpoint set --file src/lib.rs --line 42
+    (lldb) run
+    ```
 
-#### Incompatible Ruby Version
+### Post-Mortem Debugging (Core Dumps)
 
-**Error:**
+Analyze core dumps for segmentation faults.
 
-```
-error: failed to run custom build command for `rb-sys v0.9.78`
-```
+1.  **Enable core dumps** (Linux/macOS): `ulimit -c unlimited`
+2.  **Run the code** that causes the crash to generate a `core` file.
+3.  **Load the core dump:**
 
-With details mentioning Ruby version compatibility issues.
+    ```bash
+    gdb --core=core --quiet `which ruby`
+    ```
 
-**Solution:**
+4.  **Get a backtrace:** Use `bt` to show the stack trace.
 
-- Ensure your rb-sys version is compatible with your Ruby version
-- Update rb-sys to the latest version
-- Check your build environment's Ruby version with `ruby -v`
+### VSCode Configuration
 
-#### Linking Errors
-
-**Error:**
-
-```
-error: linking with `cc` failed: exit status: 1
-... undefined reference to `rb_define_module` ...
-```
-
-**Solution:**
-
-- Ensure proper linking configuration in `build.rs`
-- Make sure you've called `rb_sys::activate()`
-- Verify that your Ruby installation is correctly detected
-
-### Runtime Errors
-
-#### Segmentation Faults
-
-Segmentation faults typically occur when accessing memory improperly:
-
-**Common Causes:**
-
-1. Accessing Ruby objects after they've been garbage collected
-2. Not protecting Ruby values from garbage collection during C API calls
-3. Incorrect use of raw pointers
-
-**Solutions:**
-
-- Use `TypedData` and implement the `mark` method to protect Ruby objects
-- Use `rb_gc_guard!` macro when working with raw C API
-- Prefer the higher-level Magnus API over raw rb-sys
-
-#### Already Borrowed: BorrowMutError
-
-When using `RefCell` for interior mutability:
-
-**Error:**
-
-```
-thread '<unnamed>' panicked at 'already borrowed: BorrowMutError', ...
-```
-
-**Solution:**
-
-- Complete all immutable borrows before attempting mutable borrows
-- Copy required data out of immutable borrows before borrowing mutably
-- See the [RefCell and Interior Mutability](memory-management) section in the Memory Management chapter
-
-#### Method Argument Mismatch
-
-**Error:**
-
-```
-ArgumentError: wrong number of arguments (given 2, expected 1)
-```
-
-**Solution:**
-
-- Check method definitions in your Rust code
-- Ensure `function!` and `method!` macros have the correct arity
-- Verify Ruby method calls match the defined signatures
-
-#### Type Conversion Failures
-
-**Error:**
-
-```
-TypeError: no implicit conversion of Integer into String
-```
-
-**Solution:**
-
-- Add proper type checking and conversions in Rust
-- Use `try_convert` and handle conversion errors gracefully
-- Add explicit type annotations to clarify intent
-
-## Debugging Techniques
-
-### Using Backtraces
-
-Ruby's built-in backtraces can help identify where problems originate:
-
-```ruby
-begin
-  # Code that might raise an exception
-  MyExtension.problematic_method
-rescue => e
-  puts e.message
-  puts e.backtrace
-end
-```
-
-You can enhance backtraces with the `backtrace` gem:
-
-```ruby
-require 'backtrace'
-Backtrace.enable_ruby_source_inspect!
-
-begin
-  MyExtension.problematic_method
-rescue => e
-  puts Backtrace.for(e)
-end
-```
-
-### VSCode + LLDB
-
-The [code-lldb](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb) extension for VSCode is a great
-way to debug Rust code. Here is an example configuration file:
+The `vadimcn.vscode-lldb` extension provides integrated debugging.
 
 ```json
 // .vscode/launch.json
@@ -188,13 +78,10 @@ way to debug Rust code. Here is an example configuration file:
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug",
-      "preLaunchTask": {
-        "task": "compile:debug",
-        "type": "rake"
-      },
-      "program": "~/.asdf/installs/ruby/3.1.1/bin/ruby",
-      "args": ["-Ilib", "test/test_helper.rb"],
+      "name": "Debug Extension",
+      "preLaunchTask": "rake: compile:debug",
+      "program": "/path/to/your/ruby",
+      "args": ["-Ilib", "-r", "my_gem", "my_script.rb"],
       "cwd": "${workspaceFolder}",
       "sourceLanguages": ["rust"]
     }
@@ -202,200 +89,79 @@ way to debug Rust code. Here is an example configuration file:
 }
 ```
 
-### Debugging the Ruby C API
+## Logging
 
-With this basic setup, you can set breakpoints and interactively debug your Rust code. However, if Ruby is not built
-with debug symbols, any calls into the Ruby C API become a black box. Luckily, it's straight-forward to fix this.
+Structured logging is invaluable for development and production.
 
-#### Compiling Ruby with debug symbols and source code
+### Setup
 
-<LanguageCallout language="ruby" title="Using chruby or ruby-build">
-```sh
-# First, compile Ruby like so:
-$ RUBY_CFLAGS="-Og -ggdb" ruby-build --keep 3.1.2 /opt/rubies/3.1.2-debug
+Use the `log` and `env_logger` crates.
 
-# Make sure your .vscode/launch.json file is configured to use /opt/rubies/3.1.2-debug/bin/ruby.
+```toml
+# Cargo.toml
+[dependencies]
+log = "0.4"
+env_logger = "0.10"
+```
 
-````
-</LanguageCallout>
+Initialize `env_logger` in your extension's `Init` function.
 
-<LanguageCallout language="ruby" title="Using rbenv">
-```sh
-# First, compile Ruby like so:
-$ RUBY_CFLAGS="-Og -ggdb" rbenv install --keep 3.1.2
+```rust
+#[magnus::init]
+fn init() {
+    env_logger::init();
+    // ...
+}
+```
 
-# Make sure your .vscode/launch.json file is configured to use $RBENV_ROOT/versions/3.1.2/bin/ruby.
-````
+### Usage
 
-</LanguageCallout>
+Run your Ruby code with `RUST_LOG` set to the desired log level (`error`, `warn`, `info`, `debug`, `trace`).
 
-### LLDB from the Command Line
-
-LLDB is an excellent tool for debugging Rust extensions from the command line:
-
-1. Compile with debug symbols:
-
-   ```bash
-   RUSTFLAGS="-g" bundle exec rake compile
-   ```
-
-2. Run Ruby with LLDB:
-
-   ```bash
-   lldb -- ruby -I lib -e 'require "my_extension"; MyExtension.method_to_debug'
-   ```
-
-3. Set breakpoints and run:
-
-   ```
-   (lldb) breakpoint set --name rb_my_method
-   (lldb) run
-   ```
-
-4. Common LLDB commands:
-   - `bt` - Display backtrace
-   - `frame variable` - Show local variables
-   - `p expression` - Evaluate expression
-   - `n` - Step over
-   - `s` - Step into
-   - `c` - Continue
-
-### GDB for Linux
-
-GDB offers similar capabilities to LLDB on Linux systems:
-
-1. Compile with debug symbols:
-
-   ```bash
-   RUSTFLAGS="-g" bundle exec rake compile
-   ```
-
-2. Run Ruby with GDB:
-
-   ```bash
-   gdb --args ruby -I lib -e 'require "my_extension"; MyExtension.method_to_debug'
-   ```
-
-3. Set breakpoints and run:
-
-   ```
-   (gdb) break rb_my_method
-   (gdb) run
-   ```
-
-4. Common GDB commands:
-   - `bt` - Display backtrace
-   - `info locals` - Show local variables
-   - `p expression` - Evaluate expression
-   - `n` - Step over
-   - `s` - Step into
-   - `c` - Continue
-
-### Rust Debugging Statements
-
-Strategic use of Rust's debug facilities can help identify issues:
-
-```rust,ignore
-// Debug prints only included in debug builds
-#[cfg(debug_assertions)]
-println!("Debug: counter value = {}", counter);
+```bash
+RUST_LOG=debug ruby my_script.rb
 ```
 
 ```rust
-// More structured logging
-use log::{debug, error, info};
-use std::error::Error;
-use magnus::Ruby;
+// In your Rust code
+use log::{debug, info};
 
-fn fallible_operation() -> Result<(), Box<dyn Error>> {
-    // Simulate a fallible operation
-    Ok(())
+fn my_function(some_data: &[i64]) {
+    debug!("Starting operation with data: {:?}", some_data);
+    // ...
+    info!("Operation completed successfully.");
 }
 
-fn some_function() -> Result<(), Box<dyn Error>> {
-    debug!("Entering some_function");
-
-    if let Err(e) = fallible_operation() {
-        error!("Operation failed: {}", e);
-        return Err(e.into());
-    }
-
-    info!("Operation succeeded");
-    Ok(())
+fn another_function() {
+    my_function(&[1, 2, 3]);
 }
-
-fn init(ruby: &Ruby) -> Result<(), Box<dyn Error>> {
-    env_logger::init();
-    // Rest of initialization...
-    Ok(())
-}
-
-fn main() {
-    // Example usage
-    let _ = some_function();
-    let _ = init(&unsafe { Ruby::get_unchecked() });
-}
-```
-
-And set the log level when running Ruby:
-
-```bash
-RUST_LOG=debug ruby -I lib -e 'require "my_extension"'
 ```
 
 ## Memory Leak Detection
 
-### Using ruby_memcheck
+Use [`ruby_memcheck`](https://github.com/Shopify/ruby_memcheck) to detect memory leaks, filtering out Ruby's GC noise.
 
-The [ruby_memcheck](https://github.com/Shopify/ruby_memcheck) gem helps identify memory leaks in Ruby extensions by
-filtering out Ruby's internal memory management noise when running Valgrind.
+1.  **Install dependencies:**
+    ```bash
+    gem install ruby_memcheck
+    # Debian/Ubuntu
+    apt-get install valgrind
+    ```
+2.  **Set up a Rake task:**
 
-1. Install dependencies:
+    ```ruby
+    # Rakefile
+    require 'ruby_memcheck'
 
-   ```bash
-   gem install ruby_memcheck
-   # On Debian/Ubuntu
-   apt-get install valgrind
-   ```
+    namespace :test do
+      RubyMemcheck::TestTask.new(valgrind: :compile) do |t|
+        t.libs << "test"
+        t.test_files = FileList["test/**/*_test.rb"]
+      end
+    end
+    ```
 
-2. Set up in your Rakefile:
-
-   ```ruby
-   require 'ruby_memcheck'
-
-   test_config = lambda do |t|
-     t.libs << "test"
-     t.test_files = FileList["test/**/*_test.rb"]
-   end
-
-   namespace :test do
-     RubyMemcheck::TestTask.new(valgrind: :compile, &test_config)
-   end
-   ```
-
-3. Run memory leak detection:
-   ```bash
-   bundle exec rake test:valgrind
-   ```
-
-For more detailed instructions and configuration options, refer to the
-[ruby_memcheck documentation](https://github.com/Shopify/ruby_memcheck).
-
-## Best Practices
-
-1. **Add Meaningful Error Messages**: Make your error messages descriptive and helpful
-2. **Test Edge Cases**: Thoroughly test edge cases like nil values, empty strings, etc.
-3. **Maintain a Test Suite**: Comprehensive tests catch issues early
-4. **Use Memory Safety Features**: Leverage Rust's safety features rather than bypassing them
-5. **Provide Debugging Symbols**: Always include debug symbol builds for better debugging
-6. **Document Troubleshooting**: Add a troubleshooting section to your extension's documentation
-7. **Log Appropriately**: Include contextual information in log messages
-
-## Next Steps
-
-- Build your extension with `RB_SYS_CARGO_PROFILE=dev` and practice setting breakpoints.
-- Explore GDB as an alternative to LLDB for low-level debugging.
-- See the Memory Management & Safety chapter for GC-related troubleshooting.
-- If you're still stuck,
-  [join the Slack channel](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to ask
-  questions and get help from the community!
+3.  **Run the task:**
+    ```bash
+    bundle exec rake test:valgrind
+    ```

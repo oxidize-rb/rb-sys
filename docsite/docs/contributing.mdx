@@ -1,489 +1,62 @@
 ---
 id: contributing
 title: Contributing
-sidebar_position: 30
-keywords: [contributing, code of conduct, development, pull request]
-description:
-  Learn how to contribute to rb-sys and the oxidize-rb ecosystem. Includes our Code of Conduct and development
-  guidelines.
 ---
 
-# Contributing to rb-sys
+# Contributing to `rb-sys`
 
-Thank you for your interest in contributing to rb-sys! This guide will help you get started.
+All contributions to `rb-sys` are welcome, from documentation improvements to new features.
 
 ## Code of Conduct
 
-### Our Pledge
-
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for
-everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity
-and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste,
-color, religion, or sexual identity and orientation.
-
-We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
-
-### Our Standards
-
-**Examples of behavior that contributes to a positive environment:**
-
-- Using welcoming and inclusive language
-- Being respectful of differing viewpoints and experiences
-- Gracefully accepting constructive criticism
-- Focusing on what is best for the community
-- Showing empathy towards other community members
-- Helping newcomers get started
-
-**Examples of unacceptable behavior:**
-
-- The use of sexualized language or imagery, and sexual attention or advances of any kind
-- Trolling, insulting or derogatory comments, and personal or political attacks
-- Public or private harassment
-- Publishing others' private information without explicit permission
-- Other conduct which could reasonably be considered inappropriate in a professional setting
-
-### Enforcement
-
-Community leaders are responsible for clarifying and enforcing our standards. All complaints will be reviewed and
-investigated promptly and fairly. All community leaders are obligated to respect the privacy and security of the
-reporter.
+We are dedicated to providing a harassment-free community for everyone. Please read our full [Code of Conduct](https://github.com/oxidize-rb/rb-sys/blob/main/CODE_OF_CONDUCT.md) before participating.
 
 ## Ways to Contribute
 
-### 1. Reporting Issues
-
-Found a bug? Have a feature request? [Open an issue](https://github.com/oxidize-rb/rb-sys/issues)!
-
-**Good issue reports include:**
-
-- Clear, descriptive title
-- Steps to reproduce
-- Expected vs actual behavior
-- System information (Ruby version, OS, etc.)
-- Minimal reproduction code
-
-**Example issue:**
-
-```markdown
-## Bug: Segfault when passing nil to parse_json
-
-### Description
-
-The extension crashes when passing nil to the parse_json method.
-
-### Steps to Reproduce
-
-1. Install gem: `gem install my_extension`
-2. Run: `MyExtension.parse_json(nil)`
-
-### Expected Behavior
-
-Should raise an ArgumentError
-
-### Actual Behavior
-
-Segmentation fault
-
-### System Info
-
-- Ruby: 3.2.0
-- OS: macOS 13.0
-- rb-sys: 0.9.85
-```
-
-### 2. Improving Documentation
-
-Documentation contributions are highly valued!
-
-**Areas to help:**
-
-- Fix typos and grammar
-- Add examples
-- Clarify confusing sections
-- Translate documentation
-- Write tutorials
-
-**Documentation standards:**
-
-- Use clear, simple language
-- Include working code examples
-- Test all code snippets
-- Follow existing style
-
-### 3. Contributing Code
-
-#### Setting Up Development Environment
-
-```bash
-# 1. Fork the repository on GitHub
-
-# 2. Clone your fork
-git clone https://github.com/YOUR_USERNAME/rb-sys.git
-cd rb-sys
-
-# 3. Add upstream remote
-git remote add upstream https://github.com/oxidize-rb/rb-sys.git
-
-# 4. Create a branch
-git checkout -b my-feature
-
-# 5. Install dependencies
-bundle install
-cargo build
-
-# 6. Run tests
-bundle exec rake test
-cargo test
-```
-
-#### Development Workflow
-
-1. **Write tests first**
-
-   ```rust
-   fn my_new_function(x: i32) -> i32 {
-       x * 2
-   }
-
-   #[test]
-   fn test_new_feature() {
-       assert_eq!(my_new_function(2), 4);
-   }
-   ```
-
-2. **Implement the feature**
-
-   ```rust
-   pub fn my_new_function(x: i32) -> i32 {
-       x * 2
-   }
-   ```
-
-3. **Run tests and linting**
-
-   ```bash
-   cargo test
-   cargo clippy
-   cargo fmt
-   ```
-
-4. **Update documentation**
-   ```rust
-   /// Doubles the input value
-   ///
-   /// # Examples
-   ///
-   /// let result = my_new_function(2);
-   /// assert_eq!(result, 4);
-   pub fn my_new_function(x: i32) -> i32 {
-       x * 2
-   }
-   ```
-
-#### Pull Request Process
-
-1. **Before submitting:**
-   - [ ] Tests pass locally
-   - [ ] Code follows style guidelines
-   - [ ] Documentation updated
-   - [ ] Commit messages are clear
-   - [ ] Branch is up to date with main
-
-2. **PR description template:**
-
-   ```markdown
-   ## Description
-
-   Brief description of changes
-
-   ## Motivation
-
-   Why are these changes needed?
-
-   ## Changes
-
-   - Change 1
-   - Change 2
-
-   ## Testing
-
-   How were these changes tested?
-
-   ## Checklist
-
-   - [ ] Tests added/updated
-   - [ ] Documentation updated
-   - [ ] CHANGELOG updated
-   ```
-
-3. **After submitting:**
-   - Respond to reviewer feedback
-   - Keep PR up to date with main
-   - Be patient - reviews take time
-
-### 4. Testing
-
-#### Writing Good Tests
-
-```rust
-fn add(a: i32, b: i32) -> i32 {
-    a + b
-}
-
-fn divide(a: i32, b: i32) -> Result<i32, String> {
-    if b == 0 {
-        Err("Division by zero".to_string())
-    } else {
-        Ok(a / b)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_basic_functionality() {
-        // Test happy path
-        assert_eq!(add(2, 3), 5);
-
-        // Test edge cases
-        assert_eq!(add(0, 0), 0);
-        assert_eq!(add(-1, 1), 0);
-
-        // Test error conditions
-        let result = divide(10, 0);
-        assert!(result.is_err());
-    }
-}
-```
-
-#### Integration Tests
-
-```ruby
-# test/integration_test.rb
-require 'test_helper'
-
-class IntegrationTest < Minitest::Test
-  def test_real_world_scenario
-    # Test actual usage patterns
-    data = load_test_data
-    result = MyExtension.process(data)
-
-    assert_equal expected_output, result
-    assert_performance_criteria_met(result)
-  end
-end
-```
-
-### 5. Performance Improvements
-
-Love making things fast? We do too!
-
-**Performance PR guidelines:**
-
-1. Include benchmarks showing improvement
-2. Ensure no functionality regression
-3. Document any trade-offs
-
-**Example benchmark:**
-
-```rust
-// In Cargo.toml add:
-// [dev-dependencies]
-// criterion = "0.5"
-
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-
-fn process_string(input: &str) -> String {
-    // Example processing function
-    input.to_uppercase()
-}
-
-fn bench_string_processing(c: &mut Criterion) {
-    let input = "test".repeat(1000);
-
-    c.bench_function("string processing", |b| {
-        b.iter(|| {
-            process_string(black_box(&input))
-        });
-    });
-}
-
-criterion_group!(benches, bench_string_processing);
-criterion_main!(benches);
-```
-
-## Project Structure
-
-Understanding the codebase:
-
-```
-rb-sys/
-├── crates/
-│   ├── rb-sys/          # Core FFI bindings
-│   ├── rb-sys-build/    # Build utilities
-│   └── rb-sys-env/      # Environment detection
-├── gem/                 # Ruby gem code
-├── tests/               # Integration tests
-├── examples/            # Example extensions
-└── docs/                # Documentation
-```
-
-### Key Areas
-
-**rb-sys crate:**
-
-- `src/value.rs` - VALUE type handling
-- `src/api.rs` - Ruby C API bindings
-- `src/macros.rs` - Helpful macros
-
-**Magnus integration:**
-
-- Examples of high-level API usage
-- Type conversion implementations
+- **Report Issues:** [Open an issue](https://github.com/oxidize-rb/rb-sys/issues) for bugs or feature requests.
+- **Improve Documentation:** Fix typos, add examples, or clarify confusing sections.
+- **Contribute Code:** Fix bugs or add new features.
+
+## Development Setup
+
+1.  **Fork and Clone:**
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/rb-sys.git
+    cd rb-sys
+    git remote add upstream https://github.com/oxidize-rb/rb-sys.git
+    ```
+2.  **Create a Branch:**
+    ```bash
+    git checkout -b my-new-feature
+    ```
+3.  **Install & Build:**
+    ```bash
+    bundle install
+    cargo build
+    ```
+4.  **Run Tests:**
+    ```bash
+    bundle exec rake test
+    cargo test
+    ```
+
+## Pull Request Process
+
+1.  **Write code and tests.** Ensure all tests pass and code is formatted (`cargo fmt`) and linted (`cargo clippy`).
+2.  **Update documentation** for new features or behavior changes.
+3.  **Push your branch** and open a Pull Request.
+4.  **Fill out the PR template.** Describe changes and motivation.
+5.  **Respond to feedback.** Be prepared to iterate on changes.
+
+### PR Checklist
+
+- [ ] Tests pass locally (`cargo test` and `rake test`).
+- [ ] Code is formatted (`cargo fmt`) and linted (`cargo clippy`).
+- [ ] Documentation has been updated.
+- [ ] Commit messages are clear and descriptive.
+- [ ] The branch is up-to-date with `main`.
 
 ## Style Guidelines
 
-### Rust Code Style
-
-Follow standard Rust conventions:
-
-```rust
-// Use descriptive names
-fn calculate_fibonacci(n: u32) -> u64 {
-    // Not: fn fib(x: u32) -> u64
-    unimplemented!()
-}
-
-// Document public APIs
-/// Calculates the nth Fibonacci number
-///
-/// # Panics
-/// Panics if n > 93 (overflow)
-pub fn fibonacci(_n: u32) -> u64 {
-    // Implementation
-    unimplemented!()
-}
-
-// Use Result for errors
-struct Config {
-    // Configuration fields
-}
-
-fn parse_config(_input: &str) -> Result<Config, String> {
-    // Not: panic! or unwrap()
-    unimplemented!()
-}
-```
-
-### Ruby Code Style
-
-Follow Ruby community standards:
-
-```ruby
-# Use 2 spaces for indentation
-def process_data(input)
-  return [] if input.empty?
-
-  input.map do |item|
-    transform(item)
-  end
-end
-
-# Document with YARD
-# @param input [Array<String>] Input data
-# @return [Array<Integer>] Processed results
-def process_data(input)
-  # ...
-end
-```
-
-## Review Process
-
-### What to Expect
-
-1. **Initial Review** (1-3 days)
-   - Maintainer assigns reviewers
-   - CI runs tests
-   - Initial feedback
-
-2. **Iteration** (varies)
-   - Address feedback
-   - Update code
-   - Re-run tests
-
-3. **Final Review**
-   - Approval from maintainer
-   - CI passes
-   - Merge!
-
-### Review Criteria
-
-- **Correctness**: Does it work?
-- **Testing**: Is it tested?
-- **Documentation**: Is it documented?
-- **Performance**: No regressions?
-- **Style**: Follows guidelines?
-- **Compatibility**: Works on all platforms?
-
-## Release Process
-
-rb-sys follows semantic versioning:
-
-- **Patch**: Bug fixes (0.9.x)
-- **Minor**: New features (0.x.0)
-- **Major**: Breaking changes (x.0.0)
-
-Releases happen approximately monthly or as needed.
-
-## Recognition
-
-Contributors are recognized in:
-
-- CHANGELOG.md
-- GitHub contributors page
-- Release notes
-- Annual contributor spotlight
-
-## Getting Help
-
-### For Contributors
-
-- **Slack**: Real-time discussion
-- **GitHub Discussions**: Questions
-- **Issues**: Bug reports
-- **Draft PRs**: Early feedback
-
-### Mentorship
-
-New to Rust or Ruby extensions? We offer:
-
-- Pairing sessions
-- Code review mentorship
-- Good first issues
-- Documentation tasks
-
-## Thank You!
-
-Every contribution matters:
-
-- 🐛 Bug reports help us improve
-- 📝 Documentation helps others learn
-- 💻 Code makes rb-sys better
-- 💬 Community support helps everyone
-
----
-
-<div className="success-message">
-
-### Ready to Contribute?
-
-Check out our
-[good first issues](https://github.com/oxidize-rb/rb-sys/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-to get started!
-
-Join our [Slack](https://join.slack.com/t/oxidize-rb/shared_invite/zt-16zv5tqte-Vi7WfzxCesdo2TqF_RYBCw) to discuss
-ideas.
-
-</div>
+- **Rust:** Follow standard Rust API Guidelines and formatting (`rustfmt`). Document public APIs.
+- **Ruby:** Follow community standard style guide. Use 2 spaces for indentation.

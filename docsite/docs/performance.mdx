@@ -1,0 +1,45 @@
+---
+id: performance
+title: Performance & Best Practices
+sidebar_position: 10
+---
+
+# Performance & Best Practices
+
+One of the primary reasons to use Rust for a Ruby native extension is to improve performance. This guide covers key concepts and best practices for writing high-performance extensions with `rb-sys`.
+
+## The FFI Boundary Cost
+
+Calling from Ruby into Rust (and back) is not free. This transition is known as the "FFI (Foreign Function Interface) boundary." Each time your code crosses this boundary, there is a small but non-trivial amount of overhead.
+
+**Best Practice: Avoid "Chatty" Calls**
+
+To minimize this overhead, you should design your extension's API to be "chunky" rather than "chatty."
+
+- **Chatty (less performant):** A loop in Ruby that calls a Rust function on every iteration to process a small piece of data.
+- **Chunky (more performant):** A single call from Ruby that passes a large collection (e.g., a Ruby `Array`) to a Rust function, which then iterates over the data on the Rust side.
+
+_(Placeholder: This section can be expanded with a code example showing a "chatty" vs. "chunky" API design.)_
+
+## Benchmarking
+
+Quantitative data is the best way to demonstrate a performance improvement. You should always benchmark your code to prove that the Rust extension is faster than a pure Ruby equivalent.
+
+The `rb-sys` project itself includes a `bench/` directory with benchmarks that you can use as a reference for setting up your own.
+
+**Recipe: Before-and-After Benchmark**
+
+_(Placeholder: This section can be expanded with a full benchmarking example for a function (e.g., the JSON or Markdown parser from the examples), showing:)_
+
+1.  _A pure Ruby implementation of a function._
+2.  _The Rust-accelerated version._
+3.  _A benchmark script (using a library like `benchmark-ips`) that measures and compares both, showing the performance gain._
+
+## Best Practices for Data Conversions
+
+A common performance consideration is when and how to convert Ruby objects into native Rust structs.
+
+- **Working directly with Ruby types:** Using `rb-sys`'s wrappers around Ruby objects (like `RString`, `RArray`) can be efficient if you only need to perform a few operations or pass them to other C API functions.
+- **Converting to native Rust structs:** If you are performing many complex computations, it is often more performant to convert the Ruby objects into native Rust `struct`s at the beginning of your function. This allows the Rust compiler to perform more optimizations, as it has full knowledge of the data layout.
+
+_(Placeholder: This section can be expanded with guidelines and code examples showing when to prefer one approach over the other.)_

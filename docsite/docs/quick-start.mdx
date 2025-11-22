@@ -10,83 +10,41 @@ description: Build your first Ruby extension with Rust. Step-by-step tutorial wi
 
 **Time:** 15 minutes | **Difficulty:** Beginner | **Prerequisites:** [Installation complete](getting-started)
 
-Let's build a working Ruby gem with Rust. We'll create a string manipulation library that showcases Rust's speed and
-safety.
+Let's build a working Ruby gem with a Rust-powered native extension. We'll create a `FastStrings` gem that showcases Rust's performance and safety for string manipulation.
 
 ## What We're Building
 
-A `FastStrings` gem that provides:
-
-- String reversal
-- Safe Unicode handling
+A `FastStrings` gem that provides a fast, Unicode-aware string reversal method.
 
 <div className="demo-preview">
 
 ```ruby
 require "fast_strings"
 
-FastStrings.reverse("Hello World!")
-# => "!dlroW olleH"
+FastStrings.reverse("Hello, world! 🦀")
+# => "🦀 !dlrow ,olleH"
 ```
 
 </div>
 
 ## Step 1: Create Your Gem
 
+We'll use Bundler to generate the gem skeleton with Rust support.
+
 ```bash
-# Create a new gem with Rust support
 bundle gem --ext=rust fast_strings
 cd fast_strings
 ```
 
-<details>
-<summary>What did Bundler create?</summary>
-
-```
-fast_strings/
-├── Gemfile              # Ruby dependencies
-├── fast_strings.gemspec # Gem metadata
-├── Rakefile             # Build tasks
-├── ext/fast_strings/    # Rust extension
-│   ├── Cargo.toml       # Rust dependencies
-│   ├── extconf.rb       # Build configuration
-│   └── src/
-│       └── lib.rs        # Rust code
-└── lib/
-    └── fast_strings.rb  # Ruby wrapper
-```
-
-</details>
+This creates a standard gem structure with an `ext/fast_strings` directory for our Rust code.
 
 ## Step 2: Write Your Rust Code
 
-Replace the default code with our fast string implementation:
+Replace the placeholder code in `ext/fast_strings/src/lib.rs` with our string reversal implementation.
 
-```rust
-// ext/fast_strings/src/lib.rs
-use magnus::{function, prelude::*, Error, Ruby};
-use unicode_segmentation::UnicodeSegmentation;
+We will use the `magnus` library for high-level, safe bindings to Ruby, and `unicode-segmentation` to correctly handle Unicode grapheme clusters.
 
-/// Reverses a string preserving Unicode grapheme clusters
-fn reverse_string(input: String) -> String {
-    input
-        .graphemes(true)  // true = extended grapheme clusters
-        .rev()
-        .collect()
-}
-
-#[magnus::init]
-fn init(ruby: &Ruby) -> Result<(), Error> {
-    let module = ruby.define_module("FastStrings")?;
-
-    // Define our module methods
-    module.define_singleton_method("reverse", function!(reverse_string, 1))?;
-
-    Ok(())
-}
-```
-
-### Add the Unicode dependency:
+First, add the dependencies to `ext/fast_strings/Cargo.toml`:
 
 ```toml
 # ext/fast_strings/Cargo.toml
@@ -96,7 +54,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-magnus = { version = "0.7" }
+magnus = "0.7"
 unicode-segmentation = "1.10"
 
 [lib]
@@ -104,111 +62,80 @@ name = "fast_strings"
 crate-type = ["cdylib"]
 ```
 
-## Step 3: Build Your Extension
+Now, the Rust code:
 
-```bash
-# Install dependencies and compile
-bundle install
-bundle exec rake compile
+```rust
+// ext/fast_strings/src/lib.rs
+use magnus::{function, prelude::*, Error, Ruby};
+use unicode_segmentation::UnicodeSegmentation;
+
+/// Reverses a string, correctly handling Unicode grapheme clusters.
+fn reverse_string(input: String) -> String {
+    input.graphemes(true).rev().collect()
+}
+
+#[magnus::init]
+fn init(ruby: &Ruby) -> Result<(), Error> {
+    let module = ruby.define_module("FastStrings")?;
+    module.define_singleton_method("reverse", function!(reverse_string, 1))?;
+    Ok(())
+}
 ```
 
-<details>
-<summary>Compilation Steps</summary>
+### Why this approach?
 
-1. Ruby reads `extconf.rb`
-2. `create_rust_makefile` generates a Makefile
-3. Cargo compiles your Rust code
-4. The compiled library is copied to `lib/fast_strings/`
+- **Safety:** `magnus` provides a safe API, avoiding `unsafe` blocks and ensuring memory safety.
+- **Correctness:** The `unicode-segmentation` crate ensures that we correctly reverse strings with complex Unicode characters, like emoji.
+- **Maintainability:** The code is clean, idiomatic Rust, making it easier to understand and maintain.
 
-</details>
+## Step 3: Build and Test
 
-## Step 4: Add Tests
+1.  **Install dependencies and compile:**
+    ```bash
+    bundle install
+    bundle exec rake compile
+    ```
+2.  **Write a test:**
+    Create a test file `test/test_fast_strings.rb` to verify the implementation:
 
-Create a test file to verify our implementation:
+    ```ruby
+    # test/test_fast_strings.rb
+    require "test_helper"
 
-```ruby
-# test/test_fast_strings.rb
-require "test_helper"
+    class TestFastStrings < Minitest::Test
+      def test_reverse_simple
+        assert_equal "dlrow olleh", FastStrings.reverse("hello world")
+      end
 
-class TestFastStrings < Minitest::Test
-  def test_reverse_simple
-    assert_equal "dlrow olleh", FastStrings.reverse("hello world")
-  end
+      def test_reverse_unicode
+        assert_equal "🦀!dlroW ,olleH", FastStrings.reverse("Hello, World!🦀")
+      end
+    end
+    ```
 
-  def test_reverse_unicode
-    assert_equal "!dlroW olleH", FastStrings.reverse("Hello World!")
-  end
-end
-```
+3.  **Run the tests:**
+    ```bash
+    bundle exec rake test
+    ```
 
-## Step 5: Run Tests
+## Step 4: Try It in the Console
 
 ```bash
-# Run the tests
-bundle exec rake test
-```
-
-## Step 6: Try It Yourself
-
-```bash
-# Open an interactive console
 bundle exec bin/console
 ```
 
 ```ruby
-# Try the reverse function
-FastStrings.reverse("Hello, World!")
-# => "!dlroW ,olleH"
+require "fast_strings"
+
+FastStrings.reverse("Hello, World! 🦀")
+# => "🦀 !dlroW ,olleH"
 ```
 
-## Publishing Your Gem
+## What You've Learned
 
-Ready to share your creation with the world?
+- You've created a Ruby gem with a Rust native extension.
+- You've written safe, performant, and correct Rust code using `magnus`.
+- You've learned how to handle Unicode strings properly.
+- You've tested your gem to ensure it works as expected.
 
-```bash
-# Update version in version.rb
-# Update gemspec with description and homepage
-
-# Build the gem
-gem build fast_strings.gemspec
-
-# Push to RubyGems.org
-gem push fast_strings-0.1.0.gem
-```
-
-## What You Learned
-
-- Created a Ruby gem with a Rust extension
-- Wrote safe, fast Rust code
-- Handled Unicode correctly
-- Added tests
-
-## Continue Learning
-
-<div className="next-steps-grid">
-
-<div className="next-step-card">
-
-### [Core Concepts](core-concepts)
-
-Understand how rb-sys bridges Ruby and Rust
-
-</div>
-
-<div className="next-step-card">
-
-### [Project Setup](project-setup)
-
-Structure larger projects properly
-
-</div>
-
-<div className="next-step-card">
-
-### [Working with Ruby Objects](working-with-ruby-objects)
-
-Manipulate arrays, hashes, and more
-
-</div>
-
-</div>
+This `quick-start` provides a solid foundation for building your own high-performance, reliable Ruby gems with Rust.

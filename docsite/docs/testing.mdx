@@ -4,14 +4,8 @@ sidebar_position: 9
 
 # Testing
 
-```mdx-code-block
-import LanguageCallout from '@site/src/components/LanguageCallout';
-```
-
 Testing Ruby extensions written in Rust requires consideration of both the Ruby and Rust sides of your code. This
 chapter covers best practices and tools for comprehensive testing.
-
-<LanguageCallout />
 
 ## Test Types
 
@@ -107,7 +101,7 @@ fn test_no_memory_leaks() {
     let _ = obj; // Ensure the object is used
 
     // Run GC and check memory usage
-    magnus::gc::start();
+    ruby.gc_start();
 }
 ```
 

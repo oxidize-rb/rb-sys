@@ -79,6 +79,9 @@ desc "Pretty the files"
 task :fmt do
   sh "cargo fmt"
   sh "bundle exec standardrb --fix" if RUBY_VERSION >= "2.6.0"
+  Dir.chdir("docsite") do
+    sh "npm run fmt"
+  end
   sh "npx prettier --write $(git ls-files '*.yml')"
   md_files = `git ls-files '*.md'`.split("\n").select { |f| File.exist?(f) }
   sh "npx", "prettier", "--write", "--print-width=120", "--prose-wrap=always", *md_files

@@ -130,7 +130,7 @@ export default function CopyMarkdownButton({ className }: CopyMarkdownButtonProp
     <div className={clsx(styles.container, className)}>
       <button
         type="button"
-        className={clsx("button", "button--sm", status === "error" ? "button--danger" : "button--secondary")}
+        className={clsx("button", "button--sm", styles.ghostButton, status === "error" && styles.ghostButtonDanger)}
         onClick={handleClick}
         disabled={status === "loading"}
         aria-live="polite"

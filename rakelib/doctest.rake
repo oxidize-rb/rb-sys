@@ -8,8 +8,6 @@ namespace :doctest do
   task :run do
     test_dir = "tmp/doctests"
     src_dir = File.join(test_dir, "src")
-    FileUtils.rm_rf(test_dir)
-    FileUtils.mkdir_p(src_dir)
     puts "--- Created temporary directory for doctests at #{test_dir} ---"
 
     files_to_check = ENV["FILE"] ? [ENV["FILE"]] : Dir.glob("docsite/docs/**/*.{mdx,md}")
@@ -51,7 +49,7 @@ namespace :doctest do
 
     if rust_files.any?
       puts "--- Compiling all Rust examples ---"
-      lib_rs_content = "#![deny(clippy::unwrap_used)]\n#![deny(clippy::expect_used)]\n\n" + rust_files.map do |file|
+      lib_rs_content = "#![allow(dead_code)]\n#![deny(clippy::unwrap_used)]\n#![deny(clippy::expect_used)]\n#![deny(clippy::indexing_slicing)]\n\n" + rust_files.map do |file|
         module_name = File.basename(file, ".rs")
         # Check if this file uses rb_sys_test_helpers
         file_content = File.read(File.join(src_dir, file))
@@ -73,30 +71,31 @@ namespace :doctest do
         [workspace]
         
         [dependencies]
-        magnus = { version = "0.6", features = ["rb-sys"] }
+        magnus = { version = "0.8", features = ["rb-sys"] }
+        serde_magnus = "0.10"
         rb-sys = "0.9"
-        unicode-segmentation = "1.10"
+        unicode-segmentation = "1.1.0"
         serde = { version = "1.0", features = ["derive"] }
         serde_json = "1.0"
-        regex = "1.5"
-        rayon = "1.5"
-        csv = "1.1"
-        sha2 = "0.10"
-        hex = "0.4"
-        image = "0.24"
-        once_cell = "1.17"
-        log = "0.4"
-        env_logger = "0.9"
-        criterion = "0.5"
-        url = "2.5"
-        lz4_flex = "0.11"
+        regex = "1.10.2"
+        rayon = "1.9.0"
+        csv = "1.3.0"
+        sha2 = "0.10.8"
+        hex = "0.4.3"
+        image = "0.25.9"
+        once_cell = "1.19.0"
+        log = "0.4.21"
+        env_logger = "0.11.0"
+        criterion = "0.5.1" # Latest is 0.5.1, so keep it.
+        url = "2.5.0"
+        lz4_flex = "0.12.0"
         
         [build-dependencies]
         rb-sys-env = { path = "../../crates/rb-sys-env" }
         
         [dev-dependencies]
         rb-sys-test-helpers = { path = "../../crates/rb-sys-test-helpers" }
-        proptest = "1.0"
+        proptest = "1.4.0"
         
         [patch.crates-io]
         rb-sys = { path = "../../crates/rb-sys" }
@@ -124,6 +123,14 @@ namespace :doctest do
       EOF
       File.write(File.join(test_dir, "build.rs"), build_rs_content)
 
+      # Explicitly create target directories to avoid "No such file or directory" errors
+      FileUtils.mkdir_p(File.join(test_dir, "target", "debug", "deps"))
+
+      # Set CARGO_TARGET_DIR to a known, existing path
+      cargo_target_dir = File.join(Dir.pwd, test_dir, "cargo_target") # Make it absolute from the current working directory
+      FileUtils.mkdir_p(cargo_target_dir)
+      ENV["CARGO_TARGET_DIR"] = cargo_target_dir
+
       Dir.chdir(test_dir) do
         sh("cargo", "check", "--all-targets")
         puts "✅ All Rust examples compiled successfully."
@@ -136,7 +143,8 @@ namespace :doctest do
           "-A", "dead_code",
           "-A", "clippy::redundant_field_names",
           "-D", "clippy::unwrap_used",
-          "-D", "clippy::expect_used")
+          "-D", "clippy::expect_used",
+          "-D", "clippy::indexing_slicing")
         puts "✅ All Rust examples pass clippy checks."
       end
     end
@@ -174,10 +182,6 @@ namespace :doctest do
         sh("ruby", "-c", temp_ruby_file)
       end
     end
-
-    # --- Cleanup ---
-    puts "--- Cleaning up temporary directory ---"
-    FileUtils.rm_rf(test_dir)
 
     puts "✅ All documentation code examples are valid!"
   end

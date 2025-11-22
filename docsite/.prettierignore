@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+build/
+.docusaurus/
+
+# Lockfiles
+package-lock.json
+yarn.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store

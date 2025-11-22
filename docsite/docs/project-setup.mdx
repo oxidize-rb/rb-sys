@@ -205,11 +205,11 @@ struct UrlWrapper {
 
 impl UrlWrapper {
     // Parse a URL string
-    fn parse(url_str: String) -> Result<Self, Error> {
+    fn parse(ruby: &Ruby, url_str: String) -> Result<Self, Error> {
         match Url::parse(&url_str) {
             Ok(url) => Ok(UrlWrapper { inner: url }),
             Err(err) => {
-                Err(Error::new(magnus::exception::arg_error(), format!("Invalid URL: {}", err)))
+                Err(Error::new(ruby.exception_arg_error(), format!("Invalid URL: {}", err)))
             }
         }
     }
@@ -442,12 +442,13 @@ impl fmt::Display for UrlError {
 // Convert to Ruby exceptions
 impl From<UrlError> for Error {
     fn from(err: UrlError) -> Self {
+        let ruby = unsafe { magnus::Ruby::get_unchecked() };
         match err {
             UrlError::InvalidScheme(_) | UrlError::InvalidHost(_) => {
-                Error::new(exception::arg_error(), err.to_string())
+                Error::new(ruby.exception_arg_error(), err.to_string())
             }
             UrlError::ParseError(_) => {
-                Error::new(exception::runtime_error(), err.to_string())
+                Error::new(ruby.exception_runtime_error(), err.to_string())
             }
         }
     }

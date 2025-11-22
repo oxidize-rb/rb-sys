@@ -1,24 +1,13 @@
 User-agent: *
 Allow: /
-
-# Crawl delay to be respectful to search engines
-Crawl-delay: 1
-
-# Sitemap location
+Crawl-delay: 0
 Sitemap: https://oxidize-rb.org/sitemap.xml
-
-# Allow search engines to index all content
-Disallow:
-
-# Specific directives for major search engines
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Google-Extended
+User-agent: CCBot
+User-agent: PerplexityBot
+User-agent: Applebot-Extended
+# Algolia-Crawler-Verif: 11F1BC0C8E02E922

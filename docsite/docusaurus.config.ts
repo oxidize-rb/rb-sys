@@ -98,6 +98,12 @@ const config: Config = {
 
   themeConfig: {
     image: "img/social-card.png",
+    algolia: {
+      appId: "8PVAUOPING",
+      apiKey: "a40d85f58697a2d29908fcb4bb5567d8",
+      indexName: "rb-sys docs",
+      contextualSearch: true,
+    },
     metadata: [
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@oxidize_rb" },
@@ -121,6 +127,10 @@ const config: Config = {
           sidebarId: "docsSidebar",
           position: "left",
           label: "Documentation",
+        },
+        {
+          type: "search",
+          position: "right",
         },
         {
           href: "https://github.com/oxidize-rb/rb-sys",

@@ -1,0 +1,131 @@
+---
+id: deployment
+title: Deployment & Distribution
+---
+
+# Deployment & Distribution
+
+This guide covers how to distribute your Rust-based Ruby gem to users on different platforms by cross-compiling pre-compiled ("fat") gems.
+
+## The Native Gem Problem
+
+Shipping native Ruby gems without pre-compiled binaries forces users to have the Rust toolchain installed. The standard solution is to provide pre-compiled binaries for common platforms, often called "fat gems," bundling compiled extensions to work out-of-the-box.
+
+## Platform Support
+
+`rb-sys` identifies target platforms using standardized strings for operating systems and CPU architectures.
+
+### Platform Matrix
+
+| Platform String     | Description                   | Docker Image              |
+| :------------------ | :---------------------------- | :------------------------ |
+| `x86_64-linux`      | 64-bit Linux (glibc)          | `rbsys/x86_64-linux`      |
+| `x86_64-linux-musl` | 64-bit Linux (musl)           | `rbsys/x86_64-linux-musl` |
+| `aarch64-linux`     | 64-bit Linux on ARM           | `rbsys/aarch64-linux`     |
+| `x86_64-darwin`     | 64-bit macOS on Intel         | `rbsys/x86_64-darwin`     |
+| `arm64-darwin`      | 64-bit macOS on Apple Silicon | `rbsys/arm64-darwin`      |
+| `x64-mingw-ucrt`    | 64-bit Windows (UCRT)         | `rbsys/x64-mingw-ucrt`    |
+
+## Cross-Compilation with `rb-sys-dock`
+
+The `rb-sys-dock` tool simplifies cross-compilation using Docker containers with pre-installed toolchains.
+
+### Setup
+
+Enable cross-compilation by setting `ext.cross_compile = true` in your `Rakefile`'s `RbSys::ExtensionTask` block. Specify target platforms using `ext.cross_platform`.
+
+```ruby
+# Rakefile
+require "rb_sys/extensiontask"
+
+GEMSPEC = Gem::Specification.load("my_gem.gemspec")
+
+RbSys::ExtensionTask.new("my_gem", GEMSPEC) do |ext|
+  ext.cross_compile = true
+  ext.cross_platform = [
+    "x86_64-linux",
+    "aarch64-linux",
+    "x86_64-darwin",
+    "arm64-darwin",
+    "x64-mingw-ucrt",
+  ]
+end
+```
+
+### Usage
+
+- **Build all platforms:** `bundle exec rake native`
+- **Build a specific platform:** `bundle exec rake native:my_gem:x86_64-linux`
+- **Use `rb-sys-dock` directly:** `bundle exec rb-sys-dock --platform x86_64-linux --build`
+
+## CI/CD Release Workflow
+
+Automate gem building and publishing with this GitHub Actions workflow, leveraging `oxidize-rb/actions` for simplified setup.
+
+```yaml
+# .github/workflows/release.yml
+name: Gem Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        ruby: ["3.0", "3.1", "3.2", "3.3"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - run: bundle exec rake compile
+      - run: bundle exec rake test
+
+  cross-compile:
+    needs: [test]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ["x86_64-linux", "aarch64-linux", "x86_64-darwin", "arm64-darwin", "x64-mingw-ucrt"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"
+      - uses: oxidize-rb/actions/cross-gem@v1
+        with:
+          platform: ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gem-${{ matrix.platform }}
+          path: pkg/*-${{ matrix.platform }}.gem
+
+  release:
+    needs: cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+      - name: Move gems to pkg directory
+        run: |
+          mkdir -p pkg
+          find artifacts -name "*.gem" -exec mv {} pkg/ \;
+      - name: Publish to RubyGems
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          mkdir -p ~/.gem
+          echo "---
+          :rubygems_api_key: ${RUBYGEMS_API_KEY}" > ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          gem push pkg/*.gem
+```

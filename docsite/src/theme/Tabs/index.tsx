@@ -39,7 +39,7 @@ function Tabs(props: TabsProps): React.ReactElement {
   const defaultIndex = defaultValue ? childrenArray.findIndex((tabItem) => tabItem.props.value === defaultValue) : 0;
 
   const [selectedValue, setSelectedValue] = useState<string | null>(
-    defaultIndex !== -1 ? childrenArray[defaultIndex].props.value : null,
+    defaultIndex !== -1 ? childrenArray[defaultIndex].props.value : null
   );
 
   const handleTabChange = (value: string): void => {
@@ -71,7 +71,7 @@ function Tabs(props: TabsProps): React.ReactElement {
           cloneElement(tabItem, {
             key: i,
             hidden: selectedValue !== tabItem.props.value,
-          }),
+          })
         )}
       </div>
     </div>

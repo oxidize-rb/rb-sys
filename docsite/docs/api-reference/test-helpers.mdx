@@ -1,107 +1,82 @@
 ---
 id: test-helpers
-title: rb-sys-test-helpers
+title: Testing with `rb-sys-test-helpers`
 ---
 
-import LanguageCallout from "../../src/components/LanguageCallout";
+# Testing with `rb-sys-test-helpers`
 
-# rb-sys-test-helpers
+The `rb-sys-test-helpers` crate provides utilities for running Rust unit and integration tests within a live Ruby VM.
 
-The `rb-sys-test-helpers` crate provides utilities for testing Ruby extensions from Rust. It makes it easy to run tests
-with a valid Ruby VM.
+## Setup
 
-## Usage
+1.  **Add `dev-dependencies` to `Cargo.toml`**:
 
-Add this to your `Cargo.toml`:
+    ```toml
+    [dev-dependencies]
+    rb-sys-env = "0.1"
+    rb-sys-test-helpers = "0.2"
+    ```
 
-```toml
-[dev-dependencies]
-rb-sys-env = { version = "0.1" }
-rb-sys-test-helpers = { version = "0.2" }
-```
+2.  **Activate `rb-sys` in `build.rs`**:
 
-Then, in your crate's `build.rs`:
+    ```rust,ignore
+    // build.rs
+    fn main() -> Result<(), Box<dyn std::error::Error>> {
+        rb_sys::activate()?;
+        Ok(())
+    }
+    ```
 
-```rust,ignore
-pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = rb_sys::activate()?;
+3.  **Annotate tests with `#[ruby_test]`**:
+    Use the `#[ruby_test]` attribute on test functions that interact with the Ruby API.
 
-    Ok(())
-}
-```
+## Example Test Module
 
-Then, you can use the `ruby_test` attribute macro in your tests. All of your tests can be placed in a single `mod tests`
-block, with all the necessary imports at the top.
+A single test module can combine `rb-sys`, `magnus`, and `proptest` examples.
 
 ```rust
 #[cfg(test)]
 mod tests {
     use rb_sys_test_helpers::ruby_test;
-    use rb_sys::{
-        rb_num2fix, rb_int2big, FIXNUM_P, rb_cObject, rb_funcall, rb_str_new_cstr, rb_iv_set, rb_intern
-    };
+    use rb_sys::{rb_num2fix, FIXNUM_P};
     use magnus::{Ruby, RString};
     use proptest::prelude::*;
-    use std::ffi::CString;
 
     #[ruby_test]
-    fn test_something() {
-        let int = unsafe { rb_num2fix(1) };
-        let big = unsafe { rb_int2big(9999999) };
-
+    fn test_raw_rb_sys_api() {
+        let int = unsafe { rb_num2fix(123) };
         assert!(FIXNUM_P(int));
-        assert!(!FIXNUM_P(big));
-    }
-
-    #[ruby_test]
-    fn test_value_conversion() {
-        unsafe {
-            let obj = rb_cObject;
-            // Use a literal C string for tests
-            let value = rb_str_new_cstr(c"test".as_ptr());
-
-            rb_iv_set(obj, c"@name".as_ptr() as *const _, value);
-
-            let result = rb_funcall(obj, rb_intern(c"instance_variable_get".as_ptr()), 1,
-                                    rb_str_new_cstr(c"@name".as_ptr()));
-
-            assert_eq!(value, result);
-        }
     }
 
     #[ruby_test]
     fn test_with_magnus() {
-        let _ruby = unsafe { Ruby::get_unchecked() };
-        let string = RString::new("Hello, world!");
-
-        assert_eq!(string.to_string().unwrap_or_default(), "Hello, world!");
+        let ruby = unsafe { Ruby::get_unchecked() };
+        let string = ruby.str_new("Hello, Magnus!");
+        assert_eq!(string.to_string().ok(), Some("Hello, Magnus!".to_string()));
     }
 
     #[ruby_test]
     fn test_with_proptest() {
-        proptest!(|(s in "[a-zA-Z0-9]*")| {
-            let _ruby = unsafe { Ruby::get_unchecked() };
-            let ruby_string = RString::new(&s);
-            assert_eq!(ruby_string.to_string().unwrap_or_default(), s);
+        proptest!(|(s in "[a-z]*")| {
+            let ruby = unsafe { Ruby::get_unchecked() };
+            let ruby_string = ruby.str_new(&s);
+            assert_eq!(ruby_string.to_string().ok(), Some(s));
         });
     }
 }
 ```
 
-## How It Works
+## Mechanism
 
-The `ruby_test` macro sets up a Ruby VM before running your test and tears it down afterward. This allows you to
-interact with Ruby from your Rust code during tests without having to set up the VM yourself.
-
-The test helpers are compatible with both `rb-sys` for low-level C API access and `magnus` for higher-level Ruby
-interactions.
+- `#[ruby_test]` initializes a Ruby VM before your test and tears it down afterward.
+- Allows `unsafe` calls to `rb_sys` or `magnus::Ruby::get_unchecked()` within the test scope.
 
 ## Testing Multiple Ruby Versions
 
-To test against multiple Ruby versions, you can use environment variables and CI configuration:
+Use a CI matrix to run your `cargo test` suite against all supported Ruby versions.
 
 ```yaml
-# .github/workflows/test.yml
+# .github/workflows/ci.yml
 jobs:
   test:
     strategy:
@@ -114,5 +89,3 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
       - run: cargo test
 ```
-
-Your tests will run against each Ruby version in the matrix, helping you ensure compatibility.

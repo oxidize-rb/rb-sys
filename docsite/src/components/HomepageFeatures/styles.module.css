@@ -56,12 +56,12 @@
 }
 
 .featureContent {
-  background-color: rgba(40, 44, 52, 0.15);
+  background-color: transparent;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   position: relative;
-  border: 1px solid rgba(84, 91, 105, 0.1);
+  border: 1px solid var(--neutral-accent);
   display: flex;
   flex-direction: column;
   height: 100%;

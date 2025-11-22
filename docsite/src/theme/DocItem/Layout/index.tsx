@@ -23,8 +23,10 @@ export default function DocItemLayout({ children }) {
   const docElement = (
     <div className={styles.docItemContainer}>
       <article>
-        <DocBreadcrumbs />
-        <CopyMarkdownButton className={styles.copyButton} />
+        <div className={styles.headerContainer}>
+          <DocBreadcrumbs />
+          <CopyMarkdownButton className={styles.copyButton} />
+        </div>
         <DocVersionBadge />
         <DocItemTOCMobile />
         <DocItemContent>{children}</DocItemContent>

@@ -1,22 +1,6 @@
 /**
  * oxidize.rb - Design System
  *
- * Important overrides for specific elements
- */
-
-/* Fix spacing issues with the title wrapper */
-div[class*="titleWrapper"] {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-div[class*="titleWrapper"] h1 {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-/**
- *
  * A design system for the oxidize.rb documentation site.
  * Focused on creating a developer documentation site with clarity and readability.
  */
@@ -26,36 +10,33 @@ div[class*="titleWrapper"] h1 {
 
 /**
  * CSS Variables
- * 
- * Defining our design system's color palette, typography, and other variables.
- * Dark mode is our primary theme, with light mode as a secondary option.
  */
 :root {
   /* Typography */
-  --ifm-font-family-base: "IBM Plex Serif", "Times New Roman", Times, serif;
-  --ifm-font-family-heading: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ifm-font-family-base: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --ifm-font-family-heading: "IBM Plex Serif", "Times New Roman", Times, serif;
   --ifm-font-family-monospace: "IBM Plex Mono", "Courier New", Courier, monospace;
   --ifm-font-size-base: 1.125rem; /* 18px */
-  --ifm-line-height-base: 1.65;
+  --ifm-line-height-base: 1.7;
   --ifm-code-font-size: 0.9375rem; /* 15px */
 
-  /* Layout - Use Docusaurus variables */
-  --ifm-container-width: 1400px; /* Slightly wider container */
-  --ifm-sidebar-width: 280px; /* Standard sidebar width */
+  /* Layout */
+  --ifm-container-width: 1400px;
+  --ifm-sidebar-width: 280px;
 
   /* Spacing */
   --ifm-spacing-horizontal: 1.5rem;
 
   /* Color Palette - Light Mode */
-  --primary-background: hsl(220, 18%, 95%); /* Light background */
-  --secondary-background: hsl(220, 16%, 90%); /* Slightly darker for contrast */
-  --primary-text: hsl(220, 18%, 12%); /* Dark text for readability */
-  --muted-text: hsl(220, 10%, 40%); /* Muted text for secondary information */
+  --primary-background: hsl(220, 18%, 95%);
+  --secondary-background: hsl(220, 16%, 90%);
+  --primary-text: hsl(220, 18%, 12%);
+  --muted-text: hsl(220, 10%, 40%);
 
   /* Accent Colors */
-  --ruby-accent: hsl(5, 65%, 55%); /* #D15B56 - Ruby accent */
-  --rust-accent: hsl(28, 60%, 60%); /* #D99A6C - Rust accent */
-  --neutral-accent: hsl(220, 12%, 38%); /* #545B69 - Neutral accent for UI elements */
+  --ruby-accent: hsl(5, 65%, 55%);
+  --rust-accent: hsl(28, 60%, 60%);
+  --neutral-accent: hsl(220, 12%, 38%);
 
   /* UI Elements */
   --border-radius-sm: 3px;
@@ -74,7 +55,6 @@ div[class*="titleWrapper"] h1 {
   --ifm-color-primary-light: hsl(220, 12%, 43%);
   --ifm-color-primary-lighter: hsl(220, 12%, 48%);
   --ifm-color-primary-lightest: hsl(220, 12%, 53%);
-
   --ifm-code-background: hsla(220, 16%, 90%, 0.6);
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.05);
 
@@ -83,64 +63,91 @@ div[class*="titleWrapper"] h1 {
   --transition-base: 0.2s ease-out;
 }
 
-/* Dark Mode Variables - Our Primary Theme */
 [data-theme="dark"] {
-  /* Color Palette - Dark Mode */
-  --primary-background: hsl(220, 18%, 12%); /* #1A1D23 */
-  --secondary-background: hsl(220, 16%, 16%); /* #22262E */
-  --code-background: hsl(220, 18%, 10%); /* #15171C */
-  --primary-text: hsl(35, 15%, 88%); /* #E4E0DB */
-  --muted-text: hsl(220, 10%, 65%); /* #9CA3B0 */
+  /* Refactored Dark Mode Palette */
+  --primary-background: #0d1117;
+  --secondary-background: #161b22;
+  --primary-text: #f0f6fc;
+  --muted-text: #8b949e;
+  --code-background: #010409;
 
   /* Docusaurus Specific - Dark Mode */
   --ifm-background-color: var(--primary-background);
   --ifm-background-surface-color: var(--secondary-background);
-  --ifm-footer-background-color: hsl(220, 20%, 10%); /* #161A21 */
+  --ifm-footer-background-color: hsl(220, 20%, 10%);
   --ifm-font-color-base: var(--primary-text);
-
-  --ifm-color-primary: hsl(220, 12%, 65%); /* Lighter neutral for dark mode */
+  --ifm-code-background: var(--code-background);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+  --ifm-color-primary: hsl(220, 12%, 65%);
   --ifm-color-primary-dark: hsl(220, 12%, 60%);
   --ifm-color-primary-darker: hsl(220, 12%, 55%);
   --ifm-color-primary-darkest: hsl(220, 12%, 50%);
   --ifm-color-primary-light: hsl(220, 12%, 70%);
   --ifm-color-primary-lighter: hsl(220, 12%, 75%);
   --ifm-color-primary-lightest: hsl(220, 12%, 80%);
-
-  /* Links and accents */
-  --ifm-link-color: hsl(28, 70%, 70%); /* Lighter Rust Accent */
-  --ifm-link-hover-color: hsl(28, 80%, 75%); /* Even lighter on hover */
-
-  /* Code blocks */
-  --ifm-code-background: var(--code-background);
-  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
-
-  /* Other elements */
+  --ifm-link-color: hsl(28, 70%, 70%);
+  --ifm-link-hover-color: hsl(28, 80%, 75%);
   --ifm-breadcrumb-color-active: var(--ruby-accent);
   --ifm-menu-color-active: var(--ruby-accent);
   --ifm-navbar-link-hover-color: var(--ruby-accent);
 }
 
 /**
- * Layout & Grid
- *
- * Let Docusaurus handle the main layout structure, we'll just customize the styling.
+ * Algolia DocSearch
  */
-
-/* Add some max-width to content for readability */
-.container {
-  max-width: min(var(--ifm-container-width), 100vw);
+[data-theme="light"] .DocSearch {
+  --docsearch-primary-color: var(--rust-accent);
+  --docsearch-text-color: var(--primary-text);
+  --docsearch-muted-color: var(--muted-text);
+  --docsearch-container-background: rgba(245, 245, 245, 0.8);
+  --docsearch-modal-background: var(--primary-background);
+  --docsearch-modal-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.1);
+  --docsearch-searchbox-background: var(--secondary-background);
+  --docsearch-searchbox-focus-background: white;
+  --docsearch-searchbox-shadow: none;
+  --docsearch-hit-color: var(--primary-text);
+  --docsearch-hit-active-color: white;
+  --docsearch-hit-background: var(--secondary-background);
+  --docsearch-hit-shadow: none;
+  --docsearch-footer-background: var(--secondary-background);
+  --docsearch-footer-shadow: 0 -1px 0 0 var(--neutral-accent);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--neutral-accent) 0%, var(--secondary-background) 100%);
 }
 
-/* Add comfortable reading width to main content*/
-article {
-  max-width: 65rem;
+[data-theme="dark"] .DocSearch {
+  --docsearch-primary-color: var(--rust-accent);
+  --docsearch-text-color: var(--ifm-font-color-base);
+  --docsearch-muted-color: var(--muted-text);
+  --docsearch-container-background: rgba(13, 17, 23, 0.8);
+  --docsearch-modal-background: var(--primary-background);
+  --docsearch-modal-shadow: 0 3px 10px 0 rgba(0, 0, 0, 0.25);
+  --docsearch-searchbox-background: var(--secondary-background);
+  --docsearch-searchbox-focus-background: var(--code-background);
+  --docsearch-searchbox-shadow: none;
+  --docsearch-hit-color: var(--ifm-font-color-base);
+  --docsearch-hit-active-color: var(--primary-background);
+  --docsearch-hit-background: var(--secondary-background);
+  --docsearch-hit-shadow: none;
+  --docsearch-footer-background: var(--secondary-background);
+  --docsearch-footer-shadow: 0 -1px 0 0 var(--neutral-accent);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--neutral-accent) 0%, var(--secondary-background) 100%);
 }
 
 /**
- * Typography
- * 
- * Establishing a clear typographic hierarchy using the IBM Plex family.
+ * General Styling
  */
+
+/* Fix spacing issues with the title wrapper */
+div[class*="titleWrapper"] {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+div[class*="titleWrapper"] h1 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
 body {
   font-family: var(--ifm-font-family-base);
   font-size: var(--ifm-font-size-base);
@@ -150,7 +157,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings */
+[data-theme="dark"] body {
+  background-image: none;
+}
+
+article {
+  max-width: 70ch;
+  margin-left: 0;
+}
+
 h1,
 h2,
 h3,
@@ -174,6 +189,7 @@ h1,
 .h1 {
   font-size: 2.441rem;
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
 h2,
@@ -182,6 +198,9 @@ h2,
   margin-top: 1.3em;
   margin-bottom: 0.7em;
   letter-spacing: -0.015em;
+  font-weight: 700;
+  border-bottom: 1px solid var(--neutral-accent);
+  padding-bottom: 0.3rem;
 }
 
 h3,
@@ -190,6 +209,8 @@ h3,
   margin-top: 1.1em;
   margin-bottom: 0.6em;
   letter-spacing: -0.01em;
+  font-family: "IBM Plex Serif", serif;
+  color: var(--primary-text);
 }
 
 h4,
@@ -215,13 +236,11 @@ h6,
   letter-spacing: 0.05em;
 }
 
-/* Paragraphs and spacing */
 p {
   margin-top: 0;
   margin-bottom: 1.5em;
 }
 
-/* Lists */
 ul,
 ol {
   padding-left: 1.5em;
@@ -232,24 +251,12 @@ li {
   margin-bottom: 0.5em;
 }
 
-/* Subtle texture for dark mode background */
-[data-theme="dark"] body {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23232935' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  background-attachment: fixed;
-}
-
-/**
- * Code Blocks
- * 
- * Styling for code blocks and inline code with a focus on readability.
- */
 .theme-code-block {
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   margin-bottom: 1.5em;
 }
 
-/* Code block header */
 .theme-code-block-header {
   background-color: rgba(0, 0, 0, 0.2);
   border-bottom: var(--border-width) solid var(--neutral-accent);
@@ -259,7 +266,6 @@ li {
   font-weight: 500;
 }
 
-/* Language badge */
 .theme-code-block-header-language {
   font-size: 0.75rem;
   font-weight: 600;
@@ -268,7 +274,6 @@ li {
   color: var(--muted-text);
 }
 
-/* Copy button */
 .theme-code-block-header button {
   opacity: 0.7;
   transition: opacity var(--transition-fast);
@@ -279,7 +284,6 @@ li {
   background-color: transparent;
 }
 
-/* Code content */
 .theme-code-block pre {
   font-family: var(--ifm-font-family-monospace);
   font-size: var(--ifm-code-font-size);
@@ -287,7 +291,6 @@ li {
   padding: 1rem;
 }
 
-/* Inline code */
 :not(pre) > code {
   font-family: var(--ifm-font-family-monospace);
   font-size: 0.9em;
@@ -298,11 +301,6 @@ li {
   font-weight: 500;
 }
 
-/**
- * Admonitions
- * 
- * Callout boxes for important information, warnings, tips, etc.
- */
 .admonition {
   border-radius: var(--border-radius-md);
   border-left: var(--border-width-thick) solid var(--neutral-accent);
@@ -341,21 +339,20 @@ li {
   font-size: 0.9375rem;
 }
 
-/* Admonition types */
 .admonition-note {
   border-left-color: var(--ifm-color-primary);
 }
 
 .admonition-tip {
-  border-left-color: hsl(142, 76%, 36%); /* Green */
+  border-left-color: hsl(142, 76%, 36%);
 }
 
 .admonition-info {
-  border-left-color: hsl(200, 85%, 45%); /* Blue */
+  border-left-color: hsl(200, 85%, 45%);
 }
 
 .admonition-caution {
-  border-left-color: hsl(40, 90%, 50%); /* Yellow/Orange */
+  border-left-color: hsl(40, 90%, 50%);
 }
 
 .admonition-warning,
@@ -363,11 +360,6 @@ li {
   border-left-color: var(--ruby-accent);
 }
 
-/**
- * Navigation & Sidebar
- * 
- * Styling for the sidebar navigation with a focus on clarity and hierarchy.
- */
 .navbar {
   background-color: var(--ifm-background-color);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
@@ -384,7 +376,6 @@ li {
   margin-right: 0.75rem;
 }
 
-/* Sidebar - Only apply styling, not structure */
 .menu {
   font-family: var(--ifm-font-family-heading);
   font-weight: 400;
@@ -440,11 +431,6 @@ li {
   background-color: transparent;
 }
 
-/**
- * Buttons & Links
- * 
- * Styling for buttons and links with a focus on clarity and feedback.
- */
 a {
   color: var(--ifm-link-color);
   text-decoration: none;
@@ -457,7 +443,6 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Buttons */
 .button {
   font-family: var(--ifm-font-family-heading);
   font-weight: 500;
@@ -469,7 +454,6 @@ a:hover {
     background-color var(--transition-base),
     color var(--transition-base),
     border-color var(--transition-base);
-  /* Common active styling */
   padding: 0.5rem 1rem;
   font-weight: 500;
   border-radius: 0.25rem;
@@ -477,7 +461,6 @@ a:hover {
 
 .button--primary,
 .button--secondary {
-  /* Active styling for both buttons */
   background-color: #d97706; /* amber-600 */
   color: white;
 }
@@ -489,11 +472,6 @@ a:hover {
   text-decoration: none;
 }
 
-/**
- * Tables
- * 
- * Clean, readable tables with clear headers and borders.
- */
 table {
   width: 100%;
   margin: 1.5em 0;
@@ -522,11 +500,6 @@ table tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-/**
- * Footer
- *
- * Sidebar-like footer with consistent styling and layout
- */
 .footer {
   background-color: var(--primary-background);
   color: var(--muted-text);
@@ -641,11 +614,6 @@ table tr:nth-child(even) {
   }
 }
 
-/**
- * Misc Elements
- * 
- * Styling for various other elements like blockquotes, horizontal rules, etc.
- */
 blockquote {
   border-left: var(--border-width-thick) solid var(--neutral-accent);
   padding: 0 1rem;
@@ -660,7 +628,6 @@ hr {
   margin: 2rem 0;
 }
 
-/* Ruby/Rust specific styling */
 .ruby-color {
   color: var(--ruby-accent);
 }
@@ -669,11 +636,6 @@ hr {
   color: var(--rust-accent);
 }
 
-/**
- * Utility Classes
- * 
- * Helpful utility classes for common styling needs.
- */
 .text-center {
   text-align: center;
 }
@@ -706,11 +668,6 @@ hr {
   margin-bottom: 3rem;
 }
 
-/**
- * Focus States
- * 
- * Ensuring clear focus states for accessibility.
- */
 :focus {
   outline: 2px solid var(--ruby-accent);
   outline-offset: 2px;
@@ -725,11 +682,6 @@ hr {
   outline-offset: 2px;
 }
 
-/**
- * Custom Components for rb-sys Documentation
- */
-
-/* Architecture diagram container */
 .architecture-diagram {
   margin: 2rem 0;
   text-align: center;
@@ -740,7 +692,6 @@ hr {
   height: auto;
 }
 
-/* Comparison table */
 .comparison-table {
   font-size: 0.9rem;
   margin: 2rem 0;
@@ -755,7 +706,6 @@ hr {
   vertical-align: middle;
 }
 
-/* Community links grid */
 .community-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -776,7 +726,6 @@ hr {
   text-decoration: none;
 }
 
-/* CTA buttons */
 .cta-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -803,7 +752,6 @@ hr {
   text-decoration: none;
 }
 
-/* Demo preview box */
 .demo-preview {
   background-color: var(--ifm-background-surface-color);
   border: 2px solid var(--rust-accent);
@@ -816,7 +764,6 @@ hr {
   background-color: transparent;
 }
 
-/* Success output */
 .success-output {
   background-color: rgba(34, 197, 94, 0.1);
   border: 2px solid rgba(34, 197, 94, 0.3);
@@ -830,7 +777,6 @@ hr {
   border-color: rgba(34, 197, 94, 0.2);
 }
 
-/* Success message */
 .success-message {
   background-color: var(--ifm-background-surface-color);
   border: 2px solid var(--rust-accent);
@@ -845,7 +791,6 @@ hr {
   color: var(--rust-accent);
 }
 
-/* Next steps grid */
 .next-steps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -879,7 +824,6 @@ hr {
   color: var(--rust-accent);
 }
 
-/* Tabs component enhancement */
 .tabs-container {
   margin: 1.5rem 0;
 }
@@ -903,13 +847,11 @@ hr {
   border-bottom-color: var(--ruby-accent);
 }
 
-/* Hide duplicate code language labels in Docusaurus */
 .codeBlockTitle_node_modules-\@docusaurus-theme-classic-lib-theme-CodeBlock-Content-styles-module,
 .codeBlockTitle {
   display: none !important;
 }
 
-/* Platform-specific notes */
 .platform-note {
   background-color: var(--ifm-background-surface-color);
   border-left: 3px solid var(--neutral-accent);
@@ -924,13 +866,11 @@ hr {
   gap: 0.5rem;
 }
 
-/* Emoji enhancements for docs */
 .emoji-icon {
   font-size: 1.5em;
   margin-right: 0.5rem;
 }
 
-/* Terminal/console output styling */
 .console-output {
   background-color: var(--code-background);
   color: #00ff00;
@@ -945,7 +885,6 @@ hr {
   background-color: #1a1a1a;
 }
 
-/* Progress indicators */
 .progress-step {
   display: flex;
   align-items: center;
@@ -966,7 +905,6 @@ hr {
   font-weight: 600;
 }
 
-/* Performance benchmark styling */
 .benchmark-result {
   font-family: var(--ifm-font-family-monospace);
   background-color: var(--ifm-background-surface-color);
@@ -985,7 +923,6 @@ hr {
   font-weight: 600;
 }
 
-/* File tree representation */
 .file-tree {
   font-family: var(--ifm-font-family-monospace);
   font-size: 0.875rem;
@@ -996,7 +933,6 @@ hr {
   overflow-x: auto;
 }
 
-/* Keyboard shortcut */
 kbd {
   display: inline-block;
   padding: 0.2em 0.4em;
@@ -1008,7 +944,6 @@ kbd {
   box-shadow: inset 0 -1px 0 var(--neutral-accent);
 }
 
-/* Sidebar emoji icons */
 .menu__link {
   display: flex;
   align-items: center;
@@ -1019,7 +954,6 @@ kbd {
   font-size: 1.2em;
 }
 
-/* Make details/summary more prominent */
 details {
   background-color: var(--ifm-background-surface-color);
   border: 1px solid var(--neutral-accent);
@@ -1049,16 +983,16 @@ details[open] summary {
   margin-bottom: 0.5rem;
 }
 
-/* Mermaid Diagram Styling */
 .mermaid {
   font-family: var(--ifm-font-family-monospace) !important;
   font-size: 0.9rem;
-  background-color: var(--code-background);
-  padding: 1.5rem;
+  background-color: #ffffff;
+  padding: 2rem;
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--neutral-accent);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-base);
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .mermaid:hover {
@@ -1070,7 +1004,6 @@ details[open] summary {
   background-color: hsl(220, 18%, 10%);
 }
 
-/* Node Styling */
 .mermaid .node rect,
 .mermaid .node circle,
 .mermaid .node ellipse,
@@ -1089,14 +1022,12 @@ details[open] summary {
   stroke: var(--ruby-accent);
 }
 
-/* Text Styling */
 .mermaid .node .label {
   font-family: var(--ifm-font-family-heading) !important;
   font-weight: 500;
   color: var(--primary-text);
 }
 
-/* Edge (arrow) styling */
 .mermaid .edgePath .path {
   stroke: var(--neutral-accent);
   stroke-width: 1.5px;
@@ -1107,7 +1038,6 @@ details[open] summary {
   fill: var(--neutral-accent);
 }
 
-/* Subgraph Styling */
 .mermaid .cluster rect {
   fill: rgba(0, 0, 0, 0.1);
   stroke: var(--neutral-accent);

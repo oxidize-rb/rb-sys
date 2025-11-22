@@ -5,20 +5,17 @@ sidebar_position: 10
 # Troubleshooting
 
 ```mdx-code-block
-import LanguageCallout from '@site/src/components/LanguageCallout';
-```
-
 This guide helps you diagnose and fix common issues when developing Ruby extensions with rb-sys.
-
-<LanguageCallout />
 
 ## Common Build Issues
 
 ### Missing Ruby Headers
 
 ```
+
 Compilation failed: Cannot find ruby.h
-```
+
+````
 
 **Solution**:
 
@@ -33,7 +30,7 @@ Compilation failed: Cannot find ruby.h
 ```bash
 ruby -v
 which ruby
-```
+````
 
 ### Linker Errors
 

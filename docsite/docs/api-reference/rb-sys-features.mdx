@@ -1,92 +1,52 @@
 ---
 id: rb-sys-features
-title: rb-sys Crate Features
+title: Crate `rb-sys`
 ---
 
-# rb-sys Crate Features
+# Crate `rb-sys`
 
-The `rb-sys` crate provides battle-tested Rust bindings for the Ruby C API. It uses the
-[`rust-bindgen`](https://github.com/rust-lang/rust-bindgen) crate to generate bindings from the `ruby.h` header.
+The `rb-sys` crate provides low-level Rust bindings for the Ruby C API, generated directly from `ruby.h` headers.
 
-## Usage Notice
+## Constraints
 
-This is a very low-level library. If you are looking to write a gem in Rust, you should probably use the
-[Magnus](https://github.com/matsadler/magnus) crate with the `rb-sys-interop` feature, which provides a higher-level,
-more ergonomic API.
+- **Direct `rb-sys`:** Use for raw, `unsafe` access to `libruby`.
+- **Gem Development:** For most gem development, prefer higher-level libraries (e.g., [Magnus](https://github.com/matsadler/magnus) with `rb-sys` feature). See [Development Approaches](../development-approaches.mdx).
+- **Embedding Ruby:** Use `rb-sys` with the `link-ruby` feature.
 
-If you need raw/unsafe bindings to libruby, then this crate is for you!
+## Crate Features
 
-## Writing a Ruby Gem
+The following features can be enabled in your `Cargo.toml`.
 
-Ruby gems require boilerplate to be defined to be usable from Ruby. `rb-sys` makes this process painless by doing the
-work for you. Simply enable the `gem` feature:
+| Feature                    | Description                                                                      | Default |
+| :------------------------- | :------------------------------------------------------------------------------- | :------ |
+| `gem`                      | Configures the crate for building a Ruby gem (e.g., does not link `libruby`).    | ✅      |
+| `link-ruby`                | Links `libruby` for embedding the Ruby VM in a Rust binary.                      |         |
+| `ruby-static`              | Statically links `libruby`. Can also be set with the `RUBY_STATIC=true` env var. |         |
+| `global-allocator`         | Reports Rust memory allocations to the Ruby GC. Recommended for gems.            |         |
+| `stable-api`               | Uses Ruby's C-level stable API if available for your Ruby version.               |         |
+| `bindgen-rbimpls`          | Includes internal Ruby implementation types in the generated bindings.           |         |
+| `bindgen-deprecated-types` | Includes deprecated Ruby functions and types in the bindings.                    |         |
+
+## Usage Examples
+
+### Ruby Gem Integration
+
+Enable the `gem` feature (default) and `global-allocator` for memory reporting.
 
 ```toml
 [dependencies]
-rb-sys = "0.9"
+rb-sys = { version = "0.9", features = ["global-allocator"] }
 ```
 
-Under the hood, this ensures the crate does not link libruby (unless on Windows) and defines a `ruby_abi_version`
-function for Ruby 3.2+.
+### Embedding Ruby VM
 
-## Embedding libruby in Your Rust App
-
-:::important If you are authoring a Ruby gem, you do not need to enable this feature. :::
-
-If you need to link libruby (i.e., you are initializing a Ruby VM in your Rust code), you can enable the `link-ruby`
-feature:
+Enable the `link-ruby` feature to embed a Ruby VM.
 
 ```toml
 [dependencies]
 rb-sys = { version = "0.9", features = ["link-ruby"] }
 ```
 
-## Static libruby
-
-You can also force static linking of libruby:
-
-```toml
-[dependencies]
-rb-sys = { version = "0.9", features = ["ruby-static"] }
-```
-
-Alternatively, you can set the `RUBY_STATIC=true` environment variable.
-
-## Available Features
-
-The `rb-sys` crate provides several features that can be enabled in your `Cargo.toml`:
-
-| Feature                    | Description                                                     |
-| -------------------------- | --------------------------------------------------------------- |
-| `global-allocator`         | Report Rust memory allocations to the Ruby GC (_recommended_)   |
-| `ruby-static`              | Link the static version of libruby                              |
-| `link-ruby`                | Link libruby (typically used for embedding, not for extensions) |
-| `bindgen-rbimpls`          | Include the Ruby impl types in bindings                         |
-| `bindgen-deprecated-types` | Include deprecated Ruby methods in bindings                     |
-| `gem`                      | Set up the crate for use in a Ruby gem (default feature)        |
-| `stable-api`               | Use the stable API (C level) if available for your Ruby version |
-
-## Example Cargo.toml
-
-```toml
-[dependencies]
-rb-sys = { version = "0.9", features = ["global-allocator", "stable-api"] }
-```
-
 ## Ruby Version Compatibility
 
-`rb-sys` is compatible with Ruby 2.6 and later. The crate detects the Ruby version at compile time and adapts the
-bindings accordingly.
-
-For Ruby 3.2 and later, `rb-sys` provides a `ruby_abi_version` function that is required for native extensions.
-
-## Integration with Magnus
-
-If you're building a Ruby extension, it's recommended to use the [Magnus](https://github.com/matsadler/magnus) crate on
-top of `rb-sys`. Magnus provides a high-level, safe API for interacting with Ruby:
-
-```toml
-[dependencies]
-magnus = { version = "0.7", features = ["rb-sys"] }
-rb-sys = "0.9"
-```
+`rb-sys` is compatible with Ruby 2.6+. It detects the Ruby version at compile time and generates appropriate bindings. Ruby 3.2+ requires `ruby_abi_version` function, which `rb-sys` provides automatically.

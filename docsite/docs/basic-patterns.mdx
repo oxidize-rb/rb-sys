@@ -2,40 +2,31 @@
 id: basic-patterns
 title: Basic Patterns
 sidebar_position: 5
-keywords: [patterns, functions, methods, strings, numbers, arrays, errors]
-description:
-  Learn essential patterns for building Ruby extensions with Rust, including functions, type conversions, and error
-  handling.
 ---
 
-# Basic Patterns
+This page covers the essential patterns for defining functions, converting types, and handling errors when building a Ruby extension in Rust.
 
-**Time:** 30 minutes | **Difficulty:** Beginner to Intermediate
+### Core Principles
 
-Master the fundamental patterns for building Ruby extensions with Rust. These patterns form the foundation of every
-rb-sys project.
+- Use `Result<T, magnus::Error>` for any function that can fail. This automatically maps Rust errors to Ruby exceptions.
+- Leverage Magnus's automatic type conversions for simple types (`String`, `i64`, `Vec<T>`, etc.).
+- For complex types or performance-critical code, work directly with Ruby objects like `RString`, `RArray`, and `RHash`.
+- Never `panic!`. A panic in your Rust code will crash the entire Ruby process.
 
 ## Functions & Methods
 
 ### Module Functions
 
-The simplest pattern - standalone functions in a module:
+Define standalone functions in a Ruby module. Magnus handles the conversion from Rust types to Ruby objects.
 
 ```rust
 use magnus::{function, prelude::*, Error, Ruby};
 
-// Simple function with automatic type conversion
-fn add(a: i64, b: i64) -> i64 {
-    a + b
-}
-
-// Function that can fail
-fn divide(a: f64, b: f64) -> Result<f64, Error> {
+// A function that can fail.
+fn divide(ruby: &Ruby, a: f64, b: f64) -> Result<f64, Error> {
     if b == 0.0 {
-        Err(Error::new(
-            magnus::exception::zero_div_error(),
-            "divided by 0"
-        ))
+        // This becomes a `ZeroDivisionError` in Ruby.
+        Err(Error::new(ruby.exception_zero_div_error(), "divided by 0"))
     } else {
         Ok(a / b)
     }
@@ -44,612 +35,162 @@ fn divide(a: f64, b: f64) -> Result<f64, Error> {
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("MathUtils")?;
-
-    // Register functions with their arity
-    module.define_singleton_method("add", function!(add, 2))?;
     module.define_singleton_method("divide", function!(divide, 2))?;
-
     Ok(())
 }
 ```
 
-**Ruby usage:**
+### Instance Methods
 
-```ruby
-MathUtils.add(5, 3)      # => 8
-MathUtils.divide(10, 2)  # => 5.0
-MathUtils.divide(10, 0)  # => ZeroDivisionError
-```
-
-### Instance Methods on Classes
-
-Creating classes with instance methods:
+Define a class in Rust and attach instance methods to it. Use `#[magnus::wrap]` to expose a Rust `struct` as a Ruby object.
 
 ```rust
-use magnus::{function, method, prelude::*, Error, Ruby};
+use magnus::{method, prelude::*, Error, Ruby};
 use std::cell::RefCell;
 
-struct CounterData {
-    value: i64,
-}
-
-#[magnus::wrap(class = "Counter", free_immediately)]
-struct Counter(RefCell<CounterData>);
+#[magnus::wrap(class = "Counter")]
+struct Counter(RefCell<i64>);
 
 impl Counter {
     fn new(initial: i64) -> Self {
-        Counter(RefCell::new(CounterData { value: initial }))
+        Self(RefCell::new(initial))
     }
 
-    fn increment(&self) -> i64 {
-        let mut data = self.0.borrow_mut();
-        data.value += 1;
-        data.value
-    }
-
-    fn increment_by(&self, amount: i64) -> i64 {
-        let mut data = self.0.borrow_mut();
-        data.value += amount;
-        data.value
+    fn increment(&self, amount: i64) {
+        *self.0.borrow_mut() += amount;
     }
 
     fn value(&self) -> i64 {
-        self.0.borrow().value
+        *self.0.borrow()
     }
-
-    fn reset(&self) {
-        self.0.borrow_mut().value = 0;
-    }
-}
-
-#[magnus::init]
-fn init(ruby: &Ruby) -> Result<(), Error> {
-    let class = ruby.define_class("Counter", ruby.class_object())?;
-
-    // Constructor
-    class.define_singleton_method("new", function!(Counter::new, 1))?;
-
-    // Instance methods
-    class.define_method("increment", method!(Counter::increment, 0))?;
-    class.define_method("increment_by", method!(Counter::increment_by, 1))?;
-    class.define_method("value", method!(Counter::value, 0))?;
-    class.define_method("reset", method!(Counter::reset, 0))?;
-
-    Ok(())
 }
 ```
 
-**Ruby usage:**
+## Type Conversions
 
-```ruby
-counter = Counter.new(10)
-counter.value         # => 10
-counter.increment     # => 11
-counter.increment_by(5) # => 16
-counter.reset
-counter.value         # => 0
-```
+### Strings
 
-## String Handling
-
-Strings are one of the most common data types. Here are key patterns:
-
-### Basic String Operations
+Automatic conversion works for `String`. For more control or efficiency, use `RString`.
 
 ```rust
 use magnus::{RString, Error};
 
-// Accept and return strings with automatic conversion
-fn reverse_string(input: String) -> String {
-    input.chars().rev().collect()
+// Automatic conversion from Ruby String to Rust String.
+fn get_length(s: String) -> usize {
+    s.len()
 }
 
-// Work with Ruby strings directly
-fn uppercase_first(ruby_str: RString) -> Result<RString, Error> {
-    let s = ruby_str.to_string()?;
-
-    if s.is_empty() {
-        return Ok(ruby_str);
-    }
-
-    let first_char = s.chars().next()
-        .ok_or_else(|| Error::new(magnus::exception::arg_error(), "string is empty"))?;
-    let result = format!(
-        "{}{}",
-        first_char.to_uppercase(),
-        &s[first_char.len_utf8()..]
-    );
-
-    Ok(RString::new(&result))
-}
-
-// Efficient string building
-fn repeat_string(s: String, times: usize) -> Result<String, Error> {
-    if times > 1_000_000 {
-        return Err(Error::new(
-            magnus::exception::arg_error(),
-            "too many repetitions"
-        ));
-    }
-
-    Ok(s.repeat(times))
+// Direct manipulation of a Ruby string, avoiding a full copy.
+fn is_empty(s: RString) -> bool {
+    s.is_empty()
 }
 ```
 
-### String Encoding
+### Numbers
 
-Handle different encodings properly:
-
-```rust
-use magnus::{RString, Error, Ruby};
-
-fn ensure_utf8(_ruby: &Ruby, input: RString) -> Result<RString, Error> {
-    // For this example, we'll assume the string is already in the correct encoding
-    // In production code, you would use rb-sys directly for encoding operations
-    Ok(input)
-}
-
-// Work with binary data
-fn process_binary(data: RString) -> Result<Vec<u8>, Error> {
-    // Get bytes regardless of encoding
-    let bytes = unsafe { data.as_slice() };
-
-    // Process the bytes...
-    Ok(bytes.to_vec())
-}
-```
-
-## Number Handling
-
-### Integer Operations
+Automatic conversion works for primitives like `i64` and `f64`. A common failure is integer overflow.
 
 ```rust
-use magnus::{Integer, Error, exception};
+use magnus::{Integer, Error, exception, Ruby};
 
-// Basic arithmetic with overflow checking
-fn safe_multiply(a: i64, b: i64) -> Result<i64, Error> {
+fn safe_multiply(ruby: &Ruby, a: i64, b: i64) -> Result<i64, Error> {
     a.checked_mul(b).ok_or_else(|| {
-        Error::new(
-            exception::range_error(),
-            "integer overflow"
-        )
+        Error::new(ruby.exception_range_error(), "integer overflow")
     })
 }
-
-// Work with Ruby Integer objects
-fn factorial(n: Integer) -> Result<Integer, Error> {
-    let num: i64 = n.to_i64()?;
-
-    if num < 0 {
-        return Err(Error::new(
-            exception::arg_error(),
-            "factorial of negative number"
-        ));
-    }
-
-    let result = (1..=num).product::<i64>();
-    Ok(Integer::from_i64(result))
-}
-
-// Handle large numbers
-fn is_prime(n: Integer) -> bool {
-    let num = match n.to_u64() {
-        Ok(n) => n,
-        Err(_) => return false, // Negative or too large
-    };
-
-    if num < 2 {
-        return false;
-    }
-
-    for i in 2..=(num as f64).sqrt() as u64 {
-        if num % i == 0 {
-            return false;
-        }
-    }
-
-    true
-}
 ```
 
-### Float Operations
+### Arrays
 
-```rust
-use magnus::{Float, Error, exception};
-use std::f64::consts::PI;
-
-// Automatic conversion from Ruby Float
-fn circle_area(radius: f64) -> f64 {
-    PI * radius * radius
-}
-
-// Return Ruby Float objects
-fn calculate_mean(numbers: Vec<f64>) -> Result<Float, Error> {
-    if numbers.is_empty() {
-        return Err(Error::new(
-            exception::arg_error(),
-            "empty array"
-        ));
-    }
-
-    let sum: f64 = numbers.iter().sum();
-    let mean = sum / numbers.len() as f64;
-
-    Ok(Float::from_f64(mean))
-}
-
-// Handle special float values
-fn safe_divide(a: f64, b: f64) -> Result<f64, Error> {
-    let result = a / b;
-
-    if result.is_nan() {
-        Err(Error::new(
-            exception::float_domain_error(),
-            "result is NaN"
-        ))
-    } else if result.is_infinite() {
-        Err(Error::new(
-            exception::float_domain_error(),
-            "result is infinite"
-        ))
-    } else {
-        Ok(result)
-    }
-}
-```
-
-## Array Handling
-
-Arrays are fundamental in Ruby. Here's how to work with them efficiently:
-
-### Basic Array Operations
+Automatic conversion works for `Vec<T>`. For heterogeneous arrays or large datasets, use `RArray`.
 
 ```rust
 use magnus::{RArray, Error, TryConvert};
 
-// Accept Vec with automatic conversion
+// Automatic conversion.
 fn sum_integers(numbers: Vec<i64>) -> i64 {
     numbers.iter().sum()
 }
 
-// Work with Ruby arrays directly
-fn first_n_elements(array: RArray, n: usize) -> Result<RArray, Error> {
-    let result = RArray::new();
-
-    for (i, item) in array.each().enumerate() {
-        if i >= n {
-            break;
-        }
-        result.push(item?)?;
-    }
-
-    Ok(result)
-}
-
-// Modify arrays efficiently
-fn double_values(array: RArray) -> Result<RArray, Error> {
-    let result = RArray::with_capacity(array.len());
-
-    for item in array.each() {
-        let value: i64 = TryConvert::try_convert(item?)?;
-        result.push(value * 2)?;
-    }
-
-    Ok(result)
+// Manual conversion with error handling for mixed types.
+fn first_integer(array: RArray) -> Result<i64, Error> {
+    let first_item = array.entry(0)?;
+    i64::try_convert(first_item)
 }
 ```
 
-### Advanced Array Patterns
+### Hashes
+
+Automatic conversion works for `HashMap<K, V>`. For symbol keys or mixed value types, use `RHash`.
 
 ```rust
-use magnus::{RArray, Error, RString, exception, TryConvert};
-
-// Filter arrays
-fn select_strings(array: RArray) -> Result<RArray, Error> {
-    let result = RArray::new();
-
-    for item in array.each() {
-        let value = item?;
-        if RString::try_convert(value).is_ok() {
-            result.push(value)?;
-        }
-    }
-
-    Ok(result)
-}
-
-// Transform arrays with error handling
-fn parse_integers(array: RArray) -> Result<Vec<i64>, Error> {
-    let mut result = Vec::with_capacity(array.len());
-
-    for (index, item) in array.each().enumerate() {
-        let value = item?;
-
-        match i64::try_convert(value) {
-            Ok(n) => result.push(n),
-            Err(_) => {
-                return Err(Error::new(
-                    exception::type_error(),
-                    format!("element at index {} is not an integer", index)
-                ));
-            }
-        }
-    }
-
-    Ok(result)
-}
-
-// Create nested arrays
-fn create_matrix(rows: usize, cols: usize, initial: i64) -> RArray {
-    let matrix = RArray::with_capacity(rows);
-
-    for _ in 0..rows {
-        let row = RArray::with_capacity(cols);
-        for _ in 0..cols {
-            let _ = row.push(initial);
-        }
-        let _ = matrix.push(row);
-    }
-
-    matrix
-}
-```
-
-## Hash Handling
-
-Working with Ruby hashes (dictionaries):
-
-```rust
-use magnus::{RHash, Value, Symbol, Error, r_hash::ForEach};
-
-// Accept HashMap with automatic conversion
+use magnus::{RHash, Symbol, Error, Ruby, TryConvert};
 use std::collections::HashMap;
 
-fn count_words(text: String) -> HashMap<String, usize> {
-    let mut counts = HashMap::new();
+// Automatic conversion.
+fn get_keys(hash: HashMap<String, i64>) -> Vec<String> {
+    hash.keys().cloned().collect()
+}
 
-    for word in text.split_whitespace() {
-        *counts.entry(word.to_string()).or_insert(0) += 1;
+// Manual lookup with a symbol key.
+fn get_id(ruby: &Ruby, hash: RHash) -> Result<i64, Error> {
+    match hash.get(ruby.to_symbol("id")) {
+        Some(val) => i64::try_convert(val),
+        None => Err(Error::new(ruby.exception_arg_error(), "missing :id key")),
     }
-
-    counts
-}
-
-// Work with Ruby hashes directly
-fn merge_hashes(hash1: RHash, hash2: RHash) -> Result<RHash, Error> {
-    let result = RHash::new();
-
-    // Copy first hash
-    hash1.foreach(|key: Value, value: Value| {
-        result.aset(key, value)?;
-        Ok(ForEach::Continue)
-    })?;
-
-    // Merge second hash
-    hash2.foreach(|key: Value, value: Value| {
-        result.aset(key, value)?;
-        Ok(ForEach::Continue)
-    })?;
-
-    Ok(result)
-}
-
-// Symbol keys
-fn get_config_value(config: RHash, key: &str) -> Result<Option<Value>, Error> {
-    let symbol_key = Symbol::new(key);
-    Ok(config.get(symbol_key))
 }
 ```
 
-## Error Handling Patterns
+## Error Handling
 
-Robust error handling is crucial for production extensions:
-
-### Custom Error Types
+Define custom Rust error types and convert them into Ruby exceptions. See the [Error Handling](./error-handling.mdx) guide for more advanced patterns.
 
 ```rust
-use magnus::{Error, exception};
+use magnus::{Error, prelude::*};
 use std::fmt;
 
-// Define custom error types
 #[derive(Debug)]
-enum ProcessingError {
-    InvalidInput(String),
-    ProcessingFailed(String),
-    ResourceNotFound(String),
-}
+struct MyError(String);
 
-impl fmt::Display for ProcessingError {
+impl fmt::Display for MyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ProcessingError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
-            ProcessingError::ProcessingFailed(msg) => write!(f, "Processing failed: {}", msg),
-            ProcessingError::ResourceNotFound(msg) => write!(f, "Resource not found: {}", msg),
-        }
+        write!(f, "{}", self.0)
     }
 }
 
-// Convert to Ruby exceptions
-impl From<ProcessingError> for Error {
-    fn from(err: ProcessingError) -> Self {
-        match err {
-            ProcessingError::InvalidInput(_) => {
-                Error::new(exception::arg_error(), err.to_string())
-            }
-            ProcessingError::ProcessingFailed(_) => {
-                Error::new(exception::runtime_error(), err.to_string())
-            }
-            ProcessingError::ResourceNotFound(_) => {
-                Error::new(exception::runtime_error(), err.to_string())
-            }
-        }
+// Use it in a function.
+fn might_fail(should_fail: bool) -> Result<(), MyError> {
+    if should_fail {
+        Err(MyError("Something went wrong".to_string()))
+    } else {
+        Ok(())
     }
-}
-
-// Use in functions
-fn process_data(input: String) -> Result<String, Error> {
-    if input.is_empty() {
-        return Err(ProcessingError::InvalidInput("input cannot be empty".to_string()).into());
-    }
-
-    // Processing logic...
-    Ok(input.to_uppercase())
 }
 ```
 
-### Error Context
+## Optional Arguments & Blocks
 
-Add context to errors for better debugging:
+### Optional Arguments
 
-```rust
-use magnus::{Error, exception};
-
-fn read_and_parse(filename: String) -> Result<Vec<i64>, Error> {
-    // Read file
-    let contents = std::fs::read_to_string(&filename)
-        .map_err(|e| Error::new(
-            exception::runtime_error(),
-            format!("Failed to read file '{}': {}", filename, e)
-        ))?;
-
-    // Parse numbers
-    let mut numbers = Vec::new();
-    for (line_no, line) in contents.lines().enumerate() {
-        let num = line.trim().parse::<i64>()
-            .map_err(|e| Error::new(
-                exception::arg_error(),
-                format!("Invalid number on line {} of '{}': {}", line_no + 1, filename, e)
-            ))?;
-        numbers.push(num);
-    }
-
-    Ok(numbers)
-}
-```
-
-## Optional and Default Arguments
-
-Handle optional parameters gracefully:
+Use `Option<T>` for optional arguments. For keyword arguments, accept an `RHash`.
 
 ```rust
-use magnus::{RHash, RArray, Symbol, Error, exception, TryConvert};
+use magnus::{RHash, Error, TryConvert};
 
-// Using Option for optional parameters
+// `greeting` will be `None` if the argument is omitted or `nil`.
 fn greet(name: String, greeting: Option<String>) -> String {
-    let greeting = greeting.unwrap_or_else(|| "Hello".to_string());
-    format!("{}, {}!", greeting, name)
-}
-
-// Using kwargs for named parameters
-fn create_user(kwargs: RHash) -> Result<String, Error> {
-    // Required parameter
-    let name: String = TryConvert::try_convert(
-        kwargs
-            .get(Symbol::new("name"))
-            .ok_or_else(|| Error::new(exception::arg_error(), "name is required"))?
-    )?;
-
-    // Optional parameters with defaults
-    let age: i32 = kwargs
-        .get(Symbol::new("age"))
-        .and_then(|v| TryConvert::try_convert(v).ok())
-        .unwrap_or(0);
-
-    let email: Option<String> = kwargs
-        .get(Symbol::new("email"))
-        .and_then(|v| TryConvert::try_convert(v).ok());
-
-    Ok(format!("User: {}, Age: {}, Email: {:?}", name, age, email))
-}
-
-// Variadic arguments
-fn concat_strings(strings: RArray) -> Result<String, Error> {
-    let mut result = String::new();
-
-    for item in strings.each() {
-        let s: String = TryConvert::try_convert(item?)?;
-        result.push_str(&s);
-        result.push(' ');
-    }
-
-    Ok(result.trim().to_string())
+    format!("{}, {}!", greeting.unwrap_or_else(|| "Hello".to_string()), name)
 }
 ```
 
-## Working with Blocks
+### Blocks
 
-Ruby blocks are powerful - here's how to use them:
+Accept a Ruby block as a `Proc`.
 
 ```rust
-use magnus::{block::Proc, Value, RArray, Error};
+use magnus::{block::Proc, Value, Error};
 
-// Accept a block and call it
-fn map_array(array: RArray, block: Proc) -> Result<RArray, Error> {
-    let result = RArray::with_capacity(array.len());
-
-    for item in array.each() {
-        let value = item?;
-        let mapped = block.call::<_, Value>((value,))?;
-        result.push(mapped)?;
-    }
-
-    Ok(result)
-}
-
-// Yield to a block multiple times
-fn times(n: usize, block: Proc) -> Result<(), Error> {
-    for i in 0..n {
-        block.call::<_, Value>((i,))?;
-    }
-    Ok(())
-}
-
-// Check if block given
-fn with_optional_block(data: String, block: Option<Proc>) -> Result<String, Error> {
-    match block {
-        Some(b) => {
-            // Call block with data
-            b.call::<_, String>((data,))
-        }
-        None => {
-            // No block provided
-            Ok(data.to_uppercase())
-        }
-    }
+fn call_the_block(block: Proc) -> Result<Value, Error> {
+    block.call(("Hello from Rust!",))
 }
 ```
-
-## 🎯 Pattern Summary
-
-### Do's ✅
-
-1. **Use Result&lt;T, Error&gt;** for fallible operations
-2. **Validate inputs** early and clearly
-3. **Provide helpful error messages** with context
-4. **Use type conversions** appropriately
-5. **Handle edge cases** (empty arrays, zero division, etc.)
-6. **Pre-allocate collections** when size is known
-
-### Don'ts ❌
-
-1. **Don't panic** - return errors instead
-2. **Don't ignore errors** - propagate them
-3. **Don't allocate unnecessarily** - reuse when possible
-4. **Don't block the GVL** unnecessarily
-5. **Don't assume types** - validate or use try_convert
-
-## 📚 Next Steps
-
-- [**Working with Ruby Objects**](working-with-ruby-objects) - Deep dive into Ruby types
-- [**Error Handling**](error-handling) - Advanced error patterns
-
----
-
-<div className="success-message">
-
-### Patterns Mastered
-
-You now know the essential patterns for building Ruby extensions with Rust. Practice these patterns to build robust,
-efficient extensions.
-
-</div>

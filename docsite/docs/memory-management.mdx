@@ -36,7 +36,7 @@ is the recommended way to handle complex objects in Rust.
 Here's how to define a simple Ruby object that wraps a Rust struct:
 
 ```rust
-use magnus::{prelude::*, Error, Ruby, TypedData, DataTypeFunctions, function, method, Value};
+use magnus::{prelude::*, Error, Ruby, TypedData, DataTypeFunctions, function, method};
 
 use std::cell::RefCell;
 
@@ -224,12 +224,13 @@ impl ErrorInfo {
     }
 
     // Return the error code as a Ruby symbol
-    pub fn code(&self) -> Result<Option<Symbol>, Error> {
-        match &self.kind {
-            ErrorKind::StackOverflow => Ok(Some(Symbol::new("STACK_OVERFLOW"))),
-            ErrorKind::MemoryOutOfBounds => Ok(Some(Symbol::new("MEMORY_OUT_OF_BOUNDS"))),
-            ErrorKind::InvalidOperation(_) => Ok(Some(Symbol::new("INVALID_OPERATION"))),
-            ErrorKind::Unknown => Ok(Some(Symbol::new("UNKNOWN"))),
+    pub fn code(rb_self: Obj<Self>) -> Result<Option<Symbol>, Error> {
+        let ruby = Ruby::get_with(rb_self);
+        match &rb_self.kind {
+            ErrorKind::StackOverflow => Ok(Some(ruby.to_symbol("STACK_OVERFLOW"))),
+            ErrorKind::MemoryOutOfBounds => Ok(Some(ruby.to_symbol("MEMORY_OUT_OF_BOUNDS"))),
+            ErrorKind::InvalidOperation(_) => Ok(Some(ruby.to_symbol("INVALID_OPERATION"))),
+            ErrorKind::Unknown => Ok(Some(ruby.to_symbol("UNKNOWN"))),
         }
     }
 
@@ -238,7 +239,7 @@ impl ErrorInfo {
         Ok(format!(
             "#<MyExtension::Error:0x{:016x} @error_code={}>",
             &rb_self as *const _ as usize,
-            rb_self.code()?.map_or("nil".to_string(), |s| s.to_string())
+            ErrorInfo::code(rb_self)?.map_or("nil".to_string(), |s| s.to_string())
         ))
     }
 }
@@ -342,7 +343,7 @@ impl MemoryGuard {
         // Check that memory size hasn't changed
         if mem.size()? != self.original_size {
             return Err(Error::new(
-                magnus::exception::runtime_error(),
+                ruby.exception_runtime_error(),
                 "memory was resized, reference is no longer valid"
             ));
         }
@@ -375,14 +376,14 @@ impl DataTypeFunctions for MemorySlice {
 }
 
 impl MemorySlice {
-    fn new(memory: Obj<Memory>, offset: usize, size: usize) -> Result<Self, Error> {
+    fn new(ruby: &Ruby, memory: Obj<Memory>, offset: usize, size: usize) -> Result<Self, Error> {
         let guard = MemoryGuard::new(memory)?;
 
         // Validate the slice is in bounds
         let mem = guard.get()?;
         if offset + size > mem.data_size()? {
             return Err(Error::new(
-                magnus::exception::range_error(),
+                ruby.exception_range_error(),
                 "memory slice out of bounds"
             ));
         }
@@ -401,7 +402,8 @@ impl MemorySlice {
         let data = mem.data()?;
 
         // Extract the relevant slice
-        let slice = &data[self.offset..self.offset + self.size];
+        let slice = data.get(self.offset..self.offset + self.size)
+            .ok_or_else(|| Error::new(ruby.exception_range_error(), "slice out of bounds"))?;
 
         // Create a Ruby string directly from the slice (zero-copy)
         Ok(ruby.str_from_slice(slice))
@@ -414,13 +416,14 @@ impl MemorySlice {
         let data = mem.data()?;
 
         // Extract the relevant slice
-        let slice = &data[self.offset..self.offset + self.size];
+        let slice = data.get(self.offset..self.offset + self.size)
+            .ok_or_else(|| Error::new(ruby.exception_range_error(), "slice out of bounds"))?;
 
         // Validate UTF-8 and create a Ruby string
         match std::str::from_utf8(slice) {
             Ok(s) => Ok(RString::new(s)),
             Err(e) => Err(Error::new(
-                magnus::exception::encoding_error(),
+                ruby.exception_encoding_error(),
                 format!("invalid UTF-8: {}", e)
             ))
         }
@@ -502,8 +505,8 @@ Creating strings inefficiently can significantly impact performance:
 use magnus::{Error, RString, Ruby};
 
 // BAD: Creates unnecessary temporary Rust String
-fn inefficient_string(data: &[u8]) -> Result<RString, Error> {
-    let temp_string = String::from_utf8(data.to_vec()).map_err(|e| Error::new(magnus::exception::type_error(), e.to_string()))?; // Unnecessary allocation
+fn inefficient_string(ruby: &Ruby, data: &[u8]) -> Result<RString, Error> {
+    let temp_string = String::from_utf8(data.to_vec()).map_err(|e| Error::new(ruby.exception_type_error(), e.to_string()))?; // Unnecessary allocation
     Ok(RString::new(&temp_string))  // Another copy
 }
 
@@ -587,7 +590,7 @@ struct Counter(Rc<RefCell<CounterInner>>);
 
 // BAD - will panic with "already borrowed: BorrowMutError"
 impl Counter {
-    fn buggy_add(&self, val: i64) -> Result<i64, Error> {
+    fn buggy_add(&self, ruby: &Ruby, val: i64) -> Result<i64, Error> {
         let ruby = unsafe { Ruby::get_unchecked() };
         // First borrow is still active when we try to borrow_mut below
         if let Some(sum) = self.0.borrow().count.checked_add(val) {
@@ -652,7 +655,7 @@ When working with more complex data structures:
 
 ```rust
 use std::cell::RefCell;
-use magnus::Error;
+use magnus::{Error, Ruby};
 
 struct Game {
     players: Vec<String>,
@@ -673,11 +676,11 @@ impl MutGame {
     }
 
     // INCORRECT: Multiple borrows that will cause issues
-    fn buggy_next_player_scores(&self, points: i64) -> Result<String, Error> {
+    fn buggy_next_player_scores(&self, ruby: &Ruby, points: i64) -> Result<String, Error> {
         let game = self.0.borrow();
         if game.players.is_empty() {
             return Err(Error::new(
-                magnus::exception::runtime_error(),
+                ruby.exception_runtime_error(),
                 "No players in game"
             ));
         }
@@ -688,12 +691,16 @@ impl MutGame {
         let player = game_mut.current_player;
         game_mut.current_player = (player + 1) % game_mut.players.len();
 
+        let player_name = game_mut.players.get(player).ok_or_else(|| {
+            Error::new(ruby.exception_index_error(), "player index out of bounds")
+        })?;
+
         Ok(format!("{} scored {} points! New total: {}",
-            game_mut.players[player], points, game_mut.score))
+            player_name, points, game_mut.score))
     }
 
     // CORRECT: Copy all needed data before releasing the borrow
-    fn safe_next_player_scores(&self, points: i64) -> Result<String, Error> {
+    fn safe_next_player_scores(&self, ruby: &Ruby, points: i64) -> Result<String, Error> {
         // Read all the data we need first
         let player_name: String;
         let new_player_index: usize;
@@ -703,13 +710,14 @@ impl MutGame {
             // Create a block scope to ensure the borrow is dropped
             let game = self.0.borrow();
             if game.players.is_empty() {
-                return Err(Error::new(
-                    magnus::exception::runtime_error(),
-                    "No players in game"
+                            return Err(Error::new(
+                                ruby.exception_runtime_error(),                    "No players in game"
                 ));
             }
 
-            player_name = game.players[game.current_player].clone();
+            player_name = game.players.get(game.current_player).ok_or_else(|| {
+                Error::new(ruby.exception_index_error(), "player index out of bounds")
+            })?.clone();
             new_player_index = (game.current_player + 1) % game.players.len();
             new_score = game.score + points;
         } // borrow is dropped here
