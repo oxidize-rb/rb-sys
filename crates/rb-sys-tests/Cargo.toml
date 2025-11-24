@@ -18,7 +18,7 @@ rb-sys = { path = "../rb-sys", features = [
 ] }
 rb-sys-env = { path = "../rb-sys-env" }
 rb-sys-test-helpers = { path = "../rb-sys-test-helpers" }
-rusty-fork = "0.3.0"
+rusty-fork = "0.3.1"
 
 [build-dependencies]
 rb-sys-env = { path = "../rb-sys-env" }
