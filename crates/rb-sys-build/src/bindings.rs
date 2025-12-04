@@ -22,6 +22,10 @@ pub fn generate(
 ) -> Result<PathBuf, Box<dyn Error>> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
 
+    // Detect target platform for cross-compilation support
+    let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| env::consts::OS.to_string());
+    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| env::consts::ARCH.to_string());
+
     let mut clang_args = vec![];
     if let Some(ruby_include_dir) = rbconfig.get("rubyhdrdir") {
         clang_args.push(format!("-I{}", ruby_include_dir));
@@ -34,9 +38,15 @@ pub fn generate(
     clang_args.extend(rbconfig.cflags.clone());
     clang_args.extend(rbconfig.cppflags());
 
+    // Support BINDGEN_EXTRA_CLANG_ARGS for injecting additional include paths
+    // This is useful for cross-compilation where system headers need to be found
+    if let Ok(extra_args) = env::var("BINDGEN_EXTRA_CLANG_ARGS") {
+        clang_args.extend(extra_args.split_whitespace().map(|s| s.to_string()));
+    }
+
     // On Windows x86_64, we need to handle AVX512 FP16 compatibility issues
     // Clang 20+ includes types like __m512h that aren't compatible with bindgen
-    if cfg!(target_os = "windows") && cfg!(target_arch = "x86_64") {
+    if target_os == "windows" && target_arch == "x86_64" {
         // For MinGW toolchain, disable SSE/AVX only for bindgen
         // This prevents intrinsics headers from loading but doesn't affect the final binary
         if !is_msvc() {
@@ -59,7 +69,7 @@ pub fn generate(
         clang_args.push("-DHAVE_RUBY_IO_BUFFER_H".to_string());
     }
 
-    let bindings = default_bindgen(clang_args, rbconfig)
+    let bindings = default_bindgen(clang_args, rbconfig, &target_os)
         .allowlist_file(".*ruby.*")
         .blocklist_item("ruby_abi_version")
         .blocklist_function("rb_tr_abi_version")
@@ -140,9 +150,9 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
+fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig, target_os: &str) -> bindgen::Builder {
     // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
-    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
+    let is_old_ruby_windows_mingw = if target_os == "windows" && !is_msvc() {
         if let Some((major, minor)) = rbconfig.major_minor() {
             (major == 2 && minor == 7) || (major == 3 && minor == 0)
         } else {
@@ -175,7 +185,7 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
 
     // Make __mingw_ldbl_type_t opaque on Windows MinGW to avoid conflicting packed/align representation
-    if cfg!(target_os = "windows") && !is_msvc() {
+    if target_os == "windows" && !is_msvc() {
         bindings = bindings.opaque_type("__mingw_ldbl_type_t");
     }
 

@@ -1,0 +1,35 @@
+[package]
+name = "rb-sys-cli"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.71"
+license = "MIT OR Apache-2.0"
+description = "A CLI for easily cross-compiling Rust native gems"
+authors = ["Ian Ker-Seymer <i.kerseymer@gmail.com>"]
+
+[[bin]]
+name = "cargo-gem"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env"] }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+which = "6.0"
+tempfile = "3.10"
+oci-distribution = "0.11"
+tokio = { version = "1", features = ["full"] }
+flate2 = "1.0"
+tar = "0.4"
+regex = "1"
+dirs = "5.0"
+ruby-prism = "1.2.0"
+ruby-prism-sys = "1.2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+indoc = "2.0"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"

@@ -25,6 +25,7 @@
             bundler
             zsh
             nodejs
+            libiconv
           ];
 
           # Make is so nix develop --impure uses zsh config
