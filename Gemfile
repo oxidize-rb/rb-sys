@@ -15,5 +15,5 @@ gem "yard"
 gem "mutex_m"
 
 if RUBY_VERSION >= "2.7.0"
-  gem "standard", "~> 1.12.1"
+  gem "standard", "~> 1.52.0"
 end
