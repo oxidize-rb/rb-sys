@@ -141,11 +141,11 @@ module RbSys
         \t$(Q) $(MAKEDIRS) $(RUBYARCHDIR)
         \t$(INSTALL_PROG) $(DLLIB) $(RUBYARCHDIR)
 
-        gemclean:
+        gemclean: install-so
         \t$(ECHO) Cleaning gem artifacts
         \t-$(Q)$(RM_RF) $(RUBYGEMS_CLEAN_DIRS) 2> /dev/null || true
 
-        install: #{builder.clean_after_install ? "install-so gemclean" : "install-so"}
+        install: #{builder.clean_after_install ? "gemclean" : "install-so"}
 
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE
