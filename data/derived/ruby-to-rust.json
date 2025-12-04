@@ -4,6 +4,7 @@
   "aarch64-linux-musl": "aarch64-unknown-linux-musl",
   "arm64-darwin": "aarch64-apple-darwin",
   "x64-mingw-ucrt": "x86_64-pc-windows-gnu",
+  "aarch64-mingw-ucrt": "aarch64-pc-windows-gnullvm",
   "x64-mingw32": "x86_64-pc-windows-gnu",
   "x86-linux": "i686-unknown-linux-gnu",
   "x86-mingw32": "i686-pc-windows-gnu",

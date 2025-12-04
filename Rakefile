@@ -78,7 +78,7 @@ task test: ["test:cargo", "test:gem", "test:examples"]
 desc "Pretty the files"
 task :fmt do
   sh "cargo fmt"
-  sh "bundle exec standardrb --fix" if RUBY_VERSION >= "2.6.0"
+  sh "bundle exec standardrb --fix" if RUBY_VERSION >= "2.7.0"
   Dir.chdir("docsite") do
     sh "npm run fmt"
   end
@@ -90,7 +90,7 @@ task format: [:fmt]
 
 desc "Lint"
 task :lint do
-  sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}" if RUBY_VERSION >= "2.6.0"
+  sh "bundle exec standardrb --format #{ENV.key?("CI") ? "github" : "progress"}" if RUBY_VERSION >= "2.7.0"
   sh "cargo fmt --check"
   sh "cargo clippy"
   sh "shellcheck $(git ls-files '*.sh')"

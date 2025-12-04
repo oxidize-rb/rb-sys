@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Helpers for compiling Rust extensions for ruby"
   spec.homepage = "https://oxidize-rb.github.io/rb-sys/"
   spec.licenses = ["MIT", "Apache-2.0"]
-  spec.required_ruby_version = ">= 2.5.0"
+  spec.required_ruby_version = ">= 2.7.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/oxidize-rb/rb-sys"
@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   end
 
   # Needed for `RakeCompilerDock.cross_rubies`
-  spec.add_dependency("rake-compiler-dock", "1.9.1")
+  spec.add_dependency("rake-compiler-dock", "1.10.0")
 
   spec.metadata["rubygems_mfa_required"] = "true"
 end
