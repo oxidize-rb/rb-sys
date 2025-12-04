@@ -14,6 +14,6 @@ gem "base64", "~> 0.3.0"
 gem "yard"
 gem "mutex_m"
 
-if RUBY_VERSION >= "2.6.0"
+if RUBY_VERSION >= "2.7.0"
   gem "standard", "~> 1.12.1"
 end
