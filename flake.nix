@@ -20,18 +20,17 @@
         devShells.default = mkShell {
           buildInputs = [
             fastmod
-            ruby_3_3.devEnv
-            rust-bin.stable.latest.default
+            ruby_3_4.devEnv
+            (rust-bin.stable.latest.default.override {
+              extensions = [ "rust-src" ];
+              targets = [ "x86_64-unknown-linux-gnu" "aarch64-apple-darwin" ];
+            })
             bundler
             zsh
             nodejs
             libiconv
+            zig
           ];
-
-          # Make is so nix develop --impure uses zsh config
-          shellHook = ''
-            exec zsh
-          '';
         };
       }
     );
