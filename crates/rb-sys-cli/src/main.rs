@@ -1,13 +1,32 @@
 mod build;
 mod extractor;
+pub mod generated_mappings;
+mod platform;
 mod rbconfig_parser;
-mod shim_generator;
 mod toolchain;
+mod zig;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use generated_mappings::Toolchain;
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
+
+/// Setup logging based on verbose flag or RUST_LOG environment variable
+fn setup_logging(verbose: bool) {
+    // RUST_LOG env var takes precedence if set
+    let filter = if std::env::var("RUST_LOG").is_ok() {
+        EnvFilter::from_default_env()
+    } else if verbose {
+        // Verbose mode: show debug logs for rb-sys-cli
+        EnvFilter::new("rb_sys_cli=debug,rb_sys_build=debug")
+    } else {
+        // Default: info level
+        EnvFilter::new("rb_sys_cli=info,rb_sys_build=info")
+    };
+
+    fmt().with_env_filter(filter).with_target(false).init();
+}
 
 #[derive(Parser)]
 #[command(name = "cargo-gem")]
@@ -24,10 +43,11 @@ enum Commands {
     #[command(alias = "b")]
     Build(build::BuildConfig),
 
-    /// Extract Ruby headers from a Docker image
+    /// Extract Ruby headers and sysroot from rake-compiler-dock image
     Extract {
-        /// OCI image reference (e.g., ghcr.io/rake-compiler/rake-compiler-dock-image:1.3.0-mri-x86_64-linux)
-        image: String,
+        /// Target platform (e.g., x86_64-linux, aarch64-linux) or full image reference
+        #[arg(value_name = "TARGET")]
+        target: String,
     },
 
     /// List supported target platforms
@@ -43,6 +63,22 @@ enum Commands {
         #[command(subcommand)]
         action: CacheCommands,
     },
+
+    /// Internal: Zig CC wrapper (called by shims)
+    #[command(hide = true)]
+    ZigCc(zig::cc::ZigCcArgs),
+
+    /// Internal: Zig C++ wrapper (called by shims)
+    #[command(hide = true)]
+    ZigCxx(zig::cc::ZigCcArgs),
+
+    /// Internal: Zig AR wrapper (called by shims)
+    #[command(hide = true)]
+    ZigAr(zig::ar::ZigArArgs),
+
+    /// Internal: Zig LD wrapper (called by shims)
+    #[command(hide = true)]
+    ZigLd(zig::ld::ZigLdArgs),
 }
 
 #[derive(Subcommand)]
@@ -65,24 +101,19 @@ enum CacheCommands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize logging - allows "RUST_LOG=debug cargo gem build..."
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
-        
-    fmt()
-        .with_env_filter(filter)
-        .with_target(false)
-        .init();
-
     let cli = Cli::parse();
+
+    // Initialize logging based on verbose flag or RUST_LOG env var
+    let verbose = matches!(&cli.command, Commands::Build(config) if config.verbose);
+    setup_logging(verbose);
 
     match cli.command {
         Commands::Build(config) => {
             build::build(&config)?;
         }
 
-        Commands::Extract { image } => {
-            extractor::extract_headers(&image).await?;
+        Commands::Extract { target } => {
+            extract_target(&target).await?;
         }
 
         Commands::List { what } => match what {
@@ -103,6 +134,53 @@ async fn main() -> Result<()> {
                 println!("{}", cache_dir.display());
             }
         },
+
+        // Zig wrapper commands (called by shims)
+        Commands::ZigCc(args) => {
+            zig::cc::run_cc(args, false)?;
+        }
+        Commands::ZigCxx(args) => {
+            zig::cc::run_cc(args, true)?;
+        }
+        Commands::ZigAr(args) => {
+            zig::ar::run_ar(args)?;
+        }
+        Commands::ZigLd(args) => {
+            zig::ld::run_ld(args)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Extract Ruby headers and sysroot for a target
+async fn extract_target(target: &str) -> Result<()> {
+    // First, try to find a toolchain by ruby-platform or rust-target
+    let toolchain =
+        Toolchain::from_ruby_platform(target).or_else(|| Toolchain::from_rust_target(target));
+
+    match toolchain {
+        Some(tc) => {
+            // Found a known toolchain, use the new extraction with sysroot support
+            extractor::extract_for_toolchain(tc).await?;
+        }
+        None => {
+            // Check if it looks like a full image reference
+            if target.contains('/') || target.contains(':') {
+                // Looks like an image reference, use legacy extraction
+                extractor::extract_headers(target).await?;
+            } else {
+                // Unknown target
+                anyhow::bail!(
+                    "Unknown target: '{}'\n\nSupported targets:\n{}",
+                    target,
+                    Toolchain::all_supported()
+                        .map(|t| format!("  - {} ({})", t.ruby_platform(), t.rust_target()))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                );
+            }
+        }
     }
 
     Ok(())
@@ -110,7 +188,7 @@ async fn main() -> Result<()> {
 
 fn list_cached_rubies() -> Result<()> {
     info!("Listing cached Ruby versions");
-    
+
     println!("📚 Cached Ruby versions:\n");
 
     let rubies = extractor::list_cached_rubies()?;
@@ -123,7 +201,10 @@ fn list_cached_rubies() -> Result<()> {
         for ruby in rubies {
             println!("  • {}", ruby);
         }
-        println!("\n📍 Cache location: {}", extractor::get_cache_dir()?.display());
+        println!(
+            "\n📍 Cache location: {}",
+            extractor::get_cache_dir()?.display()
+        );
     }
 
     Ok(())

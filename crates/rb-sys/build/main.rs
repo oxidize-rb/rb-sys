@@ -262,16 +262,19 @@ fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
 
 fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     // See https://github.com/oxidize-rb/rb-sys/issues/88
-    
+
     // Use CARGO_CFG_TARGET_OS to detect the target platform, not the host
     // This is critical for cross-compilation (e.g., macOS → Linux)
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| {
         // Fallback to compile-time target for non-cross builds
         env::consts::OS.to_string()
     });
-    
-    eprintln!("DEBUG: enable_dynamic_lookup detected target_os = {}", target_os);
-    
+
+    eprintln!(
+        "DEBUG: enable_dynamic_lookup detected target_os = {}",
+        target_os
+    );
+
     if target_os == "macos" {
         rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");
         rbconfig.push_dldflags("-Wl,-multiply_defined,suppress");

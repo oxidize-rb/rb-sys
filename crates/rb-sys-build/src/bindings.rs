@@ -24,7 +24,8 @@ pub fn generate(
 
     // Detect target platform for cross-compilation support
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| env::consts::OS.to_string());
-    let target_arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| env::consts::ARCH.to_string());
+    let target_arch =
+        env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| env::consts::ARCH.to_string());
 
     let mut clang_args = vec![];
     if let Some(ruby_include_dir) = rbconfig.get("rubyhdrdir") {
@@ -150,7 +151,11 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig, target_os: &str) -> bindgen::Builder {
+fn default_bindgen(
+    clang_args: Vec<String>,
+    rbconfig: &RbConfig,
+    target_os: &str,
+) -> bindgen::Builder {
     // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
     let is_old_ruby_windows_mingw = if target_os == "windows" && !is_msvc() {
         if let Some((major, minor)) = rbconfig.major_minor() {

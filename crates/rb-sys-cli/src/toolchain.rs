@@ -50,13 +50,13 @@ impl ToolchainInfo {
         toolchains
             .into_iter()
             .find(|tc| {
-                tc.rust_target == rust_target
-                    || tc.aliases.iter().any(|alias| alias == rust_target)
+                tc.rust_target == rust_target || tc.aliases.iter().any(|alias| alias == rust_target)
             })
             .with_context(|| format!("No toolchain found for Rust target: {}", rust_target))
     }
 
     /// Find a toolchain by Ruby platform
+    #[allow(dead_code)]
     pub fn find_by_ruby_platform(ruby_platform: &str) -> Result<ToolchainInfo> {
         let toolchains = Self::load_all()?;
 
@@ -67,6 +67,7 @@ impl ToolchainInfo {
     }
 
     /// Get the Zig target triple (strips 'unknown' vendor)
+    #[allow(dead_code)]
     pub fn zig_target(&self) -> String {
         self.rust_target.replace("-unknown-", "-")
     }
@@ -74,14 +75,12 @@ impl ToolchainInfo {
     /// List all supported platforms
     pub fn list_supported() -> Result<Vec<ToolchainInfo>> {
         let toolchains = Self::load_all()?;
-        Ok(toolchains
-            .into_iter()
-            .filter(|tc| tc.supported)
-            .collect())
+        Ok(toolchains.into_iter().filter(|tc| tc.supported).collect())
     }
 }
 
 /// Detect the current host platform's Rust target triple
+#[allow(dead_code)]
 pub fn detect_host_target() -> String {
     // Get the target triple from the build environment
     std::env::var("TARGET").unwrap_or_else(|_| {

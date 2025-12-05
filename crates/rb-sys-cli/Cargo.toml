@@ -29,6 +29,11 @@ ruby-prism-sys = "1.2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 indoc = "2.0"
+walkdir = "2"
+indicatif = "0.17"
+
+[build-dependencies]
+serde_json = "1.0"
 
 [dev-dependencies]
 assert_cmd = "2.0"

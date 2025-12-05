@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if [ -f ./tmp/env.sh ]; then
+    source ./tmp/env.sh
+fi
+
 CACHE_DIR="./tmp/nix-cache"
 mkdir -p "$CACHE_DIR"
 

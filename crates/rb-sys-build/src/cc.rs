@@ -329,14 +329,23 @@ fn get_tool_from_rb_config_or_env(env_var: &str) -> Option<String> {
 }
 
 fn get_tool_from_env(env_var: &str) -> Option<String> {
-    let target_slug = env::var("TARGET").ok()?.replace('-', "_");
-    let env_var_with_target = format!("{}_{}", env_var, target_slug);
+    let target = env::var("TARGET").ok()?;
+    let target_slug = target.replace('-', "_");
+    let env_var_with_target_underscores = format!("{}_{}", env_var, target_slug);
+    let env_var_with_target_dashes = format!("{}_{}", env_var, target);
 
     println!("cargo:rerun-if-env-changed={}", env_var);
-    println!("cargo:rerun-if-env-changed={}", env_var_with_target);
+    println!(
+        "cargo:rerun-if-env-changed={}",
+        env_var_with_target_underscores
+    );
+    println!("cargo:rerun-if-env-changed={}", env_var_with_target_dashes);
 
-    env::var(env_var)
-        .or_else(|_| env::var(env_var_with_target))
+    // Check target-specific variables first (both underscore and dash variants)
+    // This ensures cross-compilation tools take precedence over host tools
+    env::var(&env_var_with_target_underscores)
+        .or_else(|_| env::var(&env_var_with_target_dashes))
+        .or_else(|_| env::var(env_var))
         .ok()
 }
 

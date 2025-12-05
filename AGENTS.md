@@ -1,6 +1,7 @@
 # Agent Instructions for rb-sys
 
 ## Build/Test/Lint Commands
+
 - **Run all commands via**: `./script/run <cmd>` (sets up dev environment)
 - **Run all tests**: `./script/run bundle exec rake test`
 - **Run Rust tests only**: `./script/run bundle exec rake test:cargo`
@@ -11,6 +12,7 @@
 - **Format all**: `./script/run bundle exec rake fmt`
 
 ## Code Style
+
 - **Rust**: Edition 2018, MSRV 1.71. Use `cargo fmt` (default rustfmt). Run `cargo clippy` before commits.
 - **Ruby**: StandardRB (based on RuboCop). No explicit style config beyond defaults.
 - **Imports**: Group std, external crates, then local modules. Use `pub use` for re-exports in lib.rs.
@@ -20,6 +22,7 @@
 - **Features**: Gate optional functionality (e.g., `#[cfg(feature = "stable-api")]`).
 
 ## Crate Overview
+
 - **rb-sys** (`crates/rb-sys/`): Low-level Rust bindings to Ruby C API via bindgen
 - **rb-sys-build** (`crates/rb-sys-build/`): Build system handling bindgen and Ruby headers
 - **rb-sys-env** (`crates/rb-sys-env/`): Cargo/rustc config, RbConfig values, Ruby version cfg flags
