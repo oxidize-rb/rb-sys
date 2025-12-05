@@ -152,7 +152,7 @@ impl ShimGenerator {
     #[cfg(windows)]
     pub fn generate_windows_shims(&self) -> Result<()> {
         // Write the shim source code
-        let shim_source = self.generate_windows_shim_source();
+        let shim_source = self.generate_windows_shim_source()?;
         let shim_source_path = self.shim_dir.join("shim_source.rs");
         fs::write(&shim_source_path, shim_source)
             .context("Failed to write Windows shim source")?;
@@ -182,13 +182,13 @@ impl ShimGenerator {
     }
 
     #[cfg(windows)]
-    fn generate_windows_shim_source(&self) -> String {
+    fn generate_windows_shim_source(&self) -> Result<String> {
         let zig_path = self
             .zig_path
             .to_str()
-            .expect("Invalid UTF-8 in zig path");
+            .context("Zig path contains invalid UTF-8 characters")?;
 
-        format!(
+        let result = format!(
             r#"
 use std::env;
 use std::ffi::OsString;
@@ -255,13 +255,18 @@ fn main() {{
         .arg(subcommand)
         .args(clean_args)
         .status()
-        .expect("Failed to execute zig");
+        .unwrap_or_else(|e| {{
+            eprintln!("Failed to execute zig: {{}}", e);
+            exit(1);
+        }});
     
     exit(status.code().unwrap_or(1));
 }}
 "#,
             zig_path = zig_path.replace("\\", "\\\\")
-        )
+        );
+        
+        Ok(result)
     }
 
     // Stub implementations for non-Unix platforms
@@ -656,7 +661,10 @@ fn main() {{
         self.shim_dir
             .join(filename)
             .to_str()
-            .expect("Invalid UTF-8 in shim path")
+            .unwrap_or_else(|| {
+                eprintln!("Warning: Shim path contains invalid UTF-8, using lossy conversion");
+                ""
+            })
             .to_string()
     }
 }
