@@ -143,6 +143,69 @@ namespace :data do
 
     gen.call("ruby-to-rust.json", ruby_to_rust)
     gen.call("github-actions-matrix.json", {include: github_actions_matrix})
+
+    Rake::Task["data:rb_sys_cli"].invoke
+  end
+
+  desc "Derive rb-sys-cli.json build config from toolchains.json"
+  task :rb_sys_cli do
+    require "json"
+    require "shellwords"
+    require "rake_compiler_dock"
+
+    puts "Deriving rb-sys-cli.json from data/toolchains.json"
+
+    toolchains = JSON.parse(File.read("data/toolchains.json"))
+    cli_toolchains = []
+
+    toolchains["toolchains"].select { |t| t["supported"] }.each do |t|
+      ruby_platform = t["ruby-platform"]
+      rust_target = t["rust-target"]
+      sysroot_paths = t["sysroot-paths"] || []
+
+      # Get image tag from RakeCompilerDock
+      image_tag = RakeCompilerDock::Starter.container_image_name(
+        platform: ruby_platform
+      )
+
+      puts "  Resolving digest for #{ruby_platform}..."
+
+      # Resolve digest using oci-digest-helper
+      cmd = [
+        "./script/run",
+        "cargo", "run",
+        "-p", "rb-sys-cli-oci-digest-helper",
+        "--",
+        image_tag
+      ]
+
+      digest = IO.popen(cmd, &:read).strip
+      raise "Failed to resolve digest for #{image_tag}" if digest.empty?
+
+      # Construct reference (repo@digest)
+      reference = image_tag.split("@").first.split(":").first + "@#{digest}"
+
+      cli_toolchains << {
+        "ruby-platform" => ruby_platform,
+        "rust-target" => rust_target,
+        "sysroot-paths" => sysroot_paths,
+        "oci" => {
+          "tag" => image_tag,
+          "digest" => digest,
+          "reference" => reference
+        }
+      }
+    end
+
+    result = {
+      "version" => 1,
+      "toolchains" => cli_toolchains
+    }
+
+    FileUtils.mkdir_p("data/derived")
+    File.write("data/derived/rb-sys-cli.json", JSON.pretty_generate(result))
+
+    puts "✓ Generated data/derived/rb-sys-cli.json"
   end
 end
 

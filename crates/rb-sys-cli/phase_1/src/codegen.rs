@@ -1,16 +1,13 @@
-use std::env;
+use anyhow::{Context, Result};
+use serde_json::Value;
 use std::fs;
 use std::path::Path;
 
-fn main() {
-    println!("cargo:rerun-if-changed=../../data/toolchains.json");
+pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Result<()> {
+    let toolchains_content = fs::read_to_string(toolchains_json)
+        .with_context(|| format!("Failed to read {}", toolchains_json.display()))?;
 
-    let toolchains_path = Path::new("../../data/toolchains.json");
-    let toolchains_content =
-        fs::read_to_string(toolchains_path).expect("Failed to read toolchains.json");
-
-    let toolchains: serde_json::Value =
-        serde_json::from_str(&toolchains_content).expect("Failed to parse toolchains.json");
+    let toolchains: Value = serde_json::from_str(&toolchains_content)?;
 
     let mut generated_code = String::new();
     generated_code.push_str("// Auto-generated from data/toolchains.json\n");
@@ -36,7 +33,7 @@ fn main() {
 
             // Convert ruby-platform to PascalCase variant name
             let variant_name = ruby_platform
-                .split(|c| c == '-' || c == '_')
+                .split(['-', '_'])
                 .map(|s| {
                     let mut chars = s.chars();
                     match chars.next() {
@@ -170,7 +167,10 @@ fn main() {
 
     generated_code.push_str("}\n");
 
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("toolchain_mappings.rs");
-    fs::write(&dest_path, generated_code).expect("Failed to write generated code");
+    // Write to CLI crate's src directory
+    let dest_path = Path::new("crates/rb-sys-cli/src/generated_toolchain_mappings.rs");
+    fs::write(dest_path, generated_code)
+        .with_context(|| format!("Failed to write {}", dest_path.display()))?;
+
+    Ok(())
 }

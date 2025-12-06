@@ -7,6 +7,9 @@ members = [
     "crates/rb-sys-test-helpers",
     "crates/rb-sys-test-helpers-macros",
     "crates/rb-sys-cli",
+    "crates/rb-sys-cli/oci-digest-helper",
+    "crates/rb-sys-cli/phase_0",
+    "crates/rb-sys-cli/phase_1",
 ]
 exclude = [
     "examples/rust_reverse/ext/rust_reverse",

@@ -1,0 +1,17 @@
+[package]
+name = "rb-sys-cli-oci-digest-helper"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.71"
+license = "MIT OR Apache-2.0"
+description = "Helper to resolve OCI image tags to digests"
+authors = ["Ian Ker-Seymer <i.kerseymer@gmail.com>"]
+
+[[bin]]
+name = "rb-sys-cli-oci-digest-helper"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+oci-distribution = "0.11"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

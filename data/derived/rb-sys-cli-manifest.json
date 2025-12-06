@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "rake_compiler_dock_version": "1.10.0",
+  "platforms": {
+    "aarch64-linux": {
+      "ruby_platform": "aarch64-linux",
+      "rust_target": "aarch64-unknown-linux-gnu",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-aarch64-linux",
+      "image_digest": "sha256:09fe780e155eff89a6e6d09e10e770ebd88187d3c46dd6ac6cce451d9048c54f",
+      "ruby_versions": [],
+      "has_sysroot": true
+    },
+    "aarch64-linux-musl": {
+      "ruby_platform": "aarch64-linux-musl",
+      "rust_target": "aarch64-unknown-linux-musl",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-aarch64-linux-musl",
+      "image_digest": "sha256:d896ab4343d2c853d3446332711aafdea0dfaf630a1cc11f5ebf8ff80b1fe529",
+      "ruby_versions": [],
+      "has_sysroot": true
+    },
+    "aarch64-mingw-ucrt": {
+      "ruby_platform": "aarch64-mingw-ucrt",
+      "rust_target": "aarch64-pc-windows-gnullvm",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-aarch64-mingw-ucrt",
+      "image_digest": "sha256:21161c9681d343a50fd82df6201d8d2d3ab134b871bc8a221edddfbeeec693fe",
+      "ruby_versions": [],
+      "has_sysroot": false
+    },
+    "arm-linux": {
+      "ruby_platform": "arm-linux",
+      "rust_target": "arm-unknown-linux-gnueabihf",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-arm-linux",
+      "image_digest": "sha256:8346817e4fcc1e61f313407eb7a5cc5b0ba35bab5545883a1e687e9524144735",
+      "ruby_versions": [],
+      "has_sysroot": true
+    },
+    "arm64-darwin": {
+      "ruby_platform": "arm64-darwin",
+      "rust_target": "aarch64-apple-darwin",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-arm64-darwin",
+      "image_digest": "sha256:af0e7311b8ef4a1c4ced4e795b323821cdbab7d882512cb60aca000c5b8c41b4",
+      "ruby_versions": [],
+      "has_sysroot": false
+    },
+    "x64-mingw-ucrt": {
+      "ruby_platform": "x64-mingw-ucrt",
+      "rust_target": "x86_64-pc-windows-gnu",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x64-mingw-ucrt",
+      "image_digest": "sha256:54f5adedd85f391104753faafe118130f8f123ea24ab371025b44d6bf8f2da13",
+      "ruby_versions": [],
+      "has_sysroot": false
+    },
+    "x64-mingw32": {
+      "ruby_platform": "x64-mingw32",
+      "rust_target": "x86_64-pc-windows-gnu",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x64-mingw32",
+      "image_digest": "sha256:36e57953bbf8d2fe252bc6a2271bb8aa51a95744038fb13068754724a974262c",
+      "ruby_versions": [],
+      "has_sysroot": false
+    },
+    "x86_64-darwin": {
+      "ruby_platform": "x86_64-darwin",
+      "rust_target": "x86_64-apple-darwin",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x86_64-darwin",
+      "image_digest": "sha256:9de5ed3b6b430b9e797caefead8ba1bc4d6ed63a6f20ca06191f042a64fd5d07",
+      "ruby_versions": [],
+      "has_sysroot": false
+    },
+    "x86_64-linux": {
+      "ruby_platform": "x86_64-linux",
+      "rust_target": "x86_64-unknown-linux-gnu",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x86_64-linux",
+      "image_digest": "sha256:c6ec0a2fe56266b8642f01d4dc3891f6e49995bf0b9a641432a0cd2b86f71abb",
+      "ruby_versions": [],
+      "has_sysroot": true
+    },
+    "x86_64-linux-musl": {
+      "ruby_platform": "x86_64-linux-musl",
+      "rust_target": "x86_64-unknown-linux-musl",
+      "image": "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x86_64-linux-musl",
+      "image_digest": "sha256:341538a3786d0b90cc14ed9cab3f441a95b22c4420bb0cbcbe1e9fb5307c171e",
+      "ruby_versions": [],
+      "has_sysroot": true
+    }
+  }
+}

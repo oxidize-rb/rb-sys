@@ -86,11 +86,10 @@ impl<'a> ArgFilter<'a> {
         }
 
         // aarch64 macOS: rewrite -march=armv8-a to apple_m1
-        if self.target.arch == Arch::Aarch64 && self.target.os == Os::Darwin {
-            if arg == "-march=armv8-a" {
+        if self.target.arch == Arch::Aarch64 && self.target.os == Os::Darwin
+            && arg == "-march=armv8-a" {
                 return Some(vec!["-march=apple_m1".to_string()]);
             }
-        }
 
         // Pass through unchanged
         Some(vec![arg.to_string()])
@@ -251,22 +250,20 @@ impl<'a> ArgFilter<'a> {
         }
 
         // === Windows MinGW flags to remove ===
-        if self.target.os == Os::Windows {
-            if first == "--dynamicbase"
+        if self.target.os == Os::Windows
+            && (first == "--dynamicbase"
                 || first == "--disable-auto-image-base"
                 || first == "--large-address-aware"
-                || first == "--allow-shlib-undefined"
+                || first == "--allow-shlib-undefined")
             {
                 return None;
             }
-        }
 
         // === musl-specific flags to remove ===
-        if self.target.env == Env::Musl {
-            if first == "-melf_i386" {
+        if self.target.env == Env::Musl
+            && first == "-melf_i386" {
                 return None;
             }
-        }
 
         // === macOS-specific flags handling ===
         if self.target.os == Os::Darwin {

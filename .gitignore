@@ -6,3 +6,7 @@ gem/docs
 .DS_Store
 examples/rust_reverse/ext/rust_reverse/Cargo.lock
 book/src/https:/
+
+# rb-sys-cli build cache and embedded assets
+.cache/
+crates/rb-sys-cli/src/embedded/

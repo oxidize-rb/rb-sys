@@ -1,15 +1,14 @@
+mod assets;
 mod build;
-mod extractor;
 pub mod generated_mappings;
 mod platform;
 mod rbconfig_parser;
+mod sysroot;
 mod toolchain;
 mod zig;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use generated_mappings::Toolchain;
-use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
 
 /// Setup logging based on verbose flag or RUST_LOG environment variable
@@ -43,20 +42,9 @@ enum Commands {
     #[command(alias = "b")]
     Build(build::BuildConfig),
 
-    /// Extract Ruby headers and sysroot from rake-compiler-dock image
-    Extract {
-        /// Target platform (e.g., x86_64-linux, aarch64-linux) or full image reference
-        #[arg(value_name = "TARGET")]
-        target: String,
-    },
-
     /// List supported target platforms
     #[command(alias = "ls")]
-    List {
-        /// What to list
-        #[command(subcommand)]
-        what: ListCommands,
-    },
+    List,
 
     /// Cache management
     Cache {
@@ -82,15 +70,6 @@ enum Commands {
 }
 
 #[derive(Subcommand)]
-enum ListCommands {
-    /// List supported target platforms
-    Targets,
-
-    /// List cached Ruby versions
-    Rubies,
-}
-
-#[derive(Subcommand)]
 enum CacheCommands {
     /// Clear the cache directory
     Clear,
@@ -99,8 +78,7 @@ enum CacheCommands {
     Path,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Initialize logging based on verbose flag or RUST_LOG env var
@@ -112,25 +90,16 @@ async fn main() -> Result<()> {
             build::build(&config)?;
         }
 
-        Commands::Extract { target } => {
-            extract_target(&target).await?;
+        Commands::List => {
+            build::list_targets()?;
         }
-
-        Commands::List { what } => match what {
-            ListCommands::Targets => {
-                build::list_targets()?;
-            }
-            ListCommands::Rubies => {
-                list_cached_rubies()?;
-            }
-        },
 
         Commands::Cache { action } => match action {
             CacheCommands::Clear => {
-                extractor::clear_cache()?;
+                assets::clear_cache()?;
             }
             CacheCommands::Path => {
-                let cache_dir = extractor::get_cache_dir()?;
+                let cache_dir = assets::get_cache_dir()?;
                 println!("{}", cache_dir.display());
             }
         },
@@ -148,63 +117,6 @@ async fn main() -> Result<()> {
         Commands::ZigLd(args) => {
             zig::ld::run_ld(args)?;
         }
-    }
-
-    Ok(())
-}
-
-/// Extract Ruby headers and sysroot for a target
-async fn extract_target(target: &str) -> Result<()> {
-    // First, try to find a toolchain by ruby-platform or rust-target
-    let toolchain =
-        Toolchain::from_ruby_platform(target).or_else(|| Toolchain::from_rust_target(target));
-
-    match toolchain {
-        Some(tc) => {
-            // Found a known toolchain, use the new extraction with sysroot support
-            extractor::extract_for_toolchain(tc).await?;
-        }
-        None => {
-            // Check if it looks like a full image reference
-            if target.contains('/') || target.contains(':') {
-                // Looks like an image reference, use legacy extraction
-                extractor::extract_headers(target).await?;
-            } else {
-                // Unknown target
-                anyhow::bail!(
-                    "Unknown target: '{}'\n\nSupported targets:\n{}",
-                    target,
-                    Toolchain::all_supported()
-                        .map(|t| format!("  - {} ({})", t.ruby_platform(), t.rust_target()))
-                        .collect::<Vec<_>>()
-                        .join("\n")
-                );
-            }
-        }
-    }
-
-    Ok(())
-}
-
-fn list_cached_rubies() -> Result<()> {
-    info!("Listing cached Ruby versions");
-
-    println!("📚 Cached Ruby versions:\n");
-
-    let rubies = extractor::list_cached_rubies()?;
-
-    if rubies.is_empty() {
-        println!("   No cached Ruby versions found.");
-        println!("\n💡 Extract Ruby headers with:");
-        println!("   cargo gem extract <image-ref>");
-    } else {
-        for ruby in rubies {
-            println!("  • {}", ruby);
-        }
-        println!(
-            "\n📍 Cache location: {}",
-            extractor::get_cache_dir()?.display()
-        );
     }
 
     Ok(())

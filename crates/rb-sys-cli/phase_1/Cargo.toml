@@ -1,34 +1,27 @@
 [package]
-name = "rb-sys-cli"
+name = "rb-sys-cli-phase-1"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.71"
 license = "MIT OR Apache-2.0"
-description = "A CLI for easily cross-compiling Rust native gems"
+description = "Phase 1: Codegen and packaging for rb-sys-cli"
 authors = ["Ian Ker-Seymer <i.kerseymer@gmail.com>"]
 
 [[bin]]
-name = "cargo-gem"
+name = "rb-sys-cli-phase-1"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.5", features = ["derive", "env"] }
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-which = "6.0"
-tempfile = "3.10"
+zstd = "0.13"
 tar = "0.4"
-regex = "1"
+walkdir = "2"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.5", features = ["derive"] }
 dirs = "5.0"
-ruby-prism = "1.2.0"
-ruby-prism-sys = "1.2.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-indoc = "2.0"
-zstd = "0.13"
-chrono = { version = "0.4", features = ["serde"] }
-
-[dev-dependencies]
-assert_cmd = "2.0"
-predicates = "3.1"
+tracing-indicatif = "0.3"
+indicatif = "0.17"

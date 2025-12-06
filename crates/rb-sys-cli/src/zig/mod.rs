@@ -15,6 +15,7 @@ pub mod cc;
 pub mod cpu;
 pub mod env;
 pub mod ld;
+pub mod libc;
 pub mod shim;
 pub mod target;
 
@@ -23,3 +24,5 @@ pub mod target;
 pub use shim::generate_shims;
 #[allow(unused_imports)]
 pub use target::RustTarget;
+#[allow(unused_imports)]
+pub use libc::get_zig_libc_includes;

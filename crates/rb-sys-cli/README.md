@@ -2,6 +2,36 @@
 
 A CLI tool for easily cross-compiling Rust native gems using Zig as the C/C++ compiler.
 
+## Building from Source
+
+This crate uses a phase-based build system. Before building `rb-sys-cli`, you must run the preparation phases:
+
+### 1. Generate the pinned configuration
+
+```bash
+rake data:derive
+```
+
+This generates `data/derived/rb-sys-cli.json` with pinned OCI image digests.
+
+### 2. Prepare embedded assets (requires network/OCI access)
+
+```bash
+rake cli:prepare
+```
+
+This runs:
+- **phase_0**: Downloads OCI images and extracts to `~/.cache/rb-sys/cli` (with progress bars)
+- **phase_1**: Generates codegen and packages `src/embedded/` assets (with progress bars)
+
+Both phases use `tracing-indicatif` to show progress bars during long-running operations.
+
+### 3. Build the CLI
+
+```bash
+./script/run cargo build -p rb-sys-cli
+```
+
 ## Features
 
 - 🔨 **Easy cross-compilation**: Build native gems for any supported platform with a single command

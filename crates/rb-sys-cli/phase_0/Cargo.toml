@@ -1,0 +1,31 @@
+[package]
+name = "rb-sys-cli-phase-0"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.71"
+license = "MIT OR Apache-2.0"
+description = "Phase 0: OCI image download and extraction for rb-sys-cli"
+authors = ["Ian Ker-Seymer <i.kerseymer@gmail.com>"]
+
+[[bin]]
+name = "rb-sys-cli-phase-0"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync"] }
+futures = "0.3"
+oci-distribution = "0.11"
+zstd = "0.13"
+tar = "0.4"
+flate2 = "1.0"
+dirs = "5.0"
+walkdir = "2"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.5", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-indicatif = "0.3"
+indicatif = "0.17"

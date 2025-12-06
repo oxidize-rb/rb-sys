@@ -71,6 +71,7 @@ impl LinuxConfig {
     /// Check if the sysroot has the expected structure.
     ///
     /// Returns an error message if the sysroot is missing expected directories.
+    /// Note: usr/include is no longer required since we use zig libc for headers.
     pub fn validate(&self) -> Result<(), String> {
         if !self.sysroot.exists() {
             return Err(format!(
@@ -79,13 +80,10 @@ impl LinuxConfig {
             ));
         }
 
-        let usr_include = self.sysroot.join("usr/include");
-        if !usr_include.exists() {
-            return Err(format!(
-                "Sysroot is missing usr/include directory: {}",
-                usr_include.display()
-            ));
-        }
+        // Note: We no longer require usr/include in the sysroot because:
+        // - Basic C headers (stdio.h, etc.) come from zig libc
+        // - The sysroot now only needs to contain additional libs like OpenSSL, zlib
+        // - Ruby headers come from the extracted rubies directory (not the sysroot)
 
         Ok(())
     }

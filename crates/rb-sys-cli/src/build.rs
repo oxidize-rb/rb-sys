@@ -4,9 +4,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use tracing::{debug, info, instrument};
 
-use crate::extractor::get_cache_dir;
+use crate::assets::AssetManager;
+use crate::sysroot::SysrootManager;
 use crate::toolchain::ToolchainInfo;
-use crate::zig::{env::cargo_env, shim, target::RustTarget};
+use crate::zig::{env::cargo_env, libc as zig_libc, shim, target::RustTarget};
 
 /// Configuration for building a gem
 #[derive(Args, Debug, Clone)]
@@ -64,33 +65,28 @@ pub fn build(config: &BuildConfig) -> Result<()> {
     // Get the CLI binary path for shims to call back into
     let cli_path = std::env::current_exe().context("Failed to get current executable path")?;
 
-    // Determine sysroot path for Linux targets
-    let sysroot = if target.requires_sysroot() {
-        let cache_dir = get_cache_dir()?;
-        let sysroot_path = cache_dir
-            .join("rubies")
-            .join(&toolchain.ruby_platform)
-            .join("sysroot");
+    // Get target directory
+    let target_dir = get_target_dir(config.manifest_path.as_deref())?;
 
-        if !sysroot_path.exists() {
-            bail!(
-                "Sysroot not found for target: {}\n\n\
-                 The sysroot is required for Linux cross-compilation.\n\
-                 To extract it, run:\n\n  \
-                 cargo gem extract --target {}\n",
-                config.target,
-                config.target
-            );
-        }
+    // Mount sysroot for hermetic build (ALWAYS, for all targets)
+    let assets = AssetManager::new().context("Failed to initialize asset manager")?;
+    let sysroots = SysrootManager::new(assets);
+    let mounted_sysroot = sysroots
+        .mount(&config.target, &target_dir)
+        .context("Failed to mount sysroot")?;
+    
+    // Canonicalize sysroot path to absolute - shims need absolute paths
+    let sysroot_path = mounted_sysroot.path().canonicalize()
+        .with_context(|| format!("Failed to canonicalize sysroot path: {}", mounted_sysroot.path().display()))?;
 
-        Some(sysroot_path)
-    } else {
-        None
-    };
+    info!(
+        sysroot = %sysroot_path.display(),
+        "Mounted sysroot for hermetic build"
+    );
 
     // Validate macOS SDK for Darwin targets
-    if target.requires_sdkroot() {
-        if std::env::var("SDKROOT").is_err() {
+    if target.requires_sdkroot()
+        && std::env::var("SDKROOT").is_err() {
             bail!(
                 "SDKROOT environment variable is required for macOS cross-compilation.\n\n\
                  Set it to the path of your macOS SDK, for example:\n  \
@@ -99,12 +95,18 @@ pub fn build(config: &BuildConfig) -> Result<()> {
                  https://github.com/joseluisq/macosx-sdks"
             );
         }
-    }
 
     // Create hermetic build directory for shims
     // Structure: target/rb-sys/<target>/bin/
-    let target_dir = get_target_dir(config.manifest_path.as_deref())?;
     let shim_dir = target_dir.join("rb-sys").join(&config.target).join("bin");
+    
+    // Ensure shim directory exists and get absolute path
+    // This is necessary because build scripts may run from different working directories
+    std::fs::create_dir_all(&shim_dir)
+        .with_context(|| format!("Failed to create shim directory: {}", shim_dir.display()))?;
+    let shim_dir = shim_dir
+        .canonicalize()
+        .with_context(|| format!("Failed to canonicalize shim directory: {}", shim_dir.display()))?;
 
     // Generate shims
     info!(shim_dir = %shim_dir.display(), "Generating compiler shims");
@@ -113,12 +115,50 @@ pub fn build(config: &BuildConfig) -> Result<()> {
         &cli_path,
         &config.zig_path,
         &target,
-        sysroot.as_deref(),
+        Some(&sysroot_path),
     )
     .context("Failed to generate shims")?;
 
     // Get environment variables
-    let env_vars = cargo_env(&target, &shim_dir, sysroot.as_deref());
+    let mut env_vars = cargo_env(&target, &shim_dir, Some(&sysroot_path));
+
+    // Configure bindgen include paths for cross-compilation
+    let bindgen_args = build_bindgen_args(config, &sysroot_path)?;
+    debug!(bindgen_args = %bindgen_args, "Setting BINDGEN_EXTRA_CLANG_ARGS");
+    env_vars.insert("BINDGEN_EXTRA_CLANG_ARGS".to_string(), bindgen_args.clone());
+
+    // Set BOTH hyphen and underscore variants - different tools check different variants
+    // rb-sys checks: BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu (underscores)
+    // bindgen checks: BINDGEN_EXTRA_CLANG_ARGS_x86_64-unknown-linux-gnu (hyphens)
+    let key_underscore = format!(
+        "BINDGEN_EXTRA_CLANG_ARGS_{}",
+        config.target.replace('-', "_")
+    );
+    let key_hyphen = format!("BINDGEN_EXTRA_CLANG_ARGS_{}", config.target);
+    env_vars.insert(key_underscore, bindgen_args.clone());
+    env_vars.insert(key_hyphen, bindgen_args);
+
+    // Set PKG_CONFIG_PATH for sysroot libraries (OpenSSL, zlib, etc.)
+    let pkg_config_path = build_pkg_config_path(&sysroot_path);
+    if !pkg_config_path.is_empty() {
+        debug!(pkg_config_path = %pkg_config_path, "Setting PKG_CONFIG_PATH");
+        env_vars.insert("PKG_CONFIG_PATH".to_string(), pkg_config_path);
+        // Disable pkg-config from finding host libraries
+        env_vars.insert("PKG_CONFIG_SYSROOT_DIR".to_string(), sysroot_path.display().to_string());
+    }
+
+    // Override Ruby header paths to use extracted target Ruby (not host Ruby)
+    // This prevents rb-sys from using host nix Ruby headers when cross-compiling
+    let rubies_path = mounted_sysroot.rubies_path();
+    if let Some(ruby_headers) = find_ruby_headers(rubies_path) {
+        info!(
+            rubyhdrdir = %ruby_headers.hdrdir.display(),
+            rubyarchhdrdir = %ruby_headers.archhdrdir.display(),
+            "Using extracted Ruby headers for target"
+        );
+        env_vars.insert("RBCONFIG_rubyhdrdir".to_string(), ruby_headers.hdrdir.display().to_string());
+        env_vars.insert("RBCONFIG_rubyarchhdrdir".to_string(), ruby_headers.archhdrdir.display().to_string());
+    }
 
     // NOTE: We do NOT add the shim directory to PATH because that would affect
     // host builds (like proc-macros). Instead, we rely on the target-specific
@@ -193,9 +233,12 @@ pub fn build(config: &BuildConfig) -> Result<()> {
         .context("Failed to execute cargo build")?;
 
     if !status.success() {
+        // Keep the mounted sysroot for debugging
+        mounted_sysroot.keep();
         bail!("Cargo build failed with exit code: {:?}", status.code());
     }
 
+    // On success, mounted_sysroot will be dropped and cleaned up automatically
     info!("Build completed successfully");
 
     let profile_dir = if config.profile == "dev" {
@@ -273,6 +316,202 @@ pub fn list_targets() -> Result<()> {
     println!("\nUse: cargo gem build --target <rust-target>");
 
     Ok(())
+}
+
+/// Build BINDGEN_EXTRA_CLANG_ARGS for cross-compilation.
+///
+/// This sets up include paths in the correct order:
+/// 1. Zig libc includes (stdio.h, stdlib.h, etc.) - for non-Darwin targets
+/// 2. RCD sysroot includes (OpenSSL, zlib headers, etc.)
+/// 3. For Darwin: -isysroot=$SDKROOT instead of zig libc
+fn build_bindgen_args(config: &BuildConfig, sysroot_path: &Path) -> Result<String> {
+    let mut include_args: Vec<String> = vec![];
+
+    if zig_libc::requires_zig_libc(&config.target) {
+        // Get zig's libc include paths for the target
+        let zig_includes = zig_libc::get_zig_libc_includes(&config.zig_path, &config.target)
+            .with_context(|| {
+                format!(
+                    "Failed to get zig libc includes for target '{}'.\n\
+                     Make sure zig is installed and supports this target.",
+                    config.target
+                )
+            })?;
+
+        for path in &zig_includes {
+            include_args.push(format!("-I{}", path.display()));
+        }
+
+        info!(
+            target = %config.target,
+            include_count = zig_includes.len(),
+            "Using zig libc includes for bindgen"
+        );
+    } else if zig_libc::requires_sdkroot(&config.target) {
+        // Darwin targets use macOS SDK
+        if let Ok(sdkroot) = std::env::var("SDKROOT") {
+            include_args.push(format!("-isysroot{}", sdkroot));
+            info!(
+                target = %config.target,
+                sdkroot = %sdkroot,
+                "Using macOS SDK for bindgen"
+            );
+        }
+        // Note: If SDKROOT is not set, we already validated and bailed earlier
+    }
+
+    // Add RCD sysroot includes for additional libraries (OpenSSL, zlib, etc.)
+    let sysroot_include = sysroot_path.join("usr/include");
+    if sysroot_include.exists() {
+        include_args.push(format!("-I{}", sysroot_include.display()));
+        debug!(
+            sysroot_include = %sysroot_include.display(),
+            "Added sysroot include path"
+        );
+    }
+
+    // Combine with any existing BINDGEN_EXTRA_CLANG_ARGS from environment
+    let existing_args = std::env::var("BINDGEN_EXTRA_CLANG_ARGS").unwrap_or_default();
+    if !existing_args.is_empty() {
+        include_args.push(existing_args);
+    }
+
+    Ok(include_args.join(" "))
+}
+
+/// Build PKG_CONFIG_PATH for sysroot libraries.
+///
+/// This allows pkg-config based crates (like openssl-sys) to find
+/// libraries in the cross-compilation sysroot.
+fn build_pkg_config_path(sysroot_path: &Path) -> String {
+    let mut paths: Vec<String> = vec![];
+
+    // Standard pkg-config locations in sysroot
+    let pkgconfig_dirs = [
+        sysroot_path.join("usr/lib/pkgconfig"),
+        sysroot_path.join("usr/share/pkgconfig"),
+        sysroot_path.join("usr/lib/x86_64-linux-gnu/pkgconfig"),
+        sysroot_path.join("usr/lib/aarch64-linux-gnu/pkgconfig"),
+        sysroot_path.join("usr/lib/arm-linux-gnueabihf/pkgconfig"),
+    ];
+
+    for dir in &pkgconfig_dirs {
+        if dir.exists() {
+            paths.push(dir.display().to_string());
+        }
+    }
+
+    paths.join(":")
+}
+
+/// Ruby header paths for cross-compilation
+struct RubyHeaders {
+    /// Path to ruby.h and other main headers
+    hdrdir: PathBuf,
+    /// Path to architecture-specific headers (config.h)
+    archhdrdir: PathBuf,
+}
+
+/// Find Ruby headers in the extracted rubies directory for the target platform.
+///
+/// The extracted rubies are stored in:
+/// - <rubies_path>/<triplet>/ruby-<version>/include/ruby-<version>/
+/// - <rubies_path>/<triplet>/ruby-<version>/include/ruby-<version>/<arch>/
+///
+/// We look for the newest Ruby version available.
+fn find_ruby_headers(rubies_path: &Path) -> Option<RubyHeaders> {
+    if !rubies_path.exists() {
+        debug!(rubies_path = %rubies_path.display(), "Rubies directory not found");
+        return None;
+    }
+
+    // Find triplet directories (e.g., "x86_64-linux-gnu", "aarch64-linux-gnu")
+    let triplet_dirs: Vec<_> = std::fs::read_dir(rubies_path)
+        .ok()?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .collect();
+
+    for triplet_entry in triplet_dirs {
+        let triplet_dir = triplet_entry.path();
+
+        // Find ruby-<version> directories
+        let ruby_dirs: Vec<_> = std::fs::read_dir(&triplet_dir)
+            .ok()?
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.path().is_dir()
+                    && e.file_name()
+                        .to_string_lossy()
+                        .starts_with("ruby-")
+            })
+            .collect();
+
+        // Sort by version (descending) to get newest first
+        let mut ruby_dirs: Vec<_> = ruby_dirs.into_iter().map(|e| e.path()).collect();
+        ruby_dirs.sort_by(|a, b| b.cmp(a));
+
+        for ruby_dir in ruby_dirs {
+            let include_dir = ruby_dir.join("include");
+            if !include_dir.exists() {
+                continue;
+            }
+
+            // Find ruby-<major>.<minor>.0 directory inside include
+            let ruby_include_dirs: Vec<_> = std::fs::read_dir(&include_dir)
+                .ok()?
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.path().is_dir()
+                        && e.file_name()
+                            .to_string_lossy()
+                            .starts_with("ruby-")
+                })
+                .collect();
+
+            for ruby_include_entry in ruby_include_dirs {
+                let hdrdir = ruby_include_entry.path();
+
+                // Check if ruby.h exists
+                if !hdrdir.join("ruby.h").exists() {
+                    continue;
+                }
+
+                // Find arch-specific directory (contains config.h)
+                // Look for directories that might match the triplet
+                let arch_dirs: Vec<_> = std::fs::read_dir(&hdrdir)
+                    .ok()?
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().is_dir())
+                    .filter(|e| {
+                        let name = e.file_name().to_string_lossy().to_string();
+                        // Match patterns like "x86_64-linux", "aarch64-linux-gnu", etc.
+                        name.contains("linux") || name.contains("darwin") || name.contains("mingw")
+                    })
+                    .collect();
+
+                if let Some(arch_entry) = arch_dirs.first() {
+                    let archhdrdir = arch_entry.path();
+
+                    // Verify config.h exists
+                    if archhdrdir.join("ruby/config.h").exists() || archhdrdir.join("config.h").exists() {
+                        debug!(
+                            hdrdir = %hdrdir.display(),
+                            archhdrdir = %archhdrdir.display(),
+                            "Found Ruby headers"
+                        );
+                        return Some(RubyHeaders { hdrdir, archhdrdir });
+                    }
+                }
+            }
+        }
+    }
+
+    debug!(
+        rubies_path = %rubies_path.display(),
+        "No Ruby headers found in rubies directory"
+    );
+    None
 }
 
 #[cfg(test)]
