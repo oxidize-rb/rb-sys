@@ -6,15 +6,34 @@
 
 use super::target::{Arch, Env, Os, RustTarget};
 
+/// Mode for filtering linker arguments.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LinkMode {
+    /// Direct linker invocation (ld.lld, ld64.lld) - strip -Wl, prefix
+    #[default]
+    Direct,
+    /// Compiler driver as linker (zig cc) - preserve -Wl, prefix
+    Driver,
+}
+
 /// Filters and transforms compiler/linker arguments for Zig compatibility.
 pub struct ArgFilter<'a> {
     target: &'a RustTarget,
+    link_mode: LinkMode,
 }
 
 impl<'a> ArgFilter<'a> {
-    /// Create a new argument filter for the given target.
+    /// Create a new argument filter for the given target with default Direct mode.
     pub fn new(target: &'a RustTarget) -> Self {
-        Self { target }
+        Self {
+            target,
+            link_mode: LinkMode::Direct,
+        }
+    }
+
+    /// Create a new argument filter with specified link mode.
+    pub fn with_link_mode(target: &'a RustTarget, link_mode: LinkMode) -> Self {
+        Self { target, link_mode }
     }
 
     /// Filter compiler (CC/CXX) arguments.
@@ -292,8 +311,17 @@ impl<'a> ArgFilter<'a> {
             }
         }
 
-        // Pass through the inner args (without -Wl, prefix) since we're calling ld directly
-        Some(parts.iter().map(|s| s.to_string()).collect())
+        // === Mode-dependent output ===
+        match self.link_mode {
+            LinkMode::Direct => {
+                // Strip -Wl, and return inner parts (current behavior for ld.lld)
+                Some(parts.iter().map(|s| s.to_string()).collect())
+            }
+            LinkMode::Driver => {
+                // Preserve -Wl, prefix for compiler driver (zig cc)
+                Some(vec![format!("-Wl,{}", inner)])
+            }
+        }
     }
 }
 
@@ -327,6 +355,168 @@ pub fn filter_ar_args(args: &[String]) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // === LinkMode tests ===
+
+    #[test]
+    fn test_windows_driver_mode_preserves_wl_out_implib() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&["-Wl,--out-implib,libfoo.lib".to_string()]);
+
+        assert_eq!(result, vec!["-Wl,--out-implib,libfoo.lib"]);
+    }
+
+    #[test]
+    fn test_windows_driver_mode_preserves_wl_def() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&["-Wl,--def,exports.def".to_string()]);
+
+        assert_eq!(result, vec!["-Wl,--def,exports.def"]);
+    }
+
+    #[test]
+    fn test_windows_driver_mode_preserves_multiple_wl_flags() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&[
+            "-Wl,--out-implib,libfoo.lib".to_string(),
+            "-lkernel32".to_string(),
+            "-Wl,--subsystem,windows".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            vec![
+                "-Wl,--out-implib,libfoo.lib",
+                "-lkernel32",
+                "-Wl,--subsystem,windows",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_windows_driver_mode_still_removes_bad_flags() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&[
+            "-Wl,--dynamicbase".to_string(),
+            "-Wl,--out-implib,libfoo.lib".to_string(),
+            "-Wl,--disable-auto-image-base".to_string(),
+        ]);
+
+        assert_eq!(result, vec!["-Wl,--out-implib,libfoo.lib"]);
+    }
+
+    #[test]
+    fn test_windows_driver_mode_removes_eh_frame_hdr() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&[
+            "-Wl,--eh-frame-hdr".to_string(),
+            "-lkernel32".to_string(),
+        ]);
+
+        assert_eq!(result, vec!["-lkernel32"]);
+    }
+
+    #[test]
+    fn test_linux_direct_mode_strips_wl_prefix() {
+        let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Direct);
+
+        let result = filter.filter_link_args(&["-Wl,-rpath,/usr/lib".to_string()]);
+
+        assert_eq!(result, vec!["-rpath", "/usr/lib"]);
+    }
+
+    #[test]
+    fn test_linux_direct_mode_strips_wl_multiple_parts() {
+        let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Direct);
+
+        let result = filter.filter_link_args(&[
+            "-Wl,-soname,libfoo.so.1".to_string(),
+            "-lfoo".to_string(),
+        ]);
+
+        assert_eq!(result, vec!["-soname", "libfoo.so.1", "-lfoo"]);
+    }
+
+    #[test]
+    fn test_darwin_direct_mode_strips_wl_prefix() {
+        let target = RustTarget::parse("aarch64-apple-darwin").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Direct);
+
+        let result = filter.filter_link_args(&["-Wl,-framework,CoreFoundation".to_string()]);
+
+        assert_eq!(result, vec!["-framework", "CoreFoundation"]);
+    }
+
+    #[test]
+    fn test_default_filter_uses_direct_mode() {
+        let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
+        let filter = ArgFilter::new(&target);
+
+        let result = filter.filter_link_args(&["-Wl,-rpath,/usr/lib".to_string()]);
+
+        assert_eq!(result, vec!["-rpath", "/usr/lib"]);
+    }
+
+    #[test]
+    fn test_aarch64_windows_gnullvm_driver_mode() {
+        let target = RustTarget::parse("aarch64-pc-windows-gnullvm").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&[
+            "-Wl,--out-implib,libfoo.lib".to_string(),
+            "-lgcc_eh".to_string(),
+        ]);
+
+        assert_eq!(result, vec!["-Wl,--out-implib,libfoo.lib", "-lc++"]);
+    }
+
+    #[test]
+    fn test_non_wl_args_unchanged_in_driver_mode() {
+        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
+
+        let result = filter.filter_link_args(&[
+            "-L/path/to/lib".to_string(),
+            "-lkernel32".to_string(),
+            "-o".to_string(),
+            "output.dll".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            vec!["-L/path/to/lib", "-lkernel32", "-o", "output.dll"]
+        );
+    }
+
+    #[test]
+    fn test_non_wl_args_unchanged_in_direct_mode() {
+        let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
+        let filter = ArgFilter::with_link_mode(&target, LinkMode::Direct);
+
+        let result = filter.filter_link_args(&[
+            "-L/path/to/lib".to_string(),
+            "-lfoo".to_string(),
+            "-o".to_string(),
+            "output.so".to_string(),
+        ]);
+
+        assert_eq!(
+            result,
+            vec!["-L/path/to/lib", "-lfoo", "-o", "output.so"]
+        );
+    }
 
     // === Global filter tests ===
 

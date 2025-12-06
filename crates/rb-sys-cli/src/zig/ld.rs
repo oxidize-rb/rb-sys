@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use tracing::{debug, info};
 
-use super::args::ArgFilter;
+use super::args::{ArgFilter, LinkMode};
 use super::target::{Arch, Os, RustTarget};
 use crate::platform::LinuxConfig;
 
@@ -70,8 +70,8 @@ fn run_ld_via_cc(args: ZigLdArgs, target: &RustTarget) -> Result<()> {
     cmd.arg("-target").arg(target.to_zig_target());
     cmd.arg("-fno-sanitize=all");
 
-    // Filter and add user arguments
-    let filter = ArgFilter::new(target);
+    // Filter and add user arguments with Driver mode to preserve -Wl, flags
+    let filter = ArgFilter::with_link_mode(target, LinkMode::Driver);
     let filtered_args = filter.filter_link_args(&args.args);
 
     debug!(
