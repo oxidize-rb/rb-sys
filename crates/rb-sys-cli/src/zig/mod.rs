@@ -13,6 +13,7 @@ pub mod ar;
 pub mod args;
 pub mod cc;
 pub mod cpu;
+pub mod dlltool;
 pub mod env;
 pub mod ld;
 pub mod libc;

@@ -110,7 +110,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
 
     // Generate shims
     info!(shim_dir = %shim_dir.display(), "Generating compiler shims");
-    shim::generate_shims(
+    let shim_paths = shim::generate_shims(
         &shim_dir,
         &cli_path,
         &config.zig_path,
@@ -120,7 +120,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
     .context("Failed to generate shims")?;
 
     // Get environment variables
-    let mut env_vars = cargo_env(&target, &shim_dir, Some(&sysroot_path));
+    let mut env_vars = cargo_env(&target, &shim_paths, Some(&sysroot_path));
 
     // Configure bindgen include paths for cross-compilation
     let bindgen_args = build_bindgen_args(config, &sysroot_path)?;

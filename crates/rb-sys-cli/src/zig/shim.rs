@@ -21,13 +21,16 @@ use super::target::RustTarget;
 /// - `c++` - C++ compiler shim
 /// - `ar`  - Archiver shim
 /// - `ld`  - Linker shim
+/// - `dlltool` - dlltool emulator shim (Windows only)
+/// 
+/// Returns the ShimPaths for the generated shims.
 pub fn generate_shims(
     shim_dir: &Path,
     cli_path: &Path,
     zig_path: &Path,
     target: &RustTarget,
     sysroot: Option<&Path>,
-) -> Result<()> {
+) -> Result<ShimPaths> {
     // Ensure shim directory exists
     fs::create_dir_all(shim_dir).context("Failed to create shim directory")?;
 
@@ -51,7 +54,27 @@ pub fn generate_shims(
     let ld_path = shim_dir.join("ld");
     write_executable(&ld_path, &ld_content)?;
 
-    Ok(())
+    // Generate dlltool shim for Windows targets
+    let has_dlltool = if target.os == super::target::Os::Windows {
+        let dlltool_content = generate_dlltool_shim(cli_path, zig_path, target);
+        let dlltool_path = shim_dir.join("dlltool");
+        write_executable(&dlltool_path, &dlltool_content)?;
+
+        // Create arch-prefixed symlink (e.g., x86_64-w64-mingw32-dlltool -> dlltool)
+        let prefix = mingw_prefix(target);
+        let prefixed_path = shim_dir.join(format!("{}-dlltool", prefix));
+        
+        #[cfg(unix)]
+        {
+            let _ = std::os::unix::fs::symlink("dlltool", &prefixed_path);
+        }
+        
+        true
+    } else {
+        false
+    };
+
+    Ok(ShimPaths::new(shim_dir, has_dlltool))
 }
 
 /// Generate the CC (C compiler) shim script.
@@ -145,6 +168,35 @@ exec '{cli_path}' zig-ld \
     )
 }
 
+/// Generate the dlltool (import library builder) shim script.
+fn generate_dlltool_shim(
+    cli_path: &Path,
+    zig_path: &Path,
+    target: &RustTarget,
+) -> String {
+    format!(
+        r#"#!/usr/bin/env bash
+exec '{cli_path}' zig-dlltool \
+    --target '{target}' \
+    --zig-path '{zig_path}' \
+    -- "$@"
+"#,
+        cli_path = cli_path.display(),
+        target = target.raw,
+        zig_path = zig_path.display(),
+    )
+}
+
+/// Get the MinGW triple prefix for a target (used for arch-prefixed tool names).
+fn mingw_prefix(target: &RustTarget) -> &'static str {
+    use super::target::Arch;
+    match target.arch {
+        Arch::X86_64 => "x86_64-w64-mingw32",
+        Arch::Aarch64 => "aarch64-w64-mingw32",
+        Arch::Arm => "arm-w64-mingw32",
+    }
+}
+
 /// Write content to a file and make it executable.
 fn write_executable(path: &Path, content: &str) -> Result<()> {
     fs::write(path, content)
@@ -166,16 +218,23 @@ pub struct ShimPaths {
     pub cxx: std::path::PathBuf,
     pub ar: std::path::PathBuf,
     pub ld: std::path::PathBuf,
+    pub dlltool: Option<std::path::PathBuf>,
 }
 
 impl ShimPaths {
     /// Create shim paths for a given directory.
-    pub fn new(shim_dir: &Path) -> Self {
+    /// dlltool is only created for Windows targets.
+    pub fn new(shim_dir: &Path, has_dlltool: bool) -> Self {
         Self {
             cc: shim_dir.join("cc"),
             cxx: shim_dir.join("c++"),
             ar: shim_dir.join("ar"),
             ld: shim_dir.join("ld"),
+            dlltool: if has_dlltool {
+                Some(shim_dir.join("dlltool"))
+            } else {
+                None
+            },
         }
     }
 }
@@ -267,13 +326,26 @@ mod tests {
     }
 
     #[test]
-    fn test_shim_paths() {
+    fn test_shim_paths_without_dlltool() {
         let shim_dir = PathBuf::from("/tmp/shims");
-        let paths = ShimPaths::new(&shim_dir);
+        let paths = ShimPaths::new(&shim_dir, false);
 
         assert_eq!(paths.cc, PathBuf::from("/tmp/shims/cc"));
         assert_eq!(paths.cxx, PathBuf::from("/tmp/shims/c++"));
         assert_eq!(paths.ar, PathBuf::from("/tmp/shims/ar"));
         assert_eq!(paths.ld, PathBuf::from("/tmp/shims/ld"));
+        assert_eq!(paths.dlltool, None);
+    }
+
+    #[test]
+    fn test_shim_paths_with_dlltool() {
+        let shim_dir = PathBuf::from("/tmp/shims");
+        let paths = ShimPaths::new(&shim_dir, true);
+
+        assert_eq!(paths.cc, PathBuf::from("/tmp/shims/cc"));
+        assert_eq!(paths.cxx, PathBuf::from("/tmp/shims/c++"));
+        assert_eq!(paths.ar, PathBuf::from("/tmp/shims/ar"));
+        assert_eq!(paths.ld, PathBuf::from("/tmp/shims/ld"));
+        assert_eq!(paths.dlltool, Some(PathBuf::from("/tmp/shims/dlltool")));
     }
 }

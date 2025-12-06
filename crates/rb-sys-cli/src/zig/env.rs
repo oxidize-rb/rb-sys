@@ -19,11 +19,10 @@ use crate::platform::WindowsConfig;
 /// - Cross-compilation signals
 pub fn cargo_env(
     target: &RustTarget,
-    shim_dir: &Path,
+    shim_paths: &ShimPaths,
     sysroot: Option<&Path>,
 ) -> HashMap<String, String> {
     let mut env = HashMap::new();
-    let shim_paths = ShimPaths::new(shim_dir);
 
     // Convert target triple to environment variable format
     let triple_underscore = target.raw.replace('-', "_");
@@ -77,6 +76,14 @@ pub fn cargo_env(
             for (key, value) in WindowsConfig::env_vars() {
                 env.insert(key, value);
             }
+            
+            // Set DLLTOOL for build scripts that need it
+            if let Some(dlltool) = &shim_paths.dlltool {
+                env.insert(
+                    format!("DLLTOOL_{}", triple_underscore),
+                    dlltool.display().to_string(),
+                );
+            }
         }
     }
 
@@ -93,8 +100,9 @@ mod tests {
         let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
         let shim_dir = PathBuf::from("/tmp/shims");
         let sysroot = PathBuf::from("/path/to/sysroot");
+        let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_dir, Some(&sysroot));
+        let env = cargo_env(&target, &shim_paths, Some(&sysroot));
 
         // Check compiler paths
         assert_eq!(
@@ -131,8 +139,9 @@ mod tests {
     fn test_cargo_env_windows() {
         let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
         let shim_dir = PathBuf::from("/tmp/shims");
+        let shim_paths = ShimPaths::new(&shim_dir, true);
 
-        let env = cargo_env(&target, &shim_dir, None);
+        let env = cargo_env(&target, &shim_paths, None);
 
         // Check Windows-specific env vars
         assert_eq!(
@@ -145,14 +154,21 @@ mod tests {
             env.get("CC_x86_64_pc_windows_gnu"),
             Some(&"/tmp/shims/cc".to_string())
         );
+        
+        // Check dlltool is set for Windows
+        assert_eq!(
+            env.get("DLLTOOL_x86_64_pc_windows_gnu"),
+            Some(&"/tmp/shims/dlltool".to_string())
+        );
     }
 
     #[test]
     fn test_cargo_env_macos() {
         let target = RustTarget::parse("aarch64-apple-darwin").unwrap();
         let shim_dir = PathBuf::from("/tmp/shims");
+        let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_dir, None);
+        let env = cargo_env(&target, &shim_paths, None);
 
         // Check compiler paths
         assert_eq!(
@@ -169,8 +185,9 @@ mod tests {
         let target = RustTarget::parse("x86_64-unknown-linux-musl").unwrap();
         let shim_dir = PathBuf::from("/tmp/shims");
         let sysroot = PathBuf::from("/musl/sysroot");
+        let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_dir, Some(&sysroot));
+        let env = cargo_env(&target, &shim_paths, Some(&sysroot));
 
         assert_eq!(
             env.get("CC_x86_64_unknown_linux_musl"),

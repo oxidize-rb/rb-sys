@@ -67,6 +67,10 @@ enum Commands {
     /// Internal: Zig LD wrapper (called by shims)
     #[command(hide = true)]
     ZigLd(zig::ld::ZigLdArgs),
+
+    /// Internal: Zig dlltool wrapper (called by shims)
+    #[command(hide = true)]
+    ZigDlltool(zig::dlltool::ZigDlltoolArgs),
 }
 
 #[derive(Subcommand)]
@@ -116,6 +120,9 @@ fn main() -> Result<()> {
         }
         Commands::ZigLd(args) => {
             zig::ld::run_ld(args)?;
+        }
+        Commands::ZigDlltool(args) => {
+            zig::dlltool::run_dlltool(args)?;
         }
     }
 

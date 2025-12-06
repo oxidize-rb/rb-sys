@@ -36,12 +36,8 @@ pub struct ZigLdArgs {
 
 /// Run the zig-ld wrapper.
 ///
-/// This function:
-/// 1. Parses and validates the target
-/// 2. Determines the correct linker flavor (ld.lld, ld64.lld, etc.)
-/// 3. Adds the appropriate emulation flag
-/// 4. Filters and transforms the input arguments
-/// 5. Executes the linker
+/// For Windows GNU targets, uses `zig cc` as a linker driver.
+/// For other targets, uses direct linker invocation (ld.lld, ld64.lld).
 pub fn run_ld(args: ZigLdArgs) -> Result<()> {
     let target = RustTarget::parse(&args.target)?;
 
@@ -54,25 +50,72 @@ pub fn run_ld(args: ZigLdArgs) -> Result<()> {
     // Validate platform requirements
     validate_requirements(&target, &args)?;
 
+    match target.os {
+        Os::Windows => {
+            // Windows GNU uses zig cc as linker driver (like cargo-zigbuild)
+            run_ld_via_cc(args, &target)
+        }
+        _ => {
+            // Linux/Darwin use direct linker invocation
+            run_ld_direct(args, &target)
+        }
+    }
+}
+
+/// Run linker via `zig cc` (used for Windows GNU targets).
+fn run_ld_via_cc(args: ZigLdArgs, target: &RustTarget) -> Result<()> {
+    // Build zig cc command
+    let mut cmd = Command::new(&args.zig_path);
+    cmd.arg("cc");
+    cmd.arg("-target").arg(target.to_zig_target());
+    cmd.arg("-fno-sanitize=all");
+
+    // Filter and add user arguments
+    let filter = ArgFilter::new(target);
+    let filtered_args = filter.filter_link_args(&args.args);
+
+    debug!(
+        original_args = ?args.args,
+        filtered_args = ?filtered_args,
+        "Filtered linker arguments for cc driver"
+    );
+
+    for arg in filtered_args {
+        cmd.arg(arg);
+    }
+
+    info!(command = ?cmd, "Executing zig cc as linker driver");
+
+    let status = cmd.status().context("Failed to execute zig cc")?;
+
+    if !status.success() {
+        std::process::exit(status.code().unwrap_or(1));
+    }
+
+    Ok(())
+}
+
+/// Run linker directly (used for Linux and macOS targets).
+fn run_ld_direct(args: ZigLdArgs, target: &RustTarget) -> Result<()> {
     // Build the zig command
     let mut cmd = Command::new(&args.zig_path);
 
     // Select the appropriate linker flavor
-    let linker_flavor = linker_flavor(&target);
+    let linker_flavor = linker_flavor(target);
     cmd.arg(linker_flavor);
     debug!(linker_flavor = %linker_flavor, "Using linker flavor");
 
     // Add emulation flag for ELF targets
-    if let Some(emulation) = linker_emulation(&target) {
+    if let Some(emulation) = linker_emulation(target) {
         cmd.arg("-m").arg(emulation);
         debug!(emulation = %emulation, "Using linker emulation");
     }
 
     // Add platform-specific linker arguments
-    add_platform_args(&mut cmd, &target, &args)?;
+    add_platform_args(&mut cmd, target, &args)?;
 
     // Filter and add user arguments
-    let filter = ArgFilter::new(&target);
+    let filter = ArgFilter::new(target);
     let filtered_args = filter.filter_link_args(&args.args);
 
     debug!(
@@ -134,12 +177,12 @@ fn validate_requirements(target: &RustTarget, args: &ZigLdArgs) -> Result<()> {
 ///
 /// - Linux: ld.lld (ELF linker)
 /// - macOS: ld64.lld (Mach-O linker)
-/// - Windows: lld-link (PE/COFF linker, MSVC-compatible)
+/// - Windows: not used (uses zig cc as linker driver instead)
 fn linker_flavor(target: &RustTarget) -> &'static str {
     match target.os {
         Os::Darwin => "ld64.lld",
         Os::Linux => "ld.lld",
-        Os::Windows => "lld-link",
+        Os::Windows => unreachable!("Windows should use zig cc as linker driver"),
     }
 }
 
@@ -209,12 +252,6 @@ mod tests {
     }
 
     #[test]
-    fn test_linker_flavor_windows() {
-        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
-        assert_eq!(linker_flavor(&target), "lld-link");
-    }
-
-    #[test]
     fn test_linker_emulation_linux_x86_64() {
         let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
         assert_eq!(linker_emulation(&target), Some("elf_x86_64"));
@@ -236,18 +273,6 @@ mod tests {
     fn test_linker_emulation_darwin() {
         let target = RustTarget::parse("x86_64-apple-darwin").unwrap();
         assert_eq!(linker_emulation(&target), None);
-    }
-
-    #[test]
-    fn test_linker_emulation_windows_x86_64() {
-        let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
-        assert_eq!(linker_emulation(&target), None); // lld-link doesn't use -m
-    }
-
-    #[test]
-    fn test_linker_emulation_windows_aarch64() {
-        let target = RustTarget::parse("aarch64-pc-windows-gnullvm").unwrap();
-        assert_eq!(linker_emulation(&target), None); // lld-link doesn't use -m
     }
 
     #[test]
