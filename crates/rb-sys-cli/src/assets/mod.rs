@@ -2,10 +2,8 @@ pub mod manifest;
 
 use anyhow::{Context, Result};
 use manifest::Manifest;
-use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 
 /// Embedded compressed asset archive
 static EMBEDDED_ASSETS: &[u8] = include_bytes!("../embedded/assets.tar.zst");
@@ -17,7 +15,6 @@ static EMBEDDED_MANIFEST: &str = include_str!("../embedded/manifest.json");
 pub struct AssetManager {
     cache_dir: PathBuf,
     manifest: Manifest,
-    extracted: Mutex<HashSet<String>>,
 }
 
 impl AssetManager {
@@ -30,36 +27,7 @@ impl AssetManager {
         Ok(Self {
             cache_dir,
             manifest,
-            extracted: Mutex::new(HashSet::new()),
         })
-    }
-
-    /// Get sysroot path for a rust target, extracting if needed
-    pub fn sysroot(&self, rust_target: &str) -> Result<Option<PathBuf>> {
-        let platform = self.manifest.platform_for_rust_target(rust_target)?;
-
-        if !platform.has_sysroot {
-            return Ok(None);
-        }
-
-        self.ensure_extracted(&platform.ruby_platform)?;
-
-        Ok(Some(
-            self.cache_dir
-                .join(&platform.ruby_platform)
-                .join("sysroot"),
-        ))
-    }
-
-    /// Get Ruby headers path for a rust target
-    pub fn ruby_headers(&self, rust_target: &str) -> Result<PathBuf> {
-        let platform = self.manifest.platform_for_rust_target(rust_target)?;
-        self.ensure_extracted(&platform.ruby_platform)?;
-
-        Ok(self
-            .cache_dir
-            .join(&platform.ruby_platform)
-            .join("rubies"))
     }
 
     /// Get the manifest
@@ -120,90 +88,6 @@ impl AssetManager {
         Ok(())
     }
 
-    /// Ensure a platform is extracted (public for SysrootManager)
-    pub fn ensure_extracted(&self, ruby_platform: &str) -> Result<()> {
-        // Check if already extracted in this session
-        {
-            let extracted = self.extracted.lock().unwrap();
-            if extracted.contains(ruby_platform) {
-                return Ok(());
-            }
-        }
-
-        // Check if marker file exists
-        let marker = self
-            .cache_dir
-            .join(ruby_platform)
-            .join(".extracted");
-
-        if marker.exists() {
-            // Already extracted in a previous run
-            let mut extracted = self.extracted.lock().unwrap();
-            extracted.insert(ruby_platform.to_string());
-            return Ok(());
-        }
-
-        // Extract from embedded archive
-        self.extract_platform(ruby_platform)?;
-
-        // Write marker
-        fs::create_dir_all(marker.parent().unwrap())?;
-        fs::write(&marker, "")?;
-
-        // Mark as extracted
-        let mut extracted = self.extracted.lock().unwrap();
-        extracted.insert(ruby_platform.to_string());
-
-        Ok(())
-    }
-
-    /// Extract a platform from the embedded archive
-    fn extract_platform(&self, ruby_platform: &str) -> Result<()> {
-        let decoder = zstd::Decoder::new(EMBEDDED_ASSETS)
-            .context("Failed to create zstd decoder")?;
-        let mut archive = tar::Archive::new(decoder);
-
-        let prefix = format!("{ruby_platform}/");
-
-        for entry in archive.entries().context("Failed to read tar entries")? {
-            let mut entry = entry.context("Failed to read tar entry")?;
-            let path = entry.path().context("Failed to get entry path")?;
-            let path_str = path.to_string_lossy();
-
-            // Only extract files for this platform
-            if path_str.starts_with(&prefix) {
-                let dest = self.cache_dir.join(&*path);
-
-                if entry.header().entry_type().is_dir() {
-                    fs::create_dir_all(&dest).with_context(|| {
-                        format!("Failed to create directory: {}", dest.display())
-                    })?;
-                } else {
-                    if let Some(parent) = dest.parent() {
-                        fs::create_dir_all(parent).with_context(|| {
-                            format!("Failed to create parent directory: {}", parent.display())
-                        })?;
-                    }
-                    let mut file = fs::File::create(&dest)
-                        .with_context(|| format!("Failed to create file: {}", dest.display()))?;
-                    std::io::copy(&mut entry, &mut file)
-                        .with_context(|| format!("Failed to write file: {}", dest.display()))?;
-
-                    // Preserve permissions on Unix
-                    #[cfg(unix)]
-                    {
-                        use std::os::unix::fs::PermissionsExt;
-                        if let Ok(mode) = entry.header().mode() {
-                            let perms = fs::Permissions::from_mode(mode);
-                            let _ = fs::set_permissions(&dest, perms);
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
 }
 
 /// Get the runtime cache directory

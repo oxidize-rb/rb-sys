@@ -35,9 +35,11 @@ pub type ZigIndex = HashMap<String, ZigVersionInfo>;
 pub struct ZigVersionInfo {
     /// Version string (e.g., "0.15.2")
     #[serde(default)]
+    #[allow(dead_code)]
     pub version: Option<String>,
     /// Release date
     #[serde(default)]
+    #[allow(dead_code)]
     pub date: Option<String>,
     /// Platform-specific download info, keyed by platform (e.g., "x86_64-linux")
     #[serde(flatten)]

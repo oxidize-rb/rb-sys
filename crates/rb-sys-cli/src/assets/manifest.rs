@@ -28,11 +28,4 @@ impl Manifest {
             .find(|p| p.rust_target == rust_target)
             .with_context(|| format!("No platform found for rust target: {rust_target}"))
     }
-
-    /// Find platform info by ruby platform
-    pub fn platform_for_ruby_platform(&self, ruby_platform: &str) -> Result<&PlatformInfo> {
-        self.platforms
-            .get(ruby_platform)
-            .with_context(|| format!("No platform found for ruby platform: {ruby_platform}"))
-    }
 }

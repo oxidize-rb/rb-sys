@@ -67,8 +67,6 @@ mod embedded {
         all(target_os = "windows", target_arch = "x86_64"),
     )))]
     pub static ZIG_ARCHIVE: &[u8] = &[];
-
-    pub static ZIG_MANIFEST: &str = include_str!("../embedded/tools/zig.json");
 }
 
 /// Zig tool information from the embedded manifest
@@ -103,11 +101,6 @@ impl ZigManager {
     pub fn new() -> Result<Self> {
         let cache_dir = get_tools_cache_dir()?;
         Ok(Self { cache_dir })
-    }
-
-    /// Create a new ZigManager with a custom cache directory.
-    pub fn with_cache_dir(cache_dir: PathBuf) -> Self {
-        Self { cache_dir }
     }
 
     /// Check if Zig is bundled in this build.
@@ -305,19 +298,6 @@ impl ZigManager {
     fn extract_zig(&self, _dest_dir: &Path) -> Result<()> {
         bail!("Zig extraction not available - bundled-zig feature not enabled")
     }
-
-    /// Get the embedded Zig manifest, if available.
-    #[cfg(feature = "bundled-zig")]
-    pub fn manifest() -> Result<Option<ZigManifestFile>> {
-        let manifest: ZigManifestFile = serde_json::from_str(embedded::ZIG_MANIFEST)
-            .context("Failed to parse embedded Zig manifest")?;
-        Ok(Some(manifest))
-    }
-
-    #[cfg(not(feature = "bundled-zig"))]
-    pub fn manifest() -> Result<Option<ZigManifestFile>> {
-        Ok(None)
-    }
 }
 
 /// Get the tools cache directory.
@@ -400,12 +380,6 @@ mod tests {
                 || HOST_PLATFORM == "unsupported",
             "Unexpected HOST_PLATFORM: {HOST_PLATFORM}"
         );
-    }
-
-    #[test]
-    fn test_zig_version_is_set() {
-        assert!(!ZIG_VERSION.is_empty());
-        assert!(ZIG_VERSION.starts_with("0."));
     }
 
     #[test]
