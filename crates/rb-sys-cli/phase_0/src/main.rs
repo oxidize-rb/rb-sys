@@ -1,9 +1,10 @@
 mod cache;
 mod config;
 mod oci;
+mod zig;
 
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use tracing::Instrument;
 use tracing_indicatif::IndicatifLayer;
@@ -15,6 +16,9 @@ use tracing_subscriber::util::SubscriberInitExt;
 #[command(name = "rb-sys-cli-phase-0")]
 #[command(about = "Phase 0: Download and extract OCI images for rb-sys-cli")]
 struct Args {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
     /// Path to rb-sys-cli.json config file
     #[arg(long, default_value = "data/derived/rb-sys-cli.json")]
     config: PathBuf,
@@ -26,6 +30,20 @@ struct Args {
     /// Skip extraction (for testing)
     #[arg(long)]
     skip_extraction: bool,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Download and repack Zig for all host platforms
+    DownloadZig {
+        /// Output directory for repacked Zig archives
+        #[arg(long, default_value = "crates/rb-sys-cli/src/embedded/tools")]
+        output_dir: PathBuf,
+
+        /// Cache directory for downloads
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+    },
 }
 
 #[tokio::main]
@@ -47,6 +65,25 @@ async fn main() -> Result<()> {
         .with(indicatif_layer)
         .init();
 
+    // Handle subcommands
+    if let Some(command) = args.command {
+        return match command {
+            Commands::DownloadZig { output_dir, cache_dir } => {
+                let cache_dir = cache_dir
+                    .or_else(|| std::env::var("RB_SYS_BUILD_CACHE_DIR").ok().map(PathBuf::from))
+                    .unwrap_or_else(|| cache::get_default_cache_dir().unwrap());
+                
+                std::fs::create_dir_all(&output_dir)
+                    .with_context(|| format!("Failed to create output dir: {}", output_dir.display()))?;
+                
+                zig::download_and_repack_zig(&cache_dir, &output_dir).await?;
+                tracing::info!("Zig download complete");
+                Ok(())
+            }
+        };
+    }
+
+    // Default behavior: extract OCI images
     // Load config
     let config = config::Config::load(&args.config)
         .with_context(|| format!("Failed to load config from {}", args.config.display()))?;

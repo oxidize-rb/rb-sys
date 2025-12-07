@@ -62,7 +62,7 @@ pub fn generate_shims(
 
         // Create arch-prefixed symlink (e.g., x86_64-w64-mingw32-dlltool -> dlltool)
         let prefix = mingw_prefix(target);
-        let prefixed_path = shim_dir.join(format!("{}-dlltool", prefix));
+        let prefixed_path = shim_dir.join(format!("{prefix}-dlltool"));
         
         #[cfg(unix)]
         {

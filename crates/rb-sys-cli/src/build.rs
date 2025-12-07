@@ -7,7 +7,7 @@ use tracing::{debug, info, instrument};
 use crate::assets::AssetManager;
 use crate::sysroot::SysrootManager;
 use crate::toolchain::ToolchainInfo;
-use crate::zig::{env::cargo_env, libc as zig_libc, shim, target::RustTarget};
+use crate::zig::{env::cargo_env, libc as zig_libc, manager as zig_manager, shim, target::RustTarget};
 
 /// Configuration for building a gem
 #[derive(Args, Debug, Clone)]
@@ -16,9 +16,9 @@ pub struct BuildConfig {
     #[arg(short, long, required = true)]
     pub target: String,
 
-    /// Path to the Zig compiler
-    #[arg(long, default_value = "zig", env = "ZIG_PATH")]
-    pub zig_path: PathBuf,
+    /// Path to the Zig compiler (defaults to bundled Zig if available)
+    #[arg(long, env = "ZIG_PATH")]
+    pub zig_path: Option<PathBuf>,
 
     /// Cargo profile to use (release/dev)
     #[arg(long, default_value = "release")]
@@ -49,8 +49,12 @@ pub fn build(config: &BuildConfig) -> Result<()> {
     // Parse and validate the target
     let target = RustTarget::parse(&config.target)?;
 
+    // Resolve Zig path (bundled, explicit, or system)
+    let zig_path = zig_manager::resolve_zig_path(config.zig_path.as_deref())
+        .context("Failed to resolve Zig path")?;
+
     // Validate zig is available
-    validate_zig(&config.zig_path)?;
+    validate_zig(&zig_path)?;
 
     // Load toolchain info for display
     let toolchain = ToolchainInfo::find_by_rust_target(&config.target)
@@ -113,7 +117,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
     let shim_paths = shim::generate_shims(
         &shim_dir,
         &cli_path,
-        &config.zig_path,
+        &zig_path,
         &target,
         Some(&sysroot_path),
     )
@@ -123,7 +127,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
     let mut env_vars = cargo_env(&target, &shim_paths, Some(&sysroot_path));
 
     // Configure bindgen include paths for cross-compilation
-    let bindgen_args = build_bindgen_args(config, &sysroot_path)?;
+    let bindgen_args = build_bindgen_args(&config.target, &zig_path, &sysroot_path)?;
     debug!(bindgen_args = %bindgen_args, "Setting BINDGEN_EXTRA_CLANG_ARGS");
     env_vars.insert("BINDGEN_EXTRA_CLANG_ARGS".to_string(), bindgen_args.clone());
 
@@ -324,17 +328,20 @@ pub fn list_targets() -> Result<()> {
 /// 1. Zig libc includes (stdio.h, stdlib.h, etc.) - for non-Darwin targets
 /// 2. RCD sysroot includes (OpenSSL, zlib headers, etc.)
 /// 3. For Darwin: -isysroot=$SDKROOT instead of zig libc
-fn build_bindgen_args(config: &BuildConfig, sysroot_path: &Path) -> Result<String> {
+fn build_bindgen_args(
+    rust_target: &str,
+    zig_path: &Path,
+    sysroot_path: &Path,
+) -> Result<String> {
     let mut include_args: Vec<String> = vec![];
 
-    if zig_libc::requires_zig_libc(&config.target) {
+    if zig_libc::requires_zig_libc(rust_target) {
         // Get zig's libc include paths for the target
-        let zig_includes = zig_libc::get_zig_libc_includes(&config.zig_path, &config.target)
+        let zig_includes = zig_libc::get_zig_libc_includes(zig_path, rust_target)
             .with_context(|| {
                 format!(
-                    "Failed to get zig libc includes for target '{}'.\n\
-                     Make sure zig is installed and supports this target.",
-                    config.target
+                    "Failed to get zig libc includes for target '{rust_target}'.\n\
+                     Make sure zig is installed and supports this target."
                 )
             })?;
 
@@ -343,16 +350,16 @@ fn build_bindgen_args(config: &BuildConfig, sysroot_path: &Path) -> Result<Strin
         }
 
         info!(
-            target = %config.target,
+            target = %rust_target,
             include_count = zig_includes.len(),
             "Using zig libc includes for bindgen"
         );
-    } else if zig_libc::requires_sdkroot(&config.target) {
+    } else if zig_libc::requires_sdkroot(rust_target) {
         // Darwin targets use macOS SDK
         if let Ok(sdkroot) = std::env::var("SDKROOT") {
-            include_args.push(format!("-isysroot{}", sdkroot));
+            include_args.push(format!("-isysroot{sdkroot}"));
             info!(
-                target = %config.target,
+                target = %rust_target,
                 sdkroot = %sdkroot,
                 "Using macOS SDK for bindgen"
             );

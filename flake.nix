@@ -23,7 +23,7 @@
             ruby_3_4.devEnv
             (rust-bin.stable.latest.default.override {
               extensions = [ "rust-src" ];
-              targets = [ "x86_64-unknown-linux-gnu" "aarch64-apple-darwin" ];
+              targets = [ "x86_64-unknown-linux-gnu" "aarch64-unknown-linux-gnu" "aarch64-apple-darwin" ];
             })
             bundler
             zsh

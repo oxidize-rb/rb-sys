@@ -180,10 +180,9 @@ fn gen_opaque_struct(
     name: &str,
     wrapper_h: &mut String,
 ) -> bindgen::Builder {
-    let struct_name = format!("rb_sys__Opaque__{}", name);
+    let struct_name = format!("rb_sys__Opaque__{name}");
     wrapper_h.push_str(&format!(
-        "struct {} {{ struct {} dummy; }};\n",
-        struct_name, name
+        "struct {struct_name} {{ struct {name} dummy; }};\n"
     ));
 
     bindings

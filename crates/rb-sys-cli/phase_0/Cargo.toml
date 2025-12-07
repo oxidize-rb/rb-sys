@@ -29,3 +29,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-indicatif = "0.3"
 indicatif = "0.17"
+# For Zig download and repack
+reqwest = { version = "0.12", features = ["json"] }
+sha2 = "0.10"
+xz2 = "0.1"
+zip = { version = "2.2", default-features = false, features = ["deflate"] }

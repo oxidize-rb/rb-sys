@@ -113,7 +113,7 @@ impl RbConfig {
         };
 
         self.push_search_path(libdir.as_str());
-        self.push_dldflags(&format!("-L{}", libdir));
+        self.push_dldflags(&format!("-L{libdir}"));
 
         let librubyarg = if is_static {
             self.get("LIBRUBYARG_STATIC")
@@ -270,23 +270,23 @@ impl RbConfig {
         let mut search_paths = vec![];
 
         for search_path in &self.search_paths {
-            result.push(format!("cargo:rustc-link-search={}", search_path));
+            result.push(format!("cargo:rustc-link-search={search_path}"));
             search_paths.push(search_path.name.as_str());
         }
 
         for lib in &self.libs {
             if !self.blocklist_lib.iter().any(|b| lib.name.contains(b)) {
-                result.push(format!("cargo:rustc-link-lib={}", lib));
+                result.push(format!("cargo:rustc-link-lib={lib}"));
             }
 
             if self.use_rpath && !lib.is_static() {
-                result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{}", lib));
+                result.push(format!("cargo:rustc-link-arg=-Wl,-rpath,{lib}"));
             }
         }
 
         for link_arg in &self.link_args {
             if !self.blocklist_link_arg.iter().any(|b| link_arg == b) {
-                result.push(format!("cargo:rustc-link-arg={}", link_arg));
+                result.push(format!("cargo:rustc-link-arg={link_arg}"));
             }
         }
 
@@ -298,7 +298,7 @@ impl RbConfig {
         let cargo_args = self.cargo_args();
 
         for arg in &cargo_args {
-            println!("{}", arg);
+            println!("{arg}");
         }
 
         debug_log!("INFO: printing cargo args ({:?})", cargo_args);
@@ -306,7 +306,7 @@ impl RbConfig {
         let encoded_cargo_args = cargo_args.join("\x1E");
         let encoded_cargo_args = encoded_cargo_args.replace('\n', "\x1F");
 
-        println!("cargo:encoded_cargo_args={}", encoded_cargo_args);
+        println!("cargo:encoded_cargo_args={encoded_cargo_args}");
     }
 
     /// Adds items to the rb_config based on a string from LDFLAGS/DLDFLAGS
@@ -470,8 +470,8 @@ impl RbConfig {
     }
 
     fn try_rbconfig_env(&self, key: &str) -> Option<String> {
-        let key = format!("RBCONFIG_{}", key);
-        println!("cargo:rerun-if-env-changed={}", key);
+        let key = format!("RBCONFIG_{key}");
+        println!("cargo:rerun-if-env-changed={key}");
         env::var(key).map(|v| v.trim_matches('\n').to_owned()).ok()
     }
 }

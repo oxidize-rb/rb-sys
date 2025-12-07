@@ -11,6 +11,13 @@ authors = ["Ian Ker-Seymer <i.kerseymer@gmail.com>"]
 name = "cargo-gem"
 path = "src/main.rs"
 
+[features]
+default = []
+# Enable bundled Zig compiler. When enabled, cargo-gem will embed the Zig
+# binary for the host platform and extract it on first use.
+# This requires the Zig archives to be present in src/embedded/tools/.
+bundled-zig = []
+
 [dependencies]
 clap = { version = "4.5", features = ["derive", "env"] }
 anyhow = "1.0"

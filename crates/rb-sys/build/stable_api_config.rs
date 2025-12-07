@@ -79,7 +79,7 @@ impl Strategy {
                 if current_ruby_version.is_stable() {
                     println!("cargo:rustc-cfg=stable_api_include_rust_impl");
                 } else {
-                    return Err(format!("A stable Ruby API is needed but could not find a candidate. If you are using a stable version of Ruby, try upgrading rb-sys. Otherwise if you are testing against ruby-head or Ruby < {}, enable the `stable-api-compiled-fallback` feature in rb-sys.", MIN_SUPPORTED_STABLE_VERSION).into());
+                    return Err(format!("A stable Ruby API is needed but could not find a candidate. If you are using a stable version of Ruby, try upgrading rb-sys. Otherwise if you are testing against ruby-head or Ruby < {MIN_SUPPORTED_STABLE_VERSION}, enable the `stable-api-compiled-fallback` feature in rb-sys.").into());
                 }
             }
             Strategy::CompiledOnly => {
@@ -137,8 +137,7 @@ fn is_testing() -> bool {
 fn maybe_warn_old_ruby_version(current_ruby_version: Version) {
     if current_ruby_version < MIN_SUPPORTED_STABLE_VERSION {
         println!(
-            "cargo:warning=Support for Ruby {} will be removed in a future release.",
-            current_ruby_version
+            "cargo:warning=Support for Ruby {current_ruby_version} will be removed in a future release."
         );
     }
 }

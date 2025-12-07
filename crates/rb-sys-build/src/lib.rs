@@ -1,5 +1,6 @@
 pub mod bindings;
 pub mod cc;
+pub mod pregenerated;
 pub mod utils;
 
 mod rb_config;

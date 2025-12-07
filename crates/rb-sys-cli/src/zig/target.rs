@@ -130,7 +130,7 @@ impl RustTarget {
             "aarch64-pc-windows-gnullvm" => (Arch::Aarch64, Os::Windows, Env::Gnullvm),
 
             _ => bail!(
-                "Unsupported target: {}\n\n\
+                "Unsupported target: {triple}\n\n\
                  Supported targets:\n  \
                  - arm-unknown-linux-gnueabihf\n  \
                  - aarch64-unknown-linux-gnu\n  \
@@ -140,8 +140,7 @@ impl RustTarget {
                  - aarch64-pc-windows-gnullvm\n  \
                  - x86_64-apple-darwin\n  \
                  - x86_64-unknown-linux-gnu\n  \
-                 - x86_64-unknown-linux-musl",
-                triple
+                 - x86_64-unknown-linux-musl"
             ),
         };
 
@@ -164,11 +163,11 @@ impl RustTarget {
         let os = self.os.as_zig_str();
         let env = self.env.as_zig_str(self.os);
 
-        let base = format!("{}-{}-{}", arch, os, env);
+        let base = format!("{arch}-{os}-{env}");
 
         // Append glibc version for Linux glibc targets
         if self.os == Os::Linux && self.env.is_glibc() {
-            format!("{}.2.17", base)
+            format!("{base}.2.17")
         } else {
             base
         }
@@ -430,12 +429,11 @@ mod tests {
 
         for (rust_target, expected_zig) in test_cases {
             let target = RustTarget::parse(rust_target)
-                .unwrap_or_else(|e| panic!("Failed to parse {}: {}", rust_target, e));
+                .unwrap_or_else(|e| panic!("Failed to parse {rust_target}: {e}"));
             assert_eq!(
                 target.to_zig_target(),
                 expected_zig,
-                "Zig target mismatch for {}",
-                rust_target
+                "Zig target mismatch for {rust_target}"
             );
         }
     }

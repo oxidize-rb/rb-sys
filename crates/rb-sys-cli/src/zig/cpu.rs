@@ -115,8 +115,7 @@ mod tests {
             assert_eq!(
                 cpu_flag(&target),
                 expected,
-                "CPU flag mismatch for {}",
-                rust_target
+                "CPU flag mismatch for {rust_target}"
             );
         }
     }

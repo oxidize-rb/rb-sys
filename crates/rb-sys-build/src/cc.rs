@@ -60,7 +60,7 @@ impl Build {
         }
 
         println!("cargo:rustc-link-search=native={}", out_dir.display());
-        println!("cargo:rustc-link-lib=static={}", lib_name);
+        println!("cargo:rustc-link-lib=static={lib_name}");
 
         Ok(())
     }
@@ -118,7 +118,7 @@ impl Build {
             .iter()
             .for_each(|f| hasher.write(f.to_str().expect("non-utf8 filename").as_bytes()));
         let lib_name = format!("{}-{}", name, hasher.finish());
-        let lib_filename = format!("lib{}.a", lib_name);
+        let lib_filename = format!("lib{lib_name}.a");
         let dst = out_dir.join(lib_filename);
 
         // The argument structure differs for MSVC and GCC.
@@ -136,7 +136,7 @@ impl Build {
         // MSVC linker will also be passed foo.lib, so be sure that both
         // exist for now.
         if is_msvc() {
-            let lib_dst = dst.with_file_name(format!("{}.lib", lib_name));
+            let lib_dst = dst.with_file_name(format!("{lib_name}.lib"));
             let _ = fs::remove_file(&lib_dst);
             match fs::hard_link(&dst, &lib_dst).or_else(|_| {
                 // if hard-link fails, just copy (ignoring the number of bytes written)
@@ -172,16 +172,16 @@ impl Build {
 fn get_include_args(rb: &rb_config::RbConfig) -> Vec<String> {
     let mut args = vec![];
     if let Some(include_dir) = rb.get("rubyhdrdir") {
-        args.push(format!("-I{}", include_dir));
+        args.push(format!("-I{include_dir}"));
     }
     if let Some(arch_include_dir) = rb.get("rubyarchhdrdir") {
-        args.push(format!("-I{}", arch_include_dir));
+        args.push(format!("-I{arch_include_dir}"));
     }
     if let Some(internal_include_dir) = rb.get("rubyhdrdir") {
-        args.push(format!("-I{}/include/internal", internal_include_dir));
+        args.push(format!("-I{internal_include_dir}/include/internal"));
     }
     if let Some(impl_include_dir) = rb.get("rubyhdrdir") {
-        args.push(format!("-I{}/include/impl", impl_include_dir));
+        args.push(format!("-I{impl_include_dir}/include/impl"));
     }
 
     args
@@ -210,7 +210,7 @@ fn get_common_args() -> Vec<String> {
                 "z" | "s" | "1" if is_msvc() => flags.push("-O1".into()),
                 // -O3 is a valid value for gcc and clang compilers, but not msvc. Cap to /O2.
                 "2" | "3" if is_msvc() => flags.push("-O2".into()),
-                lvl => flags.push(format!("-O{}", lvl)),
+                lvl => flags.push(format!("-O{lvl}")),
             }
         }
     }
@@ -331,15 +331,14 @@ fn get_tool_from_rb_config_or_env(env_var: &str) -> Option<String> {
 fn get_tool_from_env(env_var: &str) -> Option<String> {
     let target = env::var("TARGET").ok()?;
     let target_slug = target.replace('-', "_");
-    let env_var_with_target_underscores = format!("{}_{}", env_var, target_slug);
-    let env_var_with_target_dashes = format!("{}_{}", env_var, target);
+    let env_var_with_target_underscores = format!("{env_var}_{target_slug}");
+    let env_var_with_target_dashes = format!("{env_var}_{target}");
 
-    println!("cargo:rerun-if-env-changed={}", env_var);
+    println!("cargo:rerun-if-env-changed={env_var}");
     println!(
-        "cargo:rerun-if-env-changed={}",
-        env_var_with_target_underscores
+        "cargo:rerun-if-env-changed={env_var_with_target_underscores}"
     );
-    println!("cargo:rerun-if-env-changed={}", env_var_with_target_dashes);
+    println!("cargo:rerun-if-env-changed={env_var_with_target_dashes}");
 
     // Check target-specific variables first (both underscore and dash variants)
     // This ensures cross-compilation tools take precedence over host tools
@@ -354,7 +353,7 @@ fn run_command(mut cmd: Command) -> Result<ExitStatus> {
     let status = cmd.status()?;
 
     if !status.success() {
-        Err(format!("Command '{:?}' failed with status: {}", cmd, status).into())
+        Err(format!("Command '{cmd:?}' failed with status: {status}").into())
     } else {
         Ok(status)
     }

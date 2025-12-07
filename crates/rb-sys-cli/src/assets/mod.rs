@@ -78,7 +78,7 @@ impl AssetManager {
             .context("Failed to create zstd decoder")?;
         let mut archive = tar::Archive::new(decoder);
 
-        let sysroot_prefix = format!("{}/sysroot/", ruby_platform);
+        let sysroot_prefix = format!("{ruby_platform}/sysroot/");
 
         for entry in archive.entries().context("Failed to read tar entries")? {
             let mut entry = entry.context("Failed to read tar entry")?;
@@ -163,7 +163,7 @@ impl AssetManager {
             .context("Failed to create zstd decoder")?;
         let mut archive = tar::Archive::new(decoder);
 
-        let prefix = format!("{}/", ruby_platform);
+        let prefix = format!("{ruby_platform}/");
 
         for entry in archive.entries().context("Failed to read tar entries")? {
             let mut entry = entry.context("Failed to read tar entry")?;

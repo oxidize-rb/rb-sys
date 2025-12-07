@@ -101,7 +101,7 @@ impl std::fmt::Debug for RubyException {
             f.write_str("<no message>")?;
         }
 
-        f.write_fmt(format_args!(" ({}):\n", klass))?;
+        f.write_fmt(format_args!(" ({klass}):\n"))?;
 
         if let Some(bt) = bt {
             f.write_str(&bt)?;

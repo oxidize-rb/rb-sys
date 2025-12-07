@@ -31,22 +31,22 @@ pub fn cargo_env(
     // === Compiler paths (target-specific) ===
     // cc-rs looks for CC_{target} with underscores
     env.insert(
-        format!("CC_{}", triple_underscore),
+        format!("CC_{triple_underscore}"),
         shim_paths.cc.display().to_string(),
     );
     env.insert(
-        format!("CXX_{}", triple_underscore),
+        format!("CXX_{triple_underscore}"),
         shim_paths.cxx.display().to_string(),
     );
     env.insert(
-        format!("AR_{}", triple_underscore),
+        format!("AR_{triple_underscore}"),
         shim_paths.ar.display().to_string(),
     );
 
     // === Cargo linker configuration ===
     // Use the dedicated ld shim for linking (not cc)
     env.insert(
-        format!("CARGO_TARGET_{}_LINKER", triple_upper),
+        format!("CARGO_TARGET_{triple_upper}_LINKER"),
         shim_paths.ld.display().to_string(),
     );
 
@@ -60,7 +60,7 @@ pub fn cargo_env(
             // Bindgen sysroot configuration
             if let Some(sysroot) = sysroot {
                 env.insert(
-                    format!("BINDGEN_EXTRA_CLANG_ARGS_{}", triple_underscore),
+                    format!("BINDGEN_EXTRA_CLANG_ARGS_{triple_underscore}"),
                     format!("--sysroot={}", sysroot.display()),
                 );
             }
@@ -79,9 +79,19 @@ pub fn cargo_env(
             
             // Set DLLTOOL for build scripts that need it
             if let Some(dlltool) = &shim_paths.dlltool {
+                // Standard DLLTOOL env var - checked by some build scripts
+                env.insert("DLLTOOL".to_string(), dlltool.display().to_string());
+                // Target-specific variant for consistency
                 env.insert(
-                    format!("DLLTOOL_{}", triple_underscore),
+                    format!("DLLTOOL_{triple_underscore}"),
                     dlltool.display().to_string(),
+                );
+                
+                // CRITICAL: Tell rustc where to find dlltool via -C dlltool flag
+                // This is required because rustc generates import libraries for Windows-GNU
+                env.insert(
+                    format!("CARGO_TARGET_{triple_upper}_RUSTFLAGS"),
+                    format!("-C dlltool={}", dlltool.display()),
                 );
             }
         }
@@ -157,8 +167,18 @@ mod tests {
         
         // Check dlltool is set for Windows
         assert_eq!(
+            env.get("DLLTOOL"),
+            Some(&"/tmp/shims/dlltool".to_string())
+        );
+        assert_eq!(
             env.get("DLLTOOL_x86_64_pc_windows_gnu"),
             Some(&"/tmp/shims/dlltool".to_string())
+        );
+        
+        // Check rustflags includes dlltool path
+        assert_eq!(
+            env.get("CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUSTFLAGS"),
+            Some(&"-C dlltool=/tmp/shims/dlltool".to_string())
         );
     }
 

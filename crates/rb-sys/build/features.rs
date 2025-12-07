@@ -80,7 +80,7 @@ pub(crate) fn is_link_ruby_enabled() -> bool {
             .collect::<Vec<_>>()
             .join("\n");
 
-            eprintln!("ERROR: {}", msg);
+            eprintln!("ERROR: {msg}");
             std::process::exit(1);
         } else {
             false

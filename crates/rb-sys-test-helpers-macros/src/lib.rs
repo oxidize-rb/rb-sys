@@ -44,13 +44,13 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
             TokenTree::Ident(ident) => match ident.to_string().as_str() {
                 "gc_stress" => gc_stress = true,
                 kw => {
-                    return syn::Error::new(kw.span(), format!("unknown argument: {}", kw))
+                    return syn::Error::new(kw.span(), format!("unknown argument: {kw}"))
                         .to_compile_error()
                         .into();
                 }
             },
             _ => {
-                return syn::Error::new(arg.span().into(), format!("expected identifier: {}", arg))
+                return syn::Error::new(arg.span().into(), format!("expected identifier: {arg}"))
                     .to_compile_error()
                     .into();
             }

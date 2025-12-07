@@ -68,7 +68,7 @@ pub fn run_cc(args: ZigCcArgs, is_cxx: bool) -> Result<()> {
 
     // Add CPU flag if needed
     if let Some(cpu) = cpu_flag(&target) {
-        cmd.arg(format!("-mcpu={}", cpu));
+        cmd.arg(format!("-mcpu={cpu}"));
         debug!(mcpu = %cpu, "Using CPU flag");
     }
 
@@ -139,7 +139,7 @@ fn validate_requirements(target: &RustTarget, args: &ZigCcArgs) -> Result<()> {
     if target.requires_sdkroot() {
         let config = MacOSConfig::from_env()?;
         if let Err(e) = config.validate() {
-            bail!("{}", e);
+            bail!("{e}");
         }
     }
 

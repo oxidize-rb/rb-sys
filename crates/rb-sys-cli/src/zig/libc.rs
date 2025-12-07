@@ -39,8 +39,7 @@ pub fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Result<Vec<P
         .output()
         .with_context(|| {
             format!(
-                "Failed to run `zig libc -target {} -includes`. Is zig installed?",
-                zig_target
+                "Failed to run `zig libc -target {zig_target} -includes`. Is zig installed?"
             )
         })?;
 
@@ -61,8 +60,7 @@ pub fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Result<Vec<P
 
     if paths.is_empty() {
         bail!(
-            "zig libc -target {} -includes returned no paths",
-            zig_target
+            "zig libc -target {zig_target} -includes returned no paths"
         );
     }
 
@@ -100,7 +98,7 @@ fn rust_target_to_zig_libc_target(rust_target: &str) -> Result<String> {
     match parts.as_slice() {
         // i686-unknown-linux-gnu -> x86-linux-gnu (zig uses x86 not i686)
         // Must come before generic linux pattern
-        ["i686", _, "linux", abi] => Ok(format!("x86-linux-{}", abi)),
+        ["i686", _, "linux", abi] => Ok(format!("x86-linux-{abi}")),
 
         // i686-pc-windows-gnu -> x86-windows-gnu
         ["i686", _, "windows", "gnu"] => Ok("x86-windows-gnu".to_string()),
@@ -109,23 +107,22 @@ fn rust_target_to_zig_libc_target(rust_target: &str) -> Result<String> {
         // aarch64-unknown-linux-gnu -> aarch64-linux-gnu
         // aarch64-unknown-linux-musl -> aarch64-linux-musl
         // arm-unknown-linux-gnueabihf -> arm-linux-gnueabihf
-        [arch, _, "linux", abi] => Ok(format!("{}-linux-{}", arch, abi)),
+        [arch, _, "linux", abi] => Ok(format!("{arch}-linux-{abi}")),
 
         // x86_64-pc-windows-gnu -> x86_64-windows-gnu
         // x86_64-pc-windows-msvc is not supported (zig doesn't provide msvc libc)
-        [arch, _, "windows", "gnu"] => Ok(format!("{}-windows-gnu", arch)),
+        [arch, _, "windows", "gnu"] => Ok(format!("{arch}-windows-gnu")),
 
         // aarch64-apple-darwin -> aarch64-macos
         // x86_64-apple-darwin -> x86_64-macos
-        [arch, "apple", "darwin"] => Ok(format!("{}-macos", arch)),
+        [arch, "apple", "darwin"] => Ok(format!("{arch}-macos")),
 
         _ => bail!(
-            "Unsupported target for zig libc: {}\n\
+            "Unsupported target for zig libc: {rust_target}\n\
              Supported patterns:\n  \
              - <arch>-unknown-linux-<abi> (e.g., x86_64-unknown-linux-gnu)\n  \
              - <arch>-pc-windows-gnu (e.g., x86_64-pc-windows-gnu)\n  \
-             - <arch>-apple-darwin (e.g., aarch64-apple-darwin)",
-            rust_target
+             - <arch>-apple-darwin (e.g., aarch64-apple-darwin)"
         ),
     }
 }

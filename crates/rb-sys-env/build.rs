@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let unescaped = lines.map(|line| line.replace('\x1F', "\n"));
 
         for line in unescaped {
-            println!("{}", line);
+            println!("{line}");
         }
     }
 

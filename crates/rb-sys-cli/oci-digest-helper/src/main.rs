@@ -14,7 +14,7 @@ async fn main() -> Result<()> {
     let image_tag = &args[1];
     let digest = fetch_image_digest(image_tag).await?;
     
-    println!("{}", digest);
+    println!("{digest}");
     
     Ok(())
 }
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 async fn fetch_image_digest(image_ref: &str) -> Result<String> {
     let reference: Reference = image_ref
         .parse()
-        .with_context(|| format!("Failed to parse image reference: {}", image_ref))?;
+        .with_context(|| format!("Failed to parse image reference: {image_ref}"))?;
 
     let config = ClientConfig {
         protocol: ClientProtocol::Https,
@@ -36,7 +36,7 @@ async fn fetch_image_digest(image_ref: &str) -> Result<String> {
     let (_, digest) = client
         .pull_manifest(&reference, &auth)
         .await
-        .with_context(|| format!("Failed to fetch manifest for: {}", image_ref))?;
+        .with_context(|| format!("Failed to fetch manifest for: {image_ref}"))?;
 
     Ok(digest)
 }

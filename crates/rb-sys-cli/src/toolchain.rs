@@ -52,7 +52,7 @@ impl ToolchainInfo {
             .find(|tc| {
                 tc.rust_target == rust_target || tc.aliases.iter().any(|alias| alias == rust_target)
             })
-            .with_context(|| format!("No toolchain found for Rust target: {}", rust_target))
+            .with_context(|| format!("No toolchain found for Rust target: {rust_target}"))
     }
 
     /// Find a toolchain by Ruby platform
@@ -63,7 +63,7 @@ impl ToolchainInfo {
         toolchains
             .into_iter()
             .find(|tc| tc.ruby_platform == ruby_platform)
-            .with_context(|| format!("No toolchain found for Ruby platform: {}", ruby_platform))
+            .with_context(|| format!("No toolchain found for Ruby platform: {ruby_platform}"))
     }
 
     /// Get the Zig target triple (strips 'unknown' vendor)
@@ -96,7 +96,7 @@ pub fn detect_host_target() -> String {
             ("macos", "aarch64") => "aarch64-apple-darwin",
             ("windows", "x86_64") => "x86_64-pc-windows-msvc",
             ("windows", "i686") => "i686-pc-windows-msvc",
-            _ => panic!("Unsupported host platform: {} {}", os, arch),
+            _ => panic!("Unsupported host platform: {os} {arch}"),
         }
         .to_string()
     })

@@ -4,7 +4,7 @@ mod stable_api_config;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, RbConfig, RubyEngine};
+use rb_sys_build::{bindings, pregenerated, RbConfig, RubyEngine};
 use std::io::Write;
 use std::{
     env,
@@ -42,12 +42,18 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    let bindings_path = bindings::generate(
-        &rbconfig,
-        is_ruby_static_enabled(&rbconfig),
-        &mut cfg_capture_file,
-    )
-    .expect("generate bindings");
+    // Check for pre-generated bindings (for dependency-free cross-compilation)
+    let bindings_path = if pregenerated::use_pregenerated() {
+        pregenerated::load_pregenerated(&rbconfig, &mut cfg_capture_file)
+            .expect("load pre-generated bindings")
+    } else {
+        bindings::generate(
+            &rbconfig,
+            is_ruby_static_enabled(&rbconfig),
+            &mut cfg_capture_file,
+        )
+        .expect("generate bindings")
+    };
     println!("Bindings generated at: {}", bindings_path.display());
     println!(
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",
@@ -57,7 +63,7 @@ fn main() {
 
     #[cfg(feature = "stable-api")]
     if let Err(e) = stable_api_config::setup(&rbconfig) {
-        eprintln!("Failed to setup stable API: {}", e);
+        eprintln!("Failed to setup stable API: {e}");
         std::process::exit(1);
     }
 
@@ -254,9 +260,9 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
 }
 
 fn rustc_cfg(rbconfig: &RbConfig, name: &str, key: &str) {
-    println!("cargo:rustc-check-cfg=cfg({})", name);
+    println!("cargo:rustc-check-cfg=cfg({name})");
     if let Some(k) = rbconfig.get(key) {
-        println!("cargo:rustc-cfg={}=\"{}\"", name, k);
+        println!("cargo:rustc-cfg={name}=\"{k}\"");
     }
 }
 
@@ -271,8 +277,7 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
     });
 
     eprintln!(
-        "DEBUG: enable_dynamic_lookup detected target_os = {}",
-        target_os
+        "DEBUG: enable_dynamic_lookup detected target_os = {target_os}"
     );
 
     if target_os == "macos" {

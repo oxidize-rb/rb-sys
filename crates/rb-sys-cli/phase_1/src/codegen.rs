@@ -57,7 +57,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("#[derive(Debug, Clone, Copy, PartialEq, Eq)]\n");
     generated_code.push_str("pub enum Toolchain {\n");
     for (variant_name, _, _, _, _) in &variants {
-        generated_code.push_str(&format!("    {},\n", variant_name));
+        generated_code.push_str(&format!("    {variant_name},\n"));
     }
     generated_code.push_str("}\n\n");
 
@@ -69,8 +69,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match self {\n");
     for (variant_name, ruby_platform, _, _, _) in &variants {
         generated_code.push_str(&format!(
-            "            Toolchain::{} => \"{}\",\n",
-            variant_name, ruby_platform
+            "            Toolchain::{variant_name} => \"{ruby_platform}\",\n"
         ));
     }
     generated_code.push_str("        }\n");
@@ -81,8 +80,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match self {\n");
     for (variant_name, _, rust_target, _, _) in &variants {
         generated_code.push_str(&format!(
-            "            Toolchain::{} => \"{}\",\n",
-            variant_name, rust_target
+            "            Toolchain::{variant_name} => \"{rust_target}\",\n"
         ));
     }
     generated_code.push_str("        }\n");
@@ -94,18 +92,16 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     for (variant_name, _, _, sysroot_paths, _) in &variants {
         if sysroot_paths.is_empty() {
             generated_code.push_str(&format!(
-                "            Toolchain::{} => &[],\n",
-                variant_name
+                "            Toolchain::{variant_name} => &[],\n"
             ));
         } else {
             let paths_str = sysroot_paths
                 .iter()
-                .map(|p| format!("\"{}\"", p))
+                .map(|p| format!("\"{p}\""))
                 .collect::<Vec<_>>()
                 .join(", ");
             generated_code.push_str(&format!(
-                "            Toolchain::{} => &[{}],\n",
-                variant_name, paths_str
+                "            Toolchain::{variant_name} => &[{paths_str}],\n"
             ));
         }
     }
@@ -122,8 +118,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match self {\n");
     for (variant_name, _, _, _, supported) in &variants {
         generated_code.push_str(&format!(
-            "            Toolchain::{} => {},\n",
-            variant_name, supported
+            "            Toolchain::{variant_name} => {supported},\n"
         ));
     }
     generated_code.push_str("        }\n");
@@ -135,8 +130,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match platform {\n");
     for (variant_name, ruby_platform, _, _, _) in &variants {
         generated_code.push_str(&format!(
-            "            \"{}\" => Some(Toolchain::{}),\n",
-            ruby_platform, variant_name
+            "            \"{ruby_platform}\" => Some(Toolchain::{variant_name}),\n"
         ));
     }
     generated_code.push_str("            _ => None,\n");
@@ -148,8 +142,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match target {\n");
     for (variant_name, _, rust_target, _, _) in &variants {
         generated_code.push_str(&format!(
-            "            \"{}\" => Some(Toolchain::{}),\n",
-            rust_target, variant_name
+            "            \"{rust_target}\" => Some(Toolchain::{variant_name}),\n"
         ));
     }
     generated_code.push_str("            _ => None,\n");
@@ -160,7 +153,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("    pub fn all_supported() -> impl Iterator<Item = Toolchain> {\n");
     generated_code.push_str("        [\n");
     for (variant_name, _, _, _, _) in &variants {
-        generated_code.push_str(&format!("            Toolchain::{},\n", variant_name));
+        generated_code.push_str(&format!("            Toolchain::{variant_name},\n"));
     }
     generated_code.push_str("        ].into_iter().filter(|t| t.supported())\n");
     generated_code.push_str("    }\n");

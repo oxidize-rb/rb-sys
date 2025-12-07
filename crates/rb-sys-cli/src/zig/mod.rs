@@ -8,6 +8,7 @@
 //! - Compiler/linker argument filtering and rewriting
 //! - Bash shim generation for CC/CXX/AR/LD
 //! - Environment variable setup for Cargo
+//! - Bundled Zig binary management
 
 pub mod ar;
 pub mod args;
@@ -17,6 +18,7 @@ pub mod dlltool;
 pub mod env;
 pub mod ld;
 pub mod libc;
+pub mod manager;
 pub mod shim;
 pub mod target;
 
@@ -27,3 +29,5 @@ pub use shim::generate_shims;
 pub use target::RustTarget;
 #[allow(unused_imports)]
 pub use libc::get_zig_libc_includes;
+#[allow(unused_imports)]
+pub use manager::{resolve_zig_path, ZigManager, ZIG_VERSION};

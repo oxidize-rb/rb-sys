@@ -1,5 +1,5 @@
-mod sanitizer;
-mod stable_api;
+pub mod sanitizer;
+pub mod stable_api;
 
 use crate::cc::Build;
 use crate::utils::is_msvc;
@@ -29,10 +29,10 @@ pub fn generate(
 
     let mut clang_args = vec![];
     if let Some(ruby_include_dir) = rbconfig.get("rubyhdrdir") {
-        clang_args.push(format!("-I{}", ruby_include_dir));
+        clang_args.push(format!("-I{ruby_include_dir}"));
     }
     if let Some(ruby_arch_include_dir) = rbconfig.get("rubyarchhdrdir") {
-        clang_args.push(format!("-I{}", ruby_arch_include_dir));
+        clang_args.push(format!("-I{ruby_arch_include_dir}"));
     }
 
     clang_args.extend(Build::default_cflags());
@@ -97,7 +97,7 @@ pub fn generate(
     let bindings = opaqueify_bindings(rbconfig, bindings, &mut wrapper_h);
 
     let mut tokens = {
-        write!(std::io::stderr(), "{}", wrapper_h)?;
+        write!(std::io::stderr(), "{wrapper_h}")?;
         let bindings = bindings.header_contents("wrapper.h", &wrapper_h);
         let code_string = bindings.generate()?.to_string();
         syn::parse_file(&code_string)?
@@ -105,7 +105,7 @@ pub fn generate(
 
     let slug = rbconfig.ruby_version_slug();
     let crate_version = env!("CARGO_PKG_VERSION");
-    let out_path = out_dir.join(format!("bindings-{}-{}.rs", crate_version, slug));
+    let out_path = out_dir.join(format!("bindings-{crate_version}-{slug}.rs"));
 
     let code = {
         sanitizer::ensure_backwards_compatible_encoding_pointers(&mut tokens);
@@ -240,12 +240,11 @@ fn push_cargo_cfg_from_bindings(
                 let name = conf_name.to_lowercase();
                 let val = conf.value_bool().to_string();
                 println!(
-                    r#"cargo:rustc-check-cfg=cfg(ruby_{}, values("true", "false"))"#,
-                    name
+                    r#"cargo:rustc-check-cfg=cfg(ruby_{name}, values("true", "false"))"#
                 );
-                println!("cargo:rustc-cfg=ruby_{}=\"{}\"", name, val);
-                println!("cargo:defines_{}={}", name, val);
-                writeln!(cfg_out, "cargo:defines_{}={}", name, val)?;
+                println!("cargo:rustc-cfg=ruby_{name}=\"{val}\"");
+                println!("cargo:defines_{name}={val}");
+                writeln!(cfg_out, "cargo:defines_{name}={val}")?;
             }
 
             if conf_name.starts_with("RUBY_ABI_VERSION") {

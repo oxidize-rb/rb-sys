@@ -220,7 +220,7 @@ impl RbConfigParser {
                         // Only substitute if the variable value doesn't contain $(
                         // This ensures we expand from bottom-up
                         if !var_value.contains("$(") {
-                            let pattern = format!("$({})", var_name);
+                            let pattern = format!("$({var_name})");
                             expanded = expanded.replace(&pattern, var_value);
                             substitutions_made += 1;
                         }
@@ -438,25 +438,24 @@ end
         assert_eq!(parser.get("exec_prefix"), Some(&expected_prefix));
         assert_eq!(
             parser.get("bindir"),
-            Some(&format!("{}/bin", expected_prefix))
+            Some(&format!("{expected_prefix}/bin"))
         );
         assert_eq!(
             parser.get("libdir"),
-            Some(&format!("{}/lib", expected_prefix))
+            Some(&format!("{expected_prefix}/lib"))
         );
         assert_eq!(
             parser.get("includedir"),
-            Some(&format!("{}/include", expected_prefix))
+            Some(&format!("{expected_prefix}/include"))
         );
         assert_eq!(
             parser.get("rubyhdrdir"),
-            Some(&format!("{}/include/ruby-3.4.0", expected_prefix))
+            Some(&format!("{expected_prefix}/include/ruby-3.4.0"))
         );
         assert_eq!(
             parser.get("rubyarchhdrdir"),
             Some(&format!(
-                "{}/include/ruby-3.4.0/x86_64-linux-gnu",
-                expected_prefix
+                "{expected_prefix}/include/ruby-3.4.0/x86_64-linux-gnu"
             ))
         );
 
@@ -512,28 +511,23 @@ end
         // These should all be absolute paths without $(...)
         assert!(
             !rubyhdrdir.contains("$("),
-            "rubyhdrdir still has variables: {}",
-            rubyhdrdir
+            "rubyhdrdir still has variables: {rubyhdrdir}"
         );
         assert!(
             !rubyarchhdrdir.contains("$("),
-            "rubyarchhdrdir still has variables: {}",
-            rubyarchhdrdir
+            "rubyarchhdrdir still has variables: {rubyarchhdrdir}"
         );
         assert!(
             !includedir.contains("$("),
-            "includedir still has variables: {}",
-            includedir
+            "includedir still has variables: {includedir}"
         );
         assert!(
             rubyhdrdir.starts_with("/"),
-            "rubyhdrdir is not absolute: {}",
-            rubyhdrdir
+            "rubyhdrdir is not absolute: {rubyhdrdir}"
         );
         assert!(
             rubyarchhdrdir.starts_with("/"),
-            "rubyarchhdrdir is not absolute: {}",
-            rubyarchhdrdir
+            "rubyarchhdrdir is not absolute: {rubyarchhdrdir}"
         );
 
         // Verify the structure is correct
@@ -547,9 +541,9 @@ end
         );
 
         println!("✓ Interpolation successful:");
-        println!("  prefix: {}", prefix);
-        println!("  includedir: {}", includedir);
-        println!("  rubyhdrdir: {}", rubyhdrdir);
-        println!("  rubyarchhdrdir: {}", rubyarchhdrdir);
+        println!("  prefix: {prefix}");
+        println!("  includedir: {includedir}");
+        println!("  rubyhdrdir: {rubyhdrdir}");
+        println!("  rubyarchhdrdir: {rubyarchhdrdir}");
     }
 }

@@ -23,7 +23,7 @@ pub async fn extract_platform(
 ) -> Result<Vec<String>> {
     let reference: Reference = image_ref
         .parse()
-        .with_context(|| format!("Failed to parse image reference: {}", image_ref))?;
+        .with_context(|| format!("Failed to parse image reference: {image_ref}"))?;
 
     // Determine platform from ruby_platform string
     let platform = determine_platform_from_ruby_platform(ruby_platform);
@@ -41,7 +41,7 @@ pub async fn extract_platform(
             ],
         )
         .await
-        .with_context(|| format!("Failed to pull image: {}", image_ref))?;
+        .with_context(|| format!("Failed to pull image: {image_ref}"))?;
 
     // Process layers in parallel on blocking pool (max 4 concurrent per platform)
     let ruby_platform_owned = ruby_platform.to_string();
