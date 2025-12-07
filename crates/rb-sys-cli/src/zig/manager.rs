@@ -6,8 +6,6 @@
 
 use anyhow::{bail, Context, Result};
 use std::fs;
-#[cfg(feature = "bundled-zig")]
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 /// Pinned Zig version bundled with cargo-gem
