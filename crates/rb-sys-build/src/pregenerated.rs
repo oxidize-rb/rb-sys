@@ -4,10 +4,28 @@
 //! instead of running bindgen at build time. This eliminates the need for
 //! libclang on end-user systems.
 //!
+//! # Binding Sources (in priority order)
+//!
+//! 1. **Environment variable**: `RB_SYS_PREGENERATED_BINDINGS_PATH` - explicit path
+//! 2. **Embedded bindings**: Built into the crate for common cross-compilation targets
+//!
 //! # Environment Variables
 //!
 //! - `RB_SYS_PREGENERATED_BINDINGS_PATH`: Path to the pre-generated bindings.rs file
 //! - `RB_SYS_PREGENERATED_CFG_PATH`: Path to the cfg metadata file (contains cargo: directives)
+//! - `RB_SYS_FORCE_BINDGEN`: If set, always use bindgen (skip pre-generated bindings)
+//!
+//! # Embedded Bindings
+//!
+//! The crate ships with pre-generated bindings for common cross-compilation targets.
+//! These are stored in a compressed tarball and extracted on-demand during build.
+//!
+//! Supported platforms:
+//! - aarch64-linux (Ruby 2.7-3.4)
+//! - arm-linux (Ruby 2.7-3.4)
+//! - x64-mingw-ucrt (Ruby 3.1-3.4)
+//! - x64-mingw32 (Ruby 2.7-3.0)
+//! - aarch64-mingw-ucrt (Ruby 3.4)
 //!
 //! # Feature-aware Filtering
 //!
@@ -20,12 +38,24 @@
 use crate::{debug_log, RbConfig};
 use quote::ToTokens;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use std::{env, error::Error};
 
-/// Check if pre-generated bindings should be used.
+/// Embedded bindings tarball (zstd-compressed tar archive).
+///
+/// This contains pre-generated bindings for cross-compilation targets.
+/// Structure: bindings/{platform}/{version}/bindings.rs
+///           bindings/{platform}/{version}/bindings.cfg
+static EMBEDDED_BINDINGS: &[u8] = include_bytes!("../data/assets.tar.zst");
+
+/// Cache for extracted embedded bindings index.
+static EMBEDDED_INDEX: OnceLock<HashMap<String, Vec<String>>> = OnceLock::new();
+
+/// Check if pre-generated bindings should be used via environment variable.
 ///
 /// Returns `Some(path)` if RB_SYS_PREGENERATED_BINDINGS_PATH is set,
 /// `None` otherwise.
@@ -47,7 +77,30 @@ pub fn use_pregenerated() -> bool {
     pregenerated_bindings_path().is_some()
 }
 
-/// Load and process pre-generated bindings.
+/// Check if embedded bindings are available for the given rbconfig.
+///
+/// This checks if we have pre-generated bindings for the target platform and Ruby version.
+pub fn has_embedded_bindings(rbconfig: &RbConfig) -> bool {
+    // Don't use embedded bindings if force-bindgen is set
+    if env::var("RB_SYS_FORCE_BINDGEN").is_ok() {
+        return false;
+    }
+
+    let platform = normalize_platform(&rbconfig.platform());
+    let version = match ruby_version_string(rbconfig) {
+        Some(v) => v,
+        None => return false,
+    };
+
+    let index = get_embedded_index();
+    if let Some(versions) = index.get(&platform) {
+        versions.iter().any(|v| v == &version)
+    } else {
+        false
+    }
+}
+
+/// Load and process pre-generated bindings from environment variable path.
 ///
 /// This function:
 /// 1. Reads the pre-generated bindings file
@@ -71,21 +124,53 @@ pub fn load_pregenerated(
     // Read the pre-generated bindings
     let bindings_content = fs::read_to_string(&bindings_path)?;
 
+    // Process and write bindings
+    process_bindings_content(rbconfig, &bindings_content, cfg_out, None)
+}
+
+/// Load embedded bindings for the target platform and Ruby version.
+///
+/// This extracts bindings from the embedded tarball and processes them.
+pub fn load_embedded(rbconfig: &RbConfig, cfg_out: &mut File) -> Result<PathBuf, Box<dyn Error>> {
+    let platform = normalize_platform(&rbconfig.platform());
+    let version = ruby_version_string(rbconfig)
+        .ok_or_else(|| "Could not determine Ruby version from rbconfig".to_string())?;
+
+    debug_log!(
+        "INFO: Loading embedded bindings for platform={}, version={}",
+        platform,
+        version
+    );
+
+    // Extract the bindings and cfg content from the tarball
+    let (bindings_content, cfg_content) = extract_embedded_bindings(&platform, &version)?;
+
+    // Process and write bindings
+    process_bindings_content(rbconfig, &bindings_content, cfg_out, Some(&cfg_content))
+}
+
+/// Process bindings content and write to OUT_DIR.
+fn process_bindings_content(
+    rbconfig: &RbConfig,
+    bindings_content: &str,
+    cfg_out: &mut File,
+    embedded_cfg: Option<&str>,
+) -> Result<PathBuf, Box<dyn Error>> {
     // Parse into syn::File
-    let mut tokens: syn::File = syn::parse_file(&bindings_content)?;
+    let mut tokens: syn::File = syn::parse_file(bindings_content)?;
 
     // Apply feature-aware filtering
     filter_bindings_for_features(&mut tokens);
 
     // Apply the same sanitizer transforms as the normal bindgen flow
-    // Import these from the bindings module
     crate::bindings::sanitizer::ensure_backwards_compatible_encoding_pointers(&mut tokens);
 
-    // Note: We skip MSVC qualifiers since pre-generated bindings are target-specific
-    // and the MSVC case should have its own pre-generated set
-
-    // Emit cfg metadata from sidecar file
-    emit_cfg_from_sidecar(cfg_out)?;
+    // Emit cfg metadata
+    if let Some(cfg) = embedded_cfg {
+        emit_cfg_from_content(cfg, cfg_out)?;
+    } else {
+        emit_cfg_from_sidecar(cfg_out)?;
+    }
 
     // Also extract cfg from the bindings themselves (like the normal flow)
     push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
@@ -106,9 +191,148 @@ pub fn load_pregenerated(
     // Try to run rustfmt
     run_rustfmt(&out_path);
 
-    debug_log!("INFO: Wrote pre-generated bindings to {}", out_path.display());
+    debug_log!(
+        "INFO: Wrote pre-generated bindings to {}",
+        out_path.display()
+    );
 
     Ok(out_path)
+}
+
+/// Get the index of embedded bindings.
+///
+/// Returns a map of platform -> [versions].
+fn get_embedded_index() -> &'static HashMap<String, Vec<String>> {
+    EMBEDDED_INDEX.get_or_init(build_embedded_index)
+}
+
+/// Build an index of what's in the embedded tarball.
+fn build_embedded_index() -> HashMap<String, Vec<String>> {
+    let mut index: HashMap<String, Vec<String>> = HashMap::new();
+
+    // Decompress and read the tarball to index its contents
+    let decoder = match zstd::Decoder::new(Cursor::new(EMBEDDED_BINDINGS)) {
+        Ok(d) => d,
+        Err(e) => {
+            debug_log!("WARN: Failed to decompress embedded bindings: {}", e);
+            return index;
+        }
+    };
+
+    let mut archive = tar::Archive::new(decoder);
+
+    if let Ok(entries) = archive.entries() {
+        for entry in entries.flatten() {
+            if let Ok(path) = entry.path() {
+                let path_str = path.to_string_lossy();
+                // Path format: bindings/{platform}/{version}/bindings.rs
+                let parts: Vec<&str> = path_str.split('/').collect();
+                if parts.len() >= 4 && parts[0] == "bindings" && parts[3] == "bindings.rs" {
+                    let platform = parts[1].to_string();
+                    let version = parts[2].to_string();
+                    index.entry(platform).or_default().push(version);
+                }
+            }
+        }
+    }
+
+    index
+}
+
+/// Extract bindings for a specific platform and version from the embedded tarball.
+fn extract_embedded_bindings(
+    platform: &str,
+    version: &str,
+) -> Result<(String, String), Box<dyn Error>> {
+    let bindings_path = format!("bindings/{platform}/{version}/bindings.rs");
+    let cfg_path = format!("bindings/{platform}/{version}/bindings.cfg");
+
+    let mut bindings_content = None;
+    let mut cfg_content = None;
+
+    // Decompress and search the tarball
+    let decoder = zstd::Decoder::new(Cursor::new(EMBEDDED_BINDINGS))?;
+    let mut archive = tar::Archive::new(decoder);
+
+    for entry in archive.entries()? {
+        let mut entry = entry?;
+        let entry_path = entry.path()?.to_string_lossy().to_string();
+
+        if entry_path == bindings_path {
+            let mut content = String::new();
+            entry.read_to_string(&mut content)?;
+            bindings_content = Some(content);
+        } else if entry_path == cfg_path {
+            let mut content = String::new();
+            entry.read_to_string(&mut content)?;
+            cfg_content = Some(content);
+        }
+
+        // Early exit if we found both
+        if bindings_content.is_some() && cfg_content.is_some() {
+            break;
+        }
+    }
+
+    let bindings = bindings_content.ok_or_else(|| {
+        format!(
+            "Embedded bindings not found for platform={platform}, version={version}"
+        )
+    })?;
+
+    let cfg = cfg_content.unwrap_or_default();
+
+    Ok((bindings, cfg))
+}
+
+/// Normalize Ruby platform to match our embedded bindings directory names.
+///
+/// Ruby's platform() returns values like "aarch64-linux-gnu" or "x64-mingw-ucrt",
+/// but our embedded bindings use simplified names like "aarch64-linux".
+fn normalize_platform(platform: &str) -> String {
+    // Map Ruby platform names to our directory names
+    match platform {
+        // Linux variants
+        p if p.starts_with("aarch64-linux") => "aarch64-linux".to_string(),
+        p if p.starts_with("arm-linux") || p.starts_with("arm-linux-gnueabihf") => {
+            "arm-linux".to_string()
+        }
+        p if p.starts_with("x86_64-linux") => "x86_64-linux".to_string(),
+        p if p.starts_with("i686-linux") || p.starts_with("i386-linux") => "x86-linux".to_string(),
+
+        // musl variants
+        p if p.contains("aarch64") && p.contains("musl") => "aarch64-linux-musl".to_string(),
+        p if p.contains("x86_64") && p.contains("musl") => "x86_64-linux-musl".to_string(),
+
+        // Windows variants (keep as-is, they already match)
+        "x64-mingw-ucrt" => "x64-mingw-ucrt".to_string(),
+        "x64-mingw32" => "x64-mingw32".to_string(),
+        "aarch64-mingw-ucrt" => "aarch64-mingw-ucrt".to_string(),
+
+        // Darwin variants
+        p if p.contains("arm64-darwin") || p.contains("aarch64-darwin") => {
+            "arm64-darwin".to_string()
+        }
+        p if p.contains("x86_64-darwin") => "x86_64-darwin".to_string(),
+
+        // Fallback to original
+        _ => platform.to_string(),
+    }
+}
+
+/// Get Ruby version string in X.Y.Z format.
+fn ruby_version_string(rbconfig: &RbConfig) -> Option<String> {
+    // Try RUBY_PROGRAM_VERSION first
+    if let Some(ver) = rbconfig.get("RUBY_PROGRAM_VERSION") {
+        return Some(ver);
+    }
+
+    // Fall back to MAJOR.MINOR.TEENY
+    let major = rbconfig.get("MAJOR")?;
+    let minor = rbconfig.get("MINOR")?;
+    let teeny = rbconfig.get("TEENY").unwrap_or_else(|| "0".to_string());
+
+    Some(format!("{major}.{minor}.{teeny}"))
 }
 
 /// Filter out items based on enabled features.
@@ -155,38 +379,35 @@ fn filter_bindings_for_features(tokens: &mut syn::File) {
     });
 }
 
-/// Emit cfg metadata from the sidecar file.
-///
-/// The sidecar file contains lines like:
-/// ```text
-/// cargo:rustc-cfg=ruby_have_ruby_encoding_h="true"
-/// cargo:defines_have_ruby_encoding_h=true
-/// ```
+/// Emit cfg metadata from the sidecar file (environment variable path).
 fn emit_cfg_from_sidecar(cfg_out: &mut File) -> Result<(), Box<dyn Error>> {
     let cfg_path = env::var("RB_SYS_PREGENERATED_CFG_PATH").ok();
 
     if let Some(path) = cfg_path {
         let path = PathBuf::from(path);
         if path.exists() {
-            debug_log!("INFO: Reading cfg sidecar from {}", path.display());
-            let file = File::open(&path)?;
-            let reader = BufReader::new(file);
+            let content = fs::read_to_string(&path)?;
+            emit_cfg_from_content(&content, cfg_out)?;
+        }
+    }
 
-            for line in reader.lines() {
-                let line = line?;
-                let line = line.trim();
-                if line.is_empty() || line.starts_with('#') {
-                    continue;
-                }
+    Ok(())
+}
 
-                // Echo to stdout for cargo
-                println!("{line}");
+/// Emit cfg metadata from content string.
+fn emit_cfg_from_content(content: &str, cfg_out: &mut File) -> Result<(), Box<dyn Error>> {
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
 
-                // Also write to cfg_out file
-                if line.starts_with("cargo:defines_") || line.starts_with("cargo:ruby_") {
-                    writeln!(cfg_out, "{line}")?;
-                }
-            }
+        // Echo to stdout for cargo
+        println!("{line}");
+
+        // Also write to cfg_out file
+        if line.starts_with("cargo:defines_") || line.starts_with("cargo:ruby_") {
+            writeln!(cfg_out, "{line}")?;
         }
     }
 
@@ -210,37 +431,55 @@ fn push_cargo_cfg_from_bindings(
             || line.starts_with("RUBY_NDEBUG")
     }
 
-    for item in syntax.items.iter() {
-        if let syn::Item::Const(item) = item {
-            let conf_name = item.ident.to_string();
+    // Helper to find constants in the uncategorized module
+    fn find_consts_in_module(items: &[syn::Item]) -> Vec<&syn::ItemConst> {
+        let mut consts = Vec::new();
 
-            if is_defines(&conf_name) {
-                let name = conf_name.to_lowercase();
-                let val = match &*item.expr {
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Int(ref lit),
-                        ..
-                    }) => (lit.base10_parse::<u8>().unwrap_or(1) != 0).to_string(),
-                    Expr::Lit(ExprLit {
-                        lit: Lit::Bool(ref lit),
-                        ..
-                    }) => lit.value.to_string(),
-                    _ => "true".to_string(),
-                };
-
-                println!(
-                    r#"cargo:rustc-check-cfg=cfg(ruby_{name}, values("true", "false"))"#
-                );
-                println!("cargo:rustc-cfg=ruby_{name}=\"{val}\"");
-                println!("cargo:defines_{name}={val}");
-                writeln!(cfg_out, "cargo:defines_{name}={val}")?;
+        for item in items {
+            match item {
+                syn::Item::Const(c) => consts.push(c),
+                syn::Item::Mod(m) => {
+                    // Look inside modules (especially "uncategorized")
+                    if let Some((_, ref items)) = m.content {
+                        consts.extend(find_consts_in_module(items));
+                    }
+                }
+                _ => {}
             }
+        }
 
-            if conf_name.starts_with("RUBY_ABI_VERSION") {
-                let val = item.expr.to_token_stream().to_string();
-                println!("cargo:ruby_abi_version={val}");
-                writeln!(cfg_out, "cargo:ruby_abi_version={val}")?;
-            }
+        consts
+    }
+
+    let consts = find_consts_in_module(&syntax.items);
+
+    for item in consts {
+        let conf_name = item.ident.to_string();
+
+        if is_defines(&conf_name) {
+            let name = conf_name.to_lowercase();
+            let val = match &*item.expr {
+                Expr::Lit(ExprLit {
+                    lit: Lit::Int(ref lit),
+                    ..
+                }) => (lit.base10_parse::<u8>().unwrap_or(1) != 0).to_string(),
+                Expr::Lit(ExprLit {
+                    lit: Lit::Bool(ref lit),
+                    ..
+                }) => lit.value.to_string(),
+                _ => "true".to_string(),
+            };
+
+            println!(r#"cargo:rustc-check-cfg=cfg(ruby_{name}, values("true", "false"))"#);
+            println!("cargo:rustc-cfg=ruby_{name}=\"{val}\"");
+            println!("cargo:defines_{name}={val}");
+            writeln!(cfg_out, "cargo:defines_{name}={val}")?;
+        }
+
+        if conf_name.starts_with("RUBY_ABI_VERSION") {
+            let val = item.expr.to_token_stream().to_string();
+            println!("cargo:ruby_abi_version={val}");
+            writeln!(cfg_out, "cargo:ruby_abi_version={val}")?;
         }
     }
 
@@ -253,4 +492,48 @@ fn run_rustfmt(path: &Path) {
     cmd.stdout(std::process::Stdio::null());
     cmd.arg(path);
     let _ = cmd.status();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_platform() {
+        assert_eq!(normalize_platform("aarch64-linux-gnu"), "aarch64-linux");
+        assert_eq!(normalize_platform("arm-linux-gnueabihf"), "arm-linux");
+        assert_eq!(normalize_platform("x64-mingw-ucrt"), "x64-mingw-ucrt");
+        assert_eq!(normalize_platform("x64-mingw32"), "x64-mingw32");
+    }
+
+    #[test]
+    fn test_embedded_index_is_populated() {
+        let index = get_embedded_index();
+        // We should have at least some platforms
+        assert!(!index.is_empty(), "Embedded index should not be empty");
+
+        // Check for expected platforms
+        assert!(
+            index.contains_key("aarch64-linux"),
+            "Should have aarch64-linux"
+        );
+        assert!(index.contains_key("arm-linux"), "Should have arm-linux");
+    }
+
+    #[test]
+    fn test_extract_embedded_bindings() {
+        // Try to extract a known binding
+        let index = get_embedded_index();
+
+        if let Some(versions) = index.get("aarch64-linux") {
+            if let Some(version) = versions.first() {
+                let result = extract_embedded_bindings("aarch64-linux", version);
+                assert!(result.is_ok(), "Should extract bindings successfully");
+
+                let (bindings, cfg) = result.unwrap();
+                assert!(!bindings.is_empty(), "Bindings should not be empty");
+                assert!(!cfg.is_empty(), "Cfg should not be empty");
+            }
+        }
+    }
 }

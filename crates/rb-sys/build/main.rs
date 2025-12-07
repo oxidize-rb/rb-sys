@@ -4,7 +4,7 @@ mod stable_api_config;
 mod version;
 
 use features::*;
-use rb_sys_build::{bindings, pregenerated, RbConfig, RubyEngine};
+use rb_sys_build::{bindings, RbConfig, RubyEngine};
 use std::io::Write;
 use std::{
     env,
@@ -42,18 +42,14 @@ fn main() {
         println!("cargo:rerun-if-changed={}", file.unwrap().path().display());
     }
 
-    // Check for pre-generated bindings (for dependency-free cross-compilation)
-    let bindings_path = if pregenerated::use_pregenerated() {
-        pregenerated::load_pregenerated(&rbconfig, &mut cfg_capture_file)
-            .expect("load pre-generated bindings")
-    } else {
-        bindings::generate(
-            &rbconfig,
-            is_ruby_static_enabled(&rbconfig),
-            &mut cfg_capture_file,
-        )
-        .expect("generate bindings")
-    };
+    // Generate or load bindings using the unified function
+    // This tries: env var path -> embedded bindings -> bindgen (in that order)
+    let bindings_path = bindings::generate_or_load(
+        &rbconfig,
+        is_ruby_static_enabled(&rbconfig),
+        &mut cfg_capture_file,
+    )
+    .expect("generate or load bindings");
     println!("Bindings generated at: {}", bindings_path.display());
     println!(
         "cargo:rustc-env=RB_SYS_BINDINGS_PATH={}",

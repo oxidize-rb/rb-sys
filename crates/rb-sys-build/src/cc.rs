@@ -335,9 +335,7 @@ fn get_tool_from_env(env_var: &str) -> Option<String> {
     let env_var_with_target_dashes = format!("{env_var}_{target}");
 
     println!("cargo:rerun-if-env-changed={env_var}");
-    println!(
-        "cargo:rerun-if-env-changed={env_var_with_target_underscores}"
-    );
+    println!("cargo:rerun-if-env-changed={env_var_with_target_underscores}");
     println!("cargo:rerun-if-env-changed={env_var_with_target_dashes}");
 
     // Check target-specific variables first (both underscore and dash variants)

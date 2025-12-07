@@ -1530,8 +1530,12 @@ dependencies = [
  "proc-macro2",
  "quote",
  "regex",
+ "serde",
+ "serde_json",
  "shell-words",
  "syn",
+ "tar",
+ "zstd",
 ]
 
 [[package]]
@@ -1606,9 +1610,11 @@ dependencies = [
  "clap",
  "dirs",
  "indicatif 0.17.11",
+ "rb-sys-build",
  "serde",
  "serde_json",
  "tar",
+ "tempfile",
  "tracing",
  "tracing-indicatif",
  "tracing-subscriber",

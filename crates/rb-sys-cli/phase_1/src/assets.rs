@@ -5,6 +5,17 @@ use walkdir::WalkDir;
 
 use crate::config::Config;
 
+/// Directories to include in the embedded assets tarball.
+///
+/// We only include:
+/// - `bindings/` - Pre-generated Ruby bindings (the main output of phase_1)
+///
+/// We explicitly exclude:
+/// - Platform directories (rubies/, sysroot/) - Too large, only headers needed
+/// - `zig/` - Only needed during phase_1 for binding generation, not at runtime
+/// - `downloads/` - Temporary download cache
+const INCLUDE_DIRS: &[&str] = &["bindings"];
+
 pub fn build_assets(config_path: &Path, cache_dir: &Path, embedded_dir: &Path) -> Result<()> {
     let _config = Config::load(config_path)?;
 
@@ -20,36 +31,23 @@ pub fn build_assets(config_path: &Path, cache_dir: &Path, embedded_dir: &Path) -
         .with_context(|| format!("Failed to create archive: {}", archive_path.display()))?;
 
     // Use zstd level 10 for good compression with reasonable speed
-    // Note: zstd crate doesn't expose multithread API, but compression is still fast
     let encoder = zstd::Encoder::new(file, 10)
         .context("Failed to create zstd encoder")?
         .auto_finish();
 
     let mut tar = tar::Builder::new(encoder);
 
-    // Add each platform directory from cache
-    for entry in fs::read_dir(cache_dir)
-        .with_context(|| format!("Failed to read cache directory: {}", cache_dir.display()))?
-    {
-        let entry = entry.context("Failed to read directory entry")?;
-        let path = entry.path();
+    // Only add specific directories we want to embed
+    for dir_name in INCLUDE_DIRS {
+        let path = cache_dir.join(dir_name);
 
-        // Skip non-directories and special files
-        if !path.is_dir() {
-            continue;
-        }
-
-        let dir_name = path.file_name().unwrap().to_string_lossy();
-
-        // Skip if it's not a platform directory
-        if dir_name.starts_with('.') {
+        if !path.exists() {
+            tracing::warn!("Directory {} not found, skipping", dir_name);
             continue;
         }
 
         tracing::debug!("Adding {} to archive", dir_name);
-
-        // Add all files in the platform directory (deterministically)
-        add_directory_to_tar(&mut tar, &path, &dir_name)?;
+        add_directory_to_tar(&mut tar, &path, dir_name)?;
     }
 
     tar.into_inner()

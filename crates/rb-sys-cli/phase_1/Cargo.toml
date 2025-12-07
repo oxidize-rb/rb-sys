@@ -25,3 +25,5 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-indicatif = "0.3"
 indicatif = "0.17"
+tempfile = "3"
+rb-sys-build = { path = "../../rb-sys-build" }

@@ -2,6 +2,7 @@ pub mod sanitizer;
 pub mod stable_api;
 
 use crate::cc::Build;
+use crate::pregenerated;
 use crate::utils::is_msvc;
 use crate::{debug_log, RbConfig};
 use quote::ToTokens;
@@ -13,6 +14,41 @@ use std::{env, error::Error};
 use syn::{Expr, ExprLit, ItemConst, Lit};
 
 const WRAPPER_H_CONTENT: &str = include_str!("bindings/wrapper.h");
+
+/// Generate or load bindings for Ruby.
+///
+/// This function tries binding sources in the following order:
+///
+/// 1. **Environment variable path**: `RB_SYS_PREGENERATED_BINDINGS_PATH`
+/// 2. **Embedded bindings**: Pre-generated bindings compiled into this crate
+/// 3. **Bindgen**: Generate fresh bindings using libclang (fallback)
+///
+/// Use `RB_SYS_FORCE_BINDGEN=1` to skip pre-generated bindings and always use bindgen.
+pub fn generate_or_load(
+    rbconfig: &RbConfig,
+    static_ruby: bool,
+    cfg_out: &mut File,
+) -> Result<PathBuf, Box<dyn Error>> {
+    // 1. Try environment variable path first
+    if pregenerated::use_pregenerated() {
+        debug_log!("INFO: Using pre-generated bindings from environment variable");
+        return pregenerated::load_pregenerated(rbconfig, cfg_out);
+    }
+
+    // 2. Try embedded bindings for cross-compilation targets
+    if pregenerated::has_embedded_bindings(rbconfig) {
+        debug_log!(
+            "INFO: Using embedded bindings for platform={}, version={}",
+            rbconfig.platform(),
+            rbconfig.get("RUBY_PROGRAM_VERSION").unwrap_or_default()
+        );
+        return pregenerated::load_embedded(rbconfig, cfg_out);
+    }
+
+    // 3. Fall back to generating with bindgen
+    debug_log!("INFO: Generating bindings with bindgen");
+    generate(rbconfig, static_ruby, cfg_out)
+}
 
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(
@@ -239,9 +275,7 @@ fn push_cargo_cfg_from_bindings(
             if is_defines(&conf_name) {
                 let name = conf_name.to_lowercase();
                 let val = conf.value_bool().to_string();
-                println!(
-                    r#"cargo:rustc-check-cfg=cfg(ruby_{name}, values("true", "false"))"#
-                );
+                println!(r#"cargo:rustc-check-cfg=cfg(ruby_{name}, values("true", "false"))"#);
                 println!("cargo:rustc-cfg=ruby_{name}=\"{val}\"");
                 println!("cargo:defines_{name}={val}");
                 writeln!(cfg_out, "cargo:defines_{name}={val}")?;

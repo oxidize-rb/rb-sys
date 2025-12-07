@@ -1,4 +1,5 @@
 mod assets;
+mod bindings;
 mod codegen;
 mod config;
 mod manifest;
@@ -59,6 +60,17 @@ enum Commands {
         /// Output directory for embedded files
         #[arg(long, default_value = "crates/rb-sys-cli/src/embedded")]
         embedded_dir: PathBuf,
+    },
+
+    /// Generate pre-generated Ruby bindings for all platforms and versions
+    GenerateBindings {
+        /// Path to rb-sys-cli.json config
+        #[arg(long, default_value = "data/derived/rb-sys-cli.json")]
+        config: PathBuf,
+
+        /// Cache directory with phase_0 outputs
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
     },
 
     /// Run all phase 1 tasks
@@ -137,6 +149,17 @@ fn main() -> Result<()> {
             tracing::info!("✓ Built embedded assets");
         }
 
+        Commands::GenerateBindings { config, cache_dir } => {
+            let span = tracing::info_span!("generate_bindings", indicatif.pb_show = tracing::field::Empty);
+            let _enter = span.enter();
+
+            let cache_dir = resolve_cache_dir(cache_dir)?;
+            let cfg = config::Config::load(&config)?;
+            let bindings_output_dir = cache_dir.join("bindings");
+            bindings::generate_all_bindings(&cache_dir, &bindings_output_dir, &cfg)?;
+            tracing::info!("✓ Generated pre-generated bindings");
+        }
+
         Commands::All {
             toolchains_json,
             config,
@@ -158,6 +181,14 @@ fn main() -> Result<()> {
                 let span = tracing::info_span!("generate_manifest", indicatif.pb_show = tracing::field::Empty);
                 let _enter = span.enter();
                 manifest::generate_manifest(&config, &cache_dir, &derived_dir)?;
+            }
+
+            {
+                let span = tracing::info_span!("generate_bindings", indicatif.pb_show = tracing::field::Empty);
+                let _enter = span.enter();
+                let cfg = config::Config::load(&config)?;
+                let bindings_output_dir = cache_dir.join("bindings");
+                bindings::generate_all_bindings(&cache_dir, &bindings_output_dir, &cfg)?;
             }
             
             {
