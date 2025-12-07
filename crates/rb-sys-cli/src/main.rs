@@ -2,7 +2,6 @@ mod assets;
 mod build;
 pub mod generated_mappings;
 mod platform;
-mod rbconfig_parser;
 mod sysroot;
 mod toolchain;
 mod zig;

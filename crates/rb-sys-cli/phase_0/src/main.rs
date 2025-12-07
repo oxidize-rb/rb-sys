@@ -1,6 +1,7 @@
 mod cache;
 mod config;
 mod oci;
+mod rbconfig_parser;
 mod zig;
 
 use anyhow::{Context, Result};
@@ -181,6 +182,9 @@ async fn main() -> Result<()> {
 
             // Write digest marker
             cache::write_digest_marker(&cache_dir, &toolchain.ruby_platform, &toolchain.oci.digest)?;
+
+            // Generate rbconfig.json files from extracted rbconfig.rb files
+            rbconfig_parser::generate_rbconfig_json(&cache_dir, &toolchain.ruby_platform)?;
 
             completed += 1;
             overall_span.pb_inc(1);

@@ -241,6 +241,78 @@ impl RbConfigParser {
     }
 }
 
+/// Generate rbconfig.json files from all extracted rbconfig.rb files
+///
+/// Walks the cache directory and converts:
+///   {cache}/rubies/{ruby_platform}/ruby-X.Y.Z/lib/ruby/X.Y.Z/{arch}/rbconfig.rb
+/// to:
+///   {cache}/rubies/{ruby_platform}/ruby-X.Y.Z/lib/ruby/X.Y.Z/{arch}/rbconfig.json
+pub fn generate_rbconfig_json(cache_dir: &Path, ruby_platform: &str) -> Result<()> {
+    let rubies_dir = cache_dir.join(ruby_platform).join("rubies");
+    
+    if !rubies_dir.exists() {
+        tracing::debug!(
+            rubies_dir = %rubies_dir.display(),
+            "Rubies directory does not exist, skipping rbconfig.json generation"
+        );
+        return Ok(());
+    }
+
+    // Find all rbconfig.rb files
+    let mut rbconfig_count = 0;
+    for entry in walkdir::WalkDir::new(&rubies_dir)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let path = entry.path();
+        if path.file_name() == Some(std::ffi::OsStr::new("rbconfig.rb")) {
+            // Parse rbconfig.rb
+            let parser = RbConfigParser::from_file(path)
+                .with_context(|| format!("Failed to parse {}", path.display()))?;
+            
+            // Compute prefix for serialization
+            let prefix = RbConfigParser::compute_prefix(path)
+                .with_context(|| format!("Failed to compute prefix for {}", path.display()))?;
+            
+            // Convert to JSON
+            let serialized = parser.to_serialized(&prefix);
+            
+            // Write rbconfig.json next to rbconfig.rb
+            let json_path = path.with_extension("json");
+            let json_content = serde_json::to_string_pretty(&serialized)
+                .context("Failed to serialize rbconfig to JSON")?;
+            std::fs::write(&json_path, json_content)
+                .with_context(|| format!("Failed to write {}", json_path.display()))?;
+            
+            tracing::info!(
+                rbconfig_rb = %path.display(),
+                rbconfig_json = %json_path.display(),
+                "Generated rbconfig.json"
+            );
+            
+            rbconfig_count += 1;
+        }
+    }
+    
+    if rbconfig_count > 0 {
+        tracing::info!(
+            ruby_platform = %ruby_platform,
+            count = rbconfig_count,
+            "Generated {} rbconfig.json files",
+            rbconfig_count
+        );
+    } else {
+        tracing::warn!(
+            ruby_platform = %ruby_platform,
+            rubies_dir = %rubies_dir.display(),
+            "No rbconfig.rb files found"
+        );
+    }
+    
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
