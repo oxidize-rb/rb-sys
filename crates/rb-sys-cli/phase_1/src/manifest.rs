@@ -12,6 +12,8 @@ pub struct RuntimeManifest {
     pub version: u32,
     pub rake_compiler_dock_version: String,
     pub platforms: BTreeMap<String, PlatformInfo>,
+    #[serde(default)]
+    pub tools: Vec<RuntimeTool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,6 +24,17 @@ pub struct PlatformInfo {
     pub image_digest: String,
     pub ruby_versions: Vec<String>,
     pub has_sysroot: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RuntimeTool {
+    pub name: String,
+    pub version: String,
+    pub host_platform: String,
+    pub archive_path: String,
+    pub blake3: String, // Will be converted to Blake3Hash at runtime
+    #[serde(default)]
+    pub notes: Option<String>,
 }
 
 /// Phase 0 build manifest (with timestamps)
@@ -45,8 +58,12 @@ pub fn generate_manifest(config_path: &Path, cache_dir: &Path, derived_dir: &Pat
 
     // Load phase_0 build manifest
     let build_manifest_path = cache_dir.join("manifest.json");
-    let build_manifest_content = fs::read_to_string(&build_manifest_path)
-        .with_context(|| format!("Failed to read build manifest: {}", build_manifest_path.display()))?;
+    let build_manifest_content = fs::read_to_string(&build_manifest_path).with_context(|| {
+        format!(
+            "Failed to read build manifest: {}",
+            build_manifest_path.display()
+        )
+    })?;
     let build_manifest: BuildManifest = serde_json::from_str(&build_manifest_content)
         .with_context(|| "Failed to parse build manifest".to_string())?;
 
@@ -69,10 +86,20 @@ pub fn generate_manifest(config_path: &Path, cache_dir: &Path, derived_dir: &Pat
         }
     }
 
+    // Load tools manifest if present
+    let tools_manifest_path = Path::new("data/tools.json");
+    let tools = if tools_manifest_path.exists() {
+        let tools_manifest = crate::tools::ToolsManifest::load(tools_manifest_path)?;
+        tools_manifest.to_runtime_tools()
+    } else {
+        Vec::new()
+    };
+
     let runtime_manifest = RuntimeManifest {
         version: 1,
         rake_compiler_dock_version: "1.10.0".to_string(),
         platforms,
+        tools,
     };
 
     // Write to derived directory (checked in)
@@ -82,7 +109,7 @@ pub fn generate_manifest(config_path: &Path, cache_dir: &Path, derived_dir: &Pat
     let dest_path = derived_dir.join("rb-sys-cli-manifest.json");
     let content = serde_json::to_string_pretty(&runtime_manifest)
         .context("Failed to serialize runtime manifest")?;
-    
+
     fs::write(&dest_path, content)
         .with_context(|| format!("Failed to write {}", dest_path.display()))?;
 

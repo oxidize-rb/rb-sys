@@ -105,10 +105,12 @@ impl<'a> ArgFilter<'a> {
         }
 
         // aarch64 macOS: rewrite -march=armv8-a to apple_m1
-        if self.target.arch == Arch::Aarch64 && self.target.os == Os::Darwin
-            && arg == "-march=armv8-a" {
-                return Some(vec!["-march=apple_m1".to_string()]);
-            }
+        if self.target.arch == Arch::Aarch64
+            && self.target.os == Os::Darwin
+            && arg == "-march=armv8-a"
+        {
+            return Some(vec!["-march=apple_m1".to_string()]);
+        }
 
         // Pass through unchanged
         Some(vec![arg.to_string()])
@@ -156,6 +158,12 @@ impl<'a> ArgFilter<'a> {
                 return Some(vec!["-lc++".to_string()]);
             }
 
+            // Remove -m <emulation> for ld.lld (not needed when using zig cc as linker driver)
+            if arg == "-m" {
+                iter.next(); // consume the next arg (e.g., "i386pep")
+                return None;
+            }
+
             // Remove MinGW-specific flags that Zig doesn't support
             if matches!(
                 arg,
@@ -163,16 +171,31 @@ impl<'a> ArgFilter<'a> {
                     | "-l:libpthread.a"
                     | "-lgcc"
                     | "-Wl,--disable-auto-image-base"
+                    | "--disable-auto-image-base"
                     | "-Wl,--dynamicbase"
+                    | "--dynamicbase"
                     | "-Wl,--large-address-aware"
+                    | "--large-address-aware"
+                    | "-Wl,--high-entropy-va"
+                    | "--high-entropy-va"
+                    | "-Wl,--nxcompat"
+                    | "--nxcompat"
+                    | "-Wl,--gc-sections"
+                    | "--gc-sections"
                     | "-lmsvcrt"
                     | "-Wl,--allow-shlib-undefined"
+                    | "--allow-shlib-undefined"
             ) {
                 return None;
             }
 
             // Remove .def files
             if arg.ends_with(".def") {
+                return None;
+            }
+
+            // Remove --out-implib (lld handles this automatically)
+            if arg.starts_with("--out-implib=") {
                 return None;
             }
 
@@ -274,15 +297,14 @@ impl<'a> ArgFilter<'a> {
                 || first == "--disable-auto-image-base"
                 || first == "--large-address-aware"
                 || first == "--allow-shlib-undefined")
-            {
-                return None;
-            }
+        {
+            return None;
+        }
 
         // === musl-specific flags to remove ===
-        if self.target.env == Env::Musl
-            && first == "-melf_i386" {
-                return None;
-            }
+        if self.target.env == Env::Musl && first == "-melf_i386" {
+            return None;
+        }
 
         // === macOS-specific flags handling ===
         if self.target.os == Os::Darwin {
@@ -418,10 +440,8 @@ mod tests {
         let target = RustTarget::parse("x86_64-pc-windows-gnu").unwrap();
         let filter = ArgFilter::with_link_mode(&target, LinkMode::Driver);
 
-        let result = filter.filter_link_args(&[
-            "-Wl,--eh-frame-hdr".to_string(),
-            "-lkernel32".to_string(),
-        ]);
+        let result =
+            filter.filter_link_args(&["-Wl,--eh-frame-hdr".to_string(), "-lkernel32".to_string()]);
 
         assert_eq!(result, vec!["-lkernel32"]);
     }
@@ -441,10 +461,8 @@ mod tests {
         let target = RustTarget::parse("x86_64-unknown-linux-gnu").unwrap();
         let filter = ArgFilter::with_link_mode(&target, LinkMode::Direct);
 
-        let result = filter.filter_link_args(&[
-            "-Wl,-soname,libfoo.so.1".to_string(),
-            "-lfoo".to_string(),
-        ]);
+        let result =
+            filter.filter_link_args(&["-Wl,-soname,libfoo.so.1".to_string(), "-lfoo".to_string()]);
 
         assert_eq!(result, vec!["-soname", "libfoo.so.1", "-lfoo"]);
     }
@@ -512,10 +530,7 @@ mod tests {
             "output.so".to_string(),
         ]);
 
-        assert_eq!(
-            result,
-            vec!["-L/path/to/lib", "-lfoo", "-o", "output.so"]
-        );
+        assert_eq!(result, vec!["-L/path/to/lib", "-lfoo", "-o", "output.so"]);
     }
 
     // === Global filter tests ===

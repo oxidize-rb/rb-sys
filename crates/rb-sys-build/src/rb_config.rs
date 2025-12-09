@@ -410,9 +410,21 @@ impl RbConfig {
             .and_then(|v| v.parse::<i32>().ok())
             .unwrap_or(-1);
 
-        // Ruby has ABI version on verion 3.2 and later only on development
-        // versions
-        major >= 3 && minor >= 2 && patchlevel == -1 && !cfg!(target_family = "windows")
+        // Check target family at runtime for cross-compilation support
+        let is_windows_target = env::var("CARGO_CFG_TARGET_FAMILY")
+            .map(|f| f == "windows")
+            .unwrap_or(cfg!(target_family = "windows"));
+
+        let result = major >= 3 && minor >= 2 && patchlevel == -1 && !is_windows_target;
+
+        debug_log!(
+            "INFO: has_ruby_dln_check_abi: major={}, minor={}, patchlevel={}, is_windows_target={}, result={}",
+            major, minor, patchlevel, is_windows_target, result
+        );
+
+        // Ruby has ABI version on version 3.2 and later only on development
+        // versions, and NOT on Windows (weak symbols not supported)
+        result
     }
 
     /// The RUBY_ENGINE we are building for

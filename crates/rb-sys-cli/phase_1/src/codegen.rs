@@ -91,9 +91,7 @@ pub fn generate_toolchains(toolchains_json: &Path, _derived_dir: &Path) -> Resul
     generated_code.push_str("        match self {\n");
     for (variant_name, _, _, sysroot_paths, _) in &variants {
         if sysroot_paths.is_empty() {
-            generated_code.push_str(&format!(
-                "            Toolchain::{variant_name} => &[],\n"
-            ));
+            generated_code.push_str(&format!("            Toolchain::{variant_name} => &[],\n"));
         } else {
             let paths_str = sysroot_paths
                 .iter()

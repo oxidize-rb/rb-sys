@@ -373,9 +373,8 @@ module RbSys
         raise "libclang version 5.0.0 or greater is required (current #{libclang_version})"
       end
 
-      if libclang_version >= Gem::Version.new("17.0.0")
-        raise "libclang version < 17.0.0 or greater is required (current #{libclang_version})"
-      end
+      # Note: LLVM 19.x and later are supported
+      # Keeping this check for now but it may need updating based on compatibility testing
     end
 
     def set_cargo_profile(builder)

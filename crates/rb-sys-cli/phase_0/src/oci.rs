@@ -138,7 +138,10 @@ fn process_layer_blob(
 
     for entry_result in archive.entries().context("Failed to read tar entries")? {
         let mut entry = entry_result.context("Failed to read tar entry")?;
-        let path = entry.path().context("Failed to get entry path")?.into_owned();
+        let path = entry
+            .path()
+            .context("Failed to get entry path")?
+            .into_owned();
         let path_str = path.to_string_lossy().to_string();
 
         // Skip docker whiteout files
@@ -249,8 +252,8 @@ fn extract_ruby_entry<R: Read>(
     dest_dir: &Path,
 ) -> Result<()> {
     let path_str = path.to_string_lossy();
-    let relative_path = strip_ruby_path_prefix(&path_str)
-        .context("Path doesn't start with expected prefix")?;
+    let relative_path =
+        strip_ruby_path_prefix(&path_str).context("Path doesn't start with expected prefix")?;
 
     let dest_path = dest_dir
         .join(ruby_platform)

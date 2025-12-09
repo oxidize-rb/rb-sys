@@ -38,9 +38,7 @@ pub fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Result<Vec<P
         .args(["libc", "-target", &zig_target, "-includes"])
         .output()
         .with_context(|| {
-            format!(
-                "Failed to run `zig libc -target {zig_target} -includes`. Is zig installed?"
-            )
+            format!("Failed to run `zig libc -target {zig_target} -includes`. Is zig installed?")
         })?;
 
     if !output.status.success() {
@@ -59,9 +57,7 @@ pub fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Result<Vec<P
         .collect();
 
     if paths.is_empty() {
-        bail!(
-            "zig libc -target {zig_target} -includes returned no paths"
-        );
+        bail!("zig libc -target {zig_target} -includes returned no paths");
     }
 
     tracing::debug!(

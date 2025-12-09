@@ -22,7 +22,7 @@ use super::target::RustTarget;
 /// - `ar`  - Archiver shim
 /// - `ld`  - Linker shim
 /// - `dlltool` - dlltool emulator shim (Windows only)
-/// 
+///
 /// Returns the ShimPaths for the generated shims.
 pub fn generate_shims(
     shim_dir: &Path,
@@ -63,12 +63,12 @@ pub fn generate_shims(
         // Create arch-prefixed symlink (e.g., x86_64-w64-mingw32-dlltool -> dlltool)
         let prefix = mingw_prefix(target);
         let prefixed_path = shim_dir.join(format!("{prefix}-dlltool"));
-        
+
         #[cfg(unix)]
         {
             let _ = std::os::unix::fs::symlink("dlltool", &prefixed_path);
         }
-        
+
         true
     } else {
         false
@@ -169,11 +169,7 @@ exec '{cli_path}' zig-ld \
 }
 
 /// Generate the dlltool (import library builder) shim script.
-fn generate_dlltool_shim(
-    cli_path: &Path,
-    zig_path: &Path,
-    target: &RustTarget,
-) -> String {
+fn generate_dlltool_shim(cli_path: &Path, zig_path: &Path, target: &RustTarget) -> String {
     format!(
         r#"#!/usr/bin/env bash
 exec '{cli_path}' zig-dlltool \

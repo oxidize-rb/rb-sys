@@ -11,6 +11,7 @@ members = [
     "crates/rb-sys-cli/oci-digest-helper",
     "crates/rb-sys-cli/phase_0",
     "crates/rb-sys-cli/phase_1",
+    "crates/rb-sys-cli/phase_2",
 ]
 exclude = [
     "examples/rust_reverse/ext/rust_reverse",

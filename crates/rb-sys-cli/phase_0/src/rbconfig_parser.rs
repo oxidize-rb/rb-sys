@@ -249,7 +249,7 @@ impl RbConfigParser {
 ///   {cache}/rubies/{ruby_platform}/ruby-X.Y.Z/lib/ruby/X.Y.Z/{arch}/rbconfig.json
 pub fn generate_rbconfig_json(cache_dir: &Path, ruby_platform: &str) -> Result<()> {
     let rubies_dir = cache_dir.join(ruby_platform).join("rubies");
-    
+
     if !rubies_dir.exists() {
         tracing::debug!(
             rubies_dir = %rubies_dir.display(),
@@ -270,31 +270,31 @@ pub fn generate_rbconfig_json(cache_dir: &Path, ruby_platform: &str) -> Result<(
             // Parse rbconfig.rb
             let parser = RbConfigParser::from_file(path)
                 .with_context(|| format!("Failed to parse {}", path.display()))?;
-            
+
             // Compute prefix for serialization
             let prefix = RbConfigParser::compute_prefix(path)
                 .with_context(|| format!("Failed to compute prefix for {}", path.display()))?;
-            
+
             // Convert to JSON
             let serialized = parser.to_serialized(&prefix);
-            
+
             // Write rbconfig.json next to rbconfig.rb
             let json_path = path.with_extension("json");
             let json_content = serde_json::to_string_pretty(&serialized)
                 .context("Failed to serialize rbconfig to JSON")?;
             std::fs::write(&json_path, json_content)
                 .with_context(|| format!("Failed to write {}", json_path.display()))?;
-            
+
             tracing::info!(
                 rbconfig_rb = %path.display(),
                 rbconfig_json = %json_path.display(),
                 "Generated rbconfig.json"
             );
-            
+
             rbconfig_count += 1;
         }
     }
-    
+
     if rbconfig_count > 0 {
         tracing::info!(
             ruby_platform = %ruby_platform,
@@ -309,7 +309,7 @@ pub fn generate_rbconfig_json(cache_dir: &Path, ruby_platform: &str) -> Result<(
             "No rbconfig.rb files found"
         );
     }
-    
+
     Ok(())
 }
 

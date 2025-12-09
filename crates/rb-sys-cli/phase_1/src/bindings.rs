@@ -21,8 +21,6 @@ use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use tracing::{debug, info};
 
-use crate::config::Config;
-
 /// Information about a discovered Ruby installation.
 #[derive(Debug, Clone)]
 pub struct RubyInfo {
@@ -100,9 +98,8 @@ fn discover_ruby_versions(rubies_dir: &Path) -> Result<Vec<RubyInfo>> {
         }
 
         // Look for ruby-X.Y.Z directories
-        let ruby_entries = fs::read_dir(&arch_path).with_context(|| {
-            format!("Failed to read arch rubies dir: {}", arch_path.display())
-        })?;
+        let ruby_entries = fs::read_dir(&arch_path)
+            .with_context(|| format!("Failed to read arch rubies dir: {}", arch_path.display()))?;
 
         for ruby_entry in ruby_entries {
             let ruby_entry = ruby_entry?;
@@ -112,10 +109,7 @@ fn discover_ruby_versions(rubies_dir: &Path) -> Result<Vec<RubyInfo>> {
                 continue;
             }
 
-            let ruby_dir_name = ruby_path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
+            let ruby_dir_name = ruby_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
             if ruby_dir_name.starts_with("ruby-") {
                 let version = ruby_dir_name.trim_start_matches("ruby-").to_string();
@@ -264,7 +258,10 @@ fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Vec<String> {
         }
 
         // Common Linux headers (last, so arch-specific overrides)
-        includes.push(format!("-I{}", libc_include.join("any-linux-any").display()));
+        includes.push(format!(
+            "-I{}",
+            libc_include.join("any-linux-any").display()
+        ));
     } else if rust_target.contains("windows") {
         // Windows/mingw headers
         includes.push(format!(
@@ -283,11 +280,7 @@ fn get_zig_libc_includes(zig_path: &Path, rust_target: &str) -> Vec<String> {
 }
 
 /// Generate bindings for all discovered Ruby installations.
-pub fn generate_all_bindings(
-    cache_dir: &Path,
-    output_dir: &Path,
-    config: &Config,
-) -> Result<()> {
+pub fn generate_all_bindings(cache_dir: &Path, output_dir: &Path) -> Result<()> {
     let rubies = discover_rubies(cache_dir)?;
 
     if rubies.is_empty() {
@@ -303,12 +296,26 @@ pub fn generate_all_bindings(
     let zig_path = find_zig_installation(cache_dir)?;
     info!(zig_path = %zig_path.display(), "Using Zig libc headers");
 
-    // Build a map of ruby_platform -> rust_target from config
-    let platform_to_target: HashMap<String, String> = config
-        .toolchains
-        .iter()
-        .map(|tc| (tc.ruby_platform.clone(), tc.rust_target.clone()))
-        .collect();
+    // Build a map of ruby_platform -> rust_target from toolchains.json
+    let toolchains_json = Path::new("data/toolchains.json");
+    let toolchains_content = fs::read_to_string(toolchains_json)
+        .with_context(|| format!("Failed to read {}", toolchains_json.display()))?;
+    let toolchains: serde_json::Value = serde_json::from_str(&toolchains_content)
+        .with_context(|| format!("Failed to parse {}", toolchains_json.display()))?;
+
+    let platform_to_target: HashMap<String, String> =
+        if let Some(toolchains_array) = toolchains["toolchains"].as_array() {
+            toolchains_array
+                .iter()
+                .filter_map(|tc| {
+                    let ruby_platform = tc["ruby-platform"].as_str()?;
+                    let rust_target = tc["rust-target"].as_str()?;
+                    Some((ruby_platform.to_string(), rust_target.to_string()))
+                })
+                .collect()
+        } else {
+            HashMap::new()
+        };
 
     let mut total_generated = 0;
     let mut errors = Vec::new();
@@ -484,9 +491,20 @@ fn generate_bindings_for_ruby(
         )
     })?;
 
+    // Copy rbconfig.json for cross-compilation support
+    let rbconfig_dest = binding_output_dir.join("rbconfig.json");
+    fs::copy(&ruby_info.rbconfig_json, &rbconfig_dest).with_context(|| {
+        format!(
+            "Failed to copy rbconfig.json from {} to {}",
+            ruby_info.rbconfig_json.display(),
+            rbconfig_dest.display()
+        )
+    })?;
+
     debug!(
         bindings = %final_bindings_path.display(),
         cfg = %cfg_path.display(),
+        rbconfig = %rbconfig_dest.display(),
         "Generated bindings files"
     );
 

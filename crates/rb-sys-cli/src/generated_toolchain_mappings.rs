@@ -116,6 +116,7 @@ impl Toolchain {
             "aarch64-apple-darwin" => Some(Toolchain::Arm64Darwin),
             "x86_64-pc-windows-gnu" => Some(Toolchain::X64MingwUcrt),
             "aarch64-pc-windows-gnullvm" => Some(Toolchain::Aarch64MingwUcrt),
+            "x86_64-pc-windows-gnu" => Some(Toolchain::X64Mingw32),
             "i686-unknown-linux-gnu" => Some(Toolchain::X86Linux),
             "i686-pc-windows-gnu" => Some(Toolchain::X86Mingw32),
             "x86_64-apple-darwin" => Some(Toolchain::X8664Darwin),

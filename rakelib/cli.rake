@@ -1,33 +1,39 @@
 # frozen_string_literal: true
 
 namespace :cli do
-  desc "Run rb-sys-cli phase 0 (OCI download/extract)"
+  desc "Prepare all rb-sys-cli artifacts (fetch, transform, bundle)"
+  task :prepare => [:phase_0, :phase_1, :phase_2]
+
+  desc "Run rb-sys-cli phase 0 (fetch assets for all platforms)"
   task :phase_0 do
     sh "./script/run", "cargo", "run",
       "--release",
-      "-p", "rb-sys-cli-phase-0",
-      "--",
-      "--config", "data/derived/rb-sys-cli.json"
+      "-p", "rb-sys-cli-phase-0"
   end
 
-  desc "Run rb-sys-cli phase 1 (codegen + packaging)"
+  desc "Run rb-sys-cli phase 1 (transform and enhance)"
   task :phase_1 do
-    cache_dir = ENV.fetch("RB_SYS_BUILD_CACHE_DIR", File.expand_path("~/.cache/rb-sys/cli"))
-
     sh "./script/run", "cargo", "run",
       "--release",
-      "-p", "rb-sys-cli-phase-1",
-      "--",
-      "all",
-      "--toolchains-json", "data/toolchains.json",
-      "--config", "data/derived/rb-sys-cli.json",
-      "--cache-dir", cache_dir,
-      "--derived-dir", "data/derived",
-      "--embedded-dir", "crates/rb-sys-cli/src/embedded"
+      "-p", "rb-sys-cli-phase-1"
   end
 
-  desc "Prepare all rb-sys-cli derived artifacts (phase 0 + phase 1)"
-  task prepare: [:phase_0, :phase_1]
+  desc "Run rb-sys-cli phase 2 (bundle into tar.xz)"
+  task :phase_2 do
+    sh "./script/run", "cargo", "run",
+      "--release",
+      "-p", "rb-sys-cli-phase-2"
+  end
+
+  desc "Clean all generated assets and staging"
+  task :clean do
+    rm_rf "data/staging"
+    rm_rf "tmp/cache"
+    rm_rf "data/derived/phase_0_lock.toml"
+    rm_rf "data/derived/runtime_manifest.json"
+    rm_rf "crates/rb-sys-cli/src/embedded/assets.tar.xz"
+    rm_rf "crates/rb-sys-cli/src/embedded/runtime_manifest.json"
+  end
 
   desc "Build the rb-sys-cli binary"
   task :build do

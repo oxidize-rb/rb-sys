@@ -65,9 +65,8 @@ pub fn save_manifest(path: &Path, manifest: &Manifest) -> Result<()> {
             .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
     }
 
-    let content = serde_json::to_string_pretty(manifest)
-        .context("Failed to serialize manifest")?;
-    
+    let content = serde_json::to_string_pretty(manifest).context("Failed to serialize manifest")?;
+
     fs::write(path, content)
         .with_context(|| format!("Failed to write manifest: {}", path.display()))?;
 
@@ -79,11 +78,11 @@ pub fn get_default_cache_dir() -> Result<PathBuf> {
     // CARGO_MANIFEST_DIR is crates/rb-sys-cli/phase_0
     // We want repo_root/.cache/cli
     let cache_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()  // crates/rb-sys-cli
+        .parent() // crates/rb-sys-cli
         .unwrap()
-        .parent()  // crates
+        .parent() // crates
         .unwrap()
-        .parent()  // repo root
+        .parent() // repo root
         .unwrap()
         .join(".cache/cli");
 
@@ -106,18 +105,18 @@ pub fn needs_extraction(
             // Digest matches, check if files exist
             let platform_dir = cache_dir.join(ruby_platform);
             let digest_marker = platform_dir.join(".digest");
-            
+
             if digest_marker.exists() {
                 if let Ok(stored_digest) = fs::read_to_string(&digest_marker) {
                     return stored_digest.trim() != current_digest;
                 }
             }
-            
+
             // Marker doesn't exist or is invalid, need to extract
             return true;
         }
     }
-    
+
     // Digest changed or not in manifest
     true
 }
@@ -125,12 +124,16 @@ pub fn needs_extraction(
 /// Write digest marker file for a platform
 pub fn write_digest_marker(cache_dir: &Path, ruby_platform: &str, digest: &str) -> Result<()> {
     let platform_dir = cache_dir.join(ruby_platform);
-    fs::create_dir_all(&platform_dir)
-        .with_context(|| format!("Failed to create platform directory: {}", platform_dir.display()))?;
-    
+    fs::create_dir_all(&platform_dir).with_context(|| {
+        format!(
+            "Failed to create platform directory: {}",
+            platform_dir.display()
+        )
+    })?;
+
     let marker_path = platform_dir.join(".digest");
     fs::write(&marker_path, digest)
         .with_context(|| format!("Failed to write digest marker: {}", marker_path.display()))?;
-    
+
     Ok(())
 }

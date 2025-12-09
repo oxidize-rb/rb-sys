@@ -1,0 +1,152 @@
+# Asset Types:
+# - tarball: Download, verify SHA256, unpack, repack as .tar.zst with BLAKE3
+# - tarball_extract: Download, extract specific files matching glob, repack with BLAKE3
+# - oci_extract: Extract from OCI image (future: Ruby sysroots)
+#
+# Workflow:
+# 1. phase_0 reads this file → fetches assets → computes blake3 → writes to phase_0_lock.toml
+# 2. phase_1 reads phase_0_lock.toml → packages into assets.tar.zst → embeds in binary
+# 3. Runtime reads embedded manifest → extracts/verifies assets using blake3
+
+[manifest]
+version = 1
+
+[[assets]]
+name = "zig"
+version = "0.15.2"
+host = "x86_64-unknown-linux-gnu"
+category = "tool"
+fetch_type = "tarball"
+fetch_url = "https://ziglang.org/download/0.15.2/zig-linux-x86_64-0.15.2.tar.xz"
+fetch_digest = "sha256:02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239"
+strip_components = 1
+archive_path = "tools/x86_64-unknown-linux-gnu/zig.tar.zst"
+
+[[assets]]
+name = "libclang"
+version = "19.1.5"
+host = "x86_64-unknown-linux-gnu"
+category = "tool"
+fetch_type = "tarball_extract"
+fetch_url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.5/LLVM-19.1.5-Linux-X64.tar.xz"
+fetch_extract = "**/lib/libclang.so*"
+fetch_digest = "sha256:a7817e1ba812f8a270424d0e20f4b6582b0b2b8b2936650c789acd3aac0f94a5"
+strip_components = 1
+archive_path = "tools/x86_64-unknown-linux-gnu/libclang.tar.zst"
+
+[[assets]]
+name = "zig"
+version = "0.15.2"
+host = "aarch64-unknown-linux-gnu"
+category = "tool"
+fetch_type = "tarball"
+fetch_url = "https://ziglang.org/download/0.15.2/zig-linux-aarch64-0.15.2.tar.xz"
+fetch_digest = "sha256:958ed7d1e00d0ea76590d27666efbf7a932281b3d7ba0c6b01b0ff26498f667f"
+strip_components = 1
+archive_path = "tools/aarch64-unknown-linux-gnu/zig.tar.zst"
+
+[[assets]]
+name = "libclang"
+version = "19.1.5"
+host = "aarch64-unknown-linux-gnu"
+category = "tool"
+fetch_type = "tarball_extract"
+fetch_url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.5/clang+llvm-19.1.5-aarch64-linux-gnu.tar.xz"
+fetch_extract = "**/lib/libclang.so*"
+fetch_digest = "sha256:a2734c46d37651df823c5323670bf2d96b30bca2b3636209a21ebdd6c307cb6d"
+strip_components = 1
+archive_path = "tools/aarch64-unknown-linux-gnu/libclang.tar.zst"
+
+[[assets]]
+name = "zig"
+version = "0.15.2"
+host = "x86_64-apple-darwin"
+category = "tool"
+fetch_type = "tarball"
+fetch_url = "https://ziglang.org/download/0.15.2/zig-macos-x86_64-0.15.2.tar.xz"
+fetch_digest = "sha256:375b6909fc1495d16fc2c7db9538f707456bfc3373b14ee83fdd3e22b3d43f7f"
+strip_components = 1
+
+archive_path = "tools/x86_64-apple-darwin/zig.tar.zst"
+
+[[assets]]
+name = "libclang"
+version = "19.1.5"
+host = "x86_64-apple-darwin"
+category = "tool"
+fetch_type = "tarball_extract"
+fetch_url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.5/LLVM-19.1.5-macOS-X64.tar.xz"
+fetch_extract = "**/lib/libclang.dylib"
+fetch_digest = "sha256:1ca27464f2ec0547079964d257b1972849fd5680a81791927f055b171dfde4ba"
+strip_components = 1
+archive_path = "tools/x86_64-apple-darwin/libclang.tar.zst"
+
+[[assets]]
+name = "sdk"
+version = "14.5"
+host = "x86_64-apple-darwin"
+category = "sdk"
+
+fetch_type = "tarball"
+fetch_url = "https://github.com/joseluisq/macosx-sdks/releases/download/14.5/MacOSX14.5.sdk.tar.xz"
+fetch_digest = "sha256:6e146275d19f027faa2e8354da5e0267513abf013b8f16ad65a231653a2b1c5d"
+strip_components = 1
+archive_path = "sdks/x86_64-apple-darwin/MacOSX.sdk.tar.zst"
+
+[[assets]]
+name = "zig"
+version = "0.15.2"
+host = "aarch64-apple-darwin"
+category = "tool"
+fetch_type = "tarball"
+fetch_url = "https://ziglang.org/download/0.15.2/zig-macos-aarch64-0.15.2.tar.xz"
+fetch_digest = "sha256:3cc2bab367e185cdfb27501c4b30b1b0653c28d9f73df8dc91488e66ece5fa6b"
+strip_components = 1
+archive_path = "tools/aarch64-apple-darwin/zig.tar.zst"
+
+[[assets]]
+name = "libclang"
+version = "21.1.6"
+host = "aarch64-apple-darwin"
+category = "tool"
+fetch_type = "tarball_extract"
+fetch_url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/LLVM-21.1.6-macOS-ARM64.tar.xz"
+fetch_extract = "**/lib/libclang.dylib"
+fetch_digest = "sha256:9efa477e961d95094e3f728ce91af110be4fe93cc18ee8bd0afda0355bc5a6e9"
+strip_components = 1
+archive_path = "tools/aarch64-apple-darwin/libclang.tar.zst"
+
+[[assets]]
+name = "sdk"
+version = "14.5"
+host = "aarch64-apple-darwin"
+category = "sdk"
+fetch_type = "tarball"
+fetch_url = "https://github.com/joseluisq/macosx-sdks/releases/download/14.5/MacOSX14.5.sdk.tar.xz"
+fetch_digest = "sha256:6e146275d19f027faa2e8354da5e0267513abf013b8f16ad65a231653a2b1c5d"
+strip_components = 1
+archive_path = "sdks/aarch64-apple-darwin/MacOSX.sdk.tar.zst"
+
+
+[[assets]]
+name = "rubies"
+version = "all"
+host = "universal"
+category = "ruby"
+fetch_type = "oci_extract"
+fetch_image = "ghcr.io/rake-compiler/rake-compiler-dock-image:1.10.0-mri-x86_64-linux"
+fetch_digest = "sha256:c6ec0a2fe56266b8642f01d4dc3891f6e49995bf0b9a641432a0cd2b86f71abb"
+fetch_items = [
+    "usr/local/rake-compiler/rb/x86_64-linux/ruby-*/include/**",
+    "usr/local/rake-compiler/rb/x86_64-linux-musl/ruby-*/include/**",
+    "usr/local/rake-compiler/rb/aarch64-linux/ruby-*/include/**",
+    "usr/local/rake-compiler/rb/aarch64-linux-musl/ruby-*/include/**",
+    "usr/local/rake-compiler/rb/arm-linux/ruby-*/include/**",
+]
+fetch_strip_prefix = "usr/local/rake-compiler/rb/"
+archive_path = "rubies.tar.zst"
+
+# ==============================================================================
+# Windows support
+# Note: Users should install zig and llvm locally for now
+# ==============================================================================

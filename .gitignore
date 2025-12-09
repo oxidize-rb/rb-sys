@@ -10,3 +10,4 @@ book/src/https:/
 # rb-sys-cli build cache and embedded assets
 .cache/
 crates/rb-sys-cli/src/embedded/
+data/staging/

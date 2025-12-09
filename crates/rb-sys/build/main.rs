@@ -136,7 +136,11 @@ fn export_cargo_cfg(rbconfig: &mut RbConfig, cap: &mut File) {
     }
 
     println!("cargo:rustc-check-cfg=cfg(has_ruby_abi_version)");
-    if rbconfig.has_ruby_dln_check_abi() {
+    let has_abi = rbconfig.has_ruby_dln_check_abi();
+    eprintln!("DEBUG: has_ruby_dln_check_abi() returned: {}", has_abi);
+    eprintln!("DEBUG: PATCHLEVEL = {:?}", rbconfig.get("PATCHLEVEL"));
+    eprintln!("DEBUG: MAJOR/MINOR = {:?}", rbconfig.major_minor());
+    if has_abi {
         println!("cargo:rustc-cfg=has_ruby_abi_version");
     }
 
@@ -272,9 +276,7 @@ fn enable_dynamic_lookup(rbconfig: &mut RbConfig) {
         env::consts::OS.to_string()
     });
 
-    eprintln!(
-        "DEBUG: enable_dynamic_lookup detected target_os = {target_os}"
-    );
+    eprintln!("DEBUG: enable_dynamic_lookup detected target_os = {target_os}");
 
     if target_os == "macos" {
         rbconfig.push_dldflags("-Wl,-undefined,dynamic_lookup");

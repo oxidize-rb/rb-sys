@@ -137,7 +137,7 @@ fn validate_requirements(target: &RustTarget, args: &ZigCcArgs) -> Result<()> {
 
     // macOS targets require SDKROOT
     if target.requires_sdkroot() {
-        let config = MacOSConfig::from_env()?;
+        let config = MacOSConfig::from_env_or_embedded(None)?;
         if let Err(e) = config.validate() {
             bail!("{e}");
         }
@@ -165,7 +165,7 @@ fn add_platform_args(cmd: &mut Command, target: &RustTarget, args: &ZigCcArgs) -
             }
         }
         Os::Darwin => {
-            let config = MacOSConfig::from_env()?;
+            let config = MacOSConfig::from_env_or_embedded(None)?;
 
             for arg in config.cc_args() {
                 cmd.arg(arg);

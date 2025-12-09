@@ -1,13 +1,18 @@
 mod assets;
+mod blake3_hash;
 mod build;
 pub mod generated_mappings;
+mod libclang;
 mod platform;
 mod sysroot;
 mod toolchain;
+mod tools;
 mod zig;
 
 use anyhow::Result;
+use assets::AssetManager;
 use clap::{Parser, Subcommand};
+use tools as tool_helpers;
 use tracing_subscriber::{fmt, EnvFilter};
 
 /// Setup logging based on verbose flag or RUST_LOG environment variable
@@ -44,6 +49,13 @@ enum Commands {
     /// List supported target platforms
     #[command(alias = "ls")]
     List,
+
+    /// Inspect embedded tooling
+    Tools,
+
+    /// Test macOS SDK embedding
+    #[command(hide = true)]
+    TestSdk,
 
     /// Cache management
     Cache {
@@ -95,6 +107,94 @@ fn main() -> Result<()> {
 
         Commands::List => {
             build::list_targets()?;
+        }
+
+        Commands::Tools => {
+            let assets = AssetManager::new()?;
+            let host = tool_helpers::current_host_platform();
+            let tools = tool_helpers::tools_for_host(&assets);
+
+            println!("📦 Embedded tools for host: {host}\n");
+            if tools.is_empty() {
+                println!("⚠️  No tools embedded for this host platform.");
+                println!("\nThis build does not include embedded tooling.");
+                println!("You'll need to provide Zig and libclang manually.");
+            } else {
+                for tool in tools {
+                    println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                    println!("Tool:     {}", tool.name);
+                    println!("Version:  {}", tool.version);
+                    println!("BLAKE3:   {}", tool.blake3);
+                    println!("Path:     {}", tool.archive_path);
+                    if let Some(notes) = &tool.notes {
+                        println!("Notes:    {}", notes);
+                    }
+                }
+                println!("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+                println!(
+                    "\n✨ These tools will be automatically extracted and used during builds."
+                );
+                println!(
+                    "   Cache location: {}",
+                    assets.cache_dir().join("tools").display()
+                );
+            }
+        }
+
+        Commands::TestSdk => {
+            let assets = AssetManager::new()?;
+
+            println!("🧪 Testing macOS SDK embedding...\n");
+
+            // Test x86_64 macOS SDK
+            println!("Testing x86_64-darwin macOS SDK:");
+            let temp_dir = std::env::temp_dir().join("rb_sys_test_sdk_x86");
+            std::fs::create_dir_all(&temp_dir)?;
+            match assets.extract_macos_sdk("x86_64-darwin", &temp_dir) {
+                Ok(Some(sdk_path)) => {
+                    println!("✅ Found macOS SDK: {}", sdk_path.display());
+
+                    // Check if it has the expected structure
+                    let usr_include = sdk_path.join("usr/include");
+                    if usr_include.exists() {
+                        println!("✅ SDK has usr/include directory");
+                    } else {
+                        println!("❌ SDK missing usr/include directory");
+                    }
+
+                    let frameworks = sdk_path.join("System/Library/Frameworks");
+                    if frameworks.exists() {
+                        println!("✅ SDK has System/Library/Frameworks directory");
+                    } else {
+                        println!("❌ SDK missing System/Library/Frameworks directory");
+                    }
+                }
+                Ok(None) => {
+                    println!("❌ No macOS SDK found in embedded assets");
+                }
+                Err(e) => {
+                    println!("❌ Error extracting macOS SDK: {}", e);
+                }
+            }
+
+            // Test aarch64 macOS SDK
+            println!("\nTesting aarch64-darwin macOS SDK:");
+            let temp_dir_arm = std::env::temp_dir().join("rb_sys_test_sdk_arm");
+            std::fs::create_dir_all(&temp_dir_arm)?;
+            match assets.extract_macos_sdk("aarch64-darwin", &temp_dir_arm) {
+                Ok(Some(sdk_path)) => {
+                    println!("✅ Found macOS SDK: {}", sdk_path.display());
+                }
+                Ok(None) => {
+                    println!("❌ No macOS SDK found in embedded assets");
+                }
+                Err(e) => {
+                    println!("❌ Error extracting macOS SDK: {}", e);
+                }
+            }
+
+            println!("\n🎉 macOS SDK embedding test complete!");
         }
 
         Commands::Cache { action } => match action {

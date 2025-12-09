@@ -21,6 +21,7 @@ rake cli:prepare
 ```
 
 This runs:
+
 - **phase_0**: Downloads OCI images and extracts to `~/.cache/rb-sys/cli` (with progress bars)
 - **phase_1**: Generates codegen and packages `src/embedded/` assets (with progress bars)
 

@@ -21,6 +21,7 @@ pub fn cargo_env(
     target: &RustTarget,
     shim_paths: &ShimPaths,
     sysroot: Option<&Path>,
+    macos_sdk: Option<&Path>,
 ) -> HashMap<String, String> {
     let mut env = HashMap::new();
 
@@ -66,8 +67,16 @@ pub fn cargo_env(
             }
         }
         Os::Darwin => {
-            // PKG_CONFIG sysroot (SDKROOT is read directly by MacOSConfig)
-            if let Ok(sdkroot) = std::env::var("SDKROOT") {
+            // Use embedded SDK if available, otherwise fall back to SDKROOT env var
+            if let Some(sdk) = macos_sdk {
+                let sdk_path = sdk.display().to_string();
+                env.insert("SDKROOT".to_string(), sdk_path.clone());
+                env.insert("PKG_CONFIG_SYSROOT_DIR".to_string(), sdk_path.clone());
+                env.insert(
+                    format!("BINDGEN_EXTRA_CLANG_ARGS_{triple_underscore}"),
+                    format!("-isysroot{}", sdk_path),
+                );
+            } else if let Ok(sdkroot) = std::env::var("SDKROOT") {
                 env.insert("PKG_CONFIG_SYSROOT_DIR".to_string(), sdkroot);
             }
         }
@@ -76,7 +85,7 @@ pub fn cargo_env(
             for (key, value) in WindowsConfig::env_vars() {
                 env.insert(key, value);
             }
-            
+
             // Set DLLTOOL for build scripts that need it
             if let Some(dlltool) = &shim_paths.dlltool {
                 // Standard DLLTOOL env var - checked by some build scripts
@@ -86,7 +95,7 @@ pub fn cargo_env(
                     format!("DLLTOOL_{triple_underscore}"),
                     dlltool.display().to_string(),
                 );
-                
+
                 // CRITICAL: Tell rustc where to find dlltool via -C dlltool flag
                 // This is required because rustc generates import libraries for Windows-GNU
                 env.insert(
@@ -112,7 +121,7 @@ mod tests {
         let sysroot = PathBuf::from("/path/to/sysroot");
         let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_paths, Some(&sysroot));
+        let env = cargo_env(&target, &shim_paths, Some(&sysroot), None);
 
         // Check compiler paths
         assert_eq!(
@@ -151,7 +160,7 @@ mod tests {
         let shim_dir = PathBuf::from("/tmp/shims");
         let shim_paths = ShimPaths::new(&shim_dir, true);
 
-        let env = cargo_env(&target, &shim_paths, None);
+        let env = cargo_env(&target, &shim_paths, None, None);
 
         // Check Windows-specific env vars
         assert_eq!(
@@ -164,17 +173,14 @@ mod tests {
             env.get("CC_x86_64_pc_windows_gnu"),
             Some(&"/tmp/shims/cc".to_string())
         );
-        
+
         // Check dlltool is set for Windows
-        assert_eq!(
-            env.get("DLLTOOL"),
-            Some(&"/tmp/shims/dlltool".to_string())
-        );
+        assert_eq!(env.get("DLLTOOL"), Some(&"/tmp/shims/dlltool".to_string()));
         assert_eq!(
             env.get("DLLTOOL_x86_64_pc_windows_gnu"),
             Some(&"/tmp/shims/dlltool".to_string())
         );
-        
+
         // Check rustflags includes dlltool path
         assert_eq!(
             env.get("CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUSTFLAGS"),
@@ -188,7 +194,7 @@ mod tests {
         let shim_dir = PathBuf::from("/tmp/shims");
         let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_paths, None);
+        let env = cargo_env(&target, &shim_paths, None, None);
 
         // Check compiler paths
         assert_eq!(
@@ -196,8 +202,30 @@ mod tests {
             Some(&"/tmp/shims/cc".to_string())
         );
 
-        // macOS doesn't have sysroot in env (uses SDKROOT directly)
+        // Without SDK, no SDKROOT should be set
+        assert!(!env.contains_key("SDKROOT"));
         assert!(!env.contains_key("BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin"));
+    }
+
+    #[test]
+    fn test_cargo_env_macos_with_sdk() {
+        let target = RustTarget::parse("aarch64-apple-darwin").unwrap();
+        let shim_dir = PathBuf::from("/tmp/shims");
+        let shim_paths = ShimPaths::new(&shim_dir, false);
+        let sdk_path = PathBuf::from("/path/to/MacOSX.sdk");
+
+        let env = cargo_env(&target, &shim_paths, None, Some(&sdk_path));
+
+        // Check SDK is set
+        assert_eq!(env.get("SDKROOT"), Some(&"/path/to/MacOSX.sdk".to_string()));
+        assert_eq!(
+            env.get("PKG_CONFIG_SYSROOT_DIR"),
+            Some(&"/path/to/MacOSX.sdk".to_string())
+        );
+        assert_eq!(
+            env.get("BINDGEN_EXTRA_CLANG_ARGS_aarch64_apple_darwin"),
+            Some(&"-isysroot/path/to/MacOSX.sdk".to_string())
+        );
     }
 
     #[test]
@@ -207,7 +235,7 @@ mod tests {
         let sysroot = PathBuf::from("/musl/sysroot");
         let shim_paths = ShimPaths::new(&shim_dir, false);
 
-        let env = cargo_env(&target, &shim_paths, Some(&sysroot));
+        let env = cargo_env(&target, &shim_paths, Some(&sysroot), None);
 
         assert_eq!(
             env.get("CC_x86_64_unknown_linux_musl"),

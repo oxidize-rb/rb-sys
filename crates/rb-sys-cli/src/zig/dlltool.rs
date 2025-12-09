@@ -32,7 +32,7 @@ pub fn run_dlltool(args: ZigDlltoolArgs) -> Result<()> {
     // Zig has llvm-dlltool built-in, so we can just forward all arguments directly
     let mut cmd = Command::new(&args.zig_path);
     cmd.arg("dlltool");
-    
+
     // Forward all arguments as-is
     for arg in &args.args {
         cmd.arg(arg);
@@ -40,9 +40,7 @@ pub fn run_dlltool(args: ZigDlltoolArgs) -> Result<()> {
 
     debug!(command = ?cmd, "Invoking zig dlltool");
 
-    let status = cmd
-        .status()
-        .context("Failed to execute zig dlltool")?;
+    let status = cmd.status().context("Failed to execute zig dlltool")?;
 
     if !status.success() {
         std::process::exit(status.code().unwrap_or(1));
@@ -50,5 +48,3 @@ pub fn run_dlltool(args: ZigDlltoolArgs) -> Result<()> {
 
     Ok(())
 }
-
-

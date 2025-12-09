@@ -6,16 +6,16 @@ use oci_distribution::{Client, Reference};
 #[tokio::main]
 async fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
-    
+
     if args.len() != 2 {
         anyhow::bail!("Usage: {} <image-tag>", args[0]);
     }
-    
+
     let image_tag = &args[1];
     let digest = fetch_image_digest(image_tag).await?;
-    
+
     println!("{digest}");
-    
+
     Ok(())
 }
 
@@ -28,7 +28,7 @@ async fn fetch_image_digest(image_ref: &str) -> Result<String> {
         protocol: ClientProtocol::Https,
         ..Default::default()
     };
-    
+
     let client = Client::new(config);
     let auth = get_registry_auth();
 

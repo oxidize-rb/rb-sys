@@ -107,14 +107,9 @@ pub async fn download_and_repack_zig(
             .get_platform(zig_key)
             .with_context(|| format!("Platform {zig_key} not found for Zig {ZIG_VERSION}"))?;
 
-        let manifest = download_and_repack_platform(
-            our_key,
-            zig_key,
-            &platform_info,
-            cache_dir,
-            output_dir,
-        )
-        .await?;
+        let manifest =
+            download_and_repack_platform(our_key, zig_key, &platform_info, cache_dir, output_dir)
+                .await?;
 
         manifests.insert(our_key.to_string(), manifest);
     }
@@ -125,8 +120,16 @@ pub async fn download_and_repack_zig(
         "version": ZIG_VERSION,
         "platforms": manifests,
     });
-    fs::write(&manifest_path, serde_json::to_string_pretty(&combined_manifest)?)
-        .with_context(|| format!("Failed to write Zig manifest to {}", manifest_path.display()))?;
+    fs::write(
+        &manifest_path,
+        serde_json::to_string_pretty(&combined_manifest)?,
+    )
+    .with_context(|| {
+        format!(
+            "Failed to write Zig manifest to {}",
+            manifest_path.display()
+        )
+    })?;
 
     tracing::info!(
         manifest_path = %manifest_path.display(),
@@ -143,10 +146,7 @@ async fn fetch_zig_index() -> Result<ZigIndex> {
         .context("Failed to fetch Zig download index")?;
 
     if !response.status().is_success() {
-        bail!(
-            "Failed to fetch Zig index: HTTP {}",
-            response.status()
-        );
+        bail!("Failed to fetch Zig index: HTTP {}", response.status());
     }
 
     let index: ZigIndex = response
@@ -170,10 +170,7 @@ async fn download_and_repack_platform(
 
     // Determine archive filename from URL
     let url = &platform_info.tarball;
-    let archive_name = url
-        .rsplit('/')
-        .next()
-        .context("Invalid Zig tarball URL")?;
+    let archive_name = url.rsplit('/').next().context("Invalid Zig tarball URL")?;
     let cached_archive = download_cache.join(archive_name);
 
     // Download if not cached
@@ -242,8 +239,7 @@ async fn download_file(url: &str, dest: &Path) -> Result<()> {
         .await
         .with_context(|| format!("Failed to read response from {url}"))?;
 
-    fs::write(dest, &bytes)
-        .with_context(|| format!("Failed to write to {}", dest.display()))?;
+    fs::write(dest, &bytes).with_context(|| format!("Failed to write to {}", dest.display()))?;
 
     Ok(())
 }
@@ -281,20 +277,20 @@ fn repack_zig_archive(input: &Path, output: &Path, _platform: &str) -> Result<()
         "Repacking Zig archive"
     );
 
-    let input_file = fs::File::open(input)
-        .with_context(|| format!("Failed to open {}", input.display()))?;
+    let input_file =
+        fs::File::open(input).with_context(|| format!("Failed to open {}", input.display()))?;
 
     // Create output file with zstd compression
     let output_file = fs::File::create(output)
         .with_context(|| format!("Failed to create {}", output.display()))?;
-    
+
     // Use zstd compression level 9 (good balance of speed and compression)
     // Level 19 is way too slow for 50MB+ archives, level 3 compresses poorly
     let encoder = zstd::Encoder::new(output_file, 9)?;
     let mut tar_builder = tar::Builder::new(encoder);
 
     let input_path_str = input.to_string_lossy();
-    
+
     if input_path_str.ends_with(".tar.xz") {
         // Linux/macOS: .tar.xz
         let decompressor = xz2::read::XzDecoder::new(input_file);
@@ -308,9 +304,11 @@ fn repack_zig_archive(input: &Path, output: &Path, _platform: &str) -> Result<()
     }
 
     // Finish the tar archive
-    let encoder = tar_builder.into_inner()
+    let encoder = tar_builder
+        .into_inner()
         .context("Failed to finish tar archive")?;
-    encoder.finish()
+    encoder
+        .finish()
         .context("Failed to finish zstd compression")?;
 
     let output_size = fs::metadata(output)?.len();
@@ -352,7 +350,7 @@ fn repack_from_zip<W: Write>(zip_path: &Path, builder: &mut tar::Builder<W>) -> 
         let name = file.name().to_string();
 
         let mut header = tar::Header::new_gnu();
-        
+
         if file.is_dir() {
             header.set_entry_type(tar::EntryType::Directory);
             header.set_size(0);
@@ -362,9 +360,13 @@ fn repack_from_zip<W: Write>(zip_path: &Path, builder: &mut tar::Builder<W>) -> 
         } else {
             header.set_entry_type(tar::EntryType::Regular);
             header.set_size(file.size());
-            header.set_mode(if name.ends_with(".exe") || name.contains("/zig") { 0o755 } else { 0o644 });
+            header.set_mode(if name.ends_with(".exe") || name.contains("/zig") {
+                0o755
+            } else {
+                0o644
+            });
             header.set_cksum();
-            
+
             let mut contents = Vec::new();
             std::io::Read::read_to_end(&mut file, &mut contents)?;
             builder.append_data(&mut header, &name, contents.as_slice())?;

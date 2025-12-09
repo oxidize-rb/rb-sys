@@ -24,10 +24,10 @@ pub mod target;
 
 // Re-exports for external use (used by build.rs and main.rs)
 #[allow(unused_imports)]
+pub use libc::get_zig_libc_includes;
+#[allow(unused_imports)]
+pub use manager::resolve_zig_path;
+#[allow(unused_imports)]
 pub use shim::generate_shims;
 #[allow(unused_imports)]
 pub use target::RustTarget;
-#[allow(unused_imports)]
-pub use libc::get_zig_libc_includes;
-#[allow(unused_imports)]
-pub use manager::{resolve_zig_path, ZigManager, ZIG_VERSION};

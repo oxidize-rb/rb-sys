@@ -1,56 +1,27 @@
 mod cache;
 mod config;
+mod digest;
+mod fetchers;
+mod lockfile;
+mod manifest;
 mod oci;
 mod rbconfig_parser;
 mod zig;
 
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 use tracing::Instrument;
 use tracing_indicatif::IndicatifLayer;
-use tracing_indicatif::style::ProgressStyle;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-#[derive(Parser)]
-#[command(name = "rb-sys-cli-phase-0")]
-#[command(about = "Phase 0: Download and extract OCI images for rb-sys-cli")]
-struct Args {
-    #[command(subcommand)]
-    command: Option<Commands>,
-
-    /// Path to rb-sys-cli.json config file
-    #[arg(long, default_value = "data/derived/rb-sys-cli.json")]
-    config: PathBuf,
-
-    /// Cache directory for extracted assets
-    #[arg(long)]
-    cache_dir: Option<PathBuf>,
-
-    /// Skip extraction (for testing)
-    #[arg(long)]
-    skip_extraction: bool,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    /// Download and repack Zig for all host platforms
-    DownloadZig {
-        /// Output directory for repacked Zig archives
-        #[arg(long, default_value = "crates/rb-sys-cli/src/embedded/tools")]
-        output_dir: PathBuf,
-
-        /// Cache directory for downloads
-        #[arg(long)]
-        cache_dir: Option<PathBuf>,
-    },
-}
+const MANIFEST_PATH: &str = "data/assets_manifest.toml";
+const STAGING_DIR: &str = "data/staging/phase_0";
+const LOCKFILE_PATH: &str = "data/derived/phase_0_lock.toml";
+const CACHE_DIR: &str = "tmp/cache/phase_0";
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let args = Args::parse();
-
     // Setup tracing with indicatif progress bars
     let indicatif_layer = IndicatifLayer::new();
     tracing_subscriber::registry()
@@ -61,153 +32,219 @@ async fn main() -> Result<()> {
         )
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"))
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
         )
         .with(indicatif_layer)
         .init();
 
-    // Handle subcommands
-    if let Some(command) = args.command {
-        return match command {
-            Commands::DownloadZig { output_dir, cache_dir } => {
-                let cache_dir = cache_dir
-                    .or_else(|| std::env::var("RB_SYS_BUILD_CACHE_DIR").ok().map(PathBuf::from))
-                    .unwrap_or_else(|| cache::get_default_cache_dir().unwrap());
-                
-                std::fs::create_dir_all(&output_dir)
-                    .with_context(|| format!("Failed to create output dir: {}", output_dir.display()))?;
-                
-                zig::download_and_repack_zig(&cache_dir, &output_dir).await?;
-                tracing::info!("Zig download complete");
-                Ok(())
-            }
-        };
-    }
+    tracing::info!("Phase 0: Fetching assets");
 
-    // Default behavior: extract OCI images
-    // Load config
-    let config = config::Config::load(&args.config)
-        .with_context(|| format!("Failed to load config from {}", args.config.display()))?;
+    // Load manifest
+    let manifest_path = PathBuf::from(MANIFEST_PATH);
+    let manifest = manifest::Phase0Manifest::load(&manifest_path)
+        .with_context(|| format!("Failed to load manifest: {}", manifest_path.display()))?;
 
-    // Determine cache directory
-    let cache_dir = if let Some(dir) = args.cache_dir {
-        dir
-    } else if let Ok(dir) = std::env::var("RB_SYS_BUILD_CACHE_DIR") {
-        PathBuf::from(dir)
-    } else {
-        cache::get_default_cache_dir()?
-    };
+    tracing::info!(
+        "Loaded manifest with {} platforms",
+        manifest.platforms().len()
+    );
 
-    tracing::info!("Using cache directory: {}", cache_dir.display());
+    // Setup directories
+    let staging_dir = PathBuf::from(STAGING_DIR);
+    let cache_dir = PathBuf::from(CACHE_DIR);
+    let lockfile_path = PathBuf::from(LOCKFILE_PATH);
 
-    // Load or create manifest
-    let manifest_path = cache_dir.join("manifest.json");
-    let mut manifest = cache::load_manifest(&manifest_path)?;
-    let mut any_changed = false;
+    std::fs::create_dir_all(&staging_dir)?;
+    std::fs::create_dir_all(&cache_dir)?;
+    std::fs::create_dir_all(lockfile_path.parent().unwrap())?;
 
-    // Collect platforms that need extraction
-    let mut platforms_to_extract = Vec::new();
-    for toolchain in &config.toolchains {
-        if args.skip_extraction || std::env::var("RB_SYS_SKIP_EXTRACTION").is_ok() {
-            tracing::info!("Skipping extraction for {} (skip flag set)", toolchain.ruby_platform);
-            continue;
-        }
+    tracing::info!("Staging: {}", staging_dir.display());
+    tracing::info!("Cache: {}", cache_dir.display());
 
-        if cache::needs_extraction(&cache_dir, &toolchain.ruby_platform, &toolchain.oci.digest, &manifest) {
-            platforms_to_extract.push(toolchain.clone());
-        } else {
-            tracing::info!("{} is up to date", toolchain.ruby_platform);
-        }
-    }
+    // Create lockfile
+    let mut lockfile = lockfile::Lockfile::new();
 
-    // Extract platforms in parallel (up to 8 concurrent)
-    if !platforms_to_extract.is_empty() {
-        use futures::stream::{self, StreamExt};
-        use tracing_indicatif::span_ext::IndicatifSpanExt;
+    // Get all platforms
+    let platforms = manifest.platforms();
+    tracing::info!("Fetching assets for {} platforms", platforms.len());
 
-        let total = platforms_to_extract.len() as u64;
-        
-        // Create overall progress span with percentage bar
-        let overall_span = tracing::info_span!("phase_0_extract");
-        overall_span.pb_set_style(
-            &ProgressStyle::default_bar()
-                .template("{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} ({percent}%) {msg}")
-                .unwrap()
-                .progress_chars("=>-")
-        );
-        overall_span.pb_set_length(total);
-        overall_span.pb_set_message("Extracting toolchains");
-        let _overall_enter = overall_span.enter();
+    // Fetch platforms in parallel
+    use futures::stream::{self, StreamExt};
+    use tracing_indicatif::span_ext::IndicatifSpanExt;
 
-        let results = stream::iter(platforms_to_extract)
-            .map(|toolchain| {
-                let cache_dir = cache_dir.clone();
-                let span = tracing::info_span!("extract", platform = %toolchain.ruby_platform);
+    let overall_span = tracing::info_span!("fetch_all");
+    overall_span.pb_set_length(platforms.len() as u64);
+    overall_span.pb_set_message("Fetching platforms");
+    let _overall_enter = overall_span.enter();
 
-                async move {
-                    let ruby_versions = oci::extract_platform(
-                        &toolchain.oci.reference,
-                        &toolchain.ruby_platform,
-                        &toolchain.sysroot_paths,
-                        &cache_dir,
-                    )
-                    .await?;
+    let results = stream::iter(platforms)
+        .map(|platform| {
+            let manifest = manifest.clone();
+            let staging_dir = staging_dir.clone();
+            let cache_dir = cache_dir.clone();
+            let span = tracing::info_span!("fetch_platform", platform = %platform);
 
-                    Ok::<_, anyhow::Error>((toolchain, ruby_versions))
+            async move {
+                let assets = manifest.assets_for_platform(&platform);
+                let mut platform_locks = std::collections::HashMap::new();
+
+                for asset in assets {
+                    tracing::info!("[{}] Fetching: {}", platform, asset.name());
+
+                    let lock = fetch_asset_with_retry(&asset, &platform, &staging_dir, &cache_dir)
+                        .await
+                        .with_context(|| {
+                            format!("Failed to fetch asset {} for {}", asset.name(), platform)
+                        })?;
+
+                    platform_locks.insert(asset.name().to_string(), lock);
+                    tracing::info!("[{}] ✓ {}", platform, asset.name());
                 }
-                .instrument(span)
-            })
-            .buffer_unordered(8);
 
-        futures::pin_mut!(results);
+                Ok::<_, anyhow::Error>((platform, platform_locks))
+            }
+            .instrument(span)
+        })
+        .buffer_unordered(4); // Fetch 4 platforms concurrently
 
-        let mut completed = 0u64;
-        while let Some(result) = results.next().await {
-            let (toolchain, ruby_versions) =
-                result.with_context(|| "Failed to extract platform")?;
+    futures::pin_mut!(results);
 
-            // Update manifest
-            manifest.set_platform(
-                toolchain.ruby_platform.clone(),
-                cache::PlatformInfo {
-                    ruby_platform: toolchain.ruby_platform.clone(),
-                    rust_target: toolchain.rust_target.clone(),
-                    image: toolchain.oci.tag.clone(),
-                    image_digest: toolchain.oci.digest.clone(),
-                    ruby_versions,
-                    has_sysroot: !toolchain.sysroot_paths.is_empty(),
-                    extracted_at: chrono::Utc::now(),
-                },
-            );
+    let mut completed = 0;
+    while let Some(result) = results.next().await {
+        let (platform, platform_locks) = result?;
 
-            // Write digest marker
-            cache::write_digest_marker(&cache_dir, &toolchain.ruby_platform, &toolchain.oci.digest)?;
-
-            // Generate rbconfig.json files from extracted rbconfig.rb files
-            rbconfig_parser::generate_rbconfig_json(&cache_dir, &toolchain.ruby_platform)?;
-
-            completed += 1;
-            overall_span.pb_inc(1);
-            overall_span.pb_set_message(&format!(
-                "Extracted {}/{} toolchains (latest: {})",
-                completed,
-                total,
-                toolchain.ruby_platform
-            ));
-
-            any_changed = true;
+        // Add to lockfile
+        for (name, lock) in platform_locks {
+            lockfile.set_asset(&platform, &name, lock);
         }
 
-        overall_span.pb_set_finish_message("All toolchains extracted");
+        completed += 1;
+        overall_span.pb_inc(1);
+        overall_span.pb_set_message(&format!(
+            "Completed {}/{} platforms",
+            completed,
+            manifest.platforms().len()
+        ));
     }
 
-    // Save manifest if anything changed
-    if any_changed {
-        cache::save_manifest(&manifest_path, &manifest)?;
-        tracing::info!("Updated manifest at {}", manifest_path.display());
-    }
+    // Save lockfile
+    lockfile.generated_at = chrono::Utc::now();
+    lockfile.save(&lockfile_path)?;
 
-    tracing::info!("Phase 0 complete");
+    tracing::info!("✓ Phase 0 complete");
+    tracing::info!("  Lockfile: {}", lockfile_path.display());
 
     Ok(())
+}
+
+const MAX_RETRIES: u32 = 3;
+const INITIAL_BACKOFF_MS: u64 = 1000;
+
+async fn fetch_asset_with_retry(
+    asset: &manifest::AssetRequest,
+    platform: &str,
+    staging_dir: &PathBuf,
+    cache_dir: &PathBuf,
+) -> Result<lockfile::AssetLock> {
+    let mut attempt = 0;
+
+    loop {
+        match fetch_asset_once(asset, platform, staging_dir, cache_dir).await {
+            Ok(lock) => return Ok(lock),
+            Err(e) if attempt < MAX_RETRIES => {
+                let backoff = INITIAL_BACKOFF_MS * 2u64.pow(attempt);
+                tracing::warn!(
+                    "[{}] Fetch failed (attempt {}/{}): {}",
+                    platform,
+                    attempt + 1,
+                    MAX_RETRIES,
+                    e
+                );
+                tracing::info!("[{}] Retrying in {}ms...", platform, backoff);
+                tokio::time::sleep(std::time::Duration::from_millis(backoff)).await;
+                attempt += 1;
+            }
+            Err(e) => {
+                return Err(e).with_context(|| format!("Failed after {} retries", MAX_RETRIES));
+            }
+        }
+    }
+}
+
+async fn fetch_asset_once(
+    asset: &manifest::AssetRequest,
+    platform: &str,
+    staging_dir: &PathBuf,
+    cache_dir: &PathBuf,
+) -> Result<lockfile::AssetLock> {
+    let asset_dir = staging_dir.join(platform).join(asset.name());
+    std::fs::create_dir_all(&asset_dir)?;
+
+    match asset {
+        manifest::AssetRequest::OciExtract {
+            name,
+            image,
+            items,
+            strip_prefix,
+        } => {
+            let extractor = fetchers::OciExtractor::new(image, items, strip_prefix.as_deref());
+            let files = extractor.extract(&asset_dir, cache_dir).await?;
+
+            Ok(lockfile::AssetLock::OciExtract {
+                image: image.clone(),
+                verified_at: chrono::Utc::now(),
+                files,
+            })
+        }
+        manifest::AssetRequest::Tarball {
+            name,
+            url,
+            digest,
+            strip_components: _,
+        } => {
+            let fetcher = fetchers::TarballFetcher::new(url, digest);
+            let (tarball_path, size_bytes) = fetcher.fetch(cache_dir).await?;
+
+            // Move tarball to staging area (will be unpacked in phase_1)
+            let dest = asset_dir.join(
+                tarball_path
+                    .file_name()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid tarball path"))?,
+            );
+            std::fs::copy(&tarball_path, &dest)?;
+
+            Ok(lockfile::AssetLock::Tarball {
+                url: url.clone(),
+                digest: digest.clone(),
+                verified_at: chrono::Utc::now(),
+                size_bytes,
+            })
+        }
+        manifest::AssetRequest::TarballExtract {
+            name: _,
+            url,
+            extract,
+            digest,
+            strip_components: _,
+        } => {
+            let extractor = fetchers::TarballExtractor::new(url, extract, digest);
+            let (extracted_path, size_bytes, source_path) = extractor.fetch(cache_dir).await?;
+
+            // Move extracted file to staging area
+            let dest = asset_dir.join(
+                extracted_path
+                    .file_name()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid extracted file path"))?,
+            );
+            std::fs::copy(&extracted_path, &dest)?;
+
+            Ok(lockfile::AssetLock::TarballExtract {
+                url: url.clone(),
+                digest: digest.clone(),
+                source_path,
+                verified_at: chrono::Utc::now(),
+                size_bytes,
+            })
+        }
+    }
 }

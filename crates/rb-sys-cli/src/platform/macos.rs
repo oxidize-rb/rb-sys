@@ -4,7 +4,7 @@
 //! This module handles SDK path configuration and macOS-specific compiler flags.
 
 use anyhow::{bail, Context, Result};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Configuration for macOS cross-compilation.
 #[derive(Debug, Clone)]
@@ -14,6 +14,123 @@ pub struct MacOSConfig {
 }
 
 impl MacOSConfig {
+    /// Create a new macOS configuration from the SDKROOT environment variable
+    /// or fall back to an embedded SDK.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - SDKROOT environment variable is not set and no embedded SDK is found
+    /// - The SDKROOT path does not exist
+    pub fn from_env_or_embedded(embedded_sdk: Option<&Path>) -> Result<Self> {
+        // First try SDKROOT environment variable
+        if let Ok(sdkroot_str) = std::env::var("SDKROOT") {
+            let sdkroot = PathBuf::from(&sdkroot_str);
+            if sdkroot.exists() {
+                return Ok(Self { sdkroot });
+            } else {
+                tracing::warn!(
+                    "SDKROOT path does not exist: {}, falling back to embedded SDK",
+                    sdkroot.display()
+                );
+            }
+        }
+
+        // Fall back to embedded SDK
+        if let Some(embedded_sdk_path) = embedded_sdk {
+            if embedded_sdk_path.exists() {
+                tracing::debug!(
+                    sdk = %embedded_sdk_path.display(),
+                    "Using embedded macOS SDK"
+                );
+                return Ok(Self {
+                    sdkroot: embedded_sdk_path.to_path_buf(),
+                });
+            } else {
+                tracing::warn!(
+                    "Embedded macOS SDK path does not exist: {}",
+                    embedded_sdk_path.display()
+                );
+            }
+        }
+
+        // Try to find embedded SDK in cache directory
+        if let Some(cache_sdk) = Self::find_embedded_sdk_in_cache()? {
+            tracing::debug!(
+                sdk = %cache_sdk.display(),
+                "Using cached embedded macOS SDK"
+            );
+            return Ok(Self { sdkroot: cache_sdk });
+        }
+
+        // No SDK available
+        bail!(
+            "macOS SDK is required for macOS cross-compilation.\n\n\
+             Either:\n\
+             1. Set the SDKROOT environment variable to a valid macOS SDK path, or\n\
+             2. Ensure rb-sys-cli has embedded macOS SDK assets\n\n\
+             You can obtain a macOS SDK from Xcode or from:\n\
+             https://github.com/joseluisq/macosx-sdks"
+        );
+    }
+
+    /// Try to find an embedded macOS SDK in the cache directory
+    fn find_embedded_sdk_in_cache() -> Result<Option<PathBuf>> {
+        // Try common macOS platforms
+        let platforms = ["arm64-darwin", "x86_64-darwin"];
+
+        for platform in &platforms {
+            let cache_dir = dirs::cache_dir()
+                .ok_or_else(|| anyhow::anyhow!("Could not determine cache directory"))?
+                .join("rb-sys/cli")
+                .join(platform)
+                .join("sdk");
+
+            if cache_dir.exists() {
+                // Find the latest SDK in this directory
+                let entries = std::fs::read_dir(&cache_dir).with_context(|| {
+                    format!(
+                        "Failed to read SDK cache directory: {}",
+                        cache_dir.display()
+                    )
+                })?;
+
+                let mut sdk_versions = Vec::new();
+                for entry in entries {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.is_dir() {
+                        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                        if name.starts_with("MacOSX") && name.ends_with(".sdk") {
+                            sdk_versions.push(path);
+                        }
+                    }
+                }
+
+                if !sdk_versions.is_empty() {
+                    // Sort by version (latest first)
+                    sdk_versions.sort_by(|a, b| {
+                        let a_name = a.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                        let b_name = b.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                        let a_version = a_name
+                            .strip_prefix("MacOSX")
+                            .and_then(|s| s.strip_suffix(".sdk"))
+                            .unwrap_or("");
+                        let b_version = b_name
+                            .strip_prefix("MacOSX")
+                            .and_then(|s| s.strip_suffix(".sdk"))
+                            .unwrap_or("");
+                        b_version.cmp(a_version)
+                    });
+
+                    return Ok(Some(sdk_versions[0].clone()));
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
     /// Create a new macOS configuration from the SDKROOT environment variable.
     ///
     /// # Errors
@@ -22,24 +139,7 @@ impl MacOSConfig {
     /// - SDKROOT environment variable is not set
     /// - The SDKROOT path does not exist
     pub fn from_env() -> Result<Self> {
-        let sdkroot = std::env::var("SDKROOT").context(
-            "SDKROOT environment variable is required for macOS cross-compilation.\n\n\
-             Set it to the path of your macOS SDK, for example:\n  \
-             export SDKROOT=/path/to/MacOSX14.0.sdk\n\n\
-             You can obtain the macOS SDK from Xcode or from:\n  \
-             https://github.com/joseluisq/macosx-sdks",
-        )?;
-
-        let sdkroot = PathBuf::from(&sdkroot);
-        if !sdkroot.exists() {
-            bail!(
-                "SDKROOT path does not exist: {}\n\n\
-                 Please ensure the path points to a valid macOS SDK directory.",
-                sdkroot.display()
-            );
-        }
-
-        Ok(Self { sdkroot })
+        Self::from_env_or_embedded(None)
     }
 
     /// Get additional CC/CXX arguments for macOS targets.

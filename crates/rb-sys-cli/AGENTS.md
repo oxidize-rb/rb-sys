@@ -63,6 +63,7 @@ RUNTIME (cargo gem build)
 #### 1. Build Phases (build-time only)
 
 **phase_0** (`phase_0/`): OCI Image Extraction
+
 - Downloads rake-compiler-dock images from OCI registries (no Docker required)
 - Extracts Ruby headers, libraries, and sysroot files
 - Stores in `~/.cache/rb-sys/cli/<ruby-platform>/`
@@ -70,6 +71,7 @@ RUNTIME (cargo gem build)
 - Shows progress bars via `tracing-indicatif`
 
 **phase_1** (`phase_1/`): Codegen & Packaging
+
 - Generates Rust toolchain mappings from `data/toolchains.json`
 - Creates runtime manifest (`manifest.json`)
 - Packages all assets into `src/embedded/assets.tar.zst`
@@ -78,24 +80,28 @@ RUNTIME (cargo gem build)
 #### 2. Asset Management (`src/assets/`)
 
 **AssetManager**: Manages embedded assets and lazy extraction
+
 - Embeds `assets.tar.zst` and `manifest.json` at compile time
 - Lazily extracts platform-specific files on first use
 - Caches extracted files in `~/.cache/rb-sys/cli/` (runtime cache)
 - Tracks extraction state with marker files
 
 **Manifest**: Maps Rust targets to Ruby platforms
+
 - Stores metadata: ruby versions, sysroot availability, OCI digests
 - Provides lookup by Rust target or Ruby platform
 
 #### 3. Sysroot Management (`src/sysroot.rs`)
 
 **SysrootManager**: Handles hermetic build environments
+
 - Extracts sysroot to `target/rb-sys/<target>/sysroot/` (build-local)
 - Contains headers (OpenSSL, zlib) and libraries for the target
 - Ruby headers stay in runtime cache (shared across builds)
 - Cleans up on successful build, keeps on failure for debugging
 
 **MountedSysroot**: RAII guard for sysroot lifecycle
+
 - `path()` - sysroot location (libs, OpenSSL headers)
 - `rubies_path()` - Ruby headers location
 - Auto-cleanup on drop (unless `.keep()` called)
@@ -118,16 +124,19 @@ src/zig/
 ```
 
 **RustTarget** (`target.rs`): Target triple handling
+
 - Parses Rust target triples (e.g., `x86_64-unknown-linux-gnu`)
 - Converts to Zig format (e.g., `x86_64-linux-gnu.2.17`)
 - Supports 9 targets: Linux (glibc/musl), macOS, Windows
 
 **Shim Generation** (`shim.rs`): Creates wrapper scripts
+
 - Generates bash scripts that call back to `cargo-gem zig-cc/zig-cxx/zig-ar/zig-ld`
 - Shims live in `target/rb-sys/<target>/bin/`
 - Allows argument filtering and target-specific transformations
 
 **Argument Filtering** (`cc.rs`, `ar.rs`, `ld.rs`): Cleans compiler args
+
 - Strips host-specific flags that break cross-compilation
 - Rewrites paths to use sysroot
 - Handles Zig-incompatible flags (e.g., `-Wl,--as-needed`)
@@ -135,6 +144,7 @@ src/zig/
 #### 5. Toolchain Info (`src/toolchain.rs`)
 
 Maps between Rust targets and Ruby platforms:
+
 - Loads from `data/toolchains.json`
 - Provides lookup by Rust target or Ruby platform
 - Used to find correct sysroot and Ruby headers
@@ -142,6 +152,7 @@ Maps between Rust targets and Ruby platforms:
 #### 6. Build Command (`src/build.rs`)
 
 Orchestrates the cross-compilation:
+
 1. Parse and validate target
 2. Validate Zig installation
 3. Mount sysroot (extract from embedded assets)
@@ -151,17 +162,17 @@ Orchestrates the cross-compilation:
 
 ### Supported Targets
 
-| Rust Target | Ruby Platform | Zig Target |
-|-------------|---------------|------------|
-| `arm-unknown-linux-gnueabihf` | `arm-linux` | `arm-linux-gnueabihf.2.17` |
-| `aarch64-unknown-linux-gnu` | `aarch64-linux` | `aarch64-linux-gnu.2.17` |
-| `aarch64-unknown-linux-musl` | `aarch64-linux-musl` | `aarch64-linux-musl` |
-| `x86_64-unknown-linux-gnu` | `x86_64-linux` | `x86_64-linux-gnu.2.17` |
-| `x86_64-unknown-linux-musl` | `x86_64-linux-musl` | `x86_64-linux-musl` |
-| `aarch64-apple-darwin` | `arm64-darwin` | `aarch64-macos-none` |
-| `x86_64-apple-darwin` | `x86_64-darwin` | `x86_64-macos-none` |
-| `x86_64-pc-windows-gnu` | `x64-mingw-ucrt` | `x86_64-windows-gnu` |
-| `aarch64-pc-windows-gnullvm` | `arm64-mingw-ucrt` | `aarch64-windows-gnu` |
+| Rust Target                   | Ruby Platform        | Zig Target                 |
+| ----------------------------- | -------------------- | -------------------------- |
+| `arm-unknown-linux-gnueabihf` | `arm-linux`          | `arm-linux-gnueabihf.2.17` |
+| `aarch64-unknown-linux-gnu`   | `aarch64-linux`      | `aarch64-linux-gnu.2.17`   |
+| `aarch64-unknown-linux-musl`  | `aarch64-linux-musl` | `aarch64-linux-musl`       |
+| `x86_64-unknown-linux-gnu`    | `x86_64-linux`       | `x86_64-linux-gnu.2.17`    |
+| `x86_64-unknown-linux-musl`   | `x86_64-linux-musl`  | `x86_64-linux-musl`        |
+| `aarch64-apple-darwin`        | `arm64-darwin`       | `aarch64-macos-none`       |
+| `x86_64-apple-darwin`         | `x86_64-darwin`      | `x86_64-macos-none`        |
+| `x86_64-pc-windows-gnu`       | `x64-mingw-ucrt`     | `x86_64-windows-gnu`       |
+| `aarch64-pc-windows-gnullvm`  | `arm64-mingw-ucrt`   | `aarch64-windows-gnu`      |
 
 ### Data Flow
 
@@ -192,16 +203,19 @@ User runs: cargo gem build --target x86_64-unknown-linux-gnu
 ### Environment Variables
 
 **Build-time (phase_0/phase_1)**:
+
 - `RB_SYS_BUILD_CACHE_DIR` - Override build cache location
 - `RB_SYS_SKIP_EXTRACTION` - Skip OCI extraction (testing)
 
 **Runtime**:
+
 - `RB_SYS_RUNTIME_CACHE_DIR` - Override runtime cache location
 - `SDKROOT` - macOS SDK path (required for Darwin targets)
 - `ZIG_PATH` - Path to Zig compiler (default: `zig`)
 - `RUST_LOG` - Tracing log level (e.g., `rb_sys_cli=debug`)
 
 **Set by CLI during build**:
+
 - `CC_<target>`, `CXX_<target>`, `AR_<target>` - Compiler shim paths
 - `CARGO_TARGET_<TARGET>_LINKER` - Linker shim path
 - `CRATE_CC_NO_DEFAULTS=1` - Prevent cc-rs from adding host flags
@@ -213,6 +227,7 @@ User runs: cargo gem build --target x86_64-unknown-linux-gnu
 ### Testing
 
 Unit tests are inline in each module (run with `cargo test -p rb-sys-cli`):
+
 - `src/zig/target.rs` - Target parsing and Zig conversion tests
 - `src/zig/shim.rs` - Shim generation tests
 - `src/build.rs` - Build config tests

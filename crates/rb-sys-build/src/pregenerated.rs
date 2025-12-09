@@ -39,8 +39,9 @@ use crate::{debug_log, RbConfig};
 use quote::ToTokens;
 use regex::Regex;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::fs::{self, File};
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::{env, error::Error};
@@ -54,6 +55,86 @@ static EMBEDDED_BINDINGS: &[u8] = include_bytes!("../data/assets.tar.zst");
 
 /// Cache for extracted embedded bindings index.
 static EMBEDDED_INDEX: OnceLock<HashMap<String, Vec<String>>> = OnceLock::new();
+
+/// Cache for extraction directory path.
+static EXTRACTION_DIR: OnceLock<PathBuf> = OnceLock::new();
+
+/// Compute a simple hash of the embedded tarball for cache invalidation.
+/// Uses length + first 8 bytes + last 8 bytes as a fast fingerprint.
+fn compute_tarball_hash() -> String {
+    let len = EMBEDDED_BINDINGS.len();
+
+    let first_hash = if len >= 8 {
+        u64::from_le_bytes(EMBEDDED_BINDINGS[..8].try_into().unwrap())
+    } else {
+        0
+    };
+
+    let last_hash = if len >= 16 {
+        u64::from_le_bytes(EMBEDDED_BINDINGS[len - 8..].try_into().unwrap())
+    } else {
+        0
+    };
+
+    format!("{:x}-{:x}-{:x}", len, first_hash, last_hash)
+}
+
+/// Get the extraction directory for embedded bindings.
+/// Uses OUT_DIR during builds, temp dir for tests.
+fn get_extraction_dir() -> Result<PathBuf, Box<dyn Error>> {
+    if let Ok(out_dir) = env::var("OUT_DIR") {
+        Ok(PathBuf::from(out_dir).join("rb-sys-embedded-bindings"))
+    } else {
+        // Fallback for tests
+        Ok(std::env::temp_dir().join("rb-sys-embedded-bindings"))
+    }
+}
+
+/// Ensure embedded bindings are extracted to disk.
+/// Returns the extraction directory. Only extracts once per build.
+fn ensure_extracted() -> Result<PathBuf, Box<dyn Error>> {
+    // Check if already initialized
+    if let Some(dir) = EXTRACTION_DIR.get() {
+        return Ok(dir.clone());
+    }
+
+    let extract_dir = get_extraction_dir()?;
+    let marker = extract_dir.join(".extracted");
+    let expected_hash = compute_tarball_hash();
+
+    // Check if already extracted with correct version
+    if marker.exists() {
+        if let Ok(stored_hash) = fs::read_to_string(&marker) {
+            if stored_hash.trim() == expected_hash {
+                debug_log!(
+                    "INFO: Using cached extracted bindings at {}",
+                    extract_dir.display()
+                );
+                let _ = EXTRACTION_DIR.set(extract_dir.clone());
+                return Ok(extract_dir);
+            }
+        }
+    }
+
+    debug_log!(
+        "INFO: Extracting embedded bindings to {}",
+        extract_dir.display()
+    );
+
+    // Extract tarball (single decompression!)
+    fs::create_dir_all(&extract_dir)?;
+    let decoder = zstd::Decoder::new(Cursor::new(EMBEDDED_BINDINGS))?;
+    let mut archive = tar::Archive::new(decoder);
+    archive.unpack(&extract_dir)?;
+
+    // Write marker
+    fs::write(&marker, &expected_hash)?;
+
+    debug_log!("INFO: Successfully extracted embedded bindings");
+
+    let _ = EXTRACTION_DIR.set(extract_dir.clone());
+    Ok(extract_dir)
+}
 
 /// Check if pre-generated bindings should be used via environment variable.
 ///
@@ -149,6 +230,14 @@ pub fn load_embedded(rbconfig: &RbConfig, cfg_out: &mut File) -> Result<PathBuf,
     process_bindings_content(rbconfig, &bindings_content, cfg_out, Some(&cfg_content))
 }
 
+/// Check if bindings are already categorized (have mod uncategorized at top level).
+fn is_already_categorized(tokens: &syn::File) -> bool {
+    tokens
+        .items
+        .iter()
+        .any(|item| matches!(item, syn::Item::Mod(m) if m.ident == "uncategorized"))
+}
+
 /// Process bindings content and write to OUT_DIR.
 fn process_bindings_content(
     rbconfig: &RbConfig,
@@ -175,8 +264,10 @@ fn process_bindings_content(
     // Also extract cfg from the bindings themselves (like the normal flow)
     push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
 
-    // Apply stable_api categorization
-    crate::bindings::stable_api::categorize_bindings(&mut tokens);
+    // Apply stable_api categorization only if not already done
+    if !is_already_categorized(&tokens) {
+        crate::bindings::stable_api::categorize_bindings(&mut tokens);
+    }
 
     // Write to OUT_DIR
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
@@ -206,31 +297,52 @@ fn get_embedded_index() -> &'static HashMap<String, Vec<String>> {
     EMBEDDED_INDEX.get_or_init(build_embedded_index)
 }
 
-/// Build an index of what's in the embedded tarball.
+/// Build an index of what's in the embedded tarball by walking the extracted directory.
 fn build_embedded_index() -> HashMap<String, Vec<String>> {
     let mut index: HashMap<String, Vec<String>> = HashMap::new();
 
-    // Decompress and read the tarball to index its contents
-    let decoder = match zstd::Decoder::new(Cursor::new(EMBEDDED_BINDINGS)) {
-        Ok(d) => d,
+    // Extract bindings to disk (or use cached extraction)
+    let extract_dir = match ensure_extracted() {
+        Ok(dir) => dir,
         Err(e) => {
-            debug_log!("WARN: Failed to decompress embedded bindings: {}", e);
+            debug_log!("WARN: Failed to extract embedded bindings: {}", e);
             return index;
         }
     };
 
-    let mut archive = tar::Archive::new(decoder);
+    // Walk the extracted directory to build index
+    let bindings_dir = extract_dir.join("bindings");
+    if !bindings_dir.exists() {
+        debug_log!(
+            "WARN: Bindings directory not found: {}",
+            bindings_dir.display()
+        );
+        return index;
+    }
 
-    if let Ok(entries) = archive.entries() {
-        for entry in entries.flatten() {
-            if let Ok(path) = entry.path() {
-                let path_str = path.to_string_lossy();
-                // Path format: bindings/{platform}/{version}/bindings.rs
-                let parts: Vec<&str> = path_str.split('/').collect();
-                if parts.len() >= 4 && parts[0] == "bindings" && parts[3] == "bindings.rs" {
-                    let platform = parts[1].to_string();
-                    let version = parts[2].to_string();
-                    index.entry(platform).or_default().push(version);
+    // Read platform directories
+    if let Ok(platform_entries) = fs::read_dir(&bindings_dir) {
+        for platform_entry in platform_entries.flatten() {
+            if let Ok(platform_meta) = platform_entry.metadata() {
+                if platform_meta.is_dir() {
+                    let platform = platform_entry.file_name().to_string_lossy().to_string();
+
+                    // Read version directories within each platform
+                    if let Ok(version_entries) = fs::read_dir(platform_entry.path()) {
+                        for version_entry in version_entries.flatten() {
+                            if let Ok(version_meta) = version_entry.metadata() {
+                                if version_meta.is_dir() {
+                                    // Check if bindings.rs exists in this version
+                                    let bindings_file = version_entry.path().join("bindings.rs");
+                                    if bindings_file.exists() {
+                                        let version =
+                                            version_entry.file_name().to_string_lossy().to_string();
+                                        index.entry(platform.clone()).or_default().push(version);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -239,48 +351,38 @@ fn build_embedded_index() -> HashMap<String, Vec<String>> {
     index
 }
 
-/// Extract bindings for a specific platform and version from the embedded tarball.
+/// Extract bindings for a specific platform and version from the extracted directory.
 fn extract_embedded_bindings(
     platform: &str,
     version: &str,
 ) -> Result<(String, String), Box<dyn Error>> {
-    let bindings_path = format!("bindings/{platform}/{version}/bindings.rs");
-    let cfg_path = format!("bindings/{platform}/{version}/bindings.cfg");
+    // Get the extraction directory (or extract if needed)
+    let extract_dir = ensure_extracted()?;
 
-    let mut bindings_content = None;
-    let mut cfg_content = None;
+    // Construct paths to the bindings files
+    let bindings_path = extract_dir
+        .join("bindings")
+        .join(platform)
+        .join(version)
+        .join("bindings.rs");
 
-    // Decompress and search the tarball
-    let decoder = zstd::Decoder::new(Cursor::new(EMBEDDED_BINDINGS))?;
-    let mut archive = tar::Archive::new(decoder);
+    let cfg_path = extract_dir
+        .join("bindings")
+        .join(platform)
+        .join(version)
+        .join("bindings.cfg");
 
-    for entry in archive.entries()? {
-        let mut entry = entry?;
-        let entry_path = entry.path()?.to_string_lossy().to_string();
-
-        if entry_path == bindings_path {
-            let mut content = String::new();
-            entry.read_to_string(&mut content)?;
-            bindings_content = Some(content);
-        } else if entry_path == cfg_path {
-            let mut content = String::new();
-            entry.read_to_string(&mut content)?;
-            cfg_content = Some(content);
-        }
-
-        // Early exit if we found both
-        if bindings_content.is_some() && cfg_content.is_some() {
-            break;
-        }
-    }
-
-    let bindings = bindings_content.ok_or_else(|| {
+    // Read bindings file
+    let bindings = fs::read_to_string(&bindings_path).map_err(|e| {
         format!(
-            "Embedded bindings not found for platform={platform}, version={version}"
+            "Failed to read bindings file at {}: {}",
+            bindings_path.display(),
+            e
         )
     })?;
 
-    let cfg = cfg_content.unwrap_or_default();
+    // Read cfg file (optional)
+    let cfg = fs::read_to_string(&cfg_path).unwrap_or_default();
 
     Ok((bindings, cfg))
 }
