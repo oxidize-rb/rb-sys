@@ -233,7 +233,7 @@ mod tests {
         let original = std::env::var("SDKROOT").ok();
         std::env::remove_var("SDKROOT");
 
-        let result = MacOSConfig::from_env();
+        let result = MacOSConfig::from_env_or_embedded(None);
         assert!(result.is_err());
 
         // Restore original value

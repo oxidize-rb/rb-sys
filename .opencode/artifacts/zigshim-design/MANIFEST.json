@@ -1,0 +1,42 @@
+{
+  "task_id": "zigshim-design",
+  "title": "ZigShim Trait Design - Implementation Guide",
+  "created_at": "2025-12-09T22:50:00Z",
+  "purpose": "Comprehensive design document for refactoring Zig toolchain wrappers using trait-based abstraction",
+  "files": [
+    {
+      "path": "IMPLEMENTATION_GUIDE.md",
+      "purpose": "Complete implementation guide with trait definitions, code examples, migration strategy, and testing approach",
+      "size_lines": 600,
+      "format": "markdown"
+    },
+    {
+      "path": "MANIFEST.json",
+      "purpose": "Metadata about artifacts produced",
+      "format": "json"
+    }
+  ],
+  "key_findings": [
+    "Current codebase has 4 separate tool implementations (cc, ld, ar, dlltool) with ~200 lines of duplicated execution logic",
+    "Each tool follows identical pattern: validate → build command → add platform flags → filter args → execute",
+    "Trait-based design eliminates duplication while maintaining tool-specific customization",
+    "Template method pattern provides clear separation of concerns"
+  ],
+  "implementation_phases": 6,
+  "estimated_effort": "2-3 days for full implementation and testing",
+  "risks": [
+    "Breaking changes during transition (mitigated by wrapper functions)",
+    "Testing gaps (mitigated by comprehensive test strategy)",
+    "Performance concerns (mitigated by zero-cost abstractions)"
+  ],
+  "next_steps": [
+    "Review and get stakeholder approval on trait design",
+    "Implement Phase 1-2: Create traits and first tool implementation",
+    "Add comprehensive unit tests",
+    "Update main.rs to use new trait",
+    "Run full test suite and integration tests",
+    "Update AGENTS.md documentation",
+    "Mark old functions as deprecated",
+    "Remove old code in next major version"
+  ]
+}

@@ -1,0 +1,70 @@
+# rb-sys-cli Refactoring Analysis Summary
+
+## Top 5 Refactoring Opportunities (Ranked)
+
+### 🥇 #1: Split zig/args.rs (914 lines)
+Priority: HIGH | Effort: 3-4 days | Impact: Very High
+- Single file with 54 functions handling CC/linker/AR argument filtering
+- Complex platform-specific logic scattered throughout
+- Propose: Split into args/{cc_filter, link_filter, ar_filter, platform/}
+- Benefits: Better testability, easier to add platforms, reduced complexity
+
+### 🥈 #2: Decompose build.rs (875 lines)
+Priority: HIGH | Effort: 2-3 days | Impact: Very High
+- Orchestrates entire build process in one monolithic file
+- 49 conditional branches, 13 functions
+- Function with 10+ parameters (code smell)
+- Propose: Split into build/{orchestrator, ruby_config, environment, cargo_runner}
+- Benefits: Single responsibility, testable components, clearer pipeline
+
+### 🥉 #3: Refactor assets/mod.rs (691 lines)
+Priority: MEDIUM-HIGH | Effort: 2 days | Impact: High
+- Mixes extraction, caching, and manifest handling
+- 22 error context calls (complex error handling)
+- Has TODO for manifest-based version detection
+- Propose: Split into assets/{extractor, cache, embedded, rbconfig}
+- Benefits: Clearer separation, easier testing, resolve TODO
+
+### #4: Reduce Cloning in Hot Paths
+Priority: MEDIUM | Effort: 1 day | Impact: Medium (Performance)
+- 5 clones in build.rs, 2 in zig/env.rs, 2 in zig/cc.rs
+- Many string clones in argument filtering
+- Propose: Use &str, Cow<str>, pass references
+- Benefits: Performance improvement, reduced allocations
+
+### #5: Extract Platform Logic from zig/target.rs (440 lines)
+Priority: MEDIUM | Effort: 1-2 days | Impact: Medium
+- Target parsing mixed with platform-specific logic
+- Could benefit from trait-based design
+- Propose: Create PlatformTarget trait with per-OS implementations
+- Benefits: Better abstraction, reduced duplication
+
+## Quick Stats
+- Total LOC: ~6,000+ in rb-sys-cli/src
+- Functions: 267 (78 public)
+- Unsafe blocks: Only 3 (excellent!)
+- TODO comments: Only 4 (low tech debt)
+- Largest file: 914 lines (zig/args.rs)
+
+## Code Quality Assessment
+✅ Minimal unsafe usage (3 instances)
+✅ Low technical debt (4 TODOs)
+✅ Good error handling (anyhow with context)
+✅ Test discipline (unwrap mostly in tests)
+🟡 Large files need splitting (3 files >600 lines)
+🟡 Some excessive cloning in hot paths
+🔴 High conditional complexity in build.rs (49 branches)
+
+## Recommended Timeline
+Week 1: Split zig/args.rs
+Week 2: Decompose build.rs
+Week 3: Refactor assets/mod.rs
+Week 4: Reduce cloning + quick wins
+
+## Additional Findings
+- Phase crates (phase_0, phase_1, phase_2) have dead code warnings
+- Some unused functions/structs could be removed
+- Generated code has unreachable pattern warning
+- Overall architecture is sound, just needs modularization
+
+See refactoring-opportunities.md for detailed analysis.

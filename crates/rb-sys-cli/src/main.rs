@@ -14,6 +14,7 @@ use assets::AssetManager;
 use clap::{Parser, Subcommand};
 use tools as tool_helpers;
 use tracing_subscriber::{fmt, EnvFilter};
+use zig::ZigShim;
 
 /// Setup logging based on verbose flag or RUST_LOG environment variable
 fn setup_logging(verbose: bool) {
@@ -65,23 +66,23 @@ enum Commands {
 
     /// Internal: Zig CC wrapper (called by shims)
     #[command(hide = true)]
-    ZigCc(zig::cc::ZigCcArgs),
+    ZigCc(zig::tools::ZigCcArgs),
 
     /// Internal: Zig C++ wrapper (called by shims)
     #[command(hide = true)]
-    ZigCxx(zig::cc::ZigCcArgs),
+    ZigCxx(zig::tools::ZigCcArgs),
 
     /// Internal: Zig AR wrapper (called by shims)
     #[command(hide = true)]
-    ZigAr(zig::ar::ZigArArgs),
+    ZigAr(zig::tools::ZigArArgs),
 
     /// Internal: Zig LD wrapper (called by shims)
     #[command(hide = true)]
-    ZigLd(zig::ld::ZigLdArgs),
+    ZigLd(zig::tools::ZigLdArgs),
 
     /// Internal: Zig dlltool wrapper (called by shims)
     #[command(hide = true)]
-    ZigDlltool(zig::dlltool::ZigDlltoolArgs),
+    ZigDlltool(zig::tools::ZigDlltoolArgs),
 }
 
 #[derive(Subcommand)]
@@ -209,19 +210,37 @@ fn main() -> Result<()> {
 
         // Zig wrapper commands (called by shims)
         Commands::ZigCc(args) => {
-            zig::cc::run_cc(args, false)?;
+            let target = zig::target::RustTarget::parse(&args.target)?;
+            let shim = zig::tools::ZigCc {
+                target,
+                is_cxx: false,
+            };
+            shim.run(args)?;
         }
         Commands::ZigCxx(args) => {
-            zig::cc::run_cc(args, true)?;
+            let target = zig::target::RustTarget::parse(&args.target)?;
+            let shim = zig::tools::ZigCc {
+                target,
+                is_cxx: true,
+            };
+            shim.run(args)?;
         }
         Commands::ZigAr(args) => {
-            zig::ar::run_ar(args)?;
+            let shim = zig::tools::ZigAr;
+            shim.run(args)?;
         }
         Commands::ZigLd(args) => {
-            zig::ld::run_ld(args)?;
+            let target = zig::target::RustTarget::parse(&args.target)?;
+            let shim = zig::tools::ZigLd {
+                target,
+                link_mode: zig::args::LinkMode::Direct,
+            };
+            shim.run(args)?;
         }
         Commands::ZigDlltool(args) => {
-            zig::dlltool::run_dlltool(args)?;
+            let target = zig::target::RustTarget::parse(&args.target)?;
+            let shim = zig::tools::ZigDlltool { target };
+            shim.run(args)?;
         }
     }
 

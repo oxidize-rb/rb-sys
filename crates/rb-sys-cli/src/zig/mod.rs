@@ -21,6 +21,8 @@ pub mod libc;
 pub mod manager;
 pub mod shim;
 pub mod target;
+pub mod tool;
+pub mod tools;
 
 // Re-exports for external use (used by build.rs and main.rs)
 #[allow(unused_imports)]
@@ -31,3 +33,7 @@ pub use manager::resolve_zig_path;
 pub use shim::generate_shims;
 #[allow(unused_imports)]
 pub use target::RustTarget;
+#[allow(unused_imports)]
+pub use tool::{ShimArgs, ZigShim};
+#[allow(unused_imports)]
+pub use tools::{ZigAr, ZigArArgs, ZigCc, ZigCcArgs, ZigDlltool, ZigDlltoolArgs, ZigLd, ZigLdArgs};

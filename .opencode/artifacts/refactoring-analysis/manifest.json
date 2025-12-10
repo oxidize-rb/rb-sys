@@ -1,0 +1,16 @@
+{
+  "task": "refactoring-analysis",
+  "timestamp": "2025-12-09",
+  "purpose": "Identify and rank refactoring opportunities in rb-sys-cli",
+  "files_produced": [
+    "code-statistics.txt",
+    "technical-debt.txt",
+    "refactoring-opportunities.md"
+  ],
+  "commands_used": [
+    "find crates/rb-sys-cli -name '*.rs' -exec wc -l {} \\;",
+    "rg 'unsafe' crates/rb-sys-cli --type rust -c",
+    "rg 'TODO|FIXME' crates/rb-sys-cli --type rust",
+    "rg '\\.clone\\(\\)' crates/rb-sys-cli/src --type rust -c"
+  ]
+}
