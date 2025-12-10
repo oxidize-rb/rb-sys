@@ -231,10 +231,11 @@ fn main() -> Result<()> {
         }
         Commands::ZigLd(args) => {
             let target = zig::target::RustTarget::parse(&args.target)?;
-            let shim = zig::tools::ZigLd {
-                target,
-                link_mode: zig::args::LinkMode::Direct,
+            let link_mode = match target.os {
+                zig::target::Os::Windows => zig::args::LinkMode::Driver,
+                _ => zig::args::LinkMode::Direct,
             };
+            let shim = zig::tools::ZigLd { target, link_mode };
             shim.run(args)?;
         }
         Commands::ZigDlltool(args) => {

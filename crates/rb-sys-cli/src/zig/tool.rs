@@ -4,7 +4,7 @@
 //! Implementors customize specific phases while the trait provides
 //! the overall execution flow.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use std::path::PathBuf;
 use std::process::Command;
 use tracing::{debug, info};
@@ -95,7 +95,7 @@ pub trait ZigShim: Sized {
         info!(command = ?cmd, "Executing Zig command");
         let status = cmd
             .status()
-            .map_err(|e| anyhow::anyhow!("Failed to execute zig {}: {}", self.subcommand(), e))?;
+            .with_context(|| format!("Failed to execute zig {}", self.subcommand()))?;
 
         if !status.success() {
             std::process::exit(status.code().unwrap_or(1));
