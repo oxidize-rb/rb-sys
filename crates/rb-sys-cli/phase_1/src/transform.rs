@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -8,7 +8,7 @@ pub fn transform_assets(
     staging_dir: &Path,
     output_dir: &Path,
     lockfile_path: &Path,
-) -> Result<RuntimeManifest> {
+) -> Result<()> {
     tracing::info!("Transforming phase_0 assets from {}", staging_dir.display());
 
     // Load phase_0 lockfile
@@ -21,8 +21,6 @@ pub fn transform_assets(
     std::fs::create_dir_all(output_dir)?;
     let assets_dir = output_dir.join("assets");
     std::fs::create_dir_all(&assets_dir)?;
-
-    let mut runtime_manifest = RuntimeManifest::new();
 
     // Process each platform
     for (platform, platform_lock) in &lockfile.platforms {
@@ -58,16 +56,11 @@ pub fn transform_assets(
                 }
             }
 
-            // Add to runtime manifest
-            let asset_path = assets_dir.join(platform).join(asset_name);
-            let asset_info = compute_asset_info(&asset_path)?;
-            runtime_manifest.add_asset(platform, asset_name, asset_info);
-
             tracing::info!("  ✓ {}", asset_name);
         }
     }
 
-    Ok(runtime_manifest)
+    Ok(())
 }
 
 fn transform_tarball(
@@ -425,46 +418,6 @@ fn normalize_permissions(dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn compute_asset_info(asset_dir: &Path) -> Result<RuntimeAssetInfo> {
-    use walkdir::WalkDir;
-
-    let mut file_count = 0u64;
-    let mut total_size = 0u64;
-    let mut files = Vec::new();
-
-    for entry in WalkDir::new(asset_dir) {
-        let entry = entry?;
-        if !entry.file_type().is_file() {
-            continue;
-        }
-
-        let rel_path = entry.path().strip_prefix(asset_dir)?;
-        let metadata = entry.metadata()?;
-        let size = metadata.len();
-
-        // Compute BLAKE3
-        let file = std::fs::File::open(entry.path())?;
-        let mut hasher = blake3::Hasher::new();
-        std::io::copy(&mut std::io::BufReader::new(file), &mut hasher)?;
-        let blake3 = hasher.finalize().to_hex().to_string();
-
-        files.push(RuntimeFileInfo {
-            path: rel_path.to_string_lossy().to_string(),
-            blake3,
-            size_bytes: size,
-        });
-
-        file_count += 1;
-        total_size += size;
-    }
-
-    Ok(RuntimeAssetInfo {
-        file_count,
-        total_size_bytes: total_size,
-        files,
-    })
-}
-
 // Phase 0 lockfile structures (minimal, just what we need to read)
 #[derive(Debug, Deserialize)]
 struct Phase0Lockfile {
@@ -500,57 +453,4 @@ struct Phase0FileDigest {
     path: String,
     blake3: String,
     size_bytes: u64,
-}
-
-// Runtime manifest structures
-#[derive(Debug, Serialize)]
-pub struct RuntimeManifest {
-    pub generated_at: String,
-    #[serde(flatten)]
-    pub platforms: HashMap<String, RuntimePlatform>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct RuntimePlatform {
-    #[serde(flatten)]
-    pub assets: HashMap<String, RuntimeAssetInfo>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct RuntimeAssetInfo {
-    pub file_count: u64,
-    pub total_size_bytes: u64,
-    pub files: Vec<RuntimeFileInfo>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct RuntimeFileInfo {
-    pub path: String,
-    pub blake3: String,
-    pub size_bytes: u64,
-}
-
-impl RuntimeManifest {
-    pub fn new() -> Self {
-        Self {
-            generated_at: chrono::Utc::now().to_rfc3339(),
-            platforms: HashMap::new(),
-        }
-    }
-
-    pub fn add_asset(&mut self, platform: &str, asset_name: &str, info: RuntimeAssetInfo) {
-        self.platforms
-            .entry(platform.to_string())
-            .or_insert_with(|| RuntimePlatform {
-                assets: HashMap::new(),
-            })
-            .assets
-            .insert(asset_name.to_string(), info);
-    }
-
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let content = serde_json::to_string_pretty(self)?;
-        std::fs::write(path, content)?;
-        Ok(())
-    }
 }

@@ -35,7 +35,7 @@ Tools are defined in a structured JSON manifest:
 During `rake cli:prepare`:
 
 1. **Phase 0**: Downloads rake-compiler-dock OCI images and extracts Ruby headers/sysroots
-2. **Phase 1**: 
+2. **Phase 1**:
    - Loads `data/tools.json`
    - Packages tool archives into `src/embedded/assets.tar.zst`
    - Generates runtime manifest with tool metadata and BLAKE3 hashes
@@ -125,7 +125,7 @@ Tools are embedded for the following host platforms:
 ## Adding New Tools
 
 1. **Obtain Tool Archive**: Download or build the tool as a `.tar.zst` file
-2. **Compute BLAKE3**: 
+2. **Compute BLAKE3**:
    ```bash
    b3sum tool.tar.zst
    ```

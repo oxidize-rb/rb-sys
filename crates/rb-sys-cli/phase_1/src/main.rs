@@ -15,7 +15,6 @@ use tracing_subscriber::util::SubscriberInitExt;
 const STAGING_DIR: &str = "data/staging/phase_0";
 const OUTPUT_DIR: &str = "data/staging/phase_1";
 const LOCKFILE_PATH: &str = "data/derived/phase_0_lock.toml";
-const RUNTIME_MANIFEST_PATH: &str = "data/derived/runtime_manifest.json";
 const TOOLCHAINS_JSON: &str = "data/toolchains.json";
 const DERIVED_DIR: &str = "data/derived";
 
@@ -53,18 +52,14 @@ fn main() -> Result<()> {
         let staging_dir = PathBuf::from(STAGING_DIR);
         let output_dir = PathBuf::from(OUTPUT_DIR);
         let lockfile_path = PathBuf::from(LOCKFILE_PATH);
-        let manifest_output = PathBuf::from(RUNTIME_MANIFEST_PATH);
 
         std::fs::create_dir_all(&output_dir)?;
 
-        let runtime_manifest =
-            transform::transform_assets(&staging_dir, &output_dir, &lockfile_path)?;
-        runtime_manifest.save(&manifest_output)?;
+        transform::transform_assets(&staging_dir, &output_dir, &lockfile_path)?;
 
         tracing::info!("✓ Transformed assets");
         tracing::info!("  Staging: {}", staging_dir.display());
         tracing::info!("  Output: {}", output_dir.display());
-        tracing::info!("  Manifest: {}", manifest_output.display());
     }
 
     // Step 3: Generate pre-compiled Ruby bindings for all platforms

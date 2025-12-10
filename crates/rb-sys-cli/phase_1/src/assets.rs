@@ -66,16 +66,6 @@ fn build_assets_new_mode(phase_1_assets: &Path, embedded_dir: &Path) -> Result<(
 
     tracing::info!("Created embedded asset archive: {:.1} MB", size_mb);
 
-    // Copy runtime_manifest.json to embedded dir
-    let manifest_src = Path::new("data/derived/runtime_manifest.json");
-    let manifest_dest = embedded_dir.join("runtime_manifest.json");
-
-    if manifest_src.exists() {
-        fs::copy(manifest_src, &manifest_dest)
-            .with_context(|| format!("Failed to copy manifest to {}", manifest_dest.display()))?;
-        tracing::info!("Copied runtime_manifest.json");
-    }
-
     Ok(())
 }
 

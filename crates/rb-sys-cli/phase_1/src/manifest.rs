@@ -87,10 +87,10 @@ pub fn generate_manifest(config_path: &Path, cache_dir: &Path, derived_dir: &Pat
     }
 
     // Load tools manifest if present
-    let tools_manifest_path = Path::new("data/tools.json");
+    let tools_manifest_path = Path::new("data/assets_manifest.toml");
     let tools = if tools_manifest_path.exists() {
-        let tools_manifest = crate::tools::ToolsManifest::load(tools_manifest_path)?;
-        tools_manifest.to_runtime_tools()
+        let assets_manifest = crate::tools::AssetsManifest::load(tools_manifest_path)?;
+        assets_manifest.to_runtime_tools()
     } else {
         Vec::new()
     };

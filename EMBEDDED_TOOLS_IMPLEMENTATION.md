@@ -14,12 +14,12 @@ A system for embedding pre-generated Ruby C API bindings to enable cross-compila
 
 ### Key Features
 
-✅ **Embedded Bindings**: 282KB compressed tarball with bindings for 19 platform/version combinations  
-✅ **Extract-Once Caching**: Single decompression per build to `$OUT_DIR/rb-sys-embedded-bindings/`  
-✅ **Hash-Based Invalidation**: Fast fingerprint (length + first/last 8 bytes) detects tarball changes  
-✅ **Feature-Aware Filtering**: Removes items based on enabled features (rbimpls, deprecated-types)  
-✅ **Automatic Fallback**: Gracefully falls back to bindgen if no embedded bindings available  
-✅ **Zero Global State**: Uses `OUT_DIR` during builds, temp dir for tests  
+✅ **Embedded Bindings**: 282KB compressed tarball with bindings for 19 platform/version combinations
+✅ **Extract-Once Caching**: Single decompression per build to `$OUT_DIR/rb-sys-embedded-bindings/`
+✅ **Hash-Based Invalidation**: Fast fingerprint (length + first/last 8 bytes) detects tarball changes
+✅ **Feature-Aware Filtering**: Removes items based on enabled features (rbimpls, deprecated-types)
+✅ **Automatic Fallback**: Gracefully falls back to bindgen if no embedded bindings available
+✅ **Zero Global State**: Uses `OUT_DIR` during builds, temp dir for tests
 
 ### Files
 
@@ -177,13 +177,13 @@ A framework for embedding Zig compiler and libclang into `cargo-gem` binaries wi
 
 ### Key Features
 
-✅ **Unified Asset System**: Tools packaged alongside Ruby sysroots in single `assets.tar.zst`  
-✅ **BLAKE3 Verification**: Type-safe hash verification at build and runtime  
-✅ **Lazy Extraction**: Tools extracted on-demand to cache directory  
-✅ **Auto-wiring**: Automatic environment variable configuration  
-✅ **CLI Inspection**: `cargo gem tools` command to view embedded tools  
-✅ **Multi-platform**: Supports all platforms in `data/toolchains.json`  
-✅ **Backward Compatible**: Legacy `bundled-zig` feature still works  
+✅ **Unified Asset System**: Tools packaged alongside Ruby sysroots in single `assets.tar.zst`
+✅ **BLAKE3 Verification**: Type-safe hash verification at build and runtime
+✅ **Lazy Extraction**: Tools extracted on-demand to cache directory
+✅ **Auto-wiring**: Automatic environment variable configuration
+✅ **CLI Inspection**: `cargo gem tools` command to view embedded tools
+✅ **Multi-platform**: Supports all platforms in `data/toolchains.json`
+✅ **Backward Compatible**: Legacy `bundled-zig` feature still works
 
 ### Files
 
@@ -385,7 +385,7 @@ libclang/
    - Cross-compilation builds exercise full path
 
 ### Embedded Tools
-1. **Unit Tests**: 
+1. **Unit Tests**:
    - `Blake3Hash` parsing and serialization
    - Tool extraction with mock archives
    - Manifest loading
@@ -404,7 +404,7 @@ libclang/
 
 - **MSRV**: Rust 1.71 (unchanged)
 - **Platforms**: All existing platforms supported
-- **Backward Compat**: 
+- **Backward Compat**:
   - Pre-generated bindings fall back to bindgen
   - Legacy `bundled-zig` feature still works
 - **Graceful Degradation**: Falls back to system tools if not embedded

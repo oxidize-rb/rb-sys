@@ -11,3 +11,6 @@ book/src/https:/
 .cache/
 crates/rb-sys-cli/src/embedded/
 data/staging/
+
+# Build artifacts
+data/derived/runtime_manifest.json

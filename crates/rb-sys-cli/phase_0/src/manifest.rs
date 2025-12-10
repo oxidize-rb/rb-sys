@@ -259,7 +259,7 @@ mod tests {
         let toml = r#"
         [manifest]
         version = 1
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.2"
@@ -282,7 +282,7 @@ mod tests {
         let toml = r#"
         [manifest]
         version = 1
-        
+
         [[assets]]
         name = "libclang"
         version = "19.1.5"
@@ -306,7 +306,7 @@ mod tests {
         let toml = r#"
         [manifest]
         version = 1
-        
+
         [[common]]
         name = "docs"
         version = "1.0"
@@ -316,7 +316,7 @@ mod tests {
         fetch_url = "https://example.com/docs.tar.xz"
         fetch_digest = "sha256:abc123"
         archive_path = "docs/common.tar.zst"
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.2"
@@ -340,7 +340,7 @@ mod tests {
         let toml = r#"
         [manifest]
         version = 1
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.2"
@@ -350,7 +350,7 @@ mod tests {
         fetch_url = "https://example.com/zig.tar.xz"
         fetch_digest = "sha256:abc123"
         archive_path = "tools/x86_64-unknown-linux-gnu/zig.tar.zst"
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.2"
@@ -374,7 +374,7 @@ mod tests {
         let toml = r#"
         [manifest]
         version = 1
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.2"
@@ -384,7 +384,7 @@ mod tests {
         fetch_url = "https://example.com/zig1.tar.xz"
         fetch_digest = "sha256:abc123"
         archive_path = "tools/x86_64-unknown-linux-gnu/zig.tar.zst"
-        
+
         [[assets]]
         name = "zig"
         version = "0.15.3"

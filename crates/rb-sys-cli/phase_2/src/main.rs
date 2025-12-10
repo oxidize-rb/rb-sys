@@ -4,9 +4,7 @@ use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 const ASSETS_DIR: &str = "data/staging/phase_1/assets";
-const RUNTIME_MANIFEST: &str = "data/derived/runtime_manifest.json";
 const OUTPUT_ARCHIVE: &str = "crates/rb-sys-cli/src/embedded/assets.tar.xz";
-const OUTPUT_MANIFEST: &str = "crates/rb-sys-cli/src/embedded/runtime_manifest.json";
 
 fn main() -> Result<()> {
     // Setup tracing
@@ -15,16 +13,11 @@ fn main() -> Result<()> {
     tracing::info!("Phase 2: Bundle assets");
 
     let assets_dir = PathBuf::from(ASSETS_DIR);
-    let runtime_manifest = PathBuf::from(RUNTIME_MANIFEST);
     let output_archive = PathBuf::from(OUTPUT_ARCHIVE);
-    let output_manifest = PathBuf::from(OUTPUT_MANIFEST);
 
     // Verify inputs exist
     if !assets_dir.exists() {
         anyhow::bail!("Assets directory not found: {}", assets_dir.display());
-    }
-    if !runtime_manifest.exists() {
-        anyhow::bail!("Runtime manifest not found: {}", runtime_manifest.display());
     }
 
     // Create output directory
@@ -52,15 +45,8 @@ fn main() -> Result<()> {
     let size_mb = metadata.len() as f64 / 1_048_576.0;
 
     tracing::info!("✓ Created archive: {:.1} MB", size_mb);
-
-    // Copy runtime manifest to embedded dir
-    fs::copy(&runtime_manifest, &output_manifest)
-        .with_context(|| format!("Failed to copy manifest to {}", output_manifest.display()))?;
-
-    tracing::info!("✓ Copied runtime manifest");
     tracing::info!("✓ Phase 2 complete");
     tracing::info!("  Archive: {}", output_archive.display());
-    tracing::info!("  Manifest: {}", output_manifest.display());
 
     Ok(())
 }
