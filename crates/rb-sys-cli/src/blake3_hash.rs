@@ -12,11 +12,6 @@ impl Blake3Hash {
         Self(bytes)
     }
 
-    /// Get the raw bytes
-    pub fn as_bytes(&self) -> &[u8; 32] {
-        &self.0
-    }
-
     /// Create from a hex string (64 lowercase hex chars)
     pub fn from_hex(hex: &str) -> Result<Self, Blake3HashError> {
         if hex.len() != 64 {

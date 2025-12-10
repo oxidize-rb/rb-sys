@@ -1,9 +1,5 @@
-mod assets;
 mod bindings;
 mod codegen;
-mod config;
-mod manifest;
-mod tools;
 mod transform;
 
 use anyhow::Result;

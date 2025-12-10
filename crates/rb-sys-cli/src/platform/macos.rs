@@ -138,10 +138,6 @@ impl MacOSConfig {
     /// Returns an error if:
     /// - SDKROOT environment variable is not set
     /// - The SDKROOT path does not exist
-    pub fn from_env() -> Result<Self> {
-        Self::from_env_or_embedded(None)
-    }
-
     /// Get additional CC/CXX arguments for macOS targets.
     ///
     /// These arguments configure the compiler to use the SDK

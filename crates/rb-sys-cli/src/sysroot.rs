@@ -149,12 +149,6 @@ impl MountedSysroot {
     pub fn macos_sdk_path(&self) -> Option<&Path> {
         self.macos_sdk_path.as_deref()
     }
-
-    /// Call this on build failure to keep the sysroot around for inspection.
-    pub fn keep(mut self) {
-        self.cleanup_on_drop = false;
-        // consume self
-    }
 }
 
 impl Drop for MountedSysroot {

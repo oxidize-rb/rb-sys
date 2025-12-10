@@ -1,8 +1,8 @@
-///! libclang manager for bundled libclang distribution.
-///!
-///! This module manages the bundled libclang runtime that is embedded in
-///! cargo-gem for use with bindgen during cross-compilation.
-use anyhow::{Context, Result};
+//! libclang manager for bundled libclang distribution.
+//!
+//! This module manages the bundled libclang runtime that is embedded in
+//! cargo-gem for use with bindgen during cross-compilation.
+use anyhow::Result;
 use std::path::PathBuf;
 use tracing::{debug, info};
 
