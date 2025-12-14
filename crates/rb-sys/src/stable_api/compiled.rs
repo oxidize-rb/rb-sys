@@ -2,7 +2,7 @@ use super::StableApiDefinition;
 use crate::{ruby_value_type, timeval, RUBY_API_VERSION_MAJOR, RUBY_API_VERSION_MINOR, VALUE};
 use std::{
     ffi::c_void,
-    os::raw::{c_char, c_long},
+    os::raw::{c_char, c_int, c_long},
     ptr::NonNull,
     time::Duration,
 };
@@ -96,6 +96,9 @@ extern "C" {
 
     #[link_name = "impl_rtypeddata_get_data"]
     fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
+
+    #[link_name = "impl_fl_able"]
+    fn impl_fl_able(obj: VALUE) -> c_int;
 
     // Symbol/ID conversion functions
     #[link_name = "impl_id2sym"]
@@ -360,5 +363,10 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
         impl_rb_obj_written(old, oldv, young)
+    }
+
+    #[inline]
+    fn fl_able(&self, obj: VALUE) -> bool {
+        unsafe { impl_fl_able(obj) != 0 }
     }
 }

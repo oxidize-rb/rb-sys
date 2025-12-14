@@ -569,3 +569,16 @@ pub unsafe fn RB_OBJ_WRITE(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE 
 pub unsafe fn RB_OBJ_WRITTEN(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
     api().rb_obj_written(old, oldv, young)
 }
+
+/// Check if an object can have flags (akin to `RB_FL_ABLE`).
+///
+/// Returns false for immediate values (nil, true, false, Fixnum, Symbol, Flonum).
+/// Returns true for heap-allocated objects that can have flags set.
+///
+/// @param[in]  obj    An object to check.
+/// @retval     true   The object can have flags.
+/// @retval     false  The object is an immediate value.
+#[inline(always)]
+pub fn FL_ABLE(obj: VALUE) -> bool {
+    api().fl_able(obj)
+}

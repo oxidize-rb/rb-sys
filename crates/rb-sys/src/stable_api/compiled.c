@@ -257,3 +257,8 @@ impl_rb_obj_written(VALUE old, VALUE oldv, VALUE young)
 {
   return rb_obj_written(old, oldv, young, __FILE__, __LINE__);
 }
+
+int impl_fl_able(VALUE obj)
+{
+  return RB_FL_ABLE(obj);
+}
