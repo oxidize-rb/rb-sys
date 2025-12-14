@@ -177,3 +177,15 @@ impl_rtypeddata_get_data(VALUE obj)
   return RTYPEDDATA(obj)->data;
 #endif
 }
+
+VALUE
+impl_id2sym(ID id)
+{
+  return ID2SYM(id);
+}
+
+ID
+impl_sym2id(VALUE obj)
+{
+  return SYM2ID(obj);
+}
