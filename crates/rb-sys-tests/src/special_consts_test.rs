@@ -17,7 +17,7 @@ fn test_static_sym_p() {
     let sym = unsafe { rb_id2sym(id) };
 
     assert!(STATIC_SYM_P(sym));
-    assert!(!STATIC_SYM_P(Qnil));
+    assert!(!STATIC_SYM_P(Qnil as VALUE));
 }
 
 #[ruby_test]
@@ -29,5 +29,5 @@ fn test_flonum_p() {
     #[cfg(not(ruby_use_flonum))]
     assert!(!FLONUM_P(flonum));
 
-    assert!(!FLONUM_P(Qnil));
+    assert!(!FLONUM_P(Qnil as VALUE));
 }
