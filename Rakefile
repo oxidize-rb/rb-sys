@@ -22,7 +22,8 @@ def cargo_test_task(name, *args, crate: name)
 
     default_args = (ENV["CI"] || extra_args.include?("--verbose")) ? [] : ["--quiet"]
     test_args = (ENV["CI"] || extra_args.include?("--verbose")) ? ["--", "--nocapture"] : []
-    sh "cargo", "test", *default_args, *extra_args, *args, "-p", crate, *test_args
+    release_flag = ["--release"]
+    sh "cargo", "test", *default_args, *extra_args, *args, "-p", crate, *release_flag, *test_args
     puts "=" * 80
   end
 
