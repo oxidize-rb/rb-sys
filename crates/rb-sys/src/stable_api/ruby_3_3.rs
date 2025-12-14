@@ -401,5 +401,4 @@ impl StableApiDefinition for Definition {
         let flags = (*rbasic).flags;
         ((flags & ENCODING_MASK) >> ENCODING_SHIFT) as std::os::raw::c_int
     }
-
 }

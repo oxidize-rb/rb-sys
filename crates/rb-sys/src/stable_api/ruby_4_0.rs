@@ -346,7 +346,7 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn num2dbl(&self, obj: VALUE) -> std::os::raw::c_double {
         if self.flonum_p(obj) {
             // Fast path: decode Flonum directly
@@ -375,13 +375,13 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn dbl2num(&self, val: std::os::raw::c_double) -> VALUE {
         // Call the C function rb_float_new to create a Float VALUE
         unsafe { crate::rb_float_new(val) }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rhash_size(&self, obj: VALUE) -> usize {
         // Call rb_hash_size which returns a fixnum VALUE
         let size_val = crate::rb_hash_size(obj);
@@ -395,12 +395,12 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rhash_empty_p(&self, obj: VALUE) -> bool {
         self.rhash_size(obj) == 0
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn encoding_get(&self, obj: VALUE) -> std::os::raw::c_int {
         // Encoding is stored in flags bits 16-23
         const ENCODING_SHIFT: usize = 16;

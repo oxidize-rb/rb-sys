@@ -820,7 +820,7 @@ fn test_dbl2num_and_num2dbl_roundtrip() {
         let original = 2.71828;
         let float_obj = rb_sys::DBL2NUM(original);
         let recovered = stable_api::get_default().num2dbl(float_obj);
-        
+
         assert!((original - recovered).abs() < 0.00001);
     }
 }
@@ -837,7 +837,7 @@ parity_test!(
 fn test_rhash_size_with_elements() {
     unsafe {
         let h = ruby_eval!("{1 => 10, 2 => 20}");
-        
+
         let size = stable_api::get_default().rhash_size(h);
         assert_eq!(size, 2);
     }
@@ -855,7 +855,7 @@ parity_test!(
 fn test_rhash_empty_p_with_elements() {
     unsafe {
         let h = ruby_eval!("{1 => 10}");
-        
+
         let is_empty = stable_api::get_default().rhash_empty_p(h);
         assert!(!is_empty);
     }
