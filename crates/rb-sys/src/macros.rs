@@ -112,6 +112,38 @@ pub unsafe fn RARRAY_LEN(obj: VALUE) -> c_long {
     api().rarray_len(obj.into())
 }
 
+/// Read array element at index (akin to `RARRAY_AREF`).
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer in order to
+/// access internal Ruby memory.
+///
+/// - @param[in]  obj  An object of ::RArray.
+/// - @param[in]  idx  Index within the array (must be within bounds: 0..RARRAY_LEN(obj)).
+/// - @return     The element at the given index.
+#[inline(always)]
+pub unsafe fn RARRAY_AREF(obj: VALUE, idx: isize) -> VALUE {
+    api().rarray_aref(obj.into(), idx)
+}
+
+/// Write array element at index (akin to `RARRAY_ASET`).
+///
+/// This function includes the GC write barrier for correctness.
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer in order to
+/// access internal Ruby memory.
+///
+/// - @param[in]  obj  An object of ::RArray.
+/// - @param[in]  idx  Index within the array (must be within bounds: 0..RARRAY_LEN(obj)).
+/// - @param[in]  val  The value to set at the given index.
+#[inline(always)]
+pub unsafe fn RARRAY_ASET(obj: VALUE, idx: isize, val: VALUE) {
+    api().rarray_aset(obj.into(), idx, val)
+}
+
 /// Get the length of a Ruby string.
 ///
 /// ### Safety
@@ -368,4 +400,44 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 #[inline(always)]
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
+}
+
+/// Execute GC write barrier when storing a reference (akin to `RB_OBJ_WRITE`).
+///
+/// Must be called when storing a VALUE reference from one heap object to another.
+/// This is critical for GC correctness - without it, the GC may collect objects
+/// that are still referenced.
+///
+/// @param[in]  old    The object being modified (must be heap-allocated).
+/// @param[in]  slot   Pointer to the VALUE slot within `old` being written to.
+/// @param[in]  young  The VALUE being stored.
+/// @return     The VALUE that was written (`young`).
+///
+/// # Safety
+/// - `old` must be a valid heap-allocated Ruby object
+/// - `slot` must be a valid pointer to a VALUE within `old`
+/// - `young` must be a valid VALUE
+#[inline(always)]
+pub unsafe fn RB_OBJ_WRITE(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+    api().rb_obj_write(old, slot, young)
+}
+
+/// Declare a write barrier without actually writing (akin to `RB_OBJ_WRITTEN`).
+///
+/// Use this when you've already written a reference but need to inform the GC.
+/// This is useful when the write happens through a different mechanism but
+/// the GC still needs to be notified.
+///
+/// @param[in]  old    The object being modified (must be heap-allocated).
+/// @param[in]  oldv   The previous value (can be any VALUE).
+/// @param[in]  young  The VALUE that was written.
+/// @return     The VALUE that was written (`young`).
+///
+/// # Safety
+/// - `old` must be a valid heap-allocated Ruby object
+/// - `oldv` is the previous value (can be any VALUE)
+/// - `young` must be a valid VALUE that was written
+#[inline(always)]
+pub unsafe fn RB_OBJ_WRITTEN(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+    api().rb_obj_written(old, oldv, young)
 }

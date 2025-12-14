@@ -15,6 +15,11 @@ use std::{
 #[cfg(not(ruby_eq_2_7))]
 compile_error!("This file should only be included in Ruby 2.7 builds");
 
+extern "C" {
+    fn rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+    fn rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+}
+
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
@@ -93,6 +98,17 @@ impl StableApiDefinition for Definition {
         assert!(!ptr.is_null());
 
         ptr
+    }
+
+    #[inline]
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
+        *self.rarray_const_ptr(obj).offset(idx)
+    }
+
+    #[inline]
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
+        let ptr = self.rarray_const_ptr(obj).cast_mut().offset(idx);
+        self.rb_obj_write(obj, ptr, val);
     }
 
     #[inline]
@@ -320,5 +336,19 @@ impl StableApiDefinition for Definition {
         // For Ruby 2.7, simply return the data field
         let rdata = obj as *const RTypedData;
         (*rdata).data
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        *slot = young;
+        self.rb_obj_written(old, crate::Qundef as VALUE, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, _oldv: VALUE, young: VALUE) -> VALUE {
+        if !self.special_const_p(young) && !self.special_const_p(old) {
+            crate::rb_gc_writebarrier(old, young);
+        }
+        young
     }
 }

@@ -42,6 +42,18 @@ impl_rarray_const_ptr(VALUE obj)
 }
 
 VALUE
+impl_rarray_aref(VALUE obj, long idx)
+{
+  return RARRAY_AREF(obj, idx);
+}
+
+void
+impl_rarray_aset(VALUE obj, long idx, VALUE val)
+{
+  RARRAY_ASET(obj, idx, val);
+}
+
+VALUE
 impl_rbasic_class(VALUE obj)
 {
   return RBASIC_CLASS(obj);
@@ -176,4 +188,16 @@ impl_rtypeddata_get_data(VALUE obj)
 #else
   return RTYPEDDATA(obj)->data;
 #endif
+}
+
+VALUE
+impl_rb_obj_write(VALUE old, VALUE *slot, VALUE young)
+{
+  return rb_obj_write(old, slot, young, __FILE__, __LINE__);
+}
+
+VALUE
+impl_rb_obj_written(VALUE old, VALUE oldv, VALUE young)
+{
+  return rb_obj_written(old, oldv, young, __FILE__, __LINE__);
 }

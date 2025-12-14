@@ -83,6 +83,17 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
+        *self.rarray_const_ptr(obj).offset(idx)
+    }
+
+    #[inline]
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
+        let ptr = self.rarray_const_ptr(obj).cast_mut().offset(idx);
+        self.rb_obj_write(obj, ptr, val);
+    }
+
+    #[inline]
     unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 
@@ -335,5 +346,19 @@ impl StableApiDefinition for Definition {
             let rdata = obj as *const crate::internal::RTypedData;
             (*rdata).data
         }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        *slot = young;
+        self.rb_obj_written(old, crate::Qundef as VALUE, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, _oldv: VALUE, young: VALUE) -> VALUE {
+        if !self.special_const_p(young) && !self.special_const_p(old) {
+            crate::rb_gc_writebarrier(old, young);
+        }
+        young
     }
 }

@@ -21,6 +21,12 @@ extern "C" {
     #[link_name = "impl_rarray_const_ptr"]
     fn impl_rarray_const_ptr(ary: VALUE) -> *const VALUE;
 
+    #[link_name = "impl_rarray_aref"]
+    fn impl_rarray_aref(ary: VALUE, idx: c_long) -> VALUE;
+
+    #[link_name = "impl_rarray_aset"]
+    fn impl_rarray_aset(ary: VALUE, idx: c_long, val: VALUE);
+
     #[link_name = "impl_rbasic_class"]
     fn impl_rbasic_class(obj: VALUE) -> VALUE;
 
@@ -93,6 +99,12 @@ extern "C" {
 
     #[link_name = "impl_rtypeddata_get_data"]
     fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
+
+    #[link_name = "impl_rb_obj_write"]
+    fn impl_rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE;
+
+    #[link_name = "impl_rb_obj_written"]
+    fn impl_rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE;
 }
 
 pub struct Definition;
@@ -119,6 +131,16 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE {
         impl_rarray_const_ptr(obj)
+    }
+
+    #[inline]
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
+        impl_rarray_aref(obj, idx as c_long)
+    }
+
+    #[inline]
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
+        impl_rarray_aset(obj, idx as c_long, val)
     }
 
     #[inline]
@@ -253,5 +275,15 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
         impl_rtypeddata_get_data(obj)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_write(old, slot, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_written(old, oldv, young)
     }
 }
