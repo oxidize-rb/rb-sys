@@ -34,8 +34,8 @@ use std::os::raw::{c_char, c_long};
 /// assert!(!TEST(Qnil));
 /// assert!(TEST(Qtrue));
 /// ```
-#[inline]
-pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn TEST(obj: VALUE) -> bool {
     api().rb_test(obj.into())
 }
 
@@ -53,8 +53,8 @@ pub fn TEST<T: Into<VALUE>>(obj: T) -> bool {
 /// assert!(NIL_P(Qnil));
 /// assert!(!NIL_P(Qtrue));
 /// ```
-#[inline]
-pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn NIL_P(obj: VALUE) -> bool {
     api().nil_p(obj.into())
 }
 
@@ -64,8 +64,8 @@ pub fn NIL_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @retval     true   `obj` is a Fixnum.
 /// - @retval     false  Anything else.
 /// - @note       Fixnum was  a thing  in the  20th century, but  it is  rather an implementation detail today.
-#[inline]
-pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn FIXNUM_P(obj: VALUE) -> bool {
     api().fixnum_p(obj.into())
 }
 
@@ -77,8 +77,8 @@ pub fn FIXNUM_P<T: Into<VALUE>>(obj: T) -> bool {
 /// - @see        RB_DYNAMIC_SYM_P()
 /// - @see        RB_SYMBOL_P()
 /// - @note       These days  there are static  and dynamic symbols, just  like we once had Fixnum/Bignum back in the old days.
-#[inline]
-pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn STATIC_SYM_P(obj: VALUE) -> bool {
     api().static_sym_p(obj.into())
 }
 
@@ -93,8 +93,8 @@ pub fn STATIC_SYM_P<T: Into<VALUE>>(obj: T) -> bool {
 ///
 /// - @param[in]  a  An object of ::RArray.
 /// - @return     Its backend storage.
-#[inline]
-pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
+#[inline(always)]
+pub unsafe fn RARRAY_CONST_PTR(obj: VALUE) -> *const VALUE {
     api().rarray_const_ptr(obj.into())
 }
 
@@ -107,8 +107,8 @@ pub unsafe fn RARRAY_CONST_PTR<T: Into<VALUE>>(obj: T) -> *const VALUE {
 ///
 /// - @param[in]  a  An object of ::RArray.
 /// - @return     Its length.
-#[inline]
-pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
+#[inline(always)]
+pub unsafe fn RARRAY_LEN(obj: VALUE) -> c_long {
     api().rarray_len(obj.into())
 }
 
@@ -121,8 +121,8 @@ pub unsafe fn RARRAY_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 ///
 /// - @param[in]  a  An object of ::RString.
 /// - @return     Its length.
-#[inline]
-pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
+#[inline(always)]
+pub unsafe fn RSTRING_LEN(obj: VALUE) -> c_long {
     api().rstring_len(obj.into())
 }
 
@@ -135,8 +135,8 @@ pub unsafe fn RSTRING_LEN<T: Into<VALUE>>(obj: T) -> c_long {
 ///
 /// - @param[in]  a  An object of ::RString.
 /// - @return     Its backend storage
-#[inline]
-pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
+#[inline(always)]
+pub unsafe fn RSTRING_PTR(obj: VALUE) -> *const c_char {
     api().rstring_ptr(obj.into())
 }
 
@@ -148,8 +148,8 @@ pub unsafe fn RSTRING_PTR<T: Into<VALUE>>(obj: T) -> *const c_char {
 /// @see        RB_FLOAT_TYPE_P()
 /// @note       These days there are Flonums and non-Flonum floats, just like we
 ///             once had Fixnum/Bignum back in the old days.
-#[inline]
-pub fn FLONUM_P<T: Into<VALUE>>(#[allow(unused)] obj: T) -> bool {
+#[inline(always)]
+pub fn FLONUM_P(obj: VALUE) -> bool {
     api().flonum_p(obj.into())
 }
 
@@ -161,8 +161,8 @@ pub fn FLONUM_P<T: Into<VALUE>>(#[allow(unused)] obj: T) -> bool {
 /// @retval     false  Anything else.
 /// @see        RB_FLOAT_TYPE_P()
 /// @note       The concept of "immediate" is purely C specific.
-#[inline]
-pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn IMMEDIATE_P(obj: VALUE) -> bool {
     api().immediate_p(obj.into())
 }
 
@@ -181,8 +181,8 @@ pub fn IMMEDIATE_P<T: Into<VALUE>>(obj: T) -> bool {
 /// assert!(SPECIAL_CONST_P(Qtrue));
 /// assert!(SPECIAL_CONST_P(Qfalse));
 /// ```
-#[inline]
-pub fn SPECIAL_CONST_P<T: Into<VALUE>>(obj: T) -> bool {
+#[inline(always)]
+pub fn SPECIAL_CONST_P(obj: VALUE) -> bool {
     api().special_const_p(obj.into())
 }
 
@@ -195,7 +195,7 @@ pub fn SPECIAL_CONST_P<T: Into<VALUE>>(obj: T) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
     api().builtin_type(obj)
 }
@@ -209,7 +209,7 @@ pub unsafe fn RB_BUILTIN_TYPE(obj: VALUE) -> ruby_value_type {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool {
     api().integer_type_p(obj)
 }
@@ -223,7 +223,7 @@ pub unsafe fn RB_INTEGER_TYPE_P(obj: VALUE) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_DYNAMIC_SYM_P(obj: VALUE) -> bool {
     api().dynamic_sym_p(obj)
 }
@@ -237,7 +237,7 @@ pub unsafe fn RB_DYNAMIC_SYM_P(obj: VALUE) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_SYMBOL_P(obj: VALUE) -> bool {
     api().symbol_p(obj)
 }
@@ -250,7 +250,7 @@ pub unsafe fn RB_SYMBOL_P(obj: VALUE) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_TYPE(value: VALUE) -> ruby_value_type {
     api().rb_type(value)
 }
@@ -265,7 +265,7 @@ pub unsafe fn RB_TYPE(value: VALUE) -> ruby_value_type {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 #[cfg(ruby_engine = "mri")] // truffleruby provides its own implementation
 pub unsafe fn RB_TYPE_P(obj: VALUE, ty: ruby_value_type) -> bool {
     api().type_p(obj, ty)
@@ -280,7 +280,7 @@ pub unsafe fn RB_TYPE_P(obj: VALUE, ty: ruby_value_type) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// attemping to access the underlying [`RBasic`] struct.
-#[inline]
+#[inline(always)]
 pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
     api().float_type_p(obj)
 }
@@ -294,7 +294,7 @@ pub unsafe fn RB_FLOAT_TYPE_P(obj: VALUE) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// accessing the underlying data structure.
-#[inline]
+#[inline(always)]
 pub unsafe fn RTYPEDDATA_P(obj: VALUE) -> bool {
     api().rtypeddata_p(obj)
 }
@@ -309,7 +309,7 @@ pub unsafe fn RTYPEDDATA_P(obj: VALUE) -> bool {
 /// This function is unsafe because it could dereference a raw pointer when
 /// accessing the underlying data structure. The caller must ensure the object
 /// is a valid RTypedData.
-#[inline]
+#[inline(always)]
 pub unsafe fn RTYPEDDATA_EMBEDDED_P(obj: VALUE) -> bool {
     api().rtypeddata_embedded_p(obj)
 }
@@ -323,7 +323,7 @@ pub unsafe fn RTYPEDDATA_EMBEDDED_P(obj: VALUE) -> bool {
 /// This function is unsafe because it dereferences a raw pointer to get
 /// access to the underlying data type. The caller must ensure the object
 /// is a valid RTypedData.
-#[inline]
+#[inline(always)]
 pub unsafe fn RTYPEDDATA_TYPE(obj: VALUE) -> *const rb_data_type_t {
     api().rtypeddata_type(obj)
 }
@@ -337,7 +337,7 @@ pub unsafe fn RTYPEDDATA_TYPE(obj: VALUE) -> *const rb_data_type_t {
 /// This function is unsafe because it dereferences a raw pointer to get
 /// access to the underlying data. The caller must ensure the object
 /// is a valid RTypedData.
-#[inline]
+#[inline(always)]
 pub unsafe fn RTYPEDDATA_GET_DATA(obj: VALUE) -> *mut c_void {
     api().rtypeddata_get_data(obj)
 }
@@ -351,7 +351,7 @@ pub unsafe fn RTYPEDDATA_GET_DATA(obj: VALUE) -> *mut c_void {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// accessing the underlying bignum structure.
-#[inline]
+#[inline(always)]
 pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
     api().bignum_positive_p(b)
 }
@@ -365,7 +365,7 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 /// # Safety
 /// This function is unsafe because it could dereference a raw pointer when
 /// accessing the underlying bignum structure.
-#[inline]
+#[inline(always)]
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
 }
