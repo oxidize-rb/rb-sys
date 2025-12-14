@@ -43,11 +43,22 @@
 #[macro_export]
 macro_rules! rb_gc_guard {
     ($v:expr) => {{
-        unsafe {
-            let val: $crate::VALUE = $v;
-            let rb_gc_guarded_ptr = std::ptr::read_volatile(&&val);
-            std::arch::asm!("/* {0} */", in(reg) rb_gc_guarded_ptr);
-            *rb_gc_guarded_ptr
-        }
+        // This matches Ruby's RB_GC_GUARD implementation:
+        //
+        //   volatile VALUE *rb_gc_guarded_ptr = &(v);
+        //   __asm__("" : : "m"(rb_gc_guarded_ptr));
+        //
+        // The empty asm with "m" (memory) constraint tells the compiler:
+        // 1. The value must be in memory (not just a register)
+        // 2. The compiler cannot reorder or eliminate this memory access
+        //
+        // In Rust, we achieve this by:
+        // 1. Taking a reference to force stack allocation
+        // 2. Using read_volatile to prevent optimization
+        let rb_gc_guarded_ptr: *const $crate::VALUE = &$v;
+        // SAFETY: rb_gc_guarded_ptr points to a valid, aligned VALUE on the
+        // stack (created on the line above). The read is volatile to ensure
+        // the compiler keeps the VALUE visible for conservative GC scanning.
+        unsafe { std::ptr::read_volatile(rb_gc_guarded_ptr) }
     }};
 }

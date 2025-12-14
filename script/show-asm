@@ -70,11 +70,74 @@ FUNCTIONS = {
   "rtypeddata_p" => {unsafe: true, ret: "bool", expr: "api.rtypeddata_p(v)"},
   "rtypeddata_embedded_p" => {unsafe: true, ret: "bool", expr: "api.rtypeddata_embedded_p(v)"},
   "rtypeddata_type" => {unsafe: true, ret: "*const rb_sys::rb_data_type_t", expr: "api.rtypeddata_type(v)"},
-  "rtypeddata_get_data" => {unsafe: true, ret: "*mut c_void", expr: "api.rtypeddata_get_data(v)"}
+  "rtypeddata_get_data" => {unsafe: true, ret: "*mut c_void", expr: "api.rtypeddata_get_data(v)"},
+
+  # GC guard (macro, not StableApiDefinition method)
+  # Uses a realistic pattern: extract pointer, call function that might GC, use guard
+  "rb_gc_guard" => {unsafe: true, ret: "VALUE", custom_body: <<~RUST}
+    // Extract raw pointer from Ruby string
+    let ptr = api.rstring_ptr(v);
+
+    // rb_str_new_cstr allocates memory and might trigger GC.
+    // Without rb_gc_guard!, the compiler sees 'v' as dead after rstring_ptr,
+    // so it might not keep it on the stack. If GC runs during this call,
+    // 'v' could be collected and 'ptr' would become a dangling pointer.
+    let new_str = rb_sys::rb_str_new_cstr(ptr);
+
+    // Guard keeps 'v' alive on the stack until this point
+    rb_sys::rb_gc_guard!(v);
+
+    // Return new_str to prevent it from being optimized away
+    new_str
+  RUST
 }.freeze
 
 # ARM64 instruction patterns to count
 INSTRUCTION_PATTERN = /^\s+(mov|ldr|str|add|sub|cmp|tst|and|orr|eor|b\.|bl|ret|cbz|cbnz|cset|ccmp|csinc|adrp|stp|ldp|ror|lsr|tbz|csel)/
+
+# C equivalents for comparison (functions that have a C macro counterpart)
+#
+# The rb_gc_guard test simulates a realistic dangerous pattern:
+#   1. Create a Ruby string
+#   2. Extract the raw C pointer (RSTRING_PTR)
+#   3. Call a function that might trigger GC (simulated by may_trigger_gc)
+#   4. Use the raw pointer after the potential GC point
+#
+# Without RB_GC_GUARD, the compiler might:
+#   - Optimize away the VALUE since it's "dead" after RSTRING_PTR
+#   - Allow GC to collect the string, leaving ptr as a dangling pointer
+#
+# With RB_GC_GUARD, the VALUE is kept alive on the stack until after
+# the guard point, ensuring the GC can see it during its conservative scan.
+C_EQUIVALENTS = {
+  "rb_gc_guard" => {
+    code: <<~C,
+      #include <ruby.h>
+
+      // Realistic pattern: extract pointer, do work that might GC, use pointer
+      // This is the pattern RB_GC_GUARD is designed to protect
+      __attribute__((noinline))
+      VALUE test_rb_gc_guard_c(VALUE str) {
+          // Extract raw pointer from Ruby string
+          const char *ptr = RSTRING_PTR(str);
+
+          // rb_str_new_cstr allocates memory and might trigger GC.
+          // Without RB_GC_GUARD, the compiler sees 'str' as dead after
+          // RSTRING_PTR, so it might not keep it on the stack. If GC runs
+          // during this call, 'str' could be collected and 'ptr' would
+          // become a dangling pointer.
+          VALUE new_str = rb_str_new_cstr(ptr);
+
+          // Guard keeps 'str' alive on the stack until this point
+          RB_GC_GUARD(str);
+
+          // Return new_str to prevent it from being optimized away
+          return new_str;
+      }
+    C
+    func_name: "test_rb_gc_guard_c"
+  }
+}.freeze
 
 class ShowAsm
   def initialize(repo_root)
@@ -111,7 +174,18 @@ class ShowAsm
 
   def generate_rust_code(func_name, func_def)
     unsafe_kw = func_def[:unsafe] ? "unsafe " : ""
-    body = func_def[:unsafe] ? func_def[:expr] : "unsafe { #{func_def[:expr]} }"
+
+    # Support custom_body for complex test patterns (like rb_gc_guard)
+    body = if func_def[:custom_body]
+      func_def[:custom_body]
+    elsif func_def[:expr]
+      func_def[:unsafe] ? func_def[:expr] : "unsafe { #{func_def[:expr]} }"
+    else
+      raise "Function #{func_name} needs either :expr or :custom_body"
+    end
+
+    # For custom_body, we need to handle the return type declaration
+    ret_type = func_def[:ret] || "VALUE"
 
     <<~RUST
       #![allow(unused_unsafe)]
@@ -124,7 +198,7 @@ class ShowAsm
 
       #[inline(never)]
       #[no_mangle]
-      pub #{unsafe_kw}fn test_#{func_name}(v: VALUE) -> #{func_def[:ret]} {
+      pub #{unsafe_kw}fn test_#{func_name}(v: VALUE) -> #{ret_type} {
           let api = get_default();
           #{body}
       }
@@ -140,7 +214,9 @@ class ShowAsm
         cmd = ["rustc", src_file.path,
           "--crate-type=lib",
           "--emit=asm",
-          "-O",
+          "-C", "opt-level=3",
+          "-C", "lto=fat",
+          "-C", "codegen-units=1",
           "--extern=rb_sys=#{@target_dir.join("librb_sys.rlib")}",
           "-L=dependency=#{@deps_dir}",
           "-o", asm_file.path]
@@ -182,33 +258,47 @@ class ShowAsm
     asm.lines.count { |line| line.match?(INSTRUCTION_PATTERN) }
   end
 
-  def show_function(func_name, count_only: false)
-    func_def = FUNCTIONS[func_name]
-    abort "ERROR: Unknown function '#{func_name}'. Use --list to see available functions." unless func_def
-
-    ensure_rb_sys_built
-
-    rust_code = generate_rust_code(func_name, func_def)
-    full_asm = compile_to_asm(rust_code)
-    func_asm = extract_function(full_asm, func_name)
-
-    unless func_asm
-      abort "ERROR: Function 'test_#{func_name}' not found in assembly output"
-    end
-
-    instr_count = count_instructions(func_asm)
-
+  def display_result(func_name, func_asm, instr_count, c_result, count_only:)
     if count_only
-      printf "%-45s %8d\n", "test_#{func_name}", instr_count
+      printf "%-45s %8d\n", "test_#{func_name} (Rust)", instr_count
+      if c_result
+        printf "%-45s %8d\n", "#{c_result[:func_name]} (C)", c_result[:instr_count]
+      end
     else
       puts "=" * 80
-      puts "Function: test_#{func_name}"
+      puts "Function: test_#{func_name} (Rust)"
       puts "Instructions: #{instr_count}"
       puts "=" * 80
       puts
       puts func_asm
       puts
+
+      if c_result
+        puts "=" * 80
+        puts "Function: #{c_result[:func_name]} (C)"
+        puts "Instructions: #{c_result[:instr_count]}"
+        puts "=" * 80
+        puts
+        puts c_result[:asm]
+        puts
+      end
     end
+  end
+
+  def compile_and_extract(func_name)
+    func_def = FUNCTIONS[func_name]
+    return nil unless func_def
+
+    rust_code = generate_rust_code(func_name, func_def)
+    full_asm = compile_to_asm(rust_code)
+    func_asm = extract_function(full_asm, func_name)
+
+    return nil unless func_asm
+
+    instr_count = count_instructions(func_asm)
+    c_result = C_EQUIVALENTS.key?(func_name) ? show_c_comparison(func_name) : nil
+
+    {func_asm: func_asm, instr_count: instr_count, c_result: c_result}
   end
 
   def show_all(count_only: false)
@@ -220,42 +310,122 @@ class ShowAsm
     end
 
     FUNCTIONS.keys.sort.each do |func_name|
-      func_def = FUNCTIONS[func_name]
-      rust_code = generate_rust_code(func_name, func_def)
-      full_asm = compile_to_asm(rust_code)
-      func_asm = extract_function(full_asm, func_name)
+      result = compile_and_extract(func_name)
 
-      unless func_asm
+      unless result
         warn "WARN: Function 'test_#{func_name}' not found in assembly"
         next
       end
 
-      instr_count = count_instructions(func_asm)
-
-      if count_only
-        printf "%-45s %8d\n", "test_#{func_name}", instr_count
-      else
-        puts "=" * 80
-        puts "Function: test_#{func_name}"
-        puts "Instructions: #{instr_count}"
-        puts "=" * 80
-        puts
-        puts func_asm
-        puts
-      end
+      display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: count_only)
     end
   end
 
   def list_functions
     puts "Available functions:"
     puts
-    printf "%-25s %-8s %s\n", "Name", "Safety", "Return Type"
+    printf "%-25s %-8s %-12s %s\n", "Name", "Safety", "C Equivalent", "Return Type"
     puts "-" * 80
     FUNCTIONS.keys.sort.each do |name|
       func = FUNCTIONS[name]
       safety = func[:unsafe] ? "unsafe" : "safe"
-      printf "%-25s %-8s %s\n", name, safety, func[:ret]
+      has_c = C_EQUIVALENTS.key?(name) ? "yes" : "-"
+      printf "%-25s %-8s %-12s %s\n", name, safety, has_c, func[:ret]
     end
+  end
+
+  def ruby_config
+    @ruby_config ||= begin
+      require "rbconfig"
+      RbConfig::CONFIG
+    end
+  end
+
+  def compile_c_to_asm(c_code)
+    Tempfile.create(["show_asm", ".c"]) do |src_file|
+      src_file.write(c_code)
+      src_file.flush
+
+      Tempfile.create(["show_asm", ".s"]) do |asm_file|
+        cc = ruby_config["CC"]
+        hdrdir = ruby_config["rubyhdrdir"]
+        archhdrdir = ruby_config["rubyarchhdrdir"]
+
+        cmd = [cc, src_file.path,
+          "-S",                     # Output assembly
+          "-O3",                    # Optimize
+          "-fno-stack-protector",   # Disable stack canary for fair comparison
+          "-I#{hdrdir}",
+          "-I#{archhdrdir}",
+          "-o", asm_file.path]
+
+        _, stderr, status = Open3.capture3(*cmd)
+        unless status.success?
+          abort "ERROR: C compiler failed:\n#{stderr}"
+        end
+
+        File.read(asm_file.path)
+      end
+    end
+  end
+
+  def extract_c_function(asm, func_name)
+    lines = []
+    found = false
+
+    asm.each_line do |line|
+      # Match function label (with or without leading underscore)
+      if line.match?(/^_?#{Regexp.escape(func_name)}:/)
+        found = true
+        lines << line
+        next
+      end
+
+      if found
+        lines << line
+        break if line.include?(".cfi_endproc")
+        # Stop at next function label, but ignore local labels:
+        # - Lloh* (linker optimization hints)
+        # - LBB* (basic block labels)
+        # - Ltmp* (temporary labels)
+        # Local labels start with 'L' (clang) or '.L' (gcc)
+        next if line.match?(/^\.?L[A-Za-z]/)
+        break if lines.size > 1 && line.match?(/^_?[a-zA-Z][a-zA-Z0-9_]*:/)
+      end
+    end
+
+    found ? lines.join : nil
+  end
+
+  def show_c_comparison(func_name)
+    c_def = C_EQUIVALENTS[func_name]
+    return nil unless c_def
+
+    full_asm = compile_c_to_asm(c_def[:code])
+    func_asm = extract_c_function(full_asm, c_def[:func_name])
+
+    unless func_asm
+      warn "WARN: C function '#{c_def[:func_name]}' not found in assembly"
+      return nil
+    end
+
+    instr_count = count_instructions(func_asm)
+
+    {asm: func_asm, instr_count: instr_count, func_name: c_def[:func_name]}
+  end
+
+  def show_function(func_name, count_only: false)
+    abort "ERROR: Unknown function '#{func_name}'. Use --list to see available functions." unless FUNCTIONS.key?(func_name)
+
+    ensure_rb_sys_built
+
+    result = compile_and_extract(func_name)
+
+    unless result
+      abort "ERROR: Function 'test_#{func_name}' not found in assembly output"
+    end
+
+    display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: count_only)
   end
 end
 
@@ -271,6 +441,7 @@ def main
 
       Show assembly output for stable_api methods.
       Generates Rust code on-demand and compiles directly with rustc.
+      C equivalents are automatically shown when available.
 
     BANNER
 
@@ -295,6 +466,9 @@ def main
       puts
       puts "  # Show instruction counts for all functions"
       puts "  #{File.basename($0)} --count --all"
+      puts
+      puts "  # Show rb_gc_guard (includes C comparison automatically)"
+      puts "  #{File.basename($0)} rb_gc_guard"
       puts
       exit 0
     end

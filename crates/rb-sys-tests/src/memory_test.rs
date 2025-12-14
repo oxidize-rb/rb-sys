@@ -2,6 +2,35 @@ use rb_sys::VALUE;
 use rb_sys::{rb_gc_guard, rb_str_cat_cstr, rb_str_new_cstr, RSTRING_PTR};
 use rb_sys_test_helpers::{rstring_to_string, ruby_test};
 
+// Assembly comparison (ARM64, rb-sys vs Ruby C API):
+//
+// Rust rb_gc_guard!: 14 instructions
+// C RB_GC_GUARD:     19 instructions
+//
+// Both achieve GC safety by keeping the VALUE visible on the stack during GC's
+// conservative stack scan. The key instructions:
+//
+// Rust (read_volatile):
+//   str  x0, [sp, #8]    ; store VALUE to stack before potential GC
+//   bl   _rb_str_new_cstr ; call that may trigger GC
+//   ldr  x8, [sp, #8]    ; volatile read forces VALUE to remain on stack
+//
+// C (inline asm + volatile):
+//   str  x0, [sp, #8]    ; store VALUE to stack
+//   bl   _rb_str_new_cstr ; call that may trigger GC
+//   add  x8, sp, #8      ; compute address of guarded ptr
+//   str  x8, [sp]        ; store ptr-to-ptr (volatile)
+//   ; InlineAsm barrier  ; empty asm with "m" constraint
+//   ldr  x8, [sp]        ; load ptr-to-ptr
+//   ldr  xzr, [x8]       ; dereference to force VALUE visible
+//
+// The Rust version achieves the same effect more directly: read_volatile on a
+// stack reference prevents the compiler from eliminating the VALUE from the
+// stack, making it visible to GC's conservative scan. The C version uses an
+// extra level of indirection (ptr-to-ptr) plus inline asm barrier.
+//
+// Run `./script/show-asm rb_gc_guard` to regenerate this comparison.
+
 #[ruby_test(gc_stress)]
 fn test_rb_gc_guarded_ptr_basic() {
     unsafe {
