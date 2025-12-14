@@ -93,6 +93,13 @@ extern "C" {
 
     #[link_name = "impl_rtypeddata_get_data"]
     fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
+
+    // Symbol/ID conversion functions
+    #[link_name = "impl_id2sym"]
+    fn impl_id2sym(id: crate::ID) -> VALUE;
+
+    #[link_name = "impl_sym2id"]
+    fn impl_sym2id(obj: VALUE) -> crate::ID;
 }
 
 pub struct Definition;
@@ -253,5 +260,15 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
         impl_rtypeddata_get_data(obj)
+    }
+
+    #[inline]
+    fn id2sym(&self, id: crate::ID) -> VALUE {
+        unsafe { impl_id2sym(id) }
+    }
+
+    #[inline]
+    unsafe fn sym2id(&self, obj: VALUE) -> crate::ID {
+        impl_sym2id(obj)
     }
 }

@@ -11,7 +11,7 @@
 //!    to ensure Rust extensions don't prevent the Ruby core team from testing
 //!    changes in production.
 
-use crate::VALUE;
+use crate::{ID, VALUE};
 use std::{
     os::raw::{c_char, c_long},
     ptr::NonNull,
@@ -218,6 +218,21 @@ pub trait StableApiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid and points to an RTypedData object.
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut std::ffi::c_void;
+
+    /// Convert ID to Symbol (akin to `RB_ID2SYM`).
+    ///
+    /// Converts an internal ID to its corresponding Symbol VALUE.
+    /// This is a safe operation - just bit manipulation for static symbols.
+    fn id2sym(&self, id: ID) -> VALUE;
+
+    /// Convert Symbol to ID (akin to `RB_SYM2ID`).
+    ///
+    /// Converts a Symbol VALUE to its internal ID representation.
+    ///
+    /// # Safety
+    /// - `obj` must be a valid Symbol VALUE
+    /// - For dynamic symbols, this may access the heap
+    unsafe fn sym2id(&self, obj: VALUE) -> ID;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

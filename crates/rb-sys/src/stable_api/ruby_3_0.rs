@@ -3,7 +3,7 @@ use crate::{
     debug_ruby_assert_type,
     internal::{RArray, RString, RTypedData},
     ruby_value_type::RUBY_T_DATA,
-    value_type, VALUE,
+    value_type, ID, VALUE,
 };
 use std::{
     ffi::c_void,
@@ -328,5 +328,23 @@ impl StableApiDefinition for Definition {
         // For Ruby 3.0 and lower, simply return the data field
         let rdata = obj as *const RTypedData;
         (*rdata).data
+    }
+
+    #[inline]
+    fn id2sym(&self, id: ID) -> VALUE {
+        // Static symbol encoding: (id << RUBY_SPECIAL_SHIFT) | RUBY_SYMBOL_FLAG
+        ((id as VALUE) << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE)
+            | crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
+    }
+
+    #[inline]
+    unsafe fn sym2id(&self, obj: VALUE) -> ID {
+        if self.static_sym_p(obj) {
+            // Static symbol: extract ID from tagged pointer
+            (obj >> crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE) as ID
+        } else {
+            // Dynamic symbol: call rb_sym2id
+            crate::rb_sym2id(obj)
+        }
     }
 }

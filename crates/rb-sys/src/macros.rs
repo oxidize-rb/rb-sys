@@ -369,3 +369,42 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
 }
+
+/// Convert ID to Symbol (akin to `ID2SYM` or `RB_ID2SYM`).
+///
+/// Converts an internal ID to its corresponding Symbol VALUE.
+/// This is a safe operation - just bit manipulation for static symbols.
+///
+/// @param[in]  id     An ID value.
+/// @return     The Symbol VALUE corresponding to the ID.
+#[inline(always)]
+pub fn ID2SYM(id: crate::ID) -> VALUE {
+    api().id2sym(id)
+}
+
+/// Alias for ID2SYM for compatibility with Ruby naming conventions.
+#[inline(always)]
+pub fn RB_ID2SYM(id: crate::ID) -> VALUE {
+    api().id2sym(id)
+}
+
+/// Convert Symbol to ID (akin to `SYM2ID` or `RB_SYM2ID`).
+///
+/// Converts a Symbol VALUE to its internal ID representation.
+///
+/// @param[in]  obj    A Symbol VALUE.
+/// @return     The ID corresponding to the Symbol.
+///
+/// # Safety
+/// - `obj` must be a valid Symbol VALUE
+/// - For dynamic symbols, this may access the heap
+#[inline(always)]
+pub unsafe fn SYM2ID(obj: VALUE) -> crate::ID {
+    api().sym2id(obj)
+}
+
+/// Alias for SYM2ID for compatibility with Ruby naming conventions.
+#[inline(always)]
+pub unsafe fn RB_SYM2ID(obj: VALUE) -> crate::ID {
+    api().sym2id(obj)
+}

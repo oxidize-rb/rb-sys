@@ -787,3 +787,77 @@ fn test_rtypeddata_functions_with_usage() {
         assert!(!large_embedded);
     }
 }
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_id2sym_and_sym2id_roundtrip() {
+    unsafe {
+        // Create a symbol from a string
+        let id = rb_sys::rb_intern2("test_symbol".as_ptr() as _, 12);
+
+        // Convert to symbol and back
+        let sym = rb_sys::ID2SYM(id);
+        let id2 = rb_sys::SYM2ID(sym);
+
+        assert_eq!(id, id2);
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_id2sym_creates_symbol() {
+    unsafe {
+        let id = rb_sys::rb_intern2("another_symbol".as_ptr() as _, 14);
+        let sym = rb_sys::ID2SYM(id);
+
+        // Verify it's actually a symbol by converting back
+        let id2 = rb_sys::SYM2ID(sym);
+        assert_eq!(id, id2);
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_sym2id_static_symbol() {
+    unsafe {
+        // Static symbols are small interned symbols
+        let id = rb_sys::rb_intern2("foo".as_ptr() as _, 3);
+        let sym = rb_sys::ID2SYM(id);
+
+        // Verify conversion roundtrips
+        let id2 = rb_sys::SYM2ID(sym);
+        assert_eq!(id, id2);
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_id2sym_and_sym2id_aliases() {
+    unsafe {
+        // Test the RB_ prefixed aliases
+        let id = rb_sys::rb_intern2("alias_test".as_ptr() as _, 10);
+        let sym1 = rb_sys::ID2SYM(id);
+        let sym2 = rb_sys::RB_ID2SYM(id);
+        assert_eq!(sym1, sym2);
+
+        let id1 = rb_sys::SYM2ID(sym1);
+        let id2 = rb_sys::RB_SYM2ID(sym2);
+        assert_eq!(id1, id2);
+        assert_eq!(id1, id);
+    }
+}
+
+parity_test!(
+    name: test_id2sym_parity,
+    func: id2sym,
+    data_factory: {
+        unsafe { rb_sys::rb_intern2("parity_test".as_ptr() as _, 11) }
+    }
+);
+
+parity_test!(
+    name: test_sym2id_parity,
+    func: sym2id,
+    data_factory: {
+        unsafe {
+            let id = rb_sys::rb_intern2("parity_sym".as_ptr() as _, 10);
+            rb_sys::ID2SYM(id)
+        }
+    }
+);
