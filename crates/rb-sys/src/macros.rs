@@ -112,6 +112,38 @@ pub unsafe fn RARRAY_LEN(obj: VALUE) -> c_long {
     api().rarray_len(obj.into())
 }
 
+/// Read array element at index (akin to `RARRAY_AREF`).
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer in order to
+/// access internal Ruby memory.
+///
+/// - @param[in]  obj  An object of ::RArray.
+/// - @param[in]  idx  Index within the array (must be within bounds: 0..RARRAY_LEN(obj)).
+/// - @return     The element at the given index.
+#[inline(always)]
+pub unsafe fn RARRAY_AREF(obj: VALUE, idx: isize) -> VALUE {
+    api().rarray_aref(obj.into(), idx)
+}
+
+/// Write array element at index (akin to `RARRAY_ASET`).
+///
+/// This function includes the GC write barrier for correctness.
+///
+/// ### Safety
+///
+/// This function is unsafe because it dereferences a raw pointer in order to
+/// access internal Ruby memory.
+///
+/// - @param[in]  obj  An object of ::RArray.
+/// - @param[in]  idx  Index within the array (must be within bounds: 0..RARRAY_LEN(obj)).
+/// - @param[in]  val  The value to set at the given index.
+#[inline(always)]
+pub unsafe fn RARRAY_ASET(obj: VALUE, idx: isize, val: VALUE) {
+    api().rarray_aset(obj.into(), idx, val)
+}
+
 /// Get the length of a Ruby string.
 ///
 /// ### Safety

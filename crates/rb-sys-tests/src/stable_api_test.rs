@@ -197,6 +197,148 @@ parity_test!(
     }
 );
 
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aref_basic() {
+    let ary = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("hello\0".as_ptr() as *const i8));
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("world\0".as_ptr() as *const i8));
+    }
+    let idx = 0;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aref_second_element() {
+    let ary = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("hello\0".as_ptr() as *const i8));
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("world\0".as_ptr() as *const i8));
+    }
+    let idx = 1;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aref_evaled() {
+    let ary = ruby_eval!("[1, 2, 3]");
+    let idx = 1;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aset_basic() {
+    let ary = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary, rb_sys::Qnil as rb_sys::VALUE);
+    }
+    let val = unsafe { rb_sys::rb_str_new_cstr("test\0".as_ptr() as *const i8) };
+    let idx = 0;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    unsafe { stable_api::get_default().rarray_aset(ary, idx, val) };
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+
+    // Reset for C test
+    let ary2 = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary2, rb_sys::Qnil as rb_sys::VALUE);
+    }
+    unsafe { stable_api::get_compiled().rarray_aset(ary2, idx, val) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary2, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aset_replace() {
+    let ary = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("old\0".as_ptr() as *const i8));
+        rb_sys::rb_ary_push(ary, rb_sys::rb_str_new_cstr("value\0".as_ptr() as *const i8));
+    }
+    let val = unsafe { rb_sys::rb_str_new_cstr("new\0".as_ptr() as *const i8) };
+    let idx = 0;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    unsafe { stable_api::get_default().rarray_aset(ary, idx, val) };
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+
+    // Reset for C test
+    let ary2 = unsafe { rb_sys::rb_ary_new_capa(3) };
+    unsafe {
+        rb_sys::rb_ary_push(ary2, rb_sys::rb_str_new_cstr("old\0".as_ptr() as *const i8));
+        rb_sys::rb_ary_push(ary2, rb_sys::rb_str_new_cstr("value\0".as_ptr() as *const i8));
+    }
+    unsafe { stable_api::get_compiled().rarray_aset(ary2, idx, val) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary2, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rarray_aset_evaled() {
+    let ary = ruby_eval!("[1, 2, 3]");
+    let val = ruby_eval!("42");
+    let idx = 1;
+
+    assert_ne!(stable_api::get_default().version(), (0, 0));
+
+    unsafe { stable_api::get_default().rarray_aset(ary, idx, val) };
+    let rust_result = unsafe { stable_api::get_default().rarray_aref(ary, idx) };
+
+    // Reset for C test
+    let ary2 = ruby_eval!("[1, 2, 3]");
+    unsafe { stable_api::get_compiled().rarray_aset(ary2, idx, val) };
+    let compiled_c_result = unsafe { stable_api::get_compiled().rarray_aref(ary2, idx) };
+
+    assert_eq!(
+        compiled_c_result, rust_result,
+        "compiled_c was {:?}, rust was {:?}",
+        compiled_c_result, rust_result
+    );
+}
+
 parity_test!(
     name: test_rbasic_class_of_array,
     func: rbasic_class,

@@ -21,6 +21,12 @@ extern "C" {
     #[link_name = "impl_rarray_const_ptr"]
     fn impl_rarray_const_ptr(ary: VALUE) -> *const VALUE;
 
+    #[link_name = "impl_rarray_aref"]
+    fn impl_rarray_aref(ary: VALUE, idx: c_long) -> VALUE;
+
+    #[link_name = "impl_rarray_aset"]
+    fn impl_rarray_aset(ary: VALUE, idx: c_long, val: VALUE);
+
     #[link_name = "impl_rbasic_class"]
     fn impl_rbasic_class(obj: VALUE) -> VALUE;
 
@@ -125,6 +131,16 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE {
         impl_rarray_const_ptr(obj)
+    }
+
+    #[inline]
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
+        impl_rarray_aref(obj, idx as c_long)
+    }
+
+    #[inline]
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
+        impl_rarray_aset(obj, idx as c_long, val)
     }
 
     #[inline]

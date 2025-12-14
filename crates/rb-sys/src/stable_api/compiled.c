@@ -42,6 +42,18 @@ impl_rarray_const_ptr(VALUE obj)
 }
 
 VALUE
+impl_rarray_aref(VALUE obj, long idx)
+{
+  return RARRAY_AREF(obj, idx);
+}
+
+void
+impl_rarray_aset(VALUE obj, long idx, VALUE val)
+{
+  RARRAY_ASET(obj, idx, val);
+}
+
+VALUE
 impl_rbasic_class(VALUE obj)
 {
   return RBASIC_CLASS(obj);
