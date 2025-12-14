@@ -68,24 +68,33 @@ pub fn with_gc_stress<R, F>(f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    unsafe {
-        let stress_intern = rb_intern("stress\0".as_ptr() as _);
-        let stress_eq_intern = rb_intern("stress=\0".as_ptr() as _);
-        let gc_module = rb_sys::rb_const_get(rb_sys::rb_cObject, rb_intern("GC\0".as_ptr() as _));
+    let _guard = GcStressGuard::new();
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
 
-        let old_gc_stress = rb_sys::rb_funcall(gc_module, stress_intern, 0);
-        rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, rb_sys::Qtrue);
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
-        rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, old_gc_stress);
-
-        match result {
-            Ok(result) => result,
-            Err(err) => std::panic::resume_unwind(err),
-        }
+    match result {
+        Ok(result) => result,
+        Err(err) => std::panic::resume_unwind(err),
     }
 }
 
+/// Type alias for panic payloads captured by `protect()`.
+type PanicPayload = Box<dyn Any + Send + 'static>;
+
+/// The result of running a closure inside `ffi_closure`. This captures both
+/// successful results and Rust panics, allowing us to propagate panics safely
+/// across FFI boundaries.
+enum ClosureResult<T> {
+    /// The closure completed successfully with a value.
+    Ok(T),
+    /// The closure panicked with this payload.
+    Panic(PanicPayload),
+}
+
 /// Catches a Ruby exception and returns it as a `Result` (using [`rb_sys::rb_protect`]).
+///
+/// This function also safely handles Rust panics that occur inside the closure.
+/// Panics are caught before they cross the FFI boundary (which would be undefined
+/// behavior) and are re-thrown after `rb_protect` returns.
 ///
 /// ### Example
 ///
