@@ -177,3 +177,44 @@ impl_rtypeddata_get_data(VALUE obj)
   return RTYPEDDATA(obj)->data;
 #endif
 }
+
+double impl_num2dbl(VALUE obj)
+{
+  return NUM2DBL(obj);
+}
+
+VALUE impl_dbl2num(double val)
+{
+  return DBL2NUM(val);
+}
+
+size_t impl_rhash_size(VALUE obj)
+{
+  return RHASH_SIZE(obj);
+}
+
+int impl_rhash_empty_p(VALUE obj)
+{
+  return RHASH_EMPTY_P(obj);
+}
+
+int impl_encoding_get(VALUE obj)
+{
+#ifdef ENCODING_GET
+  return ENCODING_GET(obj);
+#else
+  // Fallback: manually extract encoding from flags (bits 16-23)
+  // This assumes the object has encoding support (String, Symbol, Regexp)
+  const VALUE ENCODING_SHIFT = 16;
+  const VALUE ENCODING_MASK = 0xff << ENCODING_SHIFT;
+  
+  // If it's an immediate value (Fixnum, Symbol, etc.), flags are in the VALUE itself
+  if (SPECIAL_CONST_P(obj)) {
+    return 0; // Immediate values don't have encoding
+  }
+  
+  // For heap objects, access the flags from RBasic
+  struct RBasic *rbasic = (struct RBasic *)obj;
+  return (int)((rbasic->flags & ENCODING_MASK) >> ENCODING_SHIFT);
+#endif
+}

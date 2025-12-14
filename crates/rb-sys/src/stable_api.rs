@@ -218,6 +218,50 @@ pub trait StableApiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid and points to an RTypedData object.
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut std::ffi::c_void;
+
+    /// Convert Ruby numeric to C double (akin to `NUM2DBL`).
+    ///
+    /// Works for Float (including Flonum), Fixnum, and other numeric types.
+    ///
+    /// # Safety
+    /// This function is unsafe because it may dereference a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid.
+    unsafe fn num2dbl(&self, obj: VALUE) -> std::os::raw::c_double;
+
+    /// Convert C double to Ruby Float VALUE (akin to `DBL2NUM`).
+    ///
+    /// May return a Flonum (tagged pointer) for small values on 64-bit platforms,
+    /// or a heap-allocated Float object.
+    fn dbl2num(&self, val: std::os::raw::c_double) -> VALUE;
+
+    /// Get hash size (akin to `RHASH_SIZE`).
+    ///
+    /// Returns the number of entries in the hash.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to a Hash object.
+    unsafe fn rhash_size(&self, obj: VALUE) -> usize;
+
+    /// Check if hash is empty (akin to `RHASH_EMPTY_P`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to a Hash object.
+    unsafe fn rhash_empty_p(&self, obj: VALUE) -> bool;
+
+    /// Get encoding index from object (akin to `ENCODING_GET`).
+    ///
+    /// Returns the encoding index stored in the object's flags.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and points to an object with encoding (String, Regexp, Symbol).
+    unsafe fn encoding_get(&self, obj: VALUE) -> std::os::raw::c_int;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
