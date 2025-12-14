@@ -33,8 +33,6 @@
             pkgs.zsh
             pkgs.nodejs
           ];
-
-
         };
       }
     );
