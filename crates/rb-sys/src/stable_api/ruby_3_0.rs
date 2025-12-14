@@ -332,8 +332,31 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     unsafe fn num2dbl(&self, obj: VALUE) -> std::os::raw::c_double {
-        // Call the C function rb_num2dbl to handle all numeric types
-        crate::rb_num2dbl(obj)
+        if self.flonum_p(obj) {
+            // Fast path: decode Flonum directly
+            #[cfg(ruby_use_flonum = "true")]
+            {
+                if obj != 0x8000000000000002 {
+                    let b63 = obj >> 63;
+                    let adjusted = ((2 - b63) | (obj & !0x03)) as u64;
+                    let rotated = adjusted.rotate_right(3);
+                    f64::from_bits(rotated)
+                } else {
+                    0.0
+                }
+            }
+            #[cfg(not(ruby_use_flonum = "true"))]
+            {
+                crate::rb_num2dbl(obj)
+            }
+        } else if self.fixnum_p(obj) {
+            // Fast path: convert Fixnum to double
+            let long_val = (obj as c_long) >> 1;
+            long_val as std::os::raw::c_double
+        } else {
+            // Slow path: heap Float, Bignum, or other numeric types
+            crate::rb_num2dbl(obj)
+        }
     }
 
     #[inline]
