@@ -46,7 +46,75 @@ where
     global_executor().run_test(f)
 }
 
+/// A guard that enables GC stress mode and restores the previous value when dropped.
+///
+/// This is useful for testing GC-related bugs by forcing garbage collection to run
+/// more frequently. When the guard is created, it saves the current `GC.stress` value
+/// and sets it to `true`. When the guard is dropped, it restores the original value.
+///
+/// ### Example
+///
+/// ```
+/// use rb_sys_test_helpers::{GcStressGuard, with_ruby_vm};
+///
+/// with_ruby_vm(|| {
+///     // GC stress is enabled for the scope of the guard
+///     let _guard = GcStressGuard::new();
+///
+///     // Do some work that should be tested under GC stress
+///     unsafe {
+///         let _ = rb_sys::rb_utf8_str_new_cstr("test\0".as_ptr() as _);
+///     }
+///
+///     // GC stress is automatically disabled when _guard goes out of scope
+/// });
+/// ```
+pub struct GcStressGuard {
+    old_gc_stress: VALUE,
+}
+
+impl GcStressGuard {
+    /// Creates a new `GcStressGuard`, enabling GC stress mode.
+    ///
+    /// The previous value of `GC.stress` is saved and will be restored when
+    /// the guard is dropped.
+    pub fn new() -> Self {
+        unsafe {
+            let stress_intern = rb_intern("stress\0".as_ptr() as _);
+            let stress_eq_intern = rb_intern("stress=\0".as_ptr() as _);
+            let gc_module =
+                rb_sys::rb_const_get(rb_sys::rb_cObject, rb_intern("GC\0".as_ptr() as _));
+
+            let old_gc_stress = rb_sys::rb_funcall(gc_module, stress_intern, 0);
+            rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, rb_sys::Qtrue);
+
+            Self { old_gc_stress }
+        }
+    }
+}
+
+impl Default for GcStressGuard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Drop for GcStressGuard {
+    fn drop(&mut self) {
+        unsafe {
+            let stress_eq_intern = rb_intern("stress=\0".as_ptr() as _);
+            let gc_module =
+                rb_sys::rb_const_get(rb_sys::rb_cObject, rb_intern("GC\0".as_ptr() as _));
+            rb_sys::rb_funcall(gc_module, stress_eq_intern, 1, self.old_gc_stress);
+        }
+    }
+}
+
 /// Runs a test with GC stress enabled to help find GC bugs.
+///
+/// This is a convenience function that creates a [`GcStressGuard`] for the duration
+/// of the closure. If you need more control over when GC stress is enabled/disabled,
+/// use `GcStressGuard` directly.
 ///
 /// ### Example
 ///
