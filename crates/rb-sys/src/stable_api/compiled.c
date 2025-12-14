@@ -189,3 +189,57 @@ impl_sym2id(VALUE obj)
 {
   return SYM2ID(obj);
 }
+
+long
+impl_fix2long(VALUE obj)
+{
+  return FIX2LONG(obj);
+}
+
+unsigned long
+impl_fix2ulong(VALUE obj)
+{
+  return FIX2ULONG(obj);
+}
+
+VALUE
+impl_long2fix(long val)
+{
+  return LONG2FIX(val);
+}
+
+int
+impl_fixable(long val)
+{
+  return FIXABLE(val);
+}
+
+int
+impl_posfixable(unsigned long val)
+{
+  return POSFIXABLE(val);
+}
+
+long
+impl_num2long(VALUE obj)
+{
+  return NUM2LONG(obj);
+}
+
+unsigned long
+impl_num2ulong(VALUE obj)
+{
+  return NUM2ULONG(obj);
+}
+
+VALUE
+impl_long2num(long val)
+{
+  return LONG2NUM(val);
+}
+
+VALUE
+impl_ulong2num(unsigned long val)
+{
+  return ULONG2NUM(val);
+}

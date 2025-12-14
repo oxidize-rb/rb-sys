@@ -217,6 +217,62 @@ FUNCTIONS = [
     ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_GET_DATA"
   },
 
+  # Integer conversion operations
+  {
+    name: "fix2long",
+    rust: {unsafe: false, ret: "c_long", expr: "rb_sys::FIX2LONG(v)"},
+    c: {expr: "FIX2LONG(v)", ret: "long"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_FIX2LONG"
+  },
+  {
+    name: "fix2ulong",
+    rust: {unsafe: false, ret: "c_ulong", expr: "rb_sys::FIX2ULONG(v)"},
+    c: {expr: "FIX2ULONG(v)", ret: "unsigned long"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_FIX2ULONG"
+  },
+  {
+    name: "long2fix",
+    rust: {unsafe: false, ret: "VALUE", expr: "rb_sys::LONG2FIX(v as c_long)"},
+    c: {expr: "LONG2FIX((long)v)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_INT2FIX"
+  },
+  {
+    name: "fixable",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::FIXABLE(v as c_long)"},
+    c: {expr: "FIXABLE((long)v)", ret: "int"},
+    ruby_source: "include/ruby/internal/arithmetic/fixnum.h:RB_FIXABLE"
+  },
+  {
+    name: "posfixable",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::POSFIXABLE(v as c_ulong)"},
+    c: {expr: "POSFIXABLE((unsigned long)v)", ret: "int"},
+    ruby_source: "include/ruby/internal/arithmetic/fixnum.h:RB_POSFIXABLE"
+  },
+  {
+    name: "num2long",
+    rust: {unsafe: true, ret: "c_long", expr: "rb_sys::NUM2LONG(v)"},
+    c: {expr: "NUM2LONG(v)", ret: "long"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_NUM2LONG"
+  },
+  {
+    name: "num2ulong",
+    rust: {unsafe: true, ret: "c_ulong", expr: "rb_sys::NUM2ULONG(v)"},
+    c: {expr: "NUM2ULONG(v)", ret: "unsigned long"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_NUM2ULONG"
+  },
+  {
+    name: "long2num",
+    rust: {unsafe: false, ret: "VALUE", expr: "rb_sys::LONG2NUM(v as c_long)"},
+    c: {expr: "LONG2NUM((long)v)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_LONG2NUM"
+  },
+  {
+    name: "ulong2num",
+    rust: {unsafe: false, ret: "VALUE", expr: "rb_sys::ULONG2NUM(v as c_ulong)"},
+    c: {expr: "ULONG2NUM((unsigned long)v)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/arithmetic/long.h:RB_ULONG2NUM"
+  },
+
   # GC guard (macro, not StableApiDefinition method)
   # Uses a realistic pattern: extract pointer, call function that might GC, use guard
   {
@@ -326,7 +382,7 @@ class ShowAsm
 
       use rb_sys::{stable_api, StableApiDefinition, VALUE};
       use std::ffi::c_void;
-      use std::os::raw::{c_char, c_long};
+      use std::os::raw::{c_char, c_long, c_ulong};
       use std::ptr::NonNull;
 
       #[inline(never)]

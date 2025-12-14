@@ -169,30 +169,30 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline(always)]
-    unsafe fn type_p(&self, obj: VALUE, t: crate::ruby_value_type) -> bool {
+    unsafe fn type_p(&self, obj: VALUE, ty: crate::ruby_value_type) -> bool {
         use crate::ruby_special_consts::*;
         use crate::ruby_value_type::*;
 
-        if t == RUBY_T_TRUE {
-            obj == RUBY_Qtrue as _
-        } else if t == RUBY_T_FALSE {
-            obj == RUBY_Qfalse as _
-        } else if t == RUBY_T_NIL {
-            obj == RUBY_Qnil as _
-        } else if t == RUBY_T_UNDEF {
-            obj == RUBY_Qundef as _
-        } else if t == RUBY_T_FIXNUM {
-            self.fixnum_p(obj)
-        } else if t == RUBY_T_SYMBOL {
-            self.symbol_p(obj)
-        } else if t == RUBY_T_FLOAT {
-            self.float_type_p(obj)
-        } else if self.special_const_p(obj) {
-            false
+        if !self.special_const_p(obj) {
+            self.builtin_type(obj) == ty
+        } else if obj == RUBY_Qfalse as _ {
+            ty == RUBY_T_FALSE
+        } else if obj == RUBY_Qnil as _ {
+            ty == RUBY_T_NIL
+        } else if obj == RUBY_Qtrue as _ {
+            ty == RUBY_T_TRUE
+        } else if obj == RUBY_Qundef as _ {
+            ty == RUBY_T_UNDEF
+        } else if self.fixnum_p(obj) {
+            ty == RUBY_T_FIXNUM
+        } else if self.static_sym_p(obj) {
+            ty == RUBY_T_SYMBOL
+        } else if self.flonum_p(obj) {
+            ty == RUBY_T_FLOAT
         } else {
             // Optimized: For heap objects, directly compare builtin_type
-            // This eliminates the extra check in the original: else if t == self.builtin_type(obj)
-            t == self.builtin_type(obj)
+            // This eliminates the extra check in the original: else if ty == self.builtin_type(obj)
+            ty == self.builtin_type(obj)
         }
     }
 
@@ -343,6 +343,72 @@ impl StableApiDefinition for Definition {
             // For non-embedded data, return the data field directly
             let rdata = obj as *const RTypedData;
             (*rdata).data
+        }
+    }
+
+    #[inline]
+    fn fix2long(&self, obj: VALUE) -> std::os::raw::c_long {
+        // Extract the integer value by performing an arithmetic right shift by 1
+        (obj as std::os::raw::c_long) >> 1
+    }
+
+    #[inline]
+    fn fix2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
+        // For positive fixnums, cast to c_long then to c_ulong
+        ((obj as std::os::raw::c_long) >> 1) as std::os::raw::c_ulong
+    }
+
+    #[inline]
+    fn long2fix(&self, val: std::os::raw::c_long) -> VALUE {
+        // Left shift by 1 and OR with FIXNUM_FLAG
+        (((val as VALUE) << 1) | crate::FIXNUM_FLAG as VALUE) as VALUE
+    }
+
+    #[inline]
+    fn fixable(&self, val: std::os::raw::c_long) -> bool {
+        // Check if value is within Fixnum range
+        val >= crate::special_consts::FIXNUM_MIN && val <= crate::special_consts::FIXNUM_MAX
+    }
+
+    #[inline]
+    fn posfixable(&self, val: std::os::raw::c_ulong) -> bool {
+        // Check if unsigned value fits in positive fixnum
+        val <= crate::special_consts::FIXNUM_MAX as std::os::raw::c_ulong
+    }
+
+    #[inline]
+    unsafe fn num2long(&self, obj: VALUE) -> std::os::raw::c_long {
+        if self.fixnum_p(obj) {
+            self.fix2long(obj)
+        } else {
+            crate::rb_num2long(obj)
+        }
+    }
+
+    #[inline]
+    unsafe fn num2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
+        if self.fixnum_p(obj) {
+            self.fix2ulong(obj)
+        } else {
+            crate::rb_num2ulong(obj)
+        }
+    }
+
+    #[inline]
+    fn long2num(&self, val: std::os::raw::c_long) -> VALUE {
+        if self.fixable(val) {
+            self.long2fix(val)
+        } else {
+            unsafe { crate::rb_int2big(val as isize) }
+        }
+    }
+
+    #[inline]
+    fn ulong2num(&self, val: std::os::raw::c_ulong) -> VALUE {
+        if self.posfixable(val) {
+            self.long2fix(val as std::os::raw::c_long)
+        } else {
+            unsafe { crate::rb_uint2big(val as usize) }
         }
     }
 
