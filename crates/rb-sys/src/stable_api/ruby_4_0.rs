@@ -110,10 +110,8 @@ impl StableApiDefinition for Definition {
 
     #[inline(always)]
     fn special_const_p(&self, value: VALUE) -> bool {
-        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
-        let test = (value & !(crate::Qnil as VALUE)) != 0;
-
-        is_immediate || !test
+        // Checks if immediate (low 3 bits set) OR if it's a "falsy" value (Qnil/Qfalse)
+        self.immediate_p(value) || !self.rb_test(value)
     }
 
     #[inline(always)]
