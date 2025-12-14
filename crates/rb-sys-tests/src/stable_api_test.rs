@@ -861,3 +861,398 @@ parity_test!(
         }
     }
 );
+
+// Integer conversion tests - fix2long
+parity_test!(
+    name: test_fix2long_zero,
+    func: fix2long,
+    data_factory: { ruby_eval!("0") },
+    expected: 0 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_one,
+    func: fix2long,
+    data_factory: { ruby_eval!("1") },
+    expected: 1 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_negative_one,
+    func: fix2long,
+    data_factory: { ruby_eval!("-1") },
+    expected: -1 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_positive_small,
+    func: fix2long,
+    data_factory: { ruby_eval!("42") },
+    expected: 42 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_negative_small,
+    func: fix2long,
+    data_factory: { ruby_eval!("-123") },
+    expected: -123 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_large_positive,
+    func: fix2long,
+    data_factory: { ruby_eval!("1073741823") },  // 2^30 - 1
+    expected: 1073741823 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_fix2long_large_negative,
+    func: fix2long,
+    data_factory: { ruby_eval!("-1073741824") },  // -2^30
+    expected: -1073741824 as std::os::raw::c_long
+);
+
+// 64-bit specific tests (c_long is i64 on Unix)
+#[cfg(not(windows))]
+parity_test!(
+    name: test_fix2long_max_fixnum,
+    func: fix2long,
+    data_factory: { ruby_eval!("(2 ** 62) - 1") },  // FIXNUM_MAX on 64-bit
+    expected: ((1i64 << 62) - 1) as std::os::raw::c_long
+);
+
+#[cfg(not(windows))]
+parity_test!(
+    name: test_fix2long_min_fixnum,
+    func: fix2long,
+    data_factory: { ruby_eval!("-(2 ** 62)") },  // FIXNUM_MIN on 64-bit
+    expected: (-(1i64 << 62)) as std::os::raw::c_long
+);
+
+// Windows-specific tests (c_long is i32 on Windows)
+#[cfg(windows)]
+parity_test!(
+    name: test_fix2long_max_fixnum,
+    func: fix2long,
+    data_factory: { ruby_eval!("(2 ** 30) - 1") },  // FIXNUM_MAX on 32-bit
+    expected: ((1i32 << 30) - 1) as std::os::raw::c_long
+);
+
+#[cfg(windows)]
+parity_test!(
+    name: test_fix2long_min_fixnum,
+    func: fix2long,
+    data_factory: { ruby_eval!("-(2 ** 30)") },  // FIXNUM_MIN on 32-bit
+    expected: (-(1i32 << 30)) as std::os::raw::c_long
+);
+
+// Integer conversion tests - fix2ulong
+parity_test!(
+    name: test_fix2ulong_zero,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("0") },
+    expected: 0 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_fix2ulong_one,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("1") },
+    expected: 1 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_fix2ulong_small,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("42") },
+    expected: 42 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_fix2ulong_medium,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("1000") },
+    expected: 1000 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_fix2ulong_large,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("1073741823") },  // 2^30 - 1
+    expected: 1073741823 as std::os::raw::c_ulong
+);
+
+// 64-bit specific test
+#[cfg(not(windows))]
+parity_test!(
+    name: test_fix2ulong_max_fixnum,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("(2 ** 62) - 1") },  // FIXNUM_MAX on 64-bit
+    expected: ((1u64 << 62) - 1) as std::os::raw::c_ulong
+);
+
+// Windows-specific test
+#[cfg(windows)]
+parity_test!(
+    name: test_fix2ulong_max_fixnum,
+    func: fix2ulong,
+    data_factory: { ruby_eval!("(2 ** 30) - 1") },  // FIXNUM_MAX on 32-bit
+    expected: ((1u32 << 30) - 1) as std::os::raw::c_ulong
+);
+
+// Integer conversion tests - num2long (handles both fixnum and bignum)
+parity_test!(
+    name: test_num2long_zero,
+    func: num2long,
+    data_factory: { ruby_eval!("0") },
+    expected: 0 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_one,
+    func: num2long,
+    data_factory: { ruby_eval!("1") },
+    expected: 1 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_negative_one,
+    func: num2long,
+    data_factory: { ruby_eval!("-1") },
+    expected: -1 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_positive_small,
+    func: num2long,
+    data_factory: { ruby_eval!("999") },
+    expected: 999 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_negative_small,
+    func: num2long,
+    data_factory: { ruby_eval!("-999") },
+    expected: -999 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_large_positive,
+    func: num2long,
+    data_factory: { ruby_eval!("2147483647") },  // 2^31 - 1 (i32 max)
+    expected: 2147483647 as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_large_negative,
+    func: num2long,
+    data_factory: { ruby_eval!("-2147483648") },  // -2^31 (i32 min)
+    expected: -2147483648 as std::os::raw::c_long
+);
+
+// Integer conversion tests - num2ulong
+parity_test!(
+    name: test_num2ulong_zero,
+    func: num2ulong,
+    data_factory: { ruby_eval!("0") },
+    expected: 0 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_one,
+    func: num2ulong,
+    data_factory: { ruby_eval!("1") },
+    expected: 1 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_small,
+    func: num2ulong,
+    data_factory: { ruby_eval!("888") },
+    expected: 888 as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_large,
+    func: num2ulong,
+    data_factory: { ruby_eval!("4294967295") },  // 2^32 - 1 (u32 max)
+    expected: 4294967295 as std::os::raw::c_ulong
+);
+
+// long2num/ulong2num parity tests
+// These functions take a primitive and return VALUE, so we need a different pattern
+macro_rules! parity_test_long2num {
+    (name: $name:ident, value: $value:expr) => {
+        #[rb_sys_test_helpers::ruby_test]
+        fn $name() {
+            use rb_sys::stable_api;
+            let val: std::os::raw::c_long = $value;
+
+            let rust_result = stable_api::get_default().long2num(val);
+            let compiled_c_result = stable_api::get_compiled().long2num(val);
+
+            // Compare by converting back to long
+            let rust_roundtrip = unsafe { stable_api::get_default().num2long(rust_result) };
+            let compiled_roundtrip =
+                unsafe { stable_api::get_compiled().num2long(compiled_c_result) };
+
+            assert_eq!(
+                rust_roundtrip, compiled_roundtrip,
+                "long2num parity failed for {}: rust={}, compiled={}",
+                val, rust_roundtrip, compiled_roundtrip
+            );
+            assert_eq!(rust_roundtrip, val, "roundtrip failed for {}", val);
+        }
+    };
+}
+
+macro_rules! parity_test_ulong2num {
+    (name: $name:ident, value: $value:expr) => {
+        #[rb_sys_test_helpers::ruby_test]
+        fn $name() {
+            use rb_sys::stable_api;
+            let val: std::os::raw::c_ulong = $value;
+
+            let rust_result = stable_api::get_default().ulong2num(val);
+            let compiled_c_result = stable_api::get_compiled().ulong2num(val);
+
+            // Compare by converting back to ulong
+            let rust_roundtrip = unsafe { stable_api::get_default().num2ulong(rust_result) };
+            let compiled_roundtrip =
+                unsafe { stable_api::get_compiled().num2ulong(compiled_c_result) };
+
+            assert_eq!(
+                rust_roundtrip, compiled_roundtrip,
+                "ulong2num parity failed for {}: rust={}, compiled={}",
+                val, rust_roundtrip, compiled_roundtrip
+            );
+            assert_eq!(rust_roundtrip, val, "roundtrip failed for {}", val);
+        }
+    };
+}
+
+// long2num parity tests
+parity_test_long2num!(name: test_long2num_zero, value: 0);
+parity_test_long2num!(name: test_long2num_one, value: 1);
+parity_test_long2num!(name: test_long2num_negative_one, value: -1);
+parity_test_long2num!(name: test_long2num_small_positive, value: 12345);
+parity_test_long2num!(name: test_long2num_small_negative, value: -12345);
+parity_test_long2num!(name: test_long2num_large_positive, value: 2147483647); // i32 max
+parity_test_long2num!(name: test_long2num_large_negative, value: -2147483648); // i32 min
+
+// 64-bit specific long2num tests
+#[cfg(not(windows))]
+parity_test_long2num!(name: test_long2num_very_large_positive, value: 4611686018427387903); // 2^62 - 1 (near FIXNUM_MAX)
+#[cfg(not(windows))]
+parity_test_long2num!(name: test_long2num_very_large_negative, value: -4611686018427387904); // -2^62 (near FIXNUM_MIN)
+
+// Windows-specific long2num tests
+#[cfg(windows)]
+parity_test_long2num!(name: test_long2num_very_large_positive, value: 1073741823); // 2^30 - 1 (near FIXNUM_MAX on 32-bit)
+#[cfg(windows)]
+parity_test_long2num!(name: test_long2num_very_large_negative, value: -1073741824); // -2^30 (near FIXNUM_MIN on 32-bit)
+
+// ulong2num parity tests
+parity_test_ulong2num!(name: test_ulong2num_zero, value: 0);
+parity_test_ulong2num!(name: test_ulong2num_one, value: 1);
+parity_test_ulong2num!(name: test_ulong2num_small, value: 54321);
+parity_test_ulong2num!(name: test_ulong2num_large, value: 4294967295); // u32 max
+
+// 64-bit specific ulong2num test
+#[cfg(not(windows))]
+parity_test_ulong2num!(name: test_ulong2num_very_large, value: 4611686018427387903); // 2^62 - 1 (near FIXNUM_MAX)
+
+// Windows-specific ulong2num test
+#[cfg(windows)]
+parity_test_ulong2num!(name: test_ulong2num_very_large, value: 1073741823); // 2^30 - 1 (near FIXNUM_MAX on 32-bit)
+
+// fixable/posfixable parity tests
+#[rb_sys_test_helpers::ruby_test]
+fn test_fixable_parity() {
+    use rb_sys::stable_api;
+    let rust_api = stable_api::get_default();
+    let compiled_api = stable_api::get_compiled();
+
+    #[cfg(not(windows))]
+    const TEST_VALUES: &[std::os::raw::c_long] = &[
+        0,
+        1,
+        -1,
+        100,
+        -100,
+        1000,
+        -1000,
+        2147483647,           // i32 max
+        -2147483648,          // i32 min
+        4611686018427387903,  // 2^62 - 1 (FIXNUM_MAX on 64-bit)
+        -4611686018427387904, // -2^62 (FIXNUM_MIN on 64-bit)
+        4611686018427387904,  // 2^62 (just above FIXNUM_MAX, not fixable)
+        -4611686018427387905, // just below FIXNUM_MIN (not fixable)
+    ];
+
+    #[cfg(windows)]
+    const TEST_VALUES: &[std::os::raw::c_long] = &[
+        0,
+        1,
+        -1,
+        100,
+        -100,
+        1000,
+        -1000,
+        1073741823,  // 2^30 - 1 (FIXNUM_MAX on 32-bit)
+        -1073741824, // -2^30 (FIXNUM_MIN on 32-bit)
+        1073741824,  // 2^30 (just above FIXNUM_MAX, not fixable)
+        -1073741825, // just below FIXNUM_MIN (not fixable)
+        2147483647,  // i32 max (not fixable)
+        -2147483648, // i32 min (not fixable)
+    ];
+
+    for &val in TEST_VALUES {
+        let rust_result = rust_api.fixable(val);
+        let compiled_result = compiled_api.fixable(val);
+        assert_eq!(
+            rust_result, compiled_result,
+            "fixable parity failed for {}: rust={}, compiled={}",
+            val, rust_result, compiled_result
+        );
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_posfixable_parity() {
+    use rb_sys::stable_api;
+    let rust_api = stable_api::get_default();
+    let compiled_api = stable_api::get_compiled();
+
+    #[cfg(not(windows))]
+    const TEST_VALUES: &[std::os::raw::c_ulong] = &[
+        0,
+        1,
+        100,
+        1000,
+        2147483647,           // i32 max
+        4294967295,           // u32 max
+        4611686018427387903,  // 2^62 - 1 (FIXNUM_MAX on 64-bit)
+        4611686018427387904,  // 2^62 (just above FIXNUM_MAX)
+        9223372036854775807,  // i64 max as u64
+        18446744073709551615, // u64 max
+    ];
+
+    #[cfg(windows)]
+    const TEST_VALUES: &[std::os::raw::c_ulong] = &[
+        0, 1, 100, 1000, 1073741823, // 2^30 - 1 (FIXNUM_MAX on 32-bit)
+        1073741824, // 2^30 (just above FIXNUM_MAX)
+        2147483647, // i32 max
+        4294967295, // u32 max
+    ];
+
+    for &val in TEST_VALUES {
+        let rust_result = rust_api.posfixable(val);
+        let compiled_result = compiled_api.posfixable(val);
+        assert_eq!(
+            rust_result, compiled_result,
+            "posfixable parity failed for {}: rust={}, compiled={}",
+            val, rust_result, compiled_result
+        );
+    }
+}

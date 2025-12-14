@@ -100,6 +100,34 @@ extern "C" {
 
     #[link_name = "impl_sym2id"]
     fn impl_sym2id(obj: VALUE) -> crate::ID;
+
+    // Integer conversion functions
+    #[link_name = "impl_fix2long"]
+    fn impl_fix2long(obj: VALUE) -> c_long;
+
+    #[link_name = "impl_fix2ulong"]
+    fn impl_fix2ulong(obj: VALUE) -> std::os::raw::c_ulong;
+
+    #[link_name = "impl_long2fix"]
+    fn impl_long2fix(val: c_long) -> VALUE;
+
+    #[link_name = "impl_fixable"]
+    fn impl_fixable(val: c_long) -> std::os::raw::c_int;
+
+    #[link_name = "impl_posfixable"]
+    fn impl_posfixable(val: std::os::raw::c_ulong) -> std::os::raw::c_int;
+
+    #[link_name = "impl_num2long"]
+    fn impl_num2long(obj: VALUE) -> c_long;
+
+    #[link_name = "impl_num2ulong"]
+    fn impl_num2ulong(obj: VALUE) -> std::os::raw::c_ulong;
+
+    #[link_name = "impl_long2num"]
+    fn impl_long2num(val: c_long) -> VALUE;
+
+    #[link_name = "impl_ulong2num"]
+    fn impl_ulong2num(val: std::os::raw::c_ulong) -> VALUE;
 }
 
 pub struct Definition;
@@ -270,5 +298,50 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn sym2id(&self, obj: VALUE) -> crate::ID {
         impl_sym2id(obj)
+    }
+
+    #[inline]
+    fn fix2long(&self, obj: VALUE) -> c_long {
+        unsafe { impl_fix2long(obj) }
+    }
+
+    #[inline]
+    fn fix2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
+        unsafe { impl_fix2ulong(obj) }
+    }
+
+    #[inline]
+    fn long2fix(&self, val: c_long) -> VALUE {
+        unsafe { impl_long2fix(val) }
+    }
+
+    #[inline]
+    fn fixable(&self, val: c_long) -> bool {
+        unsafe { impl_fixable(val) != 0 }
+    }
+
+    #[inline]
+    fn posfixable(&self, val: std::os::raw::c_ulong) -> bool {
+        unsafe { impl_posfixable(val) != 0 }
+    }
+
+    #[inline]
+    unsafe fn num2long(&self, obj: VALUE) -> c_long {
+        impl_num2long(obj)
+    }
+
+    #[inline]
+    unsafe fn num2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
+        impl_num2ulong(obj)
+    }
+
+    #[inline]
+    fn long2num(&self, val: c_long) -> VALUE {
+        unsafe { impl_long2num(val) }
+    }
+
+    #[inline]
+    fn ulong2num(&self, val: std::os::raw::c_ulong) -> VALUE {
+        unsafe { impl_ulong2num(val) }
     }
 }

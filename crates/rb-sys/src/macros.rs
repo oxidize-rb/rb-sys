@@ -408,3 +408,101 @@ pub unsafe fn SYM2ID(obj: VALUE) -> crate::ID {
 pub unsafe fn RB_SYM2ID(obj: VALUE) -> crate::ID {
     api().sym2id(obj)
 }
+
+/// Convert Fixnum to long (akin to `FIX2LONG`).
+///
+/// Extracts the integer value from a Fixnum VALUE by performing an arithmetic right shift.
+///
+/// # Safety
+/// - `obj` must be a valid Fixnum VALUE (checked with FIXNUM_P)
+/// - Behavior is undefined if called on non-Fixnum values
+#[inline(always)]
+pub unsafe fn FIX2LONG(obj: VALUE) -> std::os::raw::c_long {
+    api().fix2long(obj)
+}
+
+/// Convert Fixnum to unsigned long (akin to `FIX2ULONG`).
+///
+/// Extracts the unsigned integer value from a Fixnum VALUE.
+///
+/// # Safety
+/// - `obj` must be a valid positive Fixnum VALUE
+/// - Behavior is undefined for negative fixnums
+#[inline(always)]
+pub unsafe fn FIX2ULONG(obj: VALUE) -> std::os::raw::c_ulong {
+    api().fix2ulong(obj)
+}
+
+/// Convert long to Fixnum (akin to `LONG2FIX`).
+///
+/// Creates a Fixnum VALUE from a long integer.
+///
+/// # Safety
+/// - `val` must be within the valid Fixnum range (use FIXABLE to check)
+/// - Behavior is undefined if value is out of range
+#[inline(always)]
+pub unsafe fn LONG2FIX(val: std::os::raw::c_long) -> VALUE {
+    api().long2fix(val)
+}
+
+/// Check if long value can be represented as Fixnum (akin to `FIXABLE`).
+///
+/// Returns true if the value fits within the Fixnum range.
+#[inline(always)]
+pub fn FIXABLE(val: std::os::raw::c_long) -> bool {
+    api().fixable(val)
+}
+
+/// Check if unsigned long value can be represented as positive Fixnum (akin to `POSFIXABLE`).
+///
+/// Returns true if the unsigned value fits within the positive Fixnum range.
+#[inline(always)]
+pub fn POSFIXABLE(val: std::os::raw::c_ulong) -> bool {
+    api().posfixable(val)
+}
+
+/// Convert Ruby Integer to long (akin to `NUM2LONG`).
+///
+/// Converts any Ruby Integer (Fixnum or Bignum) to a C long.
+/// May raise a RangeError exception if the value is out of range.
+///
+/// # Safety
+/// - `obj` must be a valid Integer VALUE
+/// - May call into Ruby runtime and potentially raise exceptions
+/// - May trigger garbage collection
+#[inline(always)]
+pub unsafe fn NUM2LONG(obj: VALUE) -> std::os::raw::c_long {
+    api().num2long(obj)
+}
+
+/// Convert Ruby Integer to unsigned long (akin to `NUM2ULONG`).
+///
+/// Converts any Ruby Integer (Fixnum or Bignum) to a C unsigned long.
+/// May raise a RangeError exception if the value is out of range or negative.
+///
+/// # Safety
+/// - `obj` must be a valid Integer VALUE
+/// - May call into Ruby runtime and potentially raise exceptions
+/// - May trigger garbage collection
+#[inline(always)]
+pub unsafe fn NUM2ULONG(obj: VALUE) -> std::os::raw::c_ulong {
+    api().num2ulong(obj)
+}
+
+/// Convert long to Ruby Integer (akin to `LONG2NUM`).
+///
+/// Creates a Ruby Integer (Fixnum or Bignum) from a C long.
+/// Uses Fixnum if possible, otherwise allocates a Bignum.
+#[inline(always)]
+pub fn LONG2NUM(val: std::os::raw::c_long) -> VALUE {
+    api().long2num(val)
+}
+
+/// Convert unsigned long to Ruby Integer (akin to `ULONG2NUM`).
+///
+/// Creates a Ruby Integer (Fixnum or Bignum) from a C unsigned long.
+/// Uses Fixnum if possible, otherwise allocates a Bignum.
+#[inline(always)]
+pub fn ULONG2NUM(val: std::os::raw::c_ulong) -> VALUE {
+    api().ulong2num(val)
+}
