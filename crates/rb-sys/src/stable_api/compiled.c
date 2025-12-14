@@ -177,3 +177,15 @@ impl_rtypeddata_get_data(VALUE obj)
   return RTYPEDDATA(obj)->data;
 #endif
 }
+
+VALUE
+impl_rb_obj_write(VALUE old, VALUE *slot, VALUE young)
+{
+  return rb_obj_write(old, slot, young, __FILE__, __LINE__);
+}
+
+VALUE
+impl_rb_obj_written(VALUE old, VALUE oldv, VALUE young)
+{
+  return rb_obj_written(old, oldv, young, __FILE__, __LINE__);
+}

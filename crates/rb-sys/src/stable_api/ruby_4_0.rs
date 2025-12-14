@@ -15,6 +15,11 @@ use std::{
 #[cfg(not(ruby_eq_4_0))]
 compile_error!("This file should only be included in Ruby 4.0 builds");
 
+extern "C" {
+    fn rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+    fn rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+}
+
 pub struct Definition;
 
 impl StableApiDefinition for Definition {
@@ -344,5 +349,17 @@ impl StableApiDefinition for Definition {
             let rdata = obj as *const RTypedData;
             (*rdata).data
         }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        // The write barrier informs the GC about cross-generational references
+        // This prevents premature collection of young objects referenced by old objects
+        rb_obj_write(old, slot, young, core::ptr::null(), 0)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+        rb_obj_written(old, oldv, young, core::ptr::null(), 0)
     }
 }

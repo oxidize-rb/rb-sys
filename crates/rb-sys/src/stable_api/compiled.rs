@@ -93,6 +93,12 @@ extern "C" {
 
     #[link_name = "impl_rtypeddata_get_data"]
     fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
+
+    #[link_name = "impl_rb_obj_write"]
+    fn impl_rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE;
+
+    #[link_name = "impl_rb_obj_written"]
+    fn impl_rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE;
 }
 
 pub struct Definition;
@@ -253,5 +259,15 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
         impl_rtypeddata_get_data(obj)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_write(old, slot, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_written(old, oldv, young)
     }
 }
