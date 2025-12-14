@@ -369,3 +369,75 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
 }
+
+/// Convert Ruby numeric to C double (akin to `NUM2DBL`).
+///
+/// Works for Float (including Flonum), Fixnum, and other numeric types.
+///
+/// @param[in]  obj    A Ruby numeric object.
+/// @return     C double representation.
+///
+/// # Safety
+/// This function is unsafe because it may dereference a raw pointer to access
+/// underlying Ruby data. The caller must ensure the VALUE is a valid Ruby numeric.
+#[inline(always)]
+pub unsafe fn NUM2DBL(obj: VALUE) -> std::os::raw::c_double {
+    api().num2dbl(obj)
+}
+
+/// Convert C double to Ruby Float VALUE (akin to `DBL2NUM`).
+///
+/// May return a Flonum (tagged pointer) for small values on 64-bit platforms,
+/// or a heap-allocated Float object.
+///
+/// @param[in]  val    A C double value.
+/// @return     A Ruby Float VALUE.
+#[inline(always)]
+pub fn DBL2NUM(val: std::os::raw::c_double) -> VALUE {
+    api().dbl2num(val)
+}
+
+/// Get hash size (akin to `RHASH_SIZE`).
+///
+/// Returns the number of entries in the hash.
+///
+/// @param[in]  obj    A Ruby Hash object.
+/// @return     Number of entries.
+///
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer to access
+/// underlying Ruby data. The caller must ensure the VALUE is a valid Hash.
+#[inline(always)]
+pub unsafe fn RHASH_SIZE(obj: VALUE) -> usize {
+    api().rhash_size(obj)
+}
+
+/// Check if hash is empty (akin to `RHASH_EMPTY_P`).
+///
+/// @param[in]  obj    A Ruby Hash object.
+/// @retval     true   The hash has no entries.
+/// @retval     false  The hash has at least one entry.
+///
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer to access
+/// underlying Ruby data. The caller must ensure the VALUE is a valid Hash.
+#[inline(always)]
+pub unsafe fn RHASH_EMPTY_P(obj: VALUE) -> bool {
+    api().rhash_empty_p(obj)
+}
+
+/// Get encoding index from object (akin to `ENCODING_GET`).
+///
+/// Returns the encoding index stored in the object's flags.
+///
+/// @param[in]  obj    A Ruby object with encoding (String, Regexp, Symbol).
+/// @return     Encoding index.
+///
+/// # Safety
+/// This function is unsafe because it dereferences a raw pointer to access
+/// the RBasic flags. The caller must ensure the VALUE is a valid object
+/// with encoding support.
+#[inline(always)]
+pub unsafe fn ENCODING_GET(obj: VALUE) -> std::os::raw::c_int {
+    api().encoding_get(obj)
+}

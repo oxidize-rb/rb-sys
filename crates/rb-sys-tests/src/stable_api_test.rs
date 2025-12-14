@@ -787,3 +787,92 @@ fn test_rtypeddata_functions_with_usage() {
         assert!(!large_embedded);
     }
 }
+
+// Tests for complex methods: float, hash, encoding
+
+parity_test!(
+    name: test_num2dbl_float,
+    func: num2dbl,
+    data_factory: {
+        rb_sys::DBL2NUM(3.14159)
+    }
+);
+
+parity_test!(
+    name: test_num2dbl_fixnum,
+    func: num2dbl,
+    data_factory: {
+        ruby_eval!("42")
+    }
+);
+
+parity_test!(
+    name: test_num2dbl_negative_fixnum,
+    func: num2dbl,
+    data_factory: {
+        ruby_eval!("-100")
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_and_num2dbl_roundtrip() {
+    unsafe {
+        let original = 2.71828;
+        let float_obj = rb_sys::DBL2NUM(original);
+        let recovered = stable_api::get_default().num2dbl(float_obj);
+
+        assert!((original - recovered).abs() < 0.00001);
+    }
+}
+
+parity_test!(
+    name: test_rhash_size_empty,
+    func: rhash_size,
+    data_factory: {
+        ruby_eval!("{}")
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rhash_size_with_elements() {
+    unsafe {
+        let h = ruby_eval!("{1 => 10, 2 => 20}");
+
+        let size = stable_api::get_default().rhash_size(h);
+        assert_eq!(size, 2);
+    }
+}
+
+parity_test!(
+    name: test_rhash_empty_p_empty,
+    func: rhash_empty_p,
+    data_factory: {
+        ruby_eval!("{}")
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rhash_empty_p_with_elements() {
+    unsafe {
+        let h = ruby_eval!("{1 => 10}");
+
+        let is_empty = stable_api::get_default().rhash_empty_p(h);
+        assert!(!is_empty);
+    }
+}
+
+parity_test!(
+    name: test_encoding_get_utf8_string,
+    func: encoding_get,
+    data_factory: {
+        gen_rstring!("hello world")
+    }
+);
+
+parity_test!(
+    name: test_encoding_get_ascii_string,
+    func: encoding_get,
+    data_factory: {
+        gen_rstring!("abc")
+    }
+);

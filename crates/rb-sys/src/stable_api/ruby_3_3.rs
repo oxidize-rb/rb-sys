@@ -336,4 +336,69 @@ impl StableApiDefinition for Definition {
             (*rdata).data
         }
     }
+
+    #[inline]
+    unsafe fn num2dbl(&self, obj: VALUE) -> std::os::raw::c_double {
+        if self.flonum_p(obj) {
+            // Fast path: decode Flonum directly
+            #[cfg(ruby_use_flonum = "true")]
+            {
+                if obj != 0x8000000000000002 {
+                    let b63 = obj >> 63;
+                    let adjusted = ((2 - b63) | (obj & !0x03)) as u64;
+                    let rotated = adjusted.rotate_right(3);
+                    f64::from_bits(rotated)
+                } else {
+                    0.0
+                }
+            }
+            #[cfg(not(ruby_use_flonum = "true"))]
+            {
+                crate::rb_num2dbl(obj)
+            }
+        } else if self.fixnum_p(obj) {
+            // Fast path: convert Fixnum to double
+            let long_val = (obj as c_long) >> 1;
+            long_val as std::os::raw::c_double
+        } else {
+            // Slow path: heap Float, Bignum, or other numeric types
+            crate::rb_num2dbl(obj)
+        }
+    }
+
+    #[inline]
+    fn dbl2num(&self, val: std::os::raw::c_double) -> VALUE {
+        // Call the C function rb_float_new to create a Float VALUE
+        unsafe { crate::rb_float_new(val) }
+    }
+
+    #[inline]
+    unsafe fn rhash_size(&self, obj: VALUE) -> usize {
+        // Call rb_hash_size which returns a fixnum VALUE
+        let size_val = crate::rb_hash_size(obj);
+        // Convert fixnum to usize
+        if self.fixnum_p(size_val) {
+            // FIX2LONG: shift right by 1 to get the actual value
+            (size_val >> 1) as usize
+        } else {
+            // Fallback for large hashes (shouldn't normally happen)
+            crate::rb_num2ulong(size_val) as usize
+        }
+    }
+
+    #[inline]
+    unsafe fn rhash_empty_p(&self, obj: VALUE) -> bool {
+        self.rhash_size(obj) == 0
+    }
+
+    #[inline]
+    unsafe fn encoding_get(&self, obj: VALUE) -> std::os::raw::c_int {
+        // Encoding is stored in flags bits 16-23
+        const ENCODING_SHIFT: usize = 16;
+        const ENCODING_MASK: VALUE = 0xff << ENCODING_SHIFT;
+
+        let rbasic = obj as *const crate::RBasic;
+        let flags = (*rbasic).flags;
+        ((flags & ENCODING_MASK) >> ENCODING_SHIFT) as std::os::raw::c_int
+    }
 }
