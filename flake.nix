@@ -34,10 +34,7 @@
             pkgs.nodejs
           ];
 
-          # Make is so nix develop --impure uses zsh config
-          shellHook = ''
-            exec zsh
-          '';
+
         };
       }
     );

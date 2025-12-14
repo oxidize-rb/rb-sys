@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+if [ -f ./tmp/env.sh ]; then
+    source ./tmp/env.sh
+fi
+
+CACHE_DIR="./tmp/nix-cache"
+mkdir -p "$CACHE_DIR"
+
+if command -v sha1sum >/dev/null 2>&1; then
+    HASHER="sha1sum"
+elif command -v shasum >/dev/null 2>&1; then
+    HASHER="shasum" # macOS
+else
+    HASHER="md5sum" # Fallback
+fi
+
+CHECKSUM=$(cat flake.nix flake.lock 2>/dev/null | $HASHER | awk '{print $1}')
+CACHE_FILE="$CACHE_DIR/$CHECKSUM.sh"
+
+if [ -f "$CACHE_FILE" ]; then
+    source "$CACHE_FILE"
+else
+    ENV_SCRIPT=$(nix print-dev-env . --option warn-dirty false 2>/dev/null)
+    if [ -z "$ENV_SCRIPT" ]; then
+        echo "Error: Failed to generate Nix environment." >&2
+        # If generation failed, runs nix develop normally to show the user the error
+        exec nix develop --command "$@"
+    fi
+    echo "$ENV_SCRIPT" > "$CACHE_FILE"
+    source "$CACHE_FILE"
+fi
+
+exec "$@"

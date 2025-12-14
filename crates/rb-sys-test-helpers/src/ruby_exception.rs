@@ -113,6 +113,20 @@ impl std::fmt::Debug for RubyException {
     }
 }
 
+impl std::fmt::Display for RubyException {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let klass = self.classname();
+
+        if let Some(message) = self.message() {
+            write!(f, "{} ({})", message, klass)
+        } else {
+            write!(f, "<no message> ({})", klass)
+        }
+    }
+}
+
+impl std::error::Error for RubyException {}
+
 #[cfg(test)]
 mod tests {
     use crate::{protect, with_ruby_vm};
