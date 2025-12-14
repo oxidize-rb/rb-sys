@@ -177,3 +177,33 @@ impl_rtypeddata_get_data(VALUE obj)
   return RTYPEDDATA(obj)->data;
 #endif
 }
+
+const char *
+impl_rstring_end(VALUE obj)
+{
+  return RSTRING_END(obj);
+}
+
+void *
+impl_rdata_ptr(VALUE obj)
+{
+  return DATA_PTR(obj);
+}
+
+void
+impl_rb_obj_freeze(VALUE obj)
+{
+  RB_OBJ_FREEZE(obj);
+}
+
+int
+impl_rb_obj_promoted(VALUE obj)
+{
+  return RB_OBJ_PROMOTED(obj);
+}
+
+int
+impl_rb_obj_promoted_raw(VALUE obj)
+{
+  return RB_OBJ_PROMOTED_RAW(obj);
+}

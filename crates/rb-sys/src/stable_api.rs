@@ -218,6 +218,46 @@ pub trait StableApiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid and points to an RTypedData object.
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut std::ffi::c_void;
+
+    /// Get pointer to end of string contents (akin to `RSTRING_END`).
+    ///
+    /// Returns a pointer to the byte after the last character of the string.
+    /// Useful for iteration and bounds checking.
+    ///
+    /// # Safety
+    /// - `obj` must be a valid Ruby String object
+    unsafe fn rstring_end(&self, obj: VALUE) -> *const c_char;
+
+    /// Get data pointer from RData/TypedData object (akin to `DATA_PTR`).
+    ///
+    /// Returns the user data pointer stored in an RData or TypedData object.
+    ///
+    /// # Safety
+    /// - `obj` must be a valid RData or TypedData object
+    unsafe fn rdata_ptr(&self, obj: VALUE) -> *mut std::ffi::c_void;
+
+    /// Freeze an object (akin to `RB_OBJ_FREEZE`).
+    ///
+    /// Sets the frozen flag on an object, preventing further modification.
+    ///
+    /// # Safety
+    /// - `obj` must be a valid heap-allocated Ruby object
+    unsafe fn rb_obj_freeze(&self, obj: VALUE);
+
+    /// Check if object is promoted to old GC generation (akin to `RB_OBJ_PROMOTED`).
+    ///
+    /// Returns true if the object has been promoted to the old generation
+    /// in Ruby's generational GC.
+    ///
+    /// # Safety
+    /// - `obj` must be a valid VALUE
+    unsafe fn rb_obj_promoted(&self, obj: VALUE) -> bool;
+
+    /// Raw version assuming FL_ABLE (akin to `RB_OBJ_PROMOTED_RAW`).
+    ///
+    /// # Safety
+    /// - `obj` must be a valid heap-allocated Ruby object (FL_ABLE must be true)
+    unsafe fn rb_obj_promoted_raw(&self, obj: VALUE) -> bool;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]
