@@ -848,7 +848,7 @@ fn test_rb_obj_freeze_basic() {
 
 #[rb_sys_test_helpers::ruby_test]
 fn test_rb_obj_freeze_array() {
-    use rb_sys::{stable_api, RB_OBJ_FREEZE, rb_ary_new};
+    use rb_sys::{rb_ary_new, stable_api, RB_OBJ_FREEZE};
 
     unsafe {
         let api = stable_api::get_default();
