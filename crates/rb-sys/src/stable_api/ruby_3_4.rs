@@ -180,10 +180,10 @@ impl StableApiDefinition for Definition {
             self.float_type_p(obj)
         } else if self.special_const_p(obj) {
             false
-        } else if t == self.builtin_type(obj) {
-            true
         } else {
-            t == self.rb_type(obj)
+            // Optimized: For heap objects, directly compare builtin_type
+            // This eliminates the extra check in the original: else if t == self.builtin_type(obj)
+            t == self.builtin_type(obj)
         }
     }
 
