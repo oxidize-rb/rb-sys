@@ -64,19 +64,24 @@ macro_rules! debug_ruby_assert_type {
 mod tests {
     use super::*;
     use rusty_fork::rusty_fork_test;
+    use std::ptr::addr_of_mut;
 
     rusty_fork_test! {
         #[test]
         fn test_is_ruby_vm_started() {
             assert!(!unsafe { is_ruby_vm_started() });
 
-            #[cfg(windows)]
-            {
-                let mut argc = 0;
-                let mut argv: [*mut std::os::raw::c_char; 0] = [];
-                let mut argv = argv.as_mut_ptr();
-                unsafe { rb_sys::rb_w32_sysinit(&mut argc, &mut argv) };
-            }
+            // Call ruby_sysinit which handles platform-specific initialization
+            // (rb_w32_sysinit on Windows) and sets up standard file descriptors
+            let mut argc = 0;
+            let mut argv: [*mut std::os::raw::c_char; 0] = [];
+            let mut argv_ptr = argv.as_mut_ptr();
+            unsafe { crate::ruby_sysinit(&mut argc, &mut argv_ptr) };
+
+            // ruby_init_stack must be called before ruby_setup, especially on
+            // Windows where it's required for proper GC stack scanning
+            let mut stack_marker: crate::VALUE = 0;
+            unsafe { crate::ruby_init_stack(addr_of_mut!(stack_marker) as *mut _) };
 
             match unsafe { crate::ruby_setup() } {
                 0 => {}

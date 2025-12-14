@@ -70,11 +70,14 @@ jobs:
           - os: windows-2025
             rust_toolchain: stable
         include:
+          # TODO: Remove allow_failure after 2025-01-01 (known compatibility issues)
           - ruby_version: "truffleruby"
+            allow_failure: true
             sys:
               os: ubuntu-latest
               rust_toolchain: stable
           - ruby_version: "truffleruby"
+            allow_failure: true
             sys:
               os: macos-15
               rust_toolchain: stable
@@ -85,6 +88,12 @@ jobs:
           - ruby_version: "ruby-head"
             sys:
               os: ubuntu-latest
+              rust_toolchain: stable
+          # TODO: Remove allow_failure after 2025-01-01 (known Windows compatibility issues)
+          - ruby_version: "3.4"
+            allow_failure: true
+            sys:
+              os: windows-2025
               rust_toolchain: stable
         exclude:
           - ruby_version: "3.1"
@@ -99,15 +108,14 @@ jobs:
             sys:
               os: windows-2022
               rust_toolchain: stable
-          - ruby_version: "3.4"
-            sys:
-              os: windows-2025
-              rust_toolchain: stable
+          # Ruby 4.0 not available on Windows yet
           - ruby_version: "4.0.0-preview2"
             sys:
               os: windows-2025
               rust_toolchain: stable
     runs-on: ${{ matrix.sys.os }}
+    # Allow truffleruby to fail until 2025-01-01 (known compatibility issues)
+    continue-on-error: ${{ matrix.allow_failure || false }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 

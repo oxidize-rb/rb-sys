@@ -14,6 +14,7 @@
 #![allow(rustdoc::invalid_html_tags)]
 #![allow(deprecated)]
 #![allow(dead_code)]
+#![allow(unpredictable_function_pointer_comparisons)]
 
 include!(env!("RB_SYS_BINDINGS_PATH"));
 

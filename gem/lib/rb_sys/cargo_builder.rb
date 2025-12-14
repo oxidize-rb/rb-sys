@@ -87,7 +87,7 @@ module RbSys
     end
 
     def cargo_dylib_path(dest_path)
-      prefix = so_ext == "dll" ? "" : "lib"
+      prefix = (so_ext == "dll") ? "" : "lib"
       path_parts = [dest_path]
       path_parts << target if target
       path_parts += [profile_target_directory, "#{prefix}#{cargo_crate_name}.#{so_ext}"]
@@ -355,7 +355,7 @@ module RbSys
       def initialize(dir)
         files = Dir.glob(File.join(dir, "**", "*")).map { |f| "- #{f}" }.join "\n"
 
-        super <<~MSG
+        super(<<~MSG)
           Dynamic library not found for Rust extension (in #{dir})
 
           Make sure you set "crate-type" in Cargo.toml to "cdylib"

@@ -2,7 +2,7 @@
 
 require "yaml"
 require "json"
-require_relative "./../gem/lib/rb_sys/version"
+require_relative "../gem/lib/rb_sys/version"
 
 TOOLCHAINS = JSON.parse(File.read("data/toolchains.json"))["toolchains"]
 DOCKERFILE_PLATFORM_PAIRS = TOOLCHAINS.select { |p| p["supported"] }.map { |p| [p["dockerfile"], p["ruby-platform"]] }

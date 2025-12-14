@@ -38,10 +38,12 @@ end
 def list_platforms
   RbSys::ToolchainInfo.supported.each do |p|
     old = logger.io
-    logger.io = $stdout
-    puts "- #{p.platform}"
-  ensure
-    logger.io = old
+    begin
+      logger.io = $stdout
+      puts "- #{p.platform}"
+    ensure
+      logger.io = old
+    end
   end
 end
 

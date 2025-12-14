@@ -338,7 +338,7 @@ module RbSys
         result << export_env(a, b) if export
         result
       else
-        "#{"\t" * indent}#{export ? "export " : ""}#{a} ?= #{b}"
+        "#{"\t" * indent}#{"export " if export}#{a} ?= #{b}"
       end
     end
 
