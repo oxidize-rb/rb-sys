@@ -198,17 +198,23 @@ impl StableApiDefinition for Definition {
 
     #[inline(always)]
     unsafe fn symbol_p(&self, obj: VALUE) -> bool {
-        self.static_sym_p(obj) || self.dynamic_sym_p(obj)
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking static_sym first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
+            self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
+        } else {
+            self.static_sym_p(obj)
+        }
     }
 
     #[inline(always)]
     unsafe fn float_type_p(&self, obj: VALUE) -> bool {
-        if self.flonum_p(obj) {
-            true
-        } else if self.special_const_p(obj) {
-            false
-        } else {
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking flonum first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
             self.builtin_type(obj) == value_type::RUBY_T_FLOAT
+        } else {
+            self.flonum_p(obj)
         }
     }
 
@@ -239,21 +245,17 @@ impl StableApiDefinition for Definition {
 
     #[inline(always)]
     unsafe fn dynamic_sym_p(&self, obj: VALUE) -> bool {
-        if self.special_const_p(obj) {
-            false
-        } else {
-            self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
-        }
+        !self.special_const_p(obj) && self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
     }
 
     #[inline(always)]
     unsafe fn integer_type_p(&self, obj: VALUE) -> bool {
-        if self.fixnum_p(obj) {
-            true
-        } else if self.special_const_p(obj) {
-            false
-        } else {
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking fixnum first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
+        } else {
+            self.fixnum_p(obj)
         }
     }
 
