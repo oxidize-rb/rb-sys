@@ -29,3 +29,16 @@
 - **rb-sys-test-helpers** (`crates/rb-sys-test-helpers/`): Test utilities including `#[ruby_test]` macro
 - **rb-sys-test-helpers-macros** (`crates/rb-sys-test-helpers-macros/`): Proc-macro impl for test helpers
 - **rb-sys-tests** (`crates/rb-sys-tests/`): Internal test suite (not published)
+
+## Performance Analysis
+
+Use `./script/show-asm` to inspect assembly output for stable API methods:
+
+```bash
+./script/show-asm symbol_p       # Show assembly for a specific function
+./script/show-asm --list         # List all available functions
+./script/show-asm --all          # Show assembly for all functions
+./script/show-asm --count --all  # Show instruction counts for all functions
+```
+
+This is useful for verifying performance optimizations and understanding codegen quality.
