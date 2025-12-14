@@ -35,10 +35,8 @@
 Use `./script/show-asm` to inspect assembly output for stable API methods:
 
 ```bash
-./script/show-asm symbol_p       # Show assembly for a specific function
-./script/show-asm --list         # List all available functions
-./script/show-asm --all          # Show assembly for all functions
-./script/show-asm --count --all  # Show instruction counts for all functions
+./script/run ./script/show-asm --list         # List all available functions
+./script/run ./script/show-asm symbol_p       # Show assembly for a specific function
 ```
 
 This is useful for verifying performance optimizations and understanding codegen quality.
