@@ -28,7 +28,7 @@ namespace :release do
 
   desc "Bump the gem version"
   task bump: "release:prepare" do
-    require_relative "./../gem/lib/rb_sys/version"
+    require_relative "../gem/lib/rb_sys/version"
     old_version = RbSys::VERSION
 
     printf "What is the new version (current: #{old_version})?: "
@@ -66,7 +66,7 @@ namespace :release do
       sh "bundle exec rake release"
     end
 
-    require_relative "./../gem/lib/rb_sys/version"
+    require_relative "../gem/lib/rb_sys/version"
 
     sh "gh", "release", "create", "v#{RbSys::VERSION}", "--generate-notes"
 
