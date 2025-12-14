@@ -1,0 +1,327 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+#
+# Show assembly output for stable_api methods
+#
+# This script generates Rust code on-demand and compiles it directly with rustc,
+# extracting the assembly for the specified function(s).
+#
+# Usage:
+#   ./script/show-asm symbol_p
+#   ./script/show-asm --list
+#   ./script/show-asm --all
+#   ./script/show-asm --count --all
+#
+
+require 'pathname'
+require 'optparse'
+require 'fileutils'
+require 'tempfile'
+require 'open3'
+
+REPO_ROOT = Pathname.new(__dir__).parent
+
+# Function definitions parsed from StableApiDefinition trait
+# Format: name => { unsafe: bool, args: "arg: Type, ...", ret: "ReturnType", expr: "expression" }
+#
+# The `expr` uses `api` to refer to `get_default()` and `v` for the VALUE argument
+FUNCTIONS = {
+  # Safe predicates (no pointer dereference)
+  'nil_p' => { unsafe: false, ret: 'bool', expr: 'api.nil_p(v)' },
+  'fixnum_p' => { unsafe: false, ret: 'bool', expr: 'api.fixnum_p(v)' },
+  'static_sym_p' => { unsafe: false, ret: 'bool', expr: 'api.static_sym_p(v)' },
+  'flonum_p' => { unsafe: false, ret: 'bool', expr: 'api.flonum_p(v)' },
+  'immediate_p' => { unsafe: false, ret: 'bool', expr: 'api.immediate_p(v)' },
+  'special_const_p' => { unsafe: false, ret: 'bool', expr: 'api.special_const_p(v)' },
+  'rb_test' => { unsafe: false, ret: 'bool', expr: 'api.rb_test(v)' },
+
+  # Unsafe predicates (may dereference pointer)
+  'symbol_p' => { unsafe: true, ret: 'bool', expr: 'api.symbol_p(v)' },
+  'dynamic_sym_p' => { unsafe: true, ret: 'bool', expr: 'api.dynamic_sym_p(v)' },
+  'float_type_p' => { unsafe: true, ret: 'bool', expr: 'api.float_type_p(v)' },
+  'integer_type_p' => { unsafe: true, ret: 'bool', expr: 'api.integer_type_p(v)' },
+
+  # type_p for heap types (all generate same asm except for type constant)
+  'type_p_heap' => { unsafe: true, ret: 'bool', expr: 'api.type_p(v, rb_sys::ruby_value_type::RUBY_T_STRING)' },
+
+  # Type inspection
+  'builtin_type' => { unsafe: true, ret: 'rb_sys::ruby_value_type', expr: 'api.builtin_type(v)' },
+  'rb_type' => { unsafe: true, ret: 'rb_sys::ruby_value_type', expr: 'api.rb_type(v)' },
+
+  # String operations
+  'rstring_len' => { unsafe: true, ret: 'c_long', expr: 'api.rstring_len(v)' },
+  'rstring_ptr' => { unsafe: true, ret: '*const c_char', expr: 'api.rstring_ptr(v)' },
+  'rstring_interned_p' => { unsafe: true, ret: 'bool', expr: 'api.rstring_interned_p(v)' },
+
+  # Array operations
+  'rarray_len' => { unsafe: true, ret: 'c_long', expr: 'api.rarray_len(v)' },
+  'rarray_const_ptr' => { unsafe: true, ret: '*const VALUE', expr: 'api.rarray_const_ptr(v)' },
+
+  # Object operations
+  'rbasic_class' => { unsafe: true, ret: 'Option<NonNull<VALUE>>', expr: 'api.rbasic_class(v)' },
+  'frozen_p' => { unsafe: true, ret: 'bool', expr: 'api.frozen_p(v)' },
+
+  # Bignum operations
+  'bignum_positive_p' => { unsafe: true, ret: 'bool', expr: 'api.bignum_positive_p(v)' },
+  'bignum_negative_p' => { unsafe: true, ret: 'bool', expr: 'api.bignum_negative_p(v)' },
+
+  # Typed data operations
+  'rtypeddata_p' => { unsafe: true, ret: 'bool', expr: 'api.rtypeddata_p(v)' },
+  'rtypeddata_embedded_p' => { unsafe: true, ret: 'bool', expr: 'api.rtypeddata_embedded_p(v)' },
+  'rtypeddata_type' => { unsafe: true, ret: '*const rb_sys::rb_data_type_t', expr: 'api.rtypeddata_type(v)' },
+  'rtypeddata_get_data' => { unsafe: true, ret: '*mut c_void', expr: 'api.rtypeddata_get_data(v)' },
+}.freeze
+
+# ARM64 instruction patterns to count
+INSTRUCTION_PATTERN = /^\s+(mov|ldr|str|add|sub|cmp|tst|and|orr|eor|b\.|bl|ret|cbz|cbnz|cset|ccmp|csinc|adrp|stp|ldp|ror|lsr|tbz|csel)/
+
+class ShowAsm
+  def initialize(repo_root)
+    @repo_root = repo_root
+    @target_dir = repo_root.join('target/release')
+    @deps_dir = @target_dir.join('deps')
+  end
+
+  def ensure_rb_sys_built
+    rlib = @target_dir.join('librb_sys.rlib')
+    return if rlib.exist?
+
+    warn "Building rb-sys (release)..."
+    Dir.chdir(@repo_root) do
+      system('./script/run', 'cargo', 'build', '-p', 'rb-sys', '--release',
+             out: $stderr, err: $stderr) or abort "ERROR: Failed to build rb-sys"
+    end
+  end
+
+  def cfg_flags
+    @cfg_flags ||= begin
+      output_files = Dir.glob(@repo_root.join('target/release/build/rb-sys-*/output'))
+      abort "ERROR: No rb-sys build output found. Run: cargo build -p rb-sys --release" if output_files.empty?
+
+      flags = []
+      output_files.each do |file|
+        File.foreach(file) do |line|
+          if line.start_with?('cargo:rustc-cfg=')
+            cfg = line.sub('cargo:rustc-cfg=', '').strip
+            flags << cfg unless cfg.empty?
+          end
+        end
+      end
+      flags.uniq
+    end
+  end
+
+  def generate_rust_code(func_name, func_def)
+    unsafe_kw = func_def[:unsafe] ? 'unsafe ' : ''
+    body = func_def[:unsafe] ? func_def[:expr] : "unsafe { #{func_def[:expr]} }"
+
+    <<~RUST
+      #![allow(unused_unsafe)]
+      extern crate rb_sys;
+
+      use rb_sys::{stable_api::get_default, StableApiDefinition, VALUE};
+      use std::ffi::c_void;
+      use std::os::raw::{c_char, c_long};
+      use std::ptr::NonNull;
+
+      #[inline(never)]
+      #[no_mangle]
+      pub #{unsafe_kw}fn test_#{func_name}(v: VALUE) -> #{func_def[:ret]} {
+          let api = get_default();
+          #{body}
+      }
+    RUST
+  end
+
+  def compile_to_asm(rust_code)
+    Tempfile.create(['show_asm', '.rs']) do |src_file|
+      src_file.write(rust_code)
+      src_file.flush
+
+      Tempfile.create(['show_asm', '.s']) do |asm_file|
+        cmd = ['rustc', src_file.path,
+               '--crate-type=lib',
+               '--emit=asm',
+               '-O',
+               "--extern=rb_sys=#{@target_dir.join('librb_sys.rlib')}",
+               "-L=dependency=#{@deps_dir}",
+               '-o', asm_file.path]
+
+        cfg_flags.each { |cfg| cmd << '--cfg' << cfg }
+
+        stdout, stderr, status = Open3.capture3(*cmd)
+        unless status.success?
+          abort "ERROR: rustc failed:\n#{stderr}"
+        end
+
+        File.read(asm_file.path)
+      end
+    end
+  end
+
+  def extract_function(asm, func_name)
+    lines = []
+    found = false
+
+    asm.each_line do |line|
+      if line.match?(/^_test_#{Regexp.escape(func_name)}:/)
+        found = true
+        lines << line
+        next
+      end
+
+      if found
+        lines << line
+        break if line.include?('.cfi_endproc')
+        break if lines.size > 1 && line.match?(/^_[a-zA-Z]/)
+      end
+    end
+
+    found ? lines.join : nil
+  end
+
+  def count_instructions(asm)
+    asm.lines.count { |line| line.match?(INSTRUCTION_PATTERN) }
+  end
+
+  def show_function(func_name, count_only: false)
+    func_def = FUNCTIONS[func_name]
+    abort "ERROR: Unknown function '#{func_name}'. Use --list to see available functions." unless func_def
+
+    ensure_rb_sys_built
+
+    rust_code = generate_rust_code(func_name, func_def)
+    full_asm = compile_to_asm(rust_code)
+    func_asm = extract_function(full_asm, func_name)
+
+    unless func_asm
+      abort "ERROR: Function 'test_#{func_name}' not found in assembly output"
+    end
+
+    instr_count = count_instructions(func_asm)
+
+    if count_only
+      printf "%-45s %8d\n", "test_#{func_name}", instr_count
+    else
+      puts "=" * 80
+      puts "Function: test_#{func_name}"
+      puts "Instructions: #{instr_count}"
+      puts "=" * 80
+      puts
+      puts func_asm
+      puts
+    end
+  end
+
+  def show_all(count_only: false)
+    ensure_rb_sys_built
+
+    if count_only
+      printf "%-45s %8s\n", "Function", "Instructions"
+      puts "-" * 80
+    end
+
+    FUNCTIONS.keys.sort.each do |func_name|
+      func_def = FUNCTIONS[func_name]
+      rust_code = generate_rust_code(func_name, func_def)
+      full_asm = compile_to_asm(rust_code)
+      func_asm = extract_function(full_asm, func_name)
+
+      unless func_asm
+        warn "WARN: Function 'test_#{func_name}' not found in assembly"
+        next
+      end
+
+      instr_count = count_instructions(func_asm)
+
+      if count_only
+        printf "%-45s %8d\n", "test_#{func_name}", instr_count
+      else
+        puts "=" * 80
+        puts "Function: test_#{func_name}"
+        puts "Instructions: #{instr_count}"
+        puts "=" * 80
+        puts
+        puts func_asm
+        puts
+      end
+    end
+  end
+
+  def list_functions
+    puts "Available functions:"
+    puts
+    printf "%-25s %-8s %s\n", "Name", "Safety", "Return Type"
+    puts "-" * 80
+    FUNCTIONS.keys.sort.each do |name|
+      func = FUNCTIONS[name]
+      safety = func[:unsafe] ? 'unsafe' : 'safe'
+      printf "%-25s %-8s %s\n", name, safety, func[:ret]
+    end
+  end
+end
+
+def main
+  options = {
+    mode: :show,
+    count_only: false
+  }
+
+  parser = OptionParser.new do |opts|
+    opts.banner = <<~BANNER
+      Usage: #{File.basename($0)} [OPTIONS] [FUNCTION]
+
+      Show assembly output for stable_api methods.
+      Generates Rust code on-demand and compiles directly with rustc.
+
+    BANNER
+
+    opts.on('--list', 'List all available functions') do
+      options[:mode] = :list
+    end
+
+    opts.on('--all', 'Show assembly for all functions') do
+      options[:mode] = :all
+    end
+
+    opts.on('--count', 'Show instruction count only') do
+      options[:count_only] = true
+    end
+
+    opts.on('-h', '--help', 'Show this help message') do
+      puts opts
+      puts
+      puts "Examples:"
+      puts "  # Show assembly for symbol_p"
+      puts "  #{File.basename($0)} symbol_p"
+      puts
+      puts "  # Show instruction counts for all functions"
+      puts "  #{File.basename($0)} --count --all"
+      puts
+      exit 0
+    end
+  end
+
+  parser.parse!
+
+  show_asm = ShowAsm.new(REPO_ROOT)
+
+  case options[:mode]
+  when :list
+    show_asm.list_functions
+  when :all
+    show_asm.show_all(count_only: options[:count_only])
+  when :show
+    if ARGV.empty?
+      warn "ERROR: Function name required"
+      puts
+      puts parser
+      exit 1
+    end
+
+    show_asm.show_function(ARGV[0], count_only: options[:count_only])
+  end
+end
+
+main if __FILE__ == $0
