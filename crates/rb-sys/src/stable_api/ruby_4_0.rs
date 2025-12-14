@@ -91,12 +91,12 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
         *self.rarray_const_ptr(obj).offset(idx)
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
         let ptr = self.rarray_const_ptr(obj).cast_mut().offset(idx);
         self.rb_obj_write(obj, ptr, val);

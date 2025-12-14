@@ -16,8 +16,20 @@ use std::{
 compile_error!("This file should only be included in Ruby 3.4 builds");
 
 extern "C" {
-    fn rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
-    fn rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+    fn rb_obj_write(
+        old: VALUE,
+        slot: *mut VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
+    fn rb_obj_written(
+        old: VALUE,
+        oldv: VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
 }
 
 pub struct Definition;
@@ -96,12 +108,12 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
         *self.rarray_const_ptr(obj).offset(idx)
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
         let ptr = self.rarray_const_ptr(obj).cast_mut().offset(idx);
         self.rb_obj_write(obj, ptr, val);
