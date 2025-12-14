@@ -320,4 +320,47 @@ impl StableApiDefinition for Definition {
         let rdata = obj as *const RTypedData;
         (*rdata).data
     }
+
+    #[inline]
+    unsafe fn rstring_end(&self, obj: VALUE) -> *const c_char {
+        assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
+
+        // RSTRING_END = RSTRING_PTR + RSTRING_LEN
+        let ptr = self.rstring_ptr(obj);
+        let len = self.rstring_len(obj);
+        ptr.add(len as usize)
+    }
+
+    #[inline]
+    unsafe fn rdata_ptr(&self, obj: VALUE) -> *mut c_void {
+        assert!(self.type_p(obj, RUBY_T_DATA));
+
+        // Access the data field of RTypedData struct
+        let rdata = obj as *const RTypedData;
+        (*rdata).data
+    }
+
+    #[inline]
+    unsafe fn rb_obj_freeze(&self, obj: VALUE) {
+        // Call rb_obj_freeze from libruby
+        crate::rb_obj_freeze(obj);
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted(&self, obj: VALUE) -> bool {
+        // Check if the object is promoted, but first check if it's special
+        if self.special_const_p(obj) {
+            false
+        } else {
+            self.rb_obj_promoted_raw(obj)
+        }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted_raw(&self, obj: VALUE) -> bool {
+        // Check RUBY_FL_PROMOTED flag in RBasic.flags
+        // In Ruby 3.0+, check for the FL_PROMOTED flag
+        let rbasic = obj as *const crate::RBasic;
+        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_PROMOTED as VALUE) != 0
+    }
 }

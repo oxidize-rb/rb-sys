@@ -787,3 +787,105 @@ fn test_rtypeddata_functions_with_usage() {
         assert!(!large_embedded);
     }
 }
+
+// Tests for new accessor methods
+
+parity_test!(
+    name: test_rstring_end_basic,
+    func: rstring_end,
+    data_factory: {
+        gen_rstring!("hello")
+    }
+);
+
+parity_test!(
+    name: test_rstring_end_empty,
+    func: rstring_end,
+    data_factory: {
+        gen_rstring!("")
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rstring_end_matches_ptr_plus_len() {
+    unsafe {
+        let s = gen_rstring!("test string");
+        let end = stable_api::get_default().rstring_end(s);
+        let ptr = stable_api::get_default().rstring_ptr(s);
+        let len = stable_api::get_default().rstring_len(s);
+        assert_eq!(end, ptr.add(len as usize));
+    }
+}
+
+parity_test!(
+    name: test_rdata_ptr_typed_data,
+    func: rdata_ptr,
+    data_factory: {
+        gen_typed_data()
+    }
+);
+
+parity_test!(
+    name: test_rdata_ptr_embedded,
+    func: rdata_ptr,
+    data_factory: {
+        gen_embedded_typed_data()
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_freeze_basic() {
+    use rb_sys::{stable_api, RB_OBJ_FREEZE};
+
+    unsafe {
+        let api = stable_api::get_default();
+        let s = gen_rstring!("freezable");
+        assert!(!api.frozen_p(s));
+        RB_OBJ_FREEZE(s);
+        assert!(api.frozen_p(s));
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_freeze_array() {
+    use rb_sys::{rb_ary_new, stable_api, RB_OBJ_FREEZE};
+
+    unsafe {
+        let api = stable_api::get_default();
+        let ary = rb_ary_new();
+        assert!(!api.frozen_p(ary));
+        RB_OBJ_FREEZE(ary);
+        assert!(api.frozen_p(ary));
+    }
+}
+
+parity_test!(
+    name: test_rb_obj_promoted_string,
+    func: rb_obj_promoted,
+    data_factory: {
+        gen_rstring!("test")
+    }
+);
+
+parity_test!(
+    name: test_rb_obj_promoted_nil,
+    func: rb_obj_promoted,
+    data_factory: {
+        rb_sys::Qnil as VALUE
+    },
+    expected: {
+        false
+    }
+);
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_promoted_consistency() {
+    use rb_sys::stable_api;
+
+    unsafe {
+        // For special constants, promoted should return false
+        assert!(!stable_api::get_default().rb_obj_promoted(rb_sys::Qnil as VALUE));
+        assert!(!stable_api::get_default().rb_obj_promoted(rb_sys::Qtrue as VALUE));
+        assert!(!stable_api::get_default().rb_obj_promoted(rb_sys::Qfalse as VALUE));
+    }
+}

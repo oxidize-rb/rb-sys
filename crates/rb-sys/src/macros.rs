@@ -369,3 +369,58 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
 }
+
+/// Get pointer to end of string contents (akin to `RSTRING_END`).
+///
+/// Returns a pointer to the byte after the last character of the string.
+/// Useful for iteration and bounds checking.
+///
+/// # Safety
+/// - `obj` must be a valid Ruby String object
+#[inline(always)]
+pub unsafe fn RSTRING_END(obj: VALUE) -> *const c_char {
+    api().rstring_end(obj)
+}
+
+/// Get data pointer from RData/TypedData object (akin to `DATA_PTR`).
+///
+/// Returns the user data pointer stored in an RData or TypedData object.
+///
+/// # Safety
+/// - `obj` must be a valid RData or TypedData object
+#[inline(always)]
+pub unsafe fn DATA_PTR(obj: VALUE) -> *mut c_void {
+    api().rdata_ptr(obj)
+}
+
+/// Freeze an object (akin to `RB_OBJ_FREEZE`).
+///
+/// Sets the frozen flag on an object, preventing further modification.
+///
+/// # Safety
+/// - `obj` must be a valid heap-allocated Ruby object
+#[inline(always)]
+pub unsafe fn RB_OBJ_FREEZE(obj: VALUE) {
+    api().rb_obj_freeze(obj)
+}
+
+/// Check if object is promoted to old GC generation (akin to `RB_OBJ_PROMOTED`).
+///
+/// Returns true if the object has been promoted to the old generation
+/// in Ruby's generational GC.
+///
+/// # Safety
+/// - `obj` must be a valid VALUE
+#[inline(always)]
+pub unsafe fn RB_OBJ_PROMOTED(obj: VALUE) -> bool {
+    api().rb_obj_promoted(obj)
+}
+
+/// Raw version assuming FL_ABLE (akin to `RB_OBJ_PROMOTED_RAW`).
+///
+/// # Safety
+/// - `obj` must be a valid heap-allocated Ruby object (FL_ABLE must be true)
+#[inline(always)]
+pub unsafe fn RB_OBJ_PROMOTED_RAW(obj: VALUE) -> bool {
+    api().rb_obj_promoted_raw(obj)
+}
