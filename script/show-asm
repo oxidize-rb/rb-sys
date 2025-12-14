@@ -84,9 +84,6 @@ class ShowAsm
   end
 
   def ensure_rb_sys_built
-    rlib = @target_dir.join('librb_sys.rlib')
-    return if rlib.exist?
-
     warn "Building rb-sys (release)..."
     Dir.chdir(@repo_root) do
       system('./script/run', 'cargo', 'build', '-p', 'rb-sys', '--release',
