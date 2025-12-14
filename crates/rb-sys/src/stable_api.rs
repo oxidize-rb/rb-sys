@@ -232,6 +232,7 @@ use compiled as api;
 #[cfg_attr(ruby_eq_3_2, path = "stable_api/ruby_3_2.rs")]
 #[cfg_attr(ruby_eq_3_3, path = "stable_api/ruby_3_3.rs")]
 #[cfg_attr(ruby_eq_3_4, path = "stable_api/ruby_3_4.rs")]
+#[cfg_attr(ruby_eq_4_0, path = "stable_api/ruby_4_0.rs")]
 mod rust;
 #[cfg(not(stable_api_export_compiled_as_api))]
 use rust as api;

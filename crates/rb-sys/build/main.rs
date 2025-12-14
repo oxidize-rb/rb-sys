@@ -13,7 +13,7 @@ use std::{
 };
 use version::Version;
 
-const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
+const SUPPORTED_RUBY_VERSIONS: [Version; 11] = [
     Version::new(2, 3),
     Version::new(2, 4),
     Version::new(2, 5),
@@ -24,6 +24,7 @@ const SUPPORTED_RUBY_VERSIONS: [Version; 10] = [
     Version::new(3, 2),
     Version::new(3, 3),
     Version::new(3, 4),
+    Version::new(4, 0),
 ];
 
 fn main() {
