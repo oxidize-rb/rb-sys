@@ -25,15 +25,19 @@ fn test_rb_gc_guarded_ptr_vec() {
         unsafe {
             let mut vec_of_values: Vec<VALUE> = Default::default();
 
-            let s1 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            // Keep the CStrings alive until after rb_str_new_cstr uses them
+            let cstr1 = std::ffi::CString::new(format!("hello world{i}")).unwrap();
+            let s1 = rb_str_new_cstr(cstr1.as_ptr());
             let s1 = rb_gc_guard!(s1);
             vec_of_values.push(s1);
 
-            let s2 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            let cstr2 = std::ffi::CString::new(format!("hello world{i}")).unwrap();
+            let s2 = rb_str_new_cstr(cstr2.as_ptr());
             let s2 = rb_gc_guard!(s2);
             vec_of_values.push(s2);
 
-            let s3 = rb_str_new_cstr(format!("hello world{i}\0").as_ptr() as _);
+            let cstr3 = std::ffi::CString::new(format!("hello world{i}")).unwrap();
+            let s3 = rb_str_new_cstr(cstr3.as_ptr());
             let s3 = rb_gc_guard!(s3);
             vec_of_values.push(s3);
 
