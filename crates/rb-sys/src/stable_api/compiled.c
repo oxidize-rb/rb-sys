@@ -262,3 +262,44 @@ int impl_fl_able(VALUE obj)
 {
   return RB_FL_ABLE(obj);
 }
+
+const char *
+impl_rstring_end(VALUE obj)
+{
+  return RSTRING_END(obj);
+}
+
+void *
+impl_rdata_ptr(VALUE obj)
+{
+  return DATA_PTR(obj);
+}
+
+void
+impl_rb_obj_freeze(VALUE obj)
+{
+  RB_OBJ_FREEZE(obj);
+}
+
+int
+impl_rb_obj_promoted(VALUE obj)
+{
+#ifdef RB_OBJ_PROMOTED
+  return RB_OBJ_PROMOTED(obj);
+#else
+  // TruffleRuby / engines without generational GC: objects are never "promoted".
+  (void)obj;
+  return 0;
+#endif
+}
+
+int
+impl_rb_obj_promoted_raw(VALUE obj)
+{
+#ifdef RB_OBJ_PROMOTED_RAW
+  return RB_OBJ_PROMOTED_RAW(obj);
+#else
+  (void)obj;
+  return 0;
+#endif
+}
