@@ -218,6 +218,12 @@ pub trait StableApiDefinition {
     /// access to underlying Ruby data. The caller must ensure that the pointer
     /// is valid and points to an RTypedData object.
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut std::ffi::c_void;
+
+    /// Check if an object can have flags (akin to `RB_FL_ABLE`).
+    ///
+    /// Returns false for immediate values (nil, true, false, Fixnum, Symbol, Flonum)
+    /// which don't have flag storage. Returns true for heap-allocated objects.
+    fn fl_able(&self, obj: VALUE) -> bool;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

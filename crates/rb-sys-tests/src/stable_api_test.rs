@@ -787,3 +787,66 @@ fn test_rtypeddata_functions_with_usage() {
         assert!(!large_embedded);
     }
 }
+
+parity_test!(
+    name: test_fl_able_string,
+    func: fl_able,
+    data_factory: {
+        gen_rstring!("test")
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_fl_able_array,
+    func: fl_able,
+    data_factory: {
+        unsafe { rb_sys::rb_ary_new() }
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_fl_able_nil,
+    func: fl_able,
+    data_factory: {
+        rb_sys::Qnil as VALUE
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_fl_able_true,
+    func: fl_able,
+    data_factory: {
+        rb_sys::Qtrue as VALUE
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_fl_able_false,
+    func: fl_able,
+    data_factory: {
+        rb_sys::Qfalse as VALUE
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_fl_able_fixnum,
+    func: fl_able,
+    data_factory: {
+        ruby_eval!("42")
+    },
+    expected: false
+);
+
+parity_test!(
+    name: test_fl_able_symbol,
+    func: fl_able,
+    data_factory: {
+        ruby_eval!(":test_symbol")
+    },
+    expected: false
+);

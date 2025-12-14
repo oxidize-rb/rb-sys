@@ -369,3 +369,16 @@ pub unsafe fn RBIGNUM_POSITIVE_P(b: VALUE) -> bool {
 pub unsafe fn RBIGNUM_NEGATIVE_P(b: VALUE) -> bool {
     api().bignum_negative_p(b)
 }
+
+/// Check if an object can have flags (akin to `RB_FL_ABLE`).
+///
+/// Returns false for immediate values (nil, true, false, Fixnum, Symbol, Flonum).
+/// Returns true for heap-allocated objects that can have flags set.
+///
+/// @param[in]  obj    An object to check.
+/// @retval     true   The object can have flags.
+/// @retval     false  The object is an immediate value.
+#[inline(always)]
+pub fn FL_ABLE(obj: VALUE) -> bool {
+    api().fl_able(obj)
+}
