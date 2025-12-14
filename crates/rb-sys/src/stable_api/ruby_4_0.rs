@@ -141,8 +141,10 @@ impl StableApiDefinition for Definition {
 
     #[inline(always)]
     fn static_sym_p(&self, obj: VALUE) -> bool {
-        let mask = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
-        (obj & mask) == crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
+        const SPECIAL_MASK: VALUE =
+            !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
+        const SYMBOL_FLAG: VALUE = crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE;
+        (obj & SPECIAL_MASK) == SYMBOL_FLAG
     }
 
     #[inline(always)]
