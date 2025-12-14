@@ -779,11 +779,11 @@ fn test_rtypeddata_functions_with_usage() {
             assert!(!data_ptr.is_null());
         }
 
-        let small_embedded = RTYPEDDATA_EMBEDDED_P(small_time);
+        let _small_embedded = RTYPEDDATA_EMBEDDED_P(small_time);
         let large_embedded = RTYPEDDATA_EMBEDDED_P(large_time);
 
         #[cfg(ruby_gte_3_3)]
-        assert!(small_embedded);
+        assert!(_small_embedded);
         assert!(!large_embedded);
     }
 }
