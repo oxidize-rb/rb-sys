@@ -346,14 +346,14 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn id2sym(&self, id: ID) -> VALUE {
         // Static symbol encoding: (id << RUBY_SPECIAL_SHIFT) | RUBY_SYMBOL_FLAG
         ((id as VALUE) << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE)
             | crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn sym2id(&self, obj: VALUE) -> ID {
         if self.static_sym_p(obj) {
             // Static symbol: extract ID from tagged pointer
