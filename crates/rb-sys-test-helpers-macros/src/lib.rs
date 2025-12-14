@@ -3,7 +3,7 @@
 
 use proc_macro::{TokenStream, TokenTree};
 use quote::quote;
-use syn::{spanned::Spanned, ItemFn};
+use syn::{spanned::Spanned, ItemFn, ReturnType};
 
 /// A proc-macro which generates a `#[test]` function has access to a valid Ruby VM.
 ///
@@ -29,6 +29,20 @@ use syn::{spanned::Spanned, ItemFn};
 /// fn test_with_stress() {
 ///    unsafe { rb_sys::rb_eval_string("puts 'GC is stressing me out.'\0".as_ptr() as _) };
 /// }
+/// ```
+///
+/// Tests can also return a `Result` to use the `?` operator:
+///
+/// ```
+/// use rb_sys_test_helpers_macros::ruby_test;
+/// use std::error::Error;
+///
+/// #[ruby_test]
+/// fn test_with_result() -> Result<(), Box<dyn Error>> {
+///    let value = some_fallible_operation()?;
+///    Ok(())
+/// }
+/// # fn some_fallible_operation() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
 /// ```
 #[proc_macro_attribute]
 pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
@@ -62,6 +76,9 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
     let vis = input.vis;
     let sig = &input.sig;
 
+    // Check if the function returns a Result type
+    let returns_result = matches!(&sig.output, ReturnType::Type(_, _));
+
     let block = if gc_stress {
         quote! {
             rb_sys_test_helpers::with_gc_stress(|| {
@@ -80,33 +97,63 @@ pub fn ruby_test(args: TokenStream, input: TokenStream) -> TokenStream {
         ret
     };
 
-    let test_fn = quote! {
-        #[test]
-        #(#attrs)*
-        #vis #sig {
-            rb_sys_test_helpers::with_ruby_vm(|| {
-                let result = rb_sys_test_helpers::protect(|| {
-                    #block
-                });
+    // Helper to generate the error logging code
+    let log_ruby_exception = quote! {
+        match std::env::var("RUST_BACKTRACE") {
+            Ok(val) if val == "1" || val == "full" => {
+                eprintln!("ruby exception:");
+                let errinfo = format!("{:#?}", err);
+                let errinfo = errinfo.replace("\n", "\n    ");
+                eprintln!("    {}", errinfo);
+            },
+            _ => (),
+        }
+    };
 
-                let ret = match result {
-                    Err(err) => {
-                        match std::env::var("RUST_BACKTRACE") {
-                            Ok(val) if val == "1" => {
-                                eprintln!("ruby exception:");
-                                let errinfo = format!("{:#?}", err);
-                                let errinfo = errinfo.replace("\n", "\n    ");
-                                eprintln!("    {}", errinfo);
-                            },
-                            _ => (),
-                        }
-                        Err(err)
-                    },
-                    Ok(v) => Ok(v),
-                };
+    // Generate different code based on whether the test returns a Result or not
+    let test_fn = if returns_result {
+        // For Result-returning tests, propagate errors properly
+        quote! {
+            #[test]
+            #(#attrs)*
+            #vis #sig {
+                rb_sys_test_helpers::with_ruby_vm(|| {
+                    let result = rb_sys_test_helpers::protect(|| {
+                        #block
+                    });
 
-                ret
-            }).expect("test execution failure").expect("ruby exception");
+                    match result {
+                        Err(err) => {
+                            #log_ruby_exception
+                            Err(err.into())
+                        },
+                        Ok(inner_result) => inner_result,
+                    }
+                }).expect("test execution failure")
+            }
+        }
+    } else {
+        // For unit-returning tests, use the original behavior
+        quote! {
+            #[test]
+            #(#attrs)*
+            #vis #sig {
+                rb_sys_test_helpers::with_ruby_vm(|| {
+                    let result = rb_sys_test_helpers::protect(|| {
+                        #block
+                    });
+
+                    let ret = match result {
+                        Err(err) => {
+                            #log_ruby_exception
+                            Err(err)
+                        },
+                        Ok(v) => Ok(v),
+                    };
+
+                    ret
+                }).expect("test execution failure").expect("ruby exception");
+            }
         }
     };
 
