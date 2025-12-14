@@ -21,35 +21,43 @@ impl StableApiDefinition for Definition {
     const VERSION_MAJOR: u32 = 3;
     const VERSION_MINOR: u32 = 4;
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rstring_len(&self, obj: VALUE) -> c_long {
-        assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
+        debug_ruby_assert_type!(
+            obj,
+            crate::ruby_value_type::RUBY_T_STRING,
+            "rstring_len called on non-T_STRING object"
+        );
 
         let rstring: &RString = &*(obj as *const RString);
         rstring.len
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rstring_ptr(&self, obj: VALUE) -> *const c_char {
-        assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
+        debug_ruby_assert_type!(
+            obj,
+            crate::ruby_value_type::RUBY_T_STRING,
+            "rstring_ptr called on non-T_STRING object"
+        );
 
         let rstring: &RString = &*(obj as *const RString);
         let flags = rstring.basic.flags;
         let is_heap = (flags & crate::ruby_rstring_flags::RSTRING_NOEMBED as VALUE) != 0;
-        let ptr = if !is_heap {
+        if !is_heap {
             std::ptr::addr_of!(rstring.as_.embed.ary) as *const _
         } else {
             rstring.as_.heap.ptr
-        };
-
-        assert!(!ptr.is_null());
-
-        ptr
+        }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_len(&self, obj: VALUE) -> c_long {
-        assert!(self.type_p(obj, value_type::RUBY_T_ARRAY));
+        debug_ruby_assert_type!(
+            obj,
+            value_type::RUBY_T_ARRAY,
+            "rarray_len called on non-T_ARRAY object"
+        );
 
         let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
@@ -65,32 +73,32 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE {
-        assert!(self.type_p(obj, value_type::RUBY_T_ARRAY));
+        debug_ruby_assert_type!(
+            obj,
+            value_type::RUBY_T_ARRAY,
+            "rarray_const_ptr called on non-T_ARRAY object"
+        );
 
         let rarray: &RArray = &*(obj as *const RArray);
         let flags = rarray.basic.flags;
         let is_embedded = (flags & crate::ruby_rarray_flags::RARRAY_EMBED_FLAG as VALUE) != 0;
-        let ptr = if is_embedded {
+        if is_embedded {
             std::ptr::addr_of!(rarray.as_.ary) as *const _
         } else {
             rarray.as_.heap.ptr
-        };
-
-        assert!(!ptr.is_null());
-
-        ptr
+        }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 
         NonNull::<VALUE>::new((*rbasic).klass as _)
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn frozen_p(&self, obj: VALUE) -> bool {
         if self.special_const_p(obj) {
             true
@@ -100,22 +108,20 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn special_const_p(&self, value: VALUE) -> bool {
-        let is_immediate = (value) & (crate::special_consts::IMMEDIATE_MASK as VALUE) != 0;
-        let test = (value & !(crate::Qnil as VALUE)) != 0;
-
-        is_immediate || !test
+        // Checks if immediate (low 3 bits set) OR if it's a "falsy" value (Qnil/Qfalse)
+        self.immediate_p(value) || !self.rb_test(value)
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn bignum_positive_p(&self, obj: VALUE) -> bool {
         let rbasic = obj as *const crate::RBasic;
 
         ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_USER1 as VALUE) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn builtin_type(&self, obj: VALUE) -> crate::ruby_value_type {
         let rbasic = obj as *const crate::RBasic;
         let ret: u32 = ((*rbasic).flags & crate::ruby_value_type::RUBY_T_MASK as VALUE) as _;
@@ -123,23 +129,24 @@ impl StableApiDefinition for Definition {
         std::mem::transmute::<_, crate::ruby_value_type>(ret)
     }
 
-    #[inline]
+    #[inline(always)]
     fn nil_p(&self, obj: VALUE) -> bool {
         obj == (crate::Qnil as VALUE)
     }
 
-    #[inline]
+    #[inline(always)]
     fn fixnum_p(&self, obj: VALUE) -> bool {
         (obj & crate::FIXNUM_FLAG as VALUE) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     fn static_sym_p(&self, obj: VALUE) -> bool {
-        let mask = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
-        (obj & mask) == crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
+        const SPECIAL_MASK: VALUE = !(VALUE::MAX << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE);
+        const SYMBOL_FLAG: VALUE = crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE;
+        (obj & SPECIAL_MASK) == SYMBOL_FLAG
     }
 
-    #[inline]
+    #[inline(always)]
     fn flonum_p(&self, obj: VALUE) -> bool {
         #[cfg(ruby_use_flonum = "true")]
         let ret = (obj & crate::FLONUM_MASK as VALUE) == crate::FLONUM_FLAG as VALUE;
@@ -150,17 +157,17 @@ impl StableApiDefinition for Definition {
         ret
     }
 
-    #[inline]
+    #[inline(always)]
     fn immediate_p(&self, obj: VALUE) -> bool {
         (obj & crate::special_consts::IMMEDIATE_MASK as VALUE) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     fn rb_test(&self, obj: VALUE) -> bool {
         (obj & !(crate::Qnil as VALUE)) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn type_p(&self, obj: VALUE, t: crate::ruby_value_type) -> bool {
         use crate::ruby_special_consts::*;
         use crate::ruby_value_type::*;
@@ -181,30 +188,36 @@ impl StableApiDefinition for Definition {
             self.float_type_p(obj)
         } else if self.special_const_p(obj) {
             false
-        } else if t == self.builtin_type(obj) {
-            true
         } else {
-            t == self.rb_type(obj)
+            // Optimized: For heap objects, directly compare builtin_type
+            // This eliminates the extra check in the original: else if t == self.builtin_type(obj)
+            t == self.builtin_type(obj)
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn symbol_p(&self, obj: VALUE) -> bool {
-        self.static_sym_p(obj) || self.dynamic_sym_p(obj)
-    }
-
-    #[inline]
-    unsafe fn float_type_p(&self, obj: VALUE) -> bool {
-        if self.flonum_p(obj) {
-            true
-        } else if self.special_const_p(obj) {
-            false
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking static_sym first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
+            self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
         } else {
-            self.builtin_type(obj) == value_type::RUBY_T_FLOAT
+            self.static_sym_p(obj)
         }
     }
 
-    #[inline]
+    #[inline(always)]
+    unsafe fn float_type_p(&self, obj: VALUE) -> bool {
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking flonum first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
+            self.builtin_type(obj) == value_type::RUBY_T_FLOAT
+        } else {
+            self.flonum_p(obj)
+        }
+    }
+
+    #[inline(always)]
     unsafe fn rb_type(&self, obj: VALUE) -> crate::ruby_value_type {
         use crate::ruby_special_consts::*;
         use crate::ruby_value_type::*;
@@ -229,29 +242,29 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn dynamic_sym_p(&self, obj: VALUE) -> bool {
-        if self.special_const_p(obj) {
-            false
-        } else {
-            self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
-        }
+        !self.special_const_p(obj) && self.builtin_type(obj) == value_type::RUBY_T_SYMBOL
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn integer_type_p(&self, obj: VALUE) -> bool {
-        if self.fixnum_p(obj) {
-            true
-        } else if self.special_const_p(obj) {
-            false
-        } else {
+        // Partition by heap vs immediate - generates fewer branches than
+        // checking fixnum first, since heap/immediate are mutually exclusive.
+        if !self.special_const_p(obj) {
             self.builtin_type(obj) == value_type::RUBY_T_BIGNUM
+        } else {
+            self.fixnum_p(obj)
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rstring_interned_p(&self, obj: VALUE) -> bool {
-        assert!(self.type_p(obj, value_type::RUBY_T_STRING));
+        debug_ruby_assert_type!(
+            obj,
+            value_type::RUBY_T_STRING,
+            "rstring_interned_p called on non-T_STRING object"
+        );
 
         let rstring: &RString = &*(obj as *const RString);
         let flags = rstring.basic.flags;
@@ -259,7 +272,7 @@ impl StableApiDefinition for Definition {
         (flags & crate::ruby_rstring_flags::RSTRING_FSTR as VALUE) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     fn thread_sleep(&self, duration: Duration) {
         let seconds = duration.as_secs() as _;
         let microseconds = duration.subsec_micros() as _;
@@ -272,7 +285,7 @@ impl StableApiDefinition for Definition {
         unsafe { crate::rb_thread_wait_for(time) }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rtypeddata_p(&self, obj: VALUE) -> bool {
         debug_ruby_assert_type!(obj, RUBY_T_DATA, "rtypeddata_p called on non-T_DATA object");
 
@@ -283,7 +296,7 @@ impl StableApiDefinition for Definition {
         typed_flag != 0 && typed_flag <= 3
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool {
         debug_ruby_assert_type!(
             obj,
@@ -301,7 +314,7 @@ impl StableApiDefinition for Definition {
         (typed_flag & FLAG) != 0
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rtypeddata_type(&self, obj: VALUE) -> *const crate::rb_data_type_t {
         debug_ruby_assert_type!(
             obj,
@@ -313,7 +326,7 @@ impl StableApiDefinition for Definition {
         (*rdata).type_
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
         debug_ruby_assert_type!(
             obj,
