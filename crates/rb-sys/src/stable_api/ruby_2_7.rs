@@ -309,16 +309,21 @@ impl StableApiDefinition for Definition {
         (*rdata).type_
     }
 
-    #[inline]
-    unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
-        debug_ruby_assert_type!(
-            obj,
-            RUBY_T_DATA,
-            "rtypeddata_get_data called on non-T_DATA object"
-        );
+     #[inline]
+     unsafe fn rtypeddata_get_data(&self, obj: VALUE) -> *mut c_void {
+         debug_ruby_assert_type!(
+             obj,
+             RUBY_T_DATA,
+             "rtypeddata_get_data called on non-T_DATA object"
+         );
 
-        // For Ruby 2.7, simply return the data field
-        let rdata = obj as *const RTypedData;
-        (*rdata).data
-    }
+         // For Ruby 2.7, simply return the data field
+         let rdata = obj as *const RTypedData;
+         (*rdata).data
+     }
+
+     #[inline]
+     fn fl_able(&self, obj: VALUE) -> bool {
+         !self.special_const_p(obj)
+     }
 }

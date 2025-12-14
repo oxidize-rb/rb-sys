@@ -177,3 +177,8 @@ impl_rtypeddata_get_data(VALUE obj)
   return RTYPEDDATA(obj)->data;
 #endif
 }
+
+int impl_fl_able(VALUE obj)
+{
+  return RB_FL_ABLE(obj);
+}

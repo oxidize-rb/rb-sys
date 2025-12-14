@@ -320,4 +320,9 @@ impl StableApiDefinition for Definition {
         let rdata = obj as *const RTypedData;
         (*rdata).data
     }
+
+    #[inline]
+    fn fl_able(&self, obj: VALUE) -> bool {
+        !self.special_const_p(obj)
+    }
 }

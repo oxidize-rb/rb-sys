@@ -350,4 +350,9 @@ impl StableApiDefinition for Definition {
             (*rdata).data
         }
     }
+
+    #[inline]
+    fn fl_able(&self, obj: VALUE) -> bool {
+        !self.special_const_p(obj)
+    }
 }
