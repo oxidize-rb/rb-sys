@@ -22,15 +22,15 @@ jobs:
           - name: "oxidize-rb/oxi-test"
             slug: oxi-test
             ref: ead2c358a6cde270863e686c7302fb56a333febc
-            run: bundle exec rake compile && bundle exec ruby -rminitest/autorun -Itest test/oxi/test_test.rb && cargo test
+            run: bundle exec rake compile && bundle exec ruby -rminitest/autorun -Itest test/oxi/test_test.rb && cargo test --release
           - name: "matsadler/magnus"
             slug: magnus-0.5
             ref: "0.5.5"
-            run: cargo test
+            run: cargo test --release
           - name: "matsadler/magnus"
             slug: magnus-head
             ref: "49f2d7f4c5f8d0de9fdceb83982aa616ddb92190"
-            run: cargo test
+            run: cargo test --release
         os: ["ubuntu-latest", "windows-latest", "macos-15"]
         rust: ["stable"]
         ruby: ["3.2", "3.3", "3.4"]
