@@ -22,122 +22,255 @@ require "open3"
 
 REPO_ROOT = Pathname.new(__dir__).parent
 
-# Function definitions parsed from StableApiDefinition trait
-# Format: name => { unsafe: bool, args: "arg: Type, ...", ret: "ReturnType", expr: "expression" }
+# Function definitions with co-located Rust and C implementations
 #
-# The `expr` uses `api` to refer to `get_default()` and `v` for the VALUE argument
-FUNCTIONS = {
+# Each entry contains:
+#   - name: Function name (used for test function naming)
+#   - rust: Rust implementation details
+#     - unsafe: Whether the Rust function is unsafe
+#     - ret: Return type
+#     - expr: Rust expression (uses rb_sys macros)
+#     - custom_body: Optional full function body for complex cases
+#   - c: C implementation details (nil if no C equivalent)
+#     - expr: C expression
+#     - ret: C return type
+#   - ruby_source: Reference to canonical Ruby source location
+#
+FUNCTIONS = [
   # Safe predicates (no pointer dereference)
-  "nil_p" => {unsafe: false, ret: "bool", expr: "api.nil_p(v)"},
-  "fixnum_p" => {unsafe: false, ret: "bool", expr: "api.fixnum_p(v)"},
-  "static_sym_p" => {unsafe: false, ret: "bool", expr: "api.static_sym_p(v)"},
-  "flonum_p" => {unsafe: false, ret: "bool", expr: "api.flonum_p(v)"},
-  "immediate_p" => {unsafe: false, ret: "bool", expr: "api.immediate_p(v)"},
-  "special_const_p" => {unsafe: false, ret: "bool", expr: "api.special_const_p(v)"},
-  "rb_test" => {unsafe: false, ret: "bool", expr: "api.rb_test(v)"},
+  {
+    name: "nil_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::NIL_P(v)"},
+    c: {expr: "NIL_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_NIL_P"
+  },
+  {
+    name: "fixnum_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::FIXNUM_P(v)"},
+    c: {expr: "FIXNUM_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_FIXNUM_P"
+  },
+  {
+    name: "static_sym_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::STATIC_SYM_P(v)"},
+    c: {expr: "STATIC_SYM_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_STATIC_SYM_P"
+  },
+  {
+    name: "flonum_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::FLONUM_P(v)"},
+    c: {expr: "RB_FLONUM_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_FLONUM_P"
+  },
+  {
+    name: "immediate_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::IMMEDIATE_P(v)"},
+    c: {expr: "RB_IMMEDIATE_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_IMMEDIATE_P"
+  },
+  {
+    name: "special_const_p",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::SPECIAL_CONST_P(v)"},
+    c: {expr: "RB_SPECIAL_CONST_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_SPECIAL_CONST_P"
+  },
+  {
+    name: "rb_test",
+    rust: {unsafe: false, ret: "bool", expr: "rb_sys::TEST(v)"},
+    c: {expr: "RB_TEST(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/special_consts.h:RB_TEST"
+  },
 
   # Unsafe predicates (may dereference pointer)
-  "symbol_p" => {unsafe: true, ret: "bool", expr: "api.symbol_p(v)"},
-  "dynamic_sym_p" => {unsafe: true, ret: "bool", expr: "api.dynamic_sym_p(v)"},
-  "float_type_p" => {unsafe: true, ret: "bool", expr: "api.float_type_p(v)"},
-  "integer_type_p" => {unsafe: true, ret: "bool", expr: "api.integer_type_p(v)"},
+  {
+    name: "symbol_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_SYMBOL_P(v)"},
+    c: {expr: "RB_SYMBOL_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:RB_SYMBOL_P"
+  },
+  {
+    name: "dynamic_sym_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_DYNAMIC_SYM_P(v)"},
+    c: {expr: "RB_DYNAMIC_SYM_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:RB_DYNAMIC_SYM_P"
+  },
+  {
+    name: "float_type_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_FLOAT_TYPE_P(v)"},
+    c: {expr: "RB_FLOAT_TYPE_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:RB_FLOAT_TYPE_P"
+  },
+  {
+    name: "integer_type_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_INTEGER_TYPE_P(v)"},
+    c: {expr: "RB_INTEGER_TYPE_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:rb_integer_type_p"
+  },
 
   # type_p for heap types (all generate same asm except for type constant)
-  "type_p_heap" => {unsafe: true, ret: "bool", expr: "api.type_p(v, rb_sys::ruby_value_type::RUBY_T_STRING)"},
+  {
+    name: "type_p_heap",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_TYPE_P(v, rb_sys::ruby_value_type::RUBY_T_STRING)"},
+    c: {expr: "RB_TYPE_P(v, T_STRING)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:RB_TYPE_P"
+  },
 
   # Type inspection
-  "builtin_type" => {unsafe: true, ret: "rb_sys::ruby_value_type", expr: "api.builtin_type(v)"},
-  "rb_type" => {unsafe: true, ret: "rb_sys::ruby_value_type", expr: "api.rb_type(v)"},
+  {
+    name: "builtin_type",
+    rust: {unsafe: true, ret: "rb_sys::ruby_value_type", expr: "rb_sys::RB_BUILTIN_TYPE(v)"},
+    c: {expr: "RB_BUILTIN_TYPE(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:RB_BUILTIN_TYPE"
+  },
+  {
+    name: "rb_type",
+    rust: {unsafe: true, ret: "rb_sys::ruby_value_type", expr: "rb_sys::RB_TYPE(v)"},
+    c: {expr: "rb_type(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/value_type.h:rb_type"
+  },
 
   # String operations
-  "rstring_len" => {unsafe: true, ret: "c_long", expr: "api.rstring_len(v)"},
-  "rstring_ptr" => {unsafe: true, ret: "*const c_char", expr: "api.rstring_ptr(v)"},
-  "rstring_interned_p" => {unsafe: true, ret: "bool", expr: "api.rstring_interned_p(v)"},
+  {
+    name: "rstring_len",
+    rust: {unsafe: true, ret: "c_long", expr: "rb_sys::RSTRING_LEN(v)"},
+    c: {expr: "RSTRING_LEN(v)", ret: "long"},
+    ruby_source: "include/ruby/internal/core/rstring.h:RSTRING_LEN"
+  },
+  {
+    name: "rstring_ptr",
+    rust: {unsafe: true, ret: "*const c_char", expr: "rb_sys::RSTRING_PTR(v)"},
+    c: {expr: "RSTRING_PTR(v)", ret: "const char *"},
+    ruby_source: "include/ruby/internal/core/rstring.h:RSTRING_PTR"
+  },
+  {
+    name: "rstring_interned_p",
+    rust: {unsafe: true, ret: "bool", expr: "{ let api = rb_sys::stable_api::get_default(); api.rstring_interned_p(v) }"},
+    c: {expr: "(RBASIC(v)->flags & RSTRING_FSTR) != 0", ret: "int"},
+    ruby_source: "include/ruby/internal/core/rstring.h:RSTRING_FSTR"
+  },
 
   # Array operations
-  "rarray_len" => {unsafe: true, ret: "c_long", expr: "api.rarray_len(v)"},
-  "rarray_const_ptr" => {unsafe: true, ret: "*const VALUE", expr: "api.rarray_const_ptr(v)"},
+  {
+    name: "rarray_len",
+    rust: {unsafe: true, ret: "c_long", expr: "rb_sys::RARRAY_LEN(v)"},
+    c: {expr: "RARRAY_LEN(v)", ret: "long"},
+    ruby_source: "include/ruby/internal/core/rarray.h:RARRAY_LEN"
+  },
+  {
+    name: "rarray_const_ptr",
+    rust: {unsafe: true, ret: "*const VALUE", expr: "rb_sys::RARRAY_CONST_PTR(v)"},
+    c: {expr: "RARRAY_CONST_PTR(v)", ret: "const VALUE *"},
+    ruby_source: "include/ruby/internal/core/rarray.h:RARRAY_CONST_PTR"
+  },
 
   # Object operations
-  "rbasic_class" => {unsafe: true, ret: "Option<NonNull<VALUE>>", expr: "api.rbasic_class(v)"},
-  "frozen_p" => {unsafe: true, ret: "bool", expr: "api.frozen_p(v)"},
+  {
+    name: "rbasic_class",
+    rust: {unsafe: true, ret: "VALUE", expr: "{ let api = rb_sys::stable_api::get_default(); api.rbasic_class(v).map(|p| p.as_ptr() as VALUE).unwrap_or(0 as VALUE) }"},
+    c: {expr: "RBASIC_CLASS(v)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/core/rbasic.h:RBASIC_CLASS"
+  },
+  {
+    name: "frozen_p",
+    rust: {unsafe: true, ret: "bool", expr: "{ let api = rb_sys::stable_api::get_default(); api.frozen_p(v) }"},
+    c: {expr: "RB_OBJ_FROZEN(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/fl_type.h:RB_OBJ_FROZEN"
+  },
 
   # Bignum operations
-  "bignum_positive_p" => {unsafe: true, ret: "bool", expr: "api.bignum_positive_p(v)"},
-  "bignum_negative_p" => {unsafe: true, ret: "bool", expr: "api.bignum_negative_p(v)"},
+  {
+    name: "bignum_positive_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RBIGNUM_POSITIVE_P(v)"},
+    c: {expr: "RBIGNUM_POSITIVE_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/core/rbignum.h:RBIGNUM_POSITIVE_P"
+  },
+  {
+    name: "bignum_negative_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RBIGNUM_NEGATIVE_P(v)"},
+    c: {expr: "RBIGNUM_NEGATIVE_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/core/rbignum.h:RBIGNUM_NEGATIVE_P"
+  },
 
   # Typed data operations
-  "rtypeddata_p" => {unsafe: true, ret: "bool", expr: "api.rtypeddata_p(v)"},
-  "rtypeddata_embedded_p" => {unsafe: true, ret: "bool", expr: "api.rtypeddata_embedded_p(v)"},
-  "rtypeddata_type" => {unsafe: true, ret: "*const rb_sys::rb_data_type_t", expr: "api.rtypeddata_type(v)"},
-  "rtypeddata_get_data" => {unsafe: true, ret: "*mut c_void", expr: "api.rtypeddata_get_data(v)"},
+  {
+    name: "rtypeddata_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RTYPEDDATA_P(v)"},
+    c: {expr: "RTYPEDDATA_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_P"
+  },
+  {
+    name: "rtypeddata_embedded_p",
+    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RTYPEDDATA_EMBEDDED_P(v)"},
+    c: {expr: "RTYPEDDATA_EMBEDDED_P(v)", ret: "int"},
+    ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_EMBEDDED_P"
+  },
+  {
+    name: "rtypeddata_type",
+    rust: {unsafe: true, ret: "*const rb_sys::rb_data_type_t", expr: "rb_sys::RTYPEDDATA_TYPE(v)"},
+    c: {expr: "RTYPEDDATA_TYPE(v)", ret: "const rb_data_type_t *"},
+    ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_TYPE"
+  },
+  {
+    name: "rtypeddata_get_data",
+    rust: {unsafe: true, ret: "*mut c_void", expr: "rb_sys::RTYPEDDATA_GET_DATA(v)"},
+    c: {expr: "RTYPEDDATA_GET_DATA(v)", ret: "void *"},
+    ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_GET_DATA"
+  },
 
   # GC guard (macro, not StableApiDefinition method)
   # Uses a realistic pattern: extract pointer, call function that might GC, use guard
-  "rb_gc_guard" => {unsafe: true, ret: "VALUE", custom_body: <<~RUST}
-    // Extract raw pointer from Ruby string
-    let ptr = api.rstring_ptr(v);
+  {
+    name: "rb_gc_guard",
+    rust: {
+      unsafe: true,
+      ret: "VALUE",
+      custom_body: <<~RUST
+        // Extract raw pointer from Ruby string
+        let ptr = rb_sys::RSTRING_PTR(v);
 
-    // rb_str_new_cstr allocates memory and might trigger GC.
-    // Without rb_gc_guard!, the compiler sees 'v' as dead after rstring_ptr,
-    // so it might not keep it on the stack. If GC runs during this call,
-    // 'v' could be collected and 'ptr' would become a dangling pointer.
-    let new_str = rb_sys::rb_str_new_cstr(ptr);
+        // rb_str_new_cstr allocates memory and might trigger GC.
+        // Without rb_gc_guard!, the compiler sees 'v' as dead after rstring_ptr,
+        // so it might not keep it on the stack. If GC runs during this call,
+        // 'v' could be collected and 'ptr' would become a dangling pointer.
+        let new_str = rb_sys::rb_str_new_cstr(ptr);
 
-    // Guard keeps 'v' alive on the stack until this point
-    rb_sys::rb_gc_guard!(v);
+        // Guard keeps 'v' alive on the stack until this point
+        rb_sys::rb_gc_guard!(v);
 
-    // Return new_str to prevent it from being optimized away
-    new_str
-  RUST
-}.freeze
+        // Return new_str to prevent it from being optimized away
+        new_str
+      RUST
+    },
+    c: {
+      custom_body: <<~C,
+        // Extract raw pointer from Ruby string
+        const char *ptr = RSTRING_PTR(str);
+
+        // rb_str_new_cstr allocates memory and might trigger GC.
+        // Without RB_GC_GUARD, the compiler sees 'str' as dead after
+        // RSTRING_PTR, so it might not keep it on the stack. If GC runs
+        // during this call, 'str' could be collected and 'ptr' would
+        // become a dangling pointer.
+        VALUE new_str = rb_str_new_cstr(ptr);
+
+        // Guard keeps 'str' alive on the stack until this point
+        RB_GC_GUARD(str);
+
+        // Return new_str to prevent it from being optimized away
+        return new_str;
+      C
+      ret: "VALUE",
+      arg_name: "str"
+    },
+    ruby_source: "include/ruby/internal/memory.h:RB_GC_GUARD"
+  }
+].freeze
+
+# Build a hash for quick lookup by name
+FUNCTIONS_BY_NAME = FUNCTIONS.each_with_object({}) { |f, h| h[f[:name]] = f }.freeze
 
 # ARM64 instruction patterns to count
 INSTRUCTION_PATTERN = /^\s+(mov|ldr|str|add|sub|cmp|tst|and|orr|eor|b\.|bl|ret|cbz|cbnz|cset|ccmp|csinc|adrp|stp|ldp|ror|lsr|tbz|csel)/
-
-# C equivalents for comparison (functions that have a C macro counterpart)
-#
-# The rb_gc_guard test simulates a realistic dangerous pattern:
-#   1. Create a Ruby string
-#   2. Extract the raw C pointer (RSTRING_PTR)
-#   3. Call a function that might trigger GC (simulated by may_trigger_gc)
-#   4. Use the raw pointer after the potential GC point
-#
-# Without RB_GC_GUARD, the compiler might:
-#   - Optimize away the VALUE since it's "dead" after RSTRING_PTR
-#   - Allow GC to collect the string, leaving ptr as a dangling pointer
-#
-# With RB_GC_GUARD, the VALUE is kept alive on the stack until after
-# the guard point, ensuring the GC can see it during its conservative scan.
-C_EQUIVALENTS = {
-  "rb_gc_guard" => {
-    code: <<~C,
-      #include <ruby.h>
-
-      // Realistic pattern: extract pointer, do work that might GC, use pointer
-      // This is the pattern RB_GC_GUARD is designed to protect
-      __attribute__((noinline))
-      VALUE test_rb_gc_guard_c(VALUE str) {
-          // Extract raw pointer from Ruby string
-          const char *ptr = RSTRING_PTR(str);
-
-          // rb_str_new_cstr allocates memory and might trigger GC.
-          // Without RB_GC_GUARD, the compiler sees 'str' as dead after
-          // RSTRING_PTR, so it might not keep it on the stack. If GC runs
-          // during this call, 'str' could be collected and 'ptr' would
-          // become a dangling pointer.
-          VALUE new_str = rb_str_new_cstr(ptr);
-
-          // Guard keeps 'str' alive on the stack until this point
-          RB_GC_GUARD(str);
-
-          // Return new_str to prevent it from being optimized away
-          return new_str;
-      }
-    C
-    func_name: "test_rb_gc_guard_c"
-  }
-}.freeze
 
 class ShowAsm
   def initialize(repo_root)
@@ -172,26 +305,26 @@ class ShowAsm
     end
   end
 
-  def generate_rust_code(func_name, func_def)
-    unsafe_kw = func_def[:unsafe] ? "unsafe " : ""
+  def generate_rust_code(func_name, rust_def)
+    unsafe_kw = rust_def[:unsafe] ? "unsafe " : ""
 
     # Support custom_body for complex test patterns (like rb_gc_guard)
-    body = if func_def[:custom_body]
-      func_def[:custom_body]
-    elsif func_def[:expr]
-      func_def[:unsafe] ? func_def[:expr] : "unsafe { #{func_def[:expr]} }"
+    body = if rust_def[:custom_body]
+      rust_def[:custom_body]
+    elsif rust_def[:expr]
+      rust_def[:unsafe] ? rust_def[:expr] : "unsafe { #{rust_def[:expr]} }"
     else
       raise "Function #{func_name} needs either :expr or :custom_body"
     end
 
     # For custom_body, we need to handle the return type declaration
-    ret_type = func_def[:ret] || "VALUE"
+    ret_type = rust_def[:ret] || "VALUE"
 
     <<~RUST
       #![allow(unused_unsafe)]
       extern crate rb_sys;
 
-      use rb_sys::{stable_api::get_default, StableApiDefinition, VALUE};
+      use rb_sys::{stable_api, StableApiDefinition, VALUE};
       use std::ffi::c_void;
       use std::os::raw::{c_char, c_long};
       use std::ptr::NonNull;
@@ -199,10 +332,37 @@ class ShowAsm
       #[inline(never)]
       #[no_mangle]
       pub #{unsafe_kw}fn test_#{func_name}(v: VALUE) -> #{ret_type} {
-          let api = get_default();
           #{body}
       }
     RUST
+  end
+
+  def generate_c_code(func_name, c_def)
+    return nil unless c_def
+
+    func_name_c = "test_#{func_name}_c"
+    ret_type = c_def[:ret] || "int"
+    arg_name = c_def[:arg_name] || "v"
+
+    if c_def[:custom_body]
+      <<~C
+        #include <ruby.h>
+
+        __attribute__((noinline))
+        #{ret_type} #{func_name_c}(VALUE #{arg_name}) {
+            #{c_def[:custom_body]}
+        }
+      C
+    else
+      <<~C
+        #include <ruby.h>
+
+        __attribute__((noinline))
+        #{ret_type} #{func_name_c}(VALUE #{arg_name}) {
+            return #{c_def[:expr]};
+        }
+      C
+    end
   end
 
   def compile_to_asm(rust_code)
@@ -260,43 +420,53 @@ class ShowAsm
 
   def display_result(func_name, func_asm, instr_count, c_result, count_only:)
     if count_only
-      printf "%-45s %8d\n", "test_#{func_name} (Rust)", instr_count
-      if c_result
-        printf "%-45s %8d\n", "#{c_result[:func_name]} (C)", c_result[:instr_count]
-      end
-    else
-      puts "=" * 80
-      puts "Function: test_#{func_name} (Rust)"
-      puts "Instructions: #{instr_count}"
-      puts "=" * 80
-      puts
-      puts func_asm
-      puts
+      # Handled by show_all for tabular output
+      return
+    end
 
-      if c_result
-        puts "=" * 80
-        puts "Function: #{c_result[:func_name]} (C)"
-        puts "Instructions: #{c_result[:instr_count]}"
-        puts "=" * 80
-        puts
-        puts c_result[:asm]
-        puts
-      end
+    puts "=" * 80
+    puts "Function: test_#{func_name} (Rust)"
+    puts "Instructions: #{instr_count}"
+    puts "=" * 80
+    puts
+    puts func_asm
+    puts
+
+    if c_result
+      puts "=" * 80
+      puts "Function: #{c_result[:func_name]} (C)"
+      puts "Instructions: #{c_result[:instr_count]}"
+      puts "=" * 80
+      puts
+      puts c_result[:asm]
+      puts
     end
   end
 
-  def compile_and_extract(func_name)
-    func_def = FUNCTIONS[func_name]
-    return nil unless func_def
+  def display_count_row(func_name, rust_count, c_count)
+    if c_count
+      diff = rust_count - c_count
+      pct = ((diff.to_f / c_count) * 100).round(0)
+      sign = (diff >= 0) ? "+" : ""
+      printf "%-25s %8d %8d %8s\n", func_name, rust_count, c_count, "#{sign}#{pct}%"
+    else
+      printf "%-25s %8d %8s %8s\n", func_name, rust_count, "-", "-"
+    end
+  end
 
-    rust_code = generate_rust_code(func_name, func_def)
+  def compile_and_extract(func_entry)
+    func_name = func_entry[:name]
+    rust_def = func_entry[:rust]
+    c_def = func_entry[:c]
+
+    rust_code = generate_rust_code(func_name, rust_def)
     full_asm = compile_to_asm(rust_code)
     func_asm = extract_function(full_asm, func_name)
 
     return nil unless func_asm
 
     instr_count = count_instructions(func_asm)
-    c_result = C_EQUIVALENTS.key?(func_name) ? show_c_comparison(func_name) : nil
+    c_result = show_c_comparison(func_name, c_def)
 
     {func_asm: func_asm, instr_count: instr_count, c_result: c_result}
   end
@@ -305,19 +475,25 @@ class ShowAsm
     ensure_rb_sys_built
 
     if count_only
-      printf "%-45s %8s\n", "Function", "Instructions"
-      puts "-" * 80
+      printf "%-25s %8s %8s %8s\n", "Function", "Rust", "C", "Diff"
+      puts "-" * 53
     end
 
-    FUNCTIONS.keys.sort.each do |func_name|
-      result = compile_and_extract(func_name)
+    FUNCTIONS.sort_by { |f| f[:name] }.each do |func_entry|
+      func_name = func_entry[:name]
+      result = compile_and_extract(func_entry)
 
       unless result
         warn "WARN: Function 'test_#{func_name}' not found in assembly"
         next
       end
 
-      display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: count_only)
+      if count_only
+        c_count = result[:c_result] ? result[:c_result][:instr_count] : nil
+        display_count_row(func_name, result[:instr_count], c_count)
+      else
+        display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: false)
+      end
     end
   end
 
@@ -326,11 +502,12 @@ class ShowAsm
     puts
     printf "%-25s %-8s %-12s %s\n", "Name", "Safety", "C Equivalent", "Return Type"
     puts "-" * 80
-    FUNCTIONS.keys.sort.each do |name|
-      func = FUNCTIONS[name]
-      safety = func[:unsafe] ? "unsafe" : "safe"
-      has_c = C_EQUIVALENTS.key?(name) ? "yes" : "-"
-      printf "%-25s %-8s %-12s %s\n", name, safety, has_c, func[:ret]
+    FUNCTIONS.sort_by { |f| f[:name] }.each do |func_entry|
+      name = func_entry[:name]
+      rust_def = func_entry[:rust]
+      safety = rust_def[:unsafe] ? "unsafe" : "safe"
+      has_c = func_entry[:c] ? "yes" : "-"
+      printf "%-25s %-8s %-12s %s\n", name, safety, has_c, rust_def[:ret]
     end
   end
 
@@ -397,35 +574,46 @@ class ShowAsm
     found ? lines.join : nil
   end
 
-  def show_c_comparison(func_name)
-    c_def = C_EQUIVALENTS[func_name]
+  def show_c_comparison(func_name, c_def)
     return nil unless c_def
 
-    full_asm = compile_c_to_asm(c_def[:code])
-    func_asm = extract_c_function(full_asm, c_def[:func_name])
+    c_code = generate_c_code(func_name, c_def)
+    return nil unless c_code
+
+    func_name_c = "test_#{func_name}_c"
+    full_asm = compile_c_to_asm(c_code)
+    func_asm = extract_c_function(full_asm, func_name_c)
 
     unless func_asm
-      warn "WARN: C function '#{c_def[:func_name]}' not found in assembly"
+      warn "WARN: C function '#{func_name_c}' not found in assembly"
       return nil
     end
 
     instr_count = count_instructions(func_asm)
 
-    {asm: func_asm, instr_count: instr_count, func_name: c_def[:func_name]}
+    {asm: func_asm, instr_count: instr_count, func_name: func_name_c}
   end
 
   def show_function(func_name, count_only: false)
-    abort "ERROR: Unknown function '#{func_name}'. Use --list to see available functions." unless FUNCTIONS.key?(func_name)
+    func_entry = FUNCTIONS_BY_NAME[func_name]
+    abort "ERROR: Unknown function '#{func_name}'. Use --list to see available functions." unless func_entry
 
     ensure_rb_sys_built
 
-    result = compile_and_extract(func_name)
+    result = compile_and_extract(func_entry)
 
     unless result
       abort "ERROR: Function 'test_#{func_name}' not found in assembly output"
     end
 
-    display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: count_only)
+    if count_only
+      printf "%-25s %8s %8s %8s\n", "Function", "Rust", "C", "Diff"
+      puts "-" * 53
+      c_count = result[:c_result] ? result[:c_result][:instr_count] : nil
+      display_count_row(func_name, result[:instr_count], c_count)
+    else
+      display_result(func_name, result[:func_asm], result[:instr_count], result[:c_result], count_only: false)
+    end
   end
 end
 
