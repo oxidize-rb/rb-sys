@@ -16,8 +16,20 @@ use std::{
 compile_error!("This file should only be included in Ruby 4.0 builds");
 
 extern "C" {
-    fn rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
-    fn rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE, file: *const c_char, line: c_long) -> VALUE;
+    fn rb_obj_write(
+        old: VALUE,
+        slot: *mut VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
+    fn rb_obj_written(
+        old: VALUE,
+        oldv: VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
 }
 
 pub struct Definition;
