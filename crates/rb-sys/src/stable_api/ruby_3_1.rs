@@ -3,7 +3,7 @@ use crate::{
     debug_ruby_assert_type,
     internal::{RArray, RString, RTypedData},
     ruby_value_type::RUBY_T_DATA,
-    value_type, ID, VALUE,
+    value_type, VALUE,
 };
 use std::{
     ffi::c_void,
@@ -11,6 +11,23 @@ use std::{
     ptr::NonNull,
     time::Duration,
 };
+
+extern "C" {
+    fn rb_obj_write(
+        old: VALUE,
+        slot: *mut VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
+    fn rb_obj_written(
+        old: VALUE,
+        oldv: VALUE,
+        young: VALUE,
+        file: *const c_char,
+        line: c_long,
+    ) -> VALUE;
+}
 
 #[cfg(not(ruby_eq_3_1))]
 compile_error!("This file should only be included in Ruby 3.1 builds");
@@ -324,86 +341,12 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    fn fix2long(&self, obj: VALUE) -> c_long {
-        // Extract the integer value by performing an arithmetic right shift by 1
-        (obj as c_long) >> 1
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        rb_obj_write(old, slot, young, core::ptr::null(), 0)
     }
 
     #[inline]
-    fn fix2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
-        // For positive fixnums, cast to c_long then to c_ulong
-        ((obj as c_long) >> 1) as std::os::raw::c_ulong
-    }
-
-    #[inline]
-    fn long2fix(&self, val: c_long) -> VALUE {
-        // Left shift by 1 and OR with FIXNUM_FLAG
-        (((val as VALUE) << 1) | crate::FIXNUM_FLAG as VALUE) as VALUE
-    }
-
-    #[inline]
-    fn fixable(&self, val: c_long) -> bool {
-        // Check if value is within Fixnum range
-        val >= crate::special_consts::FIXNUM_MIN && val <= crate::special_consts::FIXNUM_MAX
-    }
-
-    #[inline]
-    fn posfixable(&self, val: std::os::raw::c_ulong) -> bool {
-        // Check if unsigned value fits in positive fixnum
-        val <= crate::special_consts::FIXNUM_MAX as std::os::raw::c_ulong
-    }
-
-    #[inline]
-    unsafe fn num2long(&self, obj: VALUE) -> c_long {
-        if self.fixnum_p(obj) {
-            self.fix2long(obj)
-        } else {
-            crate::rb_num2long(obj)
-        }
-    }
-
-    #[inline]
-    unsafe fn num2ulong(&self, obj: VALUE) -> std::os::raw::c_ulong {
-        if self.fixnum_p(obj) {
-            self.fix2ulong(obj)
-        } else {
-            crate::rb_num2ulong(obj)
-        }
-    }
-
-    #[inline]
-    fn long2num(&self, val: c_long) -> VALUE {
-        if self.fixable(val) {
-            self.long2fix(val)
-        } else {
-            unsafe { crate::rb_int2big(val as isize) }
-        }
-    }
-
-    #[inline]
-    fn ulong2num(&self, val: std::os::raw::c_ulong) -> VALUE {
-        if self.posfixable(val) {
-            self.long2fix(val as c_long)
-        } else {
-            unsafe { crate::rb_uint2big(val as usize) }
-        }
-    }
-
-    #[inline]
-    fn id2sym(&self, id: ID) -> VALUE {
-        // Static symbol encoding: (id << RUBY_SPECIAL_SHIFT) | RUBY_SYMBOL_FLAG
-        ((id as VALUE) << crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE)
-            | crate::ruby_special_consts::RUBY_SYMBOL_FLAG as VALUE
-    }
-
-    #[inline]
-    unsafe fn sym2id(&self, obj: VALUE) -> ID {
-        if self.static_sym_p(obj) {
-            // Static symbol: extract ID from tagged pointer
-            (obj >> crate::ruby_special_consts::RUBY_SPECIAL_SHIFT as VALUE) as ID
-        } else {
-            // Dynamic symbol: call rb_sym2id
-            crate::rb_sym2id(obj)
-        }
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+        rb_obj_written(old, oldv, young, core::ptr::null(), 0)
     }
 }
