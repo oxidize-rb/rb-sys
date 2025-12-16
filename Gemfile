@@ -15,3 +15,5 @@ gem "yard"
 gem "mutex_m"
 gem "standard"
 gem "tsort"
+
+gem "ostruct", "~> 0.6.3"
