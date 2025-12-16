@@ -36,11 +36,6 @@ impl Version {
             }
         }
     }
-
-    #[allow(dead_code)]
-    pub fn is_stable(&self) -> bool {
-        *self >= MIN_SUPPORTED_STABLE_VERSION && *self <= LATEST_STABLE_VERSION
-    }
 }
 
 impl std::fmt::Display for Version {

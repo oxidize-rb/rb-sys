@@ -13,7 +13,7 @@ gem "racc"
 gem "base64"
 gem "yard"
 gem "mutex_m"
-gem "standard"
+gem "standard", "~> 1.52.0"
 gem "tsort"
 
 gem "ostruct", "~> 0.6.3"
