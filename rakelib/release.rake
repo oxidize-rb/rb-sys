@@ -41,7 +41,7 @@ namespace :release do
     sh "fastmod", "--extensions=rb", "--accept-all", "^  VERSION = \"#{old_version}\"", "  VERSION = #{new_version.inspect}"
     sh "cargo check"
     Dir.chdir("examples/rust_reverse") { sh("cargo", "check") }
-    sh "bundle"
+    sh "bundle install"
     sh "rake test:examples"
   end
 
