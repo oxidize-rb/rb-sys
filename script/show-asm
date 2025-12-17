@@ -585,9 +585,9 @@ class ShowAsm
         archhdrdir = ruby_config["rubyarchhdrdir"]
 
         cmd = [cc, src_file.path,
-          "-S",                     # Output assembly
-          "-O3",                    # Optimize
-          "-fno-stack-protector",   # Disable stack canary for fair comparison
+          "-S", # Output assembly
+          "-O3", # Optimize
+          "-fno-stack-protector", # Disable stack canary for fair comparison
           "-I#{hdrdir}",
           "-I#{archhdrdir}",
           "-o", asm_file.path]

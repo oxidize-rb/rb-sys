@@ -4,11 +4,30 @@ use crate::{
     features::is_env_variable_defined,
     version::{Version, MIN_SUPPORTED_STABLE_VERSION},
 };
-use std::{convert::TryFrom, error::Error, path::Path};
+use std::{convert::TryFrom, error::Error, path::{Path, PathBuf}};
+
+/// Get the path to the Rust implementation file for the given Ruby version.
+fn rust_impl_path(version: Version) -> PathBuf {
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    crate_dir
+        .join("src")
+        .join("stable_api")
+        .join(format!("ruby_{}_{}.rs", version.major(), version.minor()))
+}
+
+/// Check if a Rust implementation file exists for the given Ruby version.
+fn has_rust_impl(version: Version) -> bool {
+    let path = rust_impl_path(version);
+    path.exists()
+}
 
 pub fn setup(rb_config: &RbConfig) -> Result<(), Box<dyn Error>> {
     let ruby_version = Version::current(rb_config);
     let ruby_engine = rb_config.ruby_engine();
+
+    // Ensure we rebuild if the file is added or removed
+    let rust_impl_path = rust_impl_path(ruby_version);
+    println!("cargo:rerun-if-changed={}", rust_impl_path.display());
     let strategy = Strategy::try_from((ruby_engine, ruby_version))?;
 
     strategy.apply()?;
@@ -42,7 +61,7 @@ impl TryFrom<(RubyEngine, Version)> for Strategy {
             RubyEngine::Mri => {}
         }
 
-        if current_ruby_version.is_stable() {
+        if has_rust_impl(current_ruby_version) {
             strategy = Some(Strategy::RustOnly(current_ruby_version));
         } else {
             maybe_warn_old_ruby_version(current_ruby_version);
@@ -76,10 +95,10 @@ impl Strategy {
         println!("cargo:rustc-check-cfg=cfg(stable_api_has_rust_impl)");
         match self {
             Strategy::RustOnly(current_ruby_version) => {
-                if current_ruby_version.is_stable() {
+                if has_rust_impl(current_ruby_version) {
                     println!("cargo:rustc-cfg=stable_api_include_rust_impl");
                 } else {
-                    return Err(format!("A stable Ruby API is needed but could not find a candidate. If you are using a stable version of Ruby, try upgrading rb-sys. Otherwise if you are testing against ruby-head or Ruby < {}, enable the `stable-api-compiled-fallback` feature in rb-sys.", MIN_SUPPORTED_STABLE_VERSION).into());
+                    return Err(format!("No Rust stable API implementation found for Ruby {}. If you are using a stable version of Ruby, try upgrading rb-sys. Otherwise if you are testing against ruby-head or Ruby < {}, enable the `stable-api-compiled-fallback` feature in rb-sys.", current_ruby_version, MIN_SUPPORTED_STABLE_VERSION).into());
                 }
             }
             Strategy::CompiledOnly => {
@@ -88,7 +107,7 @@ impl Strategy {
                 println!("cargo:rustc-cfg=stable_api_export_compiled_as_api");
             }
             Strategy::RustThenCompiled(current_ruby_version) => {
-                if current_ruby_version.is_stable() {
+                if has_rust_impl(current_ruby_version) {
                     println!("cargo:rustc-cfg=stable_api_has_rust_impl");
                     println!("cargo:rustc-cfg=stable_api_include_rust_impl");
                 } else {
@@ -102,7 +121,7 @@ impl Strategy {
 
                 println!("cargo:rustc-cfg=stable_api_enable_compiled_mod");
 
-                if current_ruby_version.is_stable() {
+                if has_rust_impl(current_ruby_version) {
                     println!("cargo:rustc-cfg=stable_api_include_rust_impl");
                 } else {
                     println!("cargo:rustc-cfg=stable_api_export_compiled_as_api");

@@ -13,7 +13,11 @@ gem "racc"
 gem "base64"
 gem "yard"
 gem "mutex_m"
-gem "standard"
+
+if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0")
+  gem "standard", "~> 1.52.0"
+end
+
 gem "tsort"
 
 gem "ostruct", "~> 0.6.3"
