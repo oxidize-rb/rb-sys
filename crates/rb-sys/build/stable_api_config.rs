@@ -4,28 +4,30 @@ use crate::{
     features::is_env_variable_defined,
     version::{Version, MIN_SUPPORTED_STABLE_VERSION},
 };
-use std::{convert::TryFrom, error::Error, path::Path};
+use std::{convert::TryFrom, error::Error, path::{Path, PathBuf}};
+
+/// Get the path to the Rust implementation file for the given Ruby version.
+fn rust_impl_path(version: Version) -> PathBuf {
+    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    crate_dir
+        .join("src")
+        .join("stable_api")
+        .join(format!("ruby_{}_{}.rs", version.major(), version.minor()))
+}
 
 /// Check if a Rust implementation file exists for the given Ruby version.
 fn has_rust_impl(version: Version) -> bool {
-    let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let path = crate_dir.join("src").join("stable_api").join(format!(
-        "ruby_{}_{}.rs",
-        version.major(),
-        version.minor()
-    ));
-
-    let exists = path.exists();
-
-    // Ensure we rebuild if the file is added or removed
-    println!("cargo:rerun-if-changed={}", path.display());
-
-    exists
+    let path = rust_impl_path(version);
+    path.exists()
 }
 
 pub fn setup(rb_config: &RbConfig) -> Result<(), Box<dyn Error>> {
     let ruby_version = Version::current(rb_config);
     let ruby_engine = rb_config.ruby_engine();
+
+    // Ensure we rebuild if the file is added or removed
+    let rust_impl_path = rust_impl_path(ruby_version);
+    println!("cargo:rerun-if-changed={}", rust_impl_path.display());
     let strategy = Strategy::try_from((ruby_engine, ruby_version))?;
 
     strategy.apply()?;
