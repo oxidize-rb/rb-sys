@@ -4,15 +4,20 @@ use crate::{
     features::is_env_variable_defined,
     version::{Version, MIN_SUPPORTED_STABLE_VERSION},
 };
-use std::{convert::TryFrom, error::Error, path::{Path, PathBuf}};
+use std::{
+    convert::TryFrom,
+    error::Error,
+    path::{Path, PathBuf},
+};
 
 /// Get the path to the Rust implementation file for the given Ruby version.
 fn rust_impl_path(version: Version) -> PathBuf {
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    crate_dir
-        .join("src")
-        .join("stable_api")
-        .join(format!("ruby_{}_{}.rs", version.major(), version.minor()))
+    crate_dir.join("src").join("stable_api").join(format!(
+        "ruby_{}_{}.rs",
+        version.major(),
+        version.minor()
+    ))
 }
 
 /// Check if a Rust implementation file exists for the given Ruby version.
