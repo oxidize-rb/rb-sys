@@ -198,9 +198,50 @@ fn get_version_specific_opaque_structs(major_minor: Option<(u32, u32)>) -> Vec<&
     let mut result = vec![];
     let (major, minor) = major_minor;
 
-    if major == 3 && minor >= 3 {
+    if major > 3 || (major == 3 && minor >= 3) {
         result.extend(OPAQUE_STRUCTS_RUBY_3_3)
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_version_specific_opaque_structs() {
+        // No version info
+        assert!(get_version_specific_opaque_structs(None).is_empty());
+
+        // Ruby 3.2.x - too old for 3.3 structs
+        assert!(get_version_specific_opaque_structs(Some((3, 2))).is_empty());
+
+        // Ruby 3.3.x - should include 3.3 structs
+        assert_eq!(
+            get_version_specific_opaque_structs(Some((3, 3))),
+            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+        );
+
+        // Ruby 3.4.x - should include 3.3 structs
+        assert_eq!(
+            get_version_specific_opaque_structs(Some((3, 4))),
+            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+        );
+
+        // Ruby 4.0.x - should include 3.3 structs (this was the bug!)
+        assert_eq!(
+            get_version_specific_opaque_structs(Some((4, 0))),
+            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+        );
+
+        // Ruby 4.1.x - should include 3.3 structs
+        assert_eq!(
+            get_version_specific_opaque_structs(Some((4, 1))),
+            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+        );
+
+        // Ruby 2.7.x - too old
+        assert!(get_version_specific_opaque_structs(Some((2, 7))).is_empty());
+    }
 }
