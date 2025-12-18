@@ -364,9 +364,11 @@ impl RbConfig {
             .and_then(|v| v.parse::<i32>().ok())
             .unwrap_or(-1);
 
-        // Ruby has ABI version on verion 3.2 and later only on development
+        // Ruby has ABI version on version 3.2 and later only on development
         // versions
-        major >= 3 && minor >= 2 && patchlevel == -1 && !cfg!(target_family = "windows")
+        (major > 3 || (major == 3 && minor >= 2))
+            && patchlevel == -1
+            && !cfg!(target_family = "windows")
     }
 
     /// The RUBY_ENGINE we are building for
@@ -859,5 +861,46 @@ mod tests {
             ],
             rb_config.cargo_args()
         );
+    }
+
+    #[test]
+    fn test_has_ruby_dln_check_abi() {
+        // Helper to create RbConfig with specific version
+        fn make_config(major: &str, minor: &str, patchlevel: &str) -> RbConfig {
+            let mut rb_config = RbConfig::new();
+            rb_config.set_value_for_key("MAJOR", major.into());
+            rb_config.set_value_for_key("MINOR", minor.into());
+            rb_config.set_value_for_key("PATCHLEVEL", patchlevel.into());
+            rb_config
+        }
+
+        // Ruby 3.1.x (any patchlevel) - too old
+        assert!(!make_config("3", "1", "-1").has_ruby_dln_check_abi());
+        assert!(!make_config("3", "1", "0").has_ruby_dln_check_abi());
+
+        // Ruby 3.2.0-dev (patchlevel -1) - should have ABI check
+        #[cfg(not(target_family = "windows"))]
+        assert!(make_config("3", "2", "-1").has_ruby_dln_check_abi());
+
+        // Ruby 3.2.0 release (patchlevel 0) - no ABI check
+        assert!(!make_config("3", "2", "0").has_ruby_dln_check_abi());
+
+        // Ruby 3.3.0-dev - should have ABI check
+        #[cfg(not(target_family = "windows"))]
+        assert!(make_config("3", "3", "-1").has_ruby_dln_check_abi());
+
+        // Ruby 4.0.0-dev - should have ABI check (this was the bug!)
+        #[cfg(not(target_family = "windows"))]
+        assert!(make_config("4", "0", "-1").has_ruby_dln_check_abi());
+
+        // Ruby 4.0.0 release - no ABI check
+        assert!(!make_config("4", "0", "0").has_ruby_dln_check_abi());
+
+        // Ruby 4.1.0-dev - should have ABI check
+        #[cfg(not(target_family = "windows"))]
+        assert!(make_config("4", "1", "-1").has_ruby_dln_check_abi());
+
+        // Ruby 2.7.x - too old
+        assert!(!make_config("2", "7", "-1").has_ruby_dln_check_abi());
     }
 }
