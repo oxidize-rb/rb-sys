@@ -128,6 +128,12 @@ extern "C" {
 
     #[link_name = "impl_ulong2num"]
     fn impl_ulong2num(val: std::os::raw::c_ulong) -> VALUE;
+
+    #[link_name = "impl_rb_obj_write"]
+    fn impl_rb_obj_write(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE;
+
+    #[link_name = "impl_rb_obj_written"]
+    fn impl_rb_obj_written(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE;
 }
 
 pub struct Definition;
@@ -343,5 +349,15 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn ulong2num(&self, val: std::os::raw::c_ulong) -> VALUE {
         unsafe { impl_ulong2num(val) }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_write(old, slot, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+        impl_rb_obj_written(old, oldv, young)
     }
 }

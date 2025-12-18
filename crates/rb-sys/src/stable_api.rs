@@ -299,6 +299,28 @@ pub trait StableApiDefinition {
     /// - `obj` must be a valid Symbol VALUE
     /// - For dynamic symbols, this may access the heap
     unsafe fn sym2id(&self, obj: VALUE) -> ID;
+
+    /// Execute GC write barrier when storing a reference (akin to `RB_OBJ_WRITE`).
+    ///
+    /// Must be called when storing a VALUE reference from one heap object to another.
+    /// This is critical for GC correctness - without it, the GC may collect objects
+    /// that are still referenced.
+    ///
+    /// # Safety
+    /// - `old` must be a valid heap-allocated Ruby object
+    /// - `slot` must be a valid pointer to a VALUE within `old`
+    /// - `young` must be a valid VALUE
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE;
+
+    /// Declare a write barrier without actually writing (akin to `RB_OBJ_WRITTEN`).
+    ///
+    /// Use this when you've already written a reference but need to inform the GC.
+    ///
+    /// # Safety
+    /// - `old` must be a valid heap-allocated Ruby object
+    /// - `oldv` is the previous value (can be any VALUE)
+    /// - `young` must be a valid VALUE that was written
+    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE;
 }
 
 #[cfg(stable_api_enable_compiled_mod)]

@@ -506,3 +506,43 @@ pub fn LONG2NUM(val: std::os::raw::c_long) -> VALUE {
 pub fn ULONG2NUM(val: std::os::raw::c_ulong) -> VALUE {
     api().ulong2num(val)
 }
+
+/// Execute GC write barrier when storing a reference (akin to `RB_OBJ_WRITE`).
+///
+/// Must be called when storing a VALUE reference from one heap object to another.
+/// This is critical for GC correctness - without it, the GC may collect objects
+/// that are still referenced.
+///
+/// @param[in]  old    The object being modified (must be heap-allocated).
+/// @param[in]  slot   Pointer to the VALUE slot within `old` being written to.
+/// @param[in]  young  The VALUE being stored.
+/// @return     The VALUE that was written (`young`).
+///
+/// # Safety
+/// - `old` must be a valid heap-allocated Ruby object
+/// - `slot` must be a valid pointer to a VALUE within `old`
+/// - `young` must be a valid VALUE
+#[inline(always)]
+pub unsafe fn RB_OBJ_WRITE(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+    api().rb_obj_write(old, slot, young)
+}
+
+/// Declare a write barrier without actually writing (akin to `RB_OBJ_WRITTEN`).
+///
+/// Use this when you've already written a reference but need to inform the GC.
+/// This is useful when the write happens through a different mechanism but
+/// the GC still needs to be notified.
+///
+/// @param[in]  old    The object being modified (must be heap-allocated).
+/// @param[in]  oldv   The previous value (can be any VALUE).
+/// @param[in]  young  The VALUE that was written.
+/// @return     The VALUE that was written (`young`).
+///
+/// # Safety
+/// - `old` must be a valid heap-allocated Ruby object
+/// - `oldv` is the previous value (can be any VALUE)
+/// - `young` must be a valid VALUE that was written
+#[inline(always)]
+pub unsafe fn RB_OBJ_WRITTEN(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
+    api().rb_obj_written(old, oldv, young)
+}
