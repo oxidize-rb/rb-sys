@@ -292,12 +292,6 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
-    unsafe fn rtypeddata_embedded_p(&self, _obj: VALUE) -> bool {
-        // Ruby 2.7 doesn't support embedded data
-        false
-    }
-
-    #[inline]
     unsafe fn rtypeddata_type(&self, obj: VALUE) -> *const crate::rb_data_type_t {
         debug_ruby_assert_type!(
             obj,

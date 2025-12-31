@@ -199,12 +199,6 @@ FUNCTIONS = [
     ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_P"
   },
   {
-    name: "rtypeddata_embedded_p",
-    rust: {unsafe: true, ret: "bool", expr: "rb_sys::RTYPEDDATA_EMBEDDED_P(v)"},
-    c: {expr: "RTYPEDDATA_EMBEDDED_P(v)", ret: "int"},
-    ruby_source: "include/ruby/internal/core/rtypeddata.h:RTYPEDDATA_EMBEDDED_P"
-  },
-  {
     name: "rtypeddata_type",
     rust: {unsafe: true, ret: "*const rb_sys::rb_data_type_t", expr: "rb_sys::RTYPEDDATA_TYPE(v)"},
     c: {expr: "RTYPEDDATA_TYPE(v)", ret: "const rb_data_type_t *"},

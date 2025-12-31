@@ -195,14 +195,6 @@ pub trait StableApiDefinition {
     /// is valid and points to a T_DATA object.
     unsafe fn rtypeddata_p(&self, obj: VALUE) -> bool;
 
-    /// Checks if the given RTypedData is embedded.
-    ///
-    /// # Safety
-    /// This function is unsafe because it dereferences a raw pointer to get
-    /// access to underlying Ruby data. The caller must ensure that the pointer
-    /// is valid and points to an RTypedData object.
-    unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool;
-
     /// Gets the data type from an RTypedData object.
     ///
     /// # Safety
