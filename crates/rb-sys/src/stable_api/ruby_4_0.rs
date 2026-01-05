@@ -367,7 +367,7 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn fixable(&self, val: std::os::raw::c_long) -> bool {
         // Check if value is within Fixnum range
-        val >= crate::special_consts::FIXNUM_MIN && val <= crate::special_consts::FIXNUM_MAX
+        (crate::special_consts::FIXNUM_MIN..=crate::special_consts::FIXNUM_MAX).contains(&val)
     }
 
     #[inline]

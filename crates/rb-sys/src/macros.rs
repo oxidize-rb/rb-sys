@@ -36,7 +36,7 @@ use std::os::raw::{c_char, c_long};
 /// ```
 #[inline(always)]
 pub fn TEST(obj: VALUE) -> bool {
-    api().rb_test(obj.into())
+    api().rb_test(obj)
 }
 
 /// Checks if the given object is nil.
@@ -55,7 +55,7 @@ pub fn TEST(obj: VALUE) -> bool {
 /// ```
 #[inline(always)]
 pub fn NIL_P(obj: VALUE) -> bool {
-    api().nil_p(obj.into())
+    api().nil_p(obj)
 }
 
 /// Checks if the given object is a so-called Fixnum.
@@ -66,7 +66,7 @@ pub fn NIL_P(obj: VALUE) -> bool {
 /// - @note       Fixnum was  a thing  in the  20th century, but  it is  rather an implementation detail today.
 #[inline(always)]
 pub fn FIXNUM_P(obj: VALUE) -> bool {
-    api().fixnum_p(obj.into())
+    api().fixnum_p(obj)
 }
 
 /// Checks if the given object is a static symbol.
@@ -79,7 +79,7 @@ pub fn FIXNUM_P(obj: VALUE) -> bool {
 /// - @note       These days  there are static  and dynamic symbols, just  like we once had Fixnum/Bignum back in the old days.
 #[inline(always)]
 pub fn STATIC_SYM_P(obj: VALUE) -> bool {
-    api().static_sym_p(obj.into())
+    api().static_sym_p(obj)
 }
 
 /// Get the backend storage of a Ruby array.
@@ -95,7 +95,7 @@ pub fn STATIC_SYM_P(obj: VALUE) -> bool {
 /// - @return     Its backend storage.
 #[inline(always)]
 pub unsafe fn RARRAY_CONST_PTR(obj: VALUE) -> *const VALUE {
-    api().rarray_const_ptr(obj.into())
+    api().rarray_const_ptr(obj)
 }
 
 /// Get the length of a Ruby array.
@@ -109,7 +109,7 @@ pub unsafe fn RARRAY_CONST_PTR(obj: VALUE) -> *const VALUE {
 /// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RARRAY_LEN(obj: VALUE) -> c_long {
-    api().rarray_len(obj.into())
+    api().rarray_len(obj)
 }
 
 /// Get the length of a Ruby string.
@@ -123,7 +123,7 @@ pub unsafe fn RARRAY_LEN(obj: VALUE) -> c_long {
 /// - @return     Its length.
 #[inline(always)]
 pub unsafe fn RSTRING_LEN(obj: VALUE) -> c_long {
-    api().rstring_len(obj.into())
+    api().rstring_len(obj)
 }
 
 /// Get the backend storage of a Ruby string.
@@ -131,13 +131,15 @@ pub unsafe fn RSTRING_LEN(obj: VALUE) -> c_long {
 /// ### Safety
 ///
 /// This function is unsafe because it dereferences a raw pointer and returns
-/// raw pointers to Ruby memory.
+/// raw pointers to Ruby memory. The caller must ensure that the pointer stays live
+/// for the duration of usage the the underlying array (by either GC marking or
+/// keeping the RArray on the stack).
 ///
 /// - @param[in]  a  An object of ::RString.
 /// - @return     Its backend storage
 #[inline(always)]
 pub unsafe fn RSTRING_PTR(obj: VALUE) -> *const c_char {
-    api().rstring_ptr(obj.into())
+    api().rstring_ptr(obj)
 }
 
 /// Checks if the given object is a so-called Flonum.
@@ -150,7 +152,7 @@ pub unsafe fn RSTRING_PTR(obj: VALUE) -> *const c_char {
 ///             once had Fixnum/Bignum back in the old days.
 #[inline(always)]
 pub fn FLONUM_P(obj: VALUE) -> bool {
-    api().flonum_p(obj.into())
+    api().flonum_p(obj)
 }
 
 /// Checks if  the given  object is  an immediate  i.e. an  object which  has no
@@ -163,7 +165,7 @@ pub fn FLONUM_P(obj: VALUE) -> bool {
 /// @note       The concept of "immediate" is purely C specific.
 #[inline(always)]
 pub fn IMMEDIATE_P(obj: VALUE) -> bool {
-    api().immediate_p(obj.into())
+    api().immediate_p(obj)
 }
 
 /// Checks if the given object is of enum ::ruby_special_consts.
@@ -183,7 +185,7 @@ pub fn IMMEDIATE_P(obj: VALUE) -> bool {
 /// ```
 #[inline(always)]
 pub fn SPECIAL_CONST_P(obj: VALUE) -> bool {
-    api().special_const_p(obj.into())
+    api().special_const_p(obj)
 }
 
 /// Queries the type of the object.
@@ -404,6 +406,10 @@ pub unsafe fn SYM2ID(obj: VALUE) -> crate::ID {
 }
 
 /// Alias for SYM2ID for compatibility with Ruby naming conventions.
+///
+/// # Safety
+/// - `obj` must be a valid Symbol VALUE
+/// - For dynamic symbols, this may access the heap
 #[inline(always)]
 pub unsafe fn RB_SYM2ID(obj: VALUE) -> crate::ID {
     api().sym2id(obj)

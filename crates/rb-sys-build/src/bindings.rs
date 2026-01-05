@@ -140,7 +140,7 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
     })
 }
 
-fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
+fn default_bindgen(clang_args: Vec<String>, _rbconfig: &RbConfig) -> bindgen::Builder {
     // Disable layout tests and Debug impl on Windows MinGW due to packed struct layout incompatibilities
     let is_windows_mingw = cfg!(target_os = "windows") && !is_msvc();
 
