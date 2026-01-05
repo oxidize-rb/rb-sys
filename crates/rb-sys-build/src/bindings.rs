@@ -141,19 +141,11 @@ fn clean_docs(rbconfig: &RbConfig, syntax: &mut syn::File) {
 }
 
 fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Builder {
-    // Disable layout tests and Debug impl for Ruby 2.7 and 3.0 on Windows MinGW due to type incompatibilities
-    let is_old_ruby_windows_mingw = if cfg!(target_os = "windows") && !is_msvc() {
-        if let Some((major, minor)) = rbconfig.major_minor() {
-            (major == 2 && minor == 7) || (major == 3 && minor == 0)
-        } else {
-            false
-        }
-    } else {
-        false
-    };
+    // Disable layout tests and Debug impl on Windows MinGW due to packed struct layout incompatibilities
+    let is_windows_mingw = cfg!(target_os = "windows") && !is_msvc();
 
-    let enable_layout_tests = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-layout-tests");
-    let impl_debug = !is_old_ruby_windows_mingw && cfg!(feature = "bindgen-impl-debug");
+    let enable_layout_tests = !is_windows_mingw && cfg!(feature = "bindgen-layout-tests");
+    let impl_debug = !is_windows_mingw && cfg!(feature = "bindgen-impl-debug");
 
     let mut bindings = bindgen::Builder::default()
         .rustified_enum(".*")
@@ -167,6 +159,8 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .blocklist_item("^__pthread_.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
+        .blocklist_type("INET_PORT_RESERVATION_INSTANCE")
+        .blocklist_type("PINET_PORT_RESERVATION_INSTANCE")
         .opaque_type("^__sFILE$")
         .merge_extern_blocks(true)
         .generate_comments(true)
