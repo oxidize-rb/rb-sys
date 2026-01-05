@@ -167,6 +167,8 @@ fn default_bindgen(clang_args: Vec<String>, rbconfig: &RbConfig) -> bindgen::Bui
         .blocklist_item("^__pthread_.*")
         .blocklist_item("^pthread_.*")
         .blocklist_item("^rb_native.*")
+        .blocklist_type("INET_PORT_RESERVATION_INSTANCE")
+        .blocklist_type("PINET_PORT_RESERVATION_INSTANCE")
         .opaque_type("^__sFILE$")
         .merge_extern_blocks(true)
         .generate_comments(true)
