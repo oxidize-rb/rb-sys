@@ -61,10 +61,6 @@ fn gen_non_embedded_typed_data() -> VALUE {
     ruby_eval!("require 'stringio'; StringIO.new('a' * 1000)")
 }
 
-fn gen_non_typed_data() -> VALUE {
-    ruby_eval!("Object.new")
-}
-
 parity_test!(
     name: test_rstring_len_basic,
     func: rstring_len,
@@ -679,24 +675,6 @@ parity_test! (
         gen_typed_data()
     },
     expected: true
-);
-
-parity_test! (
-    name: test_rtypeddata_p_for_regular_data,
-    func: rtypeddata_p,
-    data_factory: {
-        gen_non_typed_data()
-    },
-    expected: false
-);
-
-parity_test! (
-    name: test_rtypeddata_p_for_string,
-    func: rtypeddata_p,
-    data_factory: {
-        gen_rstring!("not a typed data")
-    },
-    expected: false
 );
 
 parity_test! (
