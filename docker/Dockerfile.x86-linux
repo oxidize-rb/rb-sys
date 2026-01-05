@@ -1,5 +1,5 @@
 # Ensure this version matches the rack-compiler-version in Gemfile
-FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.11.0-mri-x86-linux
+FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.11.1-mri-x86-linux
 
 ENV RUBY_TARGET="x86-linux" \
     RUST_TARGET="i686-unknown-linux-gnu" \
