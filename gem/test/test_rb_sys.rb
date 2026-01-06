@@ -105,6 +105,23 @@ class TestRbSys < Minitest::Test
     assert_match(/--target \$\(CARGO_BUILD_TARGET\)/, makefile.read)
   end
 
+  def test_uses_target_from_cargo_config
+    skip("Skipping for mswin") if win_target?
+
+    old_cargo_target = ENV.delete("CARGO_BUILD_TARGET")
+    old_rust_target = ENV.delete("RUST_TARGET")
+
+    makefile = create_makefile_with_cargo_config("[build]\ntarget = \"aarch64-unknown-linux-gnu\"")
+    content = makefile.read
+
+    assert_match(/CARGO_BUILD_TARGET \?= aarch64-unknown-linux-gnu/, content)
+    assert_match(%r{RB_SYS_FULL_TARGET_DIR.*\$\(RB_SYS_CARGO_TARGET_DIR\)/\$\(CARGO_BUILD_TARGET\)}, content)
+    assert_match(/--target \$\(CARGO_BUILD_TARGET\)/, content)
+  ensure
+    ENV["CARGO_BUILD_TARGET"] = old_cargo_target if old_cargo_target
+    ENV["RUST_TARGET"] = old_rust_target if old_rust_target
+  end
+
   private
 
   def create_makefile(&blk)
@@ -115,6 +132,22 @@ class TestRbSys < Minitest::Test
     Dir.chdir(cargo_dir) do
       create_rust_makefile("foo_ext", &blk)
       Pathname.new(File.join(cargo_dir, "Makefile"))
+    end
+  end
+
+  def create_makefile_with_cargo_config(config_content, &blk)
+    require "mkmf"
+    require "rb_sys/mkmf"
+    require "fileutils"
+
+    dir = Dir.mktmpdir("rb_sys_cargo_config_test")
+    cargo_config_dir = File.join(dir, ".cargo")
+    FileUtils.mkdir_p(cargo_config_dir)
+    File.write(File.join(cargo_config_dir, "config.toml"), config_content)
+
+    Dir.chdir(dir) do
+      create_rust_makefile("foo_ext", &blk)
+      Pathname.new(File.join(dir, "Makefile"))
     end
   end
 end
