@@ -296,19 +296,6 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline(always)]
-    unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool {
-        debug_ruby_assert_type!(
-            obj,
-            RUBY_T_DATA,
-            "rtypeddata_embedded_p called on non-T_DATA object"
-        );
-
-        // Ruby 4.0: TYPED_DATA_EMBEDDED is bit 0 of the type field
-        let rdata = obj as *const RTypedData;
-        ((*rdata).type_ & 1) != 0
-    }
-
-    #[inline(always)]
     unsafe fn rtypeddata_type(&self, obj: VALUE) -> *const crate::rb_data_type_t {
         debug_ruby_assert_type!(
             obj,
@@ -330,7 +317,9 @@ impl StableApiDefinition for Definition {
             "rtypeddata_get_data called on non-T_DATA object"
         );
 
-        if self.rtypeddata_embedded_p(obj) {
+        // Ruby 4.0: TYPED_DATA_EMBEDDED is bit 0 of the type field
+        let rdata = obj as *const RTypedData;
+        if ((*rdata).type_ & 1) != 0 {
             // For embedded data, calculate pointer based on struct layout
             // The formula matches Ruby's implementation:
             // embedded_typed_data_size = sizeof(RTypedData) - sizeof(void *)

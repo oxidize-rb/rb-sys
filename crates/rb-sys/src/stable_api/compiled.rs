@@ -85,9 +85,6 @@ extern "C" {
     #[link_name = "impl_rtypeddata_p"]
     fn impl_rtypeddata_p(obj: VALUE) -> bool;
 
-    #[link_name = "impl_rtypeddata_embedded_p"]
-    fn impl_rtypeddata_embedded_p(obj: VALUE) -> bool;
-
     #[link_name = "impl_rtypeddata_type"]
     fn impl_rtypeddata_type(obj: VALUE) -> *const crate::rb_data_type_t;
 
@@ -266,18 +263,6 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rtypeddata_p(&self, obj: VALUE) -> bool {
         impl_rtypeddata_p(obj)
-    }
-
-    #[inline]
-    #[cfg(ruby_gte_3_3)]
-    unsafe fn rtypeddata_embedded_p(&self, obj: VALUE) -> bool {
-        impl_rtypeddata_embedded_p(obj)
-    }
-
-    #[inline]
-    #[cfg(ruby_lt_3_3)]
-    unsafe fn rtypeddata_embedded_p(&self, _obj: VALUE) -> bool {
-        false
     }
 
     #[inline]

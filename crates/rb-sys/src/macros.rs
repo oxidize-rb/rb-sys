@@ -301,21 +301,6 @@ pub unsafe fn RTYPEDDATA_P(obj: VALUE) -> bool {
     api().rtypeddata_p(obj)
 }
 
-/// Checks if the given RTypedData is embedded.
-///
-/// @param[in]  obj    An RTypedData object.
-/// @retval     true   The data is embedded in the object itself.
-/// @retval     false  The data is stored separately.
-///
-/// # Safety
-/// This function is unsafe because it could dereference a raw pointer when
-/// accessing the underlying data structure. The caller must ensure the object
-/// is a valid RTypedData.
-#[inline(always)]
-pub unsafe fn RTYPEDDATA_EMBEDDED_P(obj: VALUE) -> bool {
-    api().rtypeddata_embedded_p(obj)
-}
-
 /// Gets the data type information from an RTypedData object.
 ///
 /// @param[in]  obj    An RTypedData object.

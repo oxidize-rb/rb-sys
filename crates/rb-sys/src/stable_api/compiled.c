@@ -152,16 +152,6 @@ int impl_rtypeddata_p(VALUE obj)
   return RTYPEDDATA_P(obj);
 }
 
-int impl_rtypeddata_embedded_p(VALUE obj)
-{
-#if RUBY_VERSION_AT_LEAST_3_3
-  return RTYPEDDATA_EMBEDDED_P(obj);
-#else
-  // On Ruby versions before 3.3, embedded typed data is not supported
-  return 0;
-#endif
-}
-
 const struct rb_data_type_struct *
 impl_rtypeddata_type(VALUE obj)
 {
