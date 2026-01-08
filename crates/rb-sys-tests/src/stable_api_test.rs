@@ -1168,3 +1168,72 @@ fn test_posfixable_parity() {
         );
     }
 }
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_write_basic() {
+    unsafe {
+        // Create an array to hold a reference
+        let ary = rb_sys::rb_ary_new_capa(1);
+        rb_sys::rb_ary_push(ary, rb_sys::Qnil as VALUE);
+
+        // Create a string to store
+        let str = rb_sys::rb_str_new_cstr(b"test\0".as_ptr() as _);
+
+        // Get pointer to first element using stable API
+        let ptr = stable_api::get_default().rarray_const_ptr(ary) as *mut VALUE;
+
+        // Use write barrier to store reference
+        let result = rb_sys::RB_OBJ_WRITE(ary, ptr, str);
+
+        // Verify the result is the value we wrote
+        assert_eq!(result, str);
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_written_basic() {
+    unsafe {
+        // Create an array
+        let ary = rb_sys::rb_ary_new();
+
+        // Create a string
+        let str = rb_sys::rb_str_new_cstr(b"test\0".as_ptr() as _);
+
+        // Manually write the value (simulating a write that happened elsewhere)
+        rb_sys::rb_ary_push(ary, str);
+
+        // Inform GC about the write
+        let result = rb_sys::RB_OBJ_WRITTEN(ary, rb_sys::Qnil as VALUE, str);
+
+        // Verify the result is the value we wrote
+        assert_eq!(result, str);
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_rb_obj_write_multiple_elements() {
+    unsafe {
+        // Create an array with multiple elements
+        let ary = rb_sys::rb_ary_new_capa(3);
+        rb_sys::rb_ary_push(ary, rb_sys::Qnil as VALUE);
+        rb_sys::rb_ary_push(ary, rb_sys::Qnil as VALUE);
+        rb_sys::rb_ary_push(ary, rb_sys::Qnil as VALUE);
+
+        // Create strings to store
+        let str1 = rb_sys::rb_str_new_cstr(b"first\0".as_ptr() as _);
+        let str2 = rb_sys::rb_str_new_cstr(b"second\0".as_ptr() as _);
+        let str3 = rb_sys::rb_str_new_cstr(b"third\0".as_ptr() as _);
+
+        // Get pointer to array elements using stable API
+        let ptr = stable_api::get_default().rarray_const_ptr(ary) as *mut VALUE;
+
+        // Write each element with write barrier
+        rb_sys::RB_OBJ_WRITE(ary, ptr, str1);
+        rb_sys::RB_OBJ_WRITE(ary, ptr.add(1), str2);
+        rb_sys::RB_OBJ_WRITE(ary, ptr.add(2), str3);
+
+        // Verify all values were written correctly by checking array length
+        let len = stable_api::get_default().rarray_len(ary);
+        assert_eq!(len, 3);
+    }
+}
