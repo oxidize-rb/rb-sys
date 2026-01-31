@@ -43,3 +43,16 @@ impl std::fmt::Display for Version {
         write!(f, "{}.{}", self.0, self.1)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_current_with_ruby_version_suffix() {
+        let mut rbconfig = RbConfig::default();
+        rbconfig.set_value_for_key("ruby_version", "4.1.0+1".to_string());
+
+        assert_eq!(Version::current(&rbconfig), Version::new(4, 1));
+    }
+}
