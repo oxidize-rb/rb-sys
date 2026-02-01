@@ -128,7 +128,7 @@ impl RubyVersion {
 
                 let mut ruby_version = env_ruby_version
                     .split('.')
-                    .map(|s| s.parse().expect("version component is not a number"));
+                    .map(|s| parse_version_component(s, "RUBY_VERSION"));
 
                 Self {
                     major: ruby_version.next().expect("major"),
@@ -140,9 +140,20 @@ impl RubyVersion {
     }
 }
 
+fn parse_version_component(value: &str, name: &str) -> u8 {
+    let digits: String = value.chars().take_while(|c| c.is_ascii_digit()).collect();
+    if digits.is_empty() {
+        panic!("{} is not a number", name);
+    }
+    digits.parse().expect("version component is not a number")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_equality_from_tuple() {
@@ -161,5 +172,47 @@ mod tests {
             RubyVersion::from_raw_environment(&env),
             RubyVersion::from((3, 0, 0))
         );
+    }
+
+    #[test]
+    fn test_from_hashmap_with_ruby_version_suffix() {
+        let mut env = HashMap::new();
+        env.insert("ruby_version".to_string(), "4.1.0+1".to_string());
+
+        assert_eq!(
+            RubyVersion::from_raw_environment(&env),
+            RubyVersion::from((4, 1, 0))
+        );
+    }
+
+    #[test]
+    fn test_from_env_with_ruby_version_suffix() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let previous = std::env::var("RUBY_VERSION").ok();
+
+        std::env::set_var("RUBY_VERSION", "4.1.0+1");
+        let env = HashMap::new();
+
+        let parsed = RubyVersion::from_raw_environment(&env);
+
+        if let Some(value) = previous {
+            std::env::set_var("RUBY_VERSION", value);
+        } else {
+            std::env::remove_var("RUBY_VERSION");
+        }
+
+        assert_eq!(parsed, RubyVersion::from((4, 1, 0)));
+    }
+
+    #[test]
+    fn test_from_hashmap_rejects_major_suffix() {
+        let mut env = HashMap::new();
+        env.insert("MAJOR".to_string(), "4+1".to_string());
+        env.insert("MINOR".to_string(), "1".to_string());
+        env.insert("TEENY".to_string(), "0".to_string());
+
+        let result = std::panic::catch_unwind(|| RubyVersion::from_raw_environment(&env));
+
+        assert!(result.is_err());
     }
 }
