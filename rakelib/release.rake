@@ -45,43 +45,6 @@ namespace :release do
     sh "rake test:examples"
   end
 
-  desc "Publish the crates and gems"
-  task :publish do
-    crates = ["rb-sys-build", "rb-sys"]
-
-    crates.each do |crate|
-      sh "cargo publish -p #{crate}" do |ok, res|
-        next if ok
-
-        already_published = res.exitstatus == 101
-        if already_published
-          puts "Skipping already published crate: #{crate}"
-        else
-          exit res.exitstatus
-        end
-      end
-    end
-
-    Dir.chdir("gem") do
-      sh "bundle exec rake release"
-    end
-
-    require_relative "../gem/lib/rb_sys/version"
-
-    sh "gh", "release", "create", "v#{RbSys::VERSION}", "--generate-notes"
-
-    sh "open", "https://www.rubydoc.info/gems/rb_sys/#{RbSys::VERSION}"
-  end
-
-  desc "Run a dry run of the release"
-  task :dry_run do
-    crates = ["rb-sys-build", "rb-sys", "rb-sys-test-helpers-macros", "rb-sys-test-helpers", "rb-sys-env"]
-
-    crates.each do |crate|
-      system "cargo publish -p #{crate} --dry-run --allow-dirty"
-    end
-  end
-
   desc "Publish rb-sys-test-helpers"
   task :publish_test_helpers do
     crates = ["rb-sys-test-helpers-macros", "rb-sys-test-helpers"]

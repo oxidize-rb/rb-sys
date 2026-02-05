@@ -1,0 +1,203 @@
+---
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prepare:
+        description: "Create release PR with changelog"
+        required: false
+        default: false
+        type: boolean
+      release:
+        description: "Create tag and GitHub release"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+env:
+  RUBY_VERSION: "3.4"
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  prepare:
+    if: ${{ inputs.prepare }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "Actions Auto Build"
+
+      - name: Get current version
+        id: version-label
+        run: |
+          VERSION=$(grep VERSION gem/lib/rb_sys/version.rb | head -n 1 | cut -d'"' -f2)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Get previous version
+        id: previous-version-label
+        run: |
+          PREVIOUS_VERSION=$(gh api "/repos/${{ github.repository }}/tags?per_page=1" | jq -r '.[] | .name?')
+          echo "previous_version=${PREVIOUS_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Generate Release Notes
+        id: generate-release-notes
+        run: |
+          generate() {
+            gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              /repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name='v${{ steps.version-label.outputs.version }}' \
+              -f previous_tag_name='${{ steps.previous-version-label.outputs.previous_version }}' \
+              | jq -r ".body"
+          }
+          echo "changelog<<EOF"$'\n'"$(generate)"$'\n'EOF >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "[skip ci] Release v${{ steps.version-label.outputs.version }}"
+          title: "Release v${{ steps.version-label.outputs.version }}"
+          body: |
+            This is an automated PR for release v${{ steps.version-label.outputs.version }}.
+
+            ## Changelog
+            ${{ steps.generate-release-notes.outputs.changelog }}
+
+            ---
+            Upon merging, run the release workflow with `release: true` to create the tag and publish.
+          delete-branch: true
+          labels: release
+          branch: "release/v${{ steps.version-label.outputs.version }}"
+
+  release:
+    if: ${{ inputs.release }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version-label.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "Actions Auto Build"
+
+      - name: Get current version
+        id: version-label
+        run: |
+          VERSION=$(grep VERSION gem/lib/rb_sys/version.rb | head -n 1 | cut -d'"' -f2)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          git tag -a "v${{ steps.version-label.outputs.version }}" -m "Release v${{ steps.version-label.outputs.version }}"
+          git push origin "v${{ steps.version-label.outputs.version }}"
+
+      - name: Publish GitHub release
+        run: |
+          gh release create "v${{ steps.version-label.outputs.version }}" --generate-notes
+
+  publish_crates:
+    needs: release
+    if: ${{ inputs.release }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure crates.io OIDC credentials
+        id: crates-io-auth
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Publish rb-sys-build to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: |
+          cargo publish -p rb-sys-build || {
+            exit_code=$?
+            if [ $exit_code -eq 101 ]; then
+              echo "Crate already published, continuing..."
+            else
+              exit $exit_code
+            fi
+          }
+
+      - name: Wait for crates.io to index rb-sys-build
+        run: |
+          VERSION=$(grep '^version' crates/rb-sys-build/Cargo.toml | head -1 | cut -d'"' -f2)
+          echo "Waiting for rb-sys-build $VERSION to be indexed..."
+          for i in {1..30}; do
+            if curl -sf "https://crates.io/api/v1/crates/rb-sys-build/$VERSION" > /dev/null; then
+              echo "rb-sys-build $VERSION is available"
+              exit 0
+            fi
+            echo "Attempt $i: not yet indexed, waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for crates.io to index rb-sys-build"
+          exit 1
+
+      - name: Publish rb-sys to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io-auth.outputs.token }}
+        run: |
+          cargo publish -p rb-sys || {
+            exit_code=$?
+            if [ $exit_code -eq 101 ]; then
+              echo "Crate already published, continuing..."
+            else
+              exit $exit_code
+            fi
+          }
+
+  publish_gem:
+    needs: [release, publish_crates]
+    if: ${{ inputs.release }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: rubygems/configure-rubygems-credentials@main
+        with:
+          role-to-assume: ${{ secrets.RUBYGEMS_OIDC_ROLE }}
+
+      - uses: actions/checkout@v6
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+          working-directory: gem
+
+      - name: Build gem
+        working-directory: gem
+        env:
+          RUBYGEMS_FORCE_DISABLE_GEM_SIGNING: "true"
+        run: |
+          gem build rb_sys.gemspec
+
+      - name: Publish to RubyGems
+        working-directory: gem
+        run: |
+          gem push rb_sys-${{ needs.release.outputs.version }}.gem
