@@ -214,7 +214,7 @@ module RbSys
     end
 
     def gsub_cargo_command!(cargo_command, builder:)
-      cargo_command.gsub!(/--profile \w+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
+      cargo_command.gsub!(/--profile [\w-]+/, "$(RB_SYS_CARGO_PROFILE_FLAG)")
       cargo_command.gsub!(%r{--features \S+}, "--features $(RB_SYS_CARGO_FEATURES)")
       cargo_command.gsub!(%r{--target \S+}, "--target $(CARGO_BUILD_TARGET)")
       cargo_command.gsub!(/--target-dir (?:(?!--).)+/, "--target-dir $(RB_SYS_CARGO_TARGET_DIR) ")
