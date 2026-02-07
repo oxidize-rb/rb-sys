@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   end
 
   # Needed for `RakeCompilerDock.cross_rubies`
-  spec.add_dependency("rake-compiler-dock", "1.11.0")
+  spec.add_dependency("rake-compiler-dock", "1.11.1")
 
   spec.metadata["rubygems_mfa_required"] = "true"
 end
