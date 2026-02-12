@@ -15,7 +15,7 @@ gem "yard"
 gem "mutex_m"
 
 if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0")
-  gem "standard", "~> 1.52.0"
+  gem "standard", "~> 1.54.0"
 end
 
 gem "tsort"
