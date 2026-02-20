@@ -1,6 +1,7 @@
 require "rubygems/ext"
 require "rubygems/ext/builder"
 require_relative "cargo_builder/link_flag_converter"
+require_relative "cargo/config"
 
 module RbSys
   # A class to build a Ruby gem Cargo. Extracted from `rubygems` gem, with some modifications.
@@ -21,7 +22,7 @@ module RbSys
       @profile = ENV.fetch("RB_SYS_CARGO_PROFILE", :release).to_sym
       @env = {}
       @features = []
-      @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"]
+      @target = ENV["CARGO_BUILD_TARGET"] || ENV["RUST_TARGET"] || Cargo::Config.build_target
       @extra_rustc_args = []
       @extra_cargo_args = []
       @dry_run = true
