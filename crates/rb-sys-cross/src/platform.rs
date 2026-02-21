@@ -37,10 +37,7 @@ impl Platform {
     pub fn list_supported() -> String {
         let mut out = String::new();
         for p in PLATFORMS {
-            out.push_str(&format!(
-                "  {:<24} → {}\n",
-                p.ruby_platform, p.rust_target
-            ));
+            out.push_str(&format!("  {:<24} → {}\n", p.ruby_platform, p.rust_target));
         }
         out
     }

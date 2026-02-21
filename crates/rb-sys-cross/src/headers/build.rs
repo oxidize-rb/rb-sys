@@ -50,10 +50,7 @@ pub fn build_ruby_headers(platform: &Platform, ruby_version: &str) -> Result<Pat
     let ruby_src = download_ruby_source(&workdir, ruby_version, &ruby_major_minor)?;
 
     // Configure
-    let build_dir = workdir.join(format!(
-        "build-{}-{ruby_version}",
-        platform.ruby_platform
-    ));
+    let build_dir = workdir.join(format!("build-{}-{ruby_version}", platform.ruby_platform));
     if build_dir.exists() {
         fs::remove_dir_all(&build_dir)?;
     }
@@ -126,10 +123,7 @@ fn create_zig_wrappers(wrapper_dir: &Path, zig_target: &str) -> Result<()> {
             "zigcxx",
             format!("#!/bin/sh\nexec zig c++ --target={zig_target} \"$@\"\n"),
         ),
-        (
-            "zigar",
-            "#!/bin/sh\nexec zig ar \"$@\"\n".to_string(),
-        ),
+        ("zigar", "#!/bin/sh\nexec zig ar \"$@\"\n".to_string()),
         (
             "zigranlib",
             "#!/bin/sh\nexec zig ranlib \"$@\"\n".to_string(),
@@ -159,16 +153,17 @@ fn download_ruby_source(workdir: &Path, version: &str, major_minor: &str) -> Res
 
     let tarball = workdir.join(format!("ruby-{version}.tar.gz"));
     if !tarball.exists() {
-        let url = format!(
-            "https://cache.ruby-lang.org/pub/ruby/{major_minor}/ruby-{version}.tar.gz"
-        );
+        let url =
+            format!("https://cache.ruby-lang.org/pub/ruby/{major_minor}/ruby-{version}.tar.gz");
         eprintln!("Downloading Ruby {version}...");
 
-        let response = reqwest::blocking::get(&url)
-            .with_context(|| format!("fetching {url}"))?;
+        let response = reqwest::blocking::get(&url).with_context(|| format!("fetching {url}"))?;
 
         if !response.status().is_success() {
-            bail!("failed to download Ruby source from {url}: HTTP {}", response.status());
+            bail!(
+                "failed to download Ruby source from {url}: HTTP {}",
+                response.status()
+            );
         }
 
         let bytes = response.bytes()?;
@@ -257,7 +252,10 @@ fn patch_config_h(build_dir: &Path) -> Result<()> {
         return Ok(());
     };
 
-    eprintln!("Patching {} with cross-compilation fixups...", config_h.display());
+    eprintln!(
+        "Patching {} with cross-compilation fixups...",
+        config_h.display()
+    );
 
     let content = fs::read_to_string(&config_h)?;
 
@@ -367,9 +365,7 @@ fn collect_artifacts(
         // Fallback: config.h might be in the build root
         let fallback = build_dir.join("include").join("ruby").join("config.h");
         if fallback.exists() {
-            let arch_dir = include_dest
-                .join(platform.ruby_platform)
-                .join("ruby");
+            let arch_dir = include_dest.join(platform.ruby_platform).join("ruby");
             fs::create_dir_all(&arch_dir)?;
             fs::copy(&fallback, arch_dir.join("config.h"))?;
         }

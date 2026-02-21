@@ -4,10 +4,7 @@ use crate::platform::Platform;
 
 pub fn run() -> Result<()> {
     println!("Supported cross-compilation platforms:\n");
-    println!(
-        "  {:<24} {:<40} GLIBC",
-        "RUBY PLATFORM", "RUST TARGET"
-    );
+    println!("  {:<24} {:<40} GLIBC", "RUBY PLATFORM", "RUST TARGET");
     println!("  {}", "-".repeat(80));
 
     for p in Platform::all() {

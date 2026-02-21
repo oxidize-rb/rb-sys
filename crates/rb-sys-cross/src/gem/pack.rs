@@ -35,18 +35,17 @@ pub struct GemPackOptions<'a> {
 ///   lib/<gem_name>/3.3/<crate_name>.so
 ///   lib/<gem_name>/3.4/<crate_name>.so
 pub fn pack_native_gem(opts: &GemPackOptions) -> Result<PathBuf> {
-    let gem_name = opts
-        .config
-        .gem
-        .name
-        .as_deref()
-        .unwrap_or(&opts.meta.name);
+    let gem_name = opts.config.gem.name.as_deref().unwrap_or(&opts.meta.name);
 
     std::fs::create_dir_all(opts.output_dir)
         .with_context(|| format!("creating output dir {}", opts.output_dir.display()))?;
 
     // Build the file list for the gemspec
-    let ruby_versions: Vec<String> = opts.artifacts.iter().map(|a| a.ruby_version.clone()).collect();
+    let ruby_versions: Vec<String> = opts
+        .artifacts
+        .iter()
+        .map(|a| a.ruby_version.clone())
+        .collect();
     let file_list = build_file_list(
         gem_name,
         &opts.meta.crate_name,

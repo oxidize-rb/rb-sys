@@ -33,8 +33,7 @@ pub fn ensure_headers(ruby_platform: &str, ruby_version: &str) -> Result<PathBuf
     );
     pb.set_message(format!("{ruby_platform} ruby-{ruby_version}"));
 
-    let response = reqwest::blocking::get(&url)
-        .with_context(|| format!("fetching {url}"))?;
+    let response = reqwest::blocking::get(&url).with_context(|| format!("fetching {url}"))?;
 
     if !response.status().is_success() {
         // Clean up empty dir on failure

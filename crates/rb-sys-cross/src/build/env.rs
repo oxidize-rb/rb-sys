@@ -63,10 +63,7 @@ impl CrossCompileEnv {
             "BINDGEN_EXTRA_CLANG_ARGS".into(),
             self.bindgen_extra_clang_args.clone(),
         ));
-        pairs.push((
-            "CARGO_BUILD_TARGET".into(),
-            self.cargo_build_target.clone(),
-        ));
+        pairs.push(("CARGO_BUILD_TARGET".into(), self.cargo_build_target.clone()));
 
         pairs
     }

@@ -47,9 +47,12 @@ pub struct BuildOpts {
 impl BuildOpts {
     /// Resolve the config path, defaulting to rb-sys-cross.toml next to Cargo.toml.
     fn config_path(&self) -> PathBuf {
-        self.config
-            .clone()
-            .unwrap_or_else(|| self.manifest_path.parent().unwrap().join("rb-sys-cross.toml"))
+        self.config.clone().unwrap_or_else(|| {
+            self.manifest_path
+                .parent()
+                .unwrap()
+                .join("rb-sys-cross.toml")
+        })
     }
 }
 

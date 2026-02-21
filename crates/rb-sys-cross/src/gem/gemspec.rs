@@ -44,8 +44,8 @@ impl CrossConfig {
         if !path.exists() {
             return Ok(Self::default());
         }
-        let contents = std::fs::read_to_string(path)
-            .with_context(|| format!("reading {}", path.display()))?;
+        let contents =
+            std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
         toml::from_str(&contents).with_context(|| format!("parsing {}", path.display()))
     }
 }
@@ -87,11 +87,7 @@ pub fn generate_gemspec_yaml(
     config: &CrossConfig,
 ) -> String {
     let gem_name = config.gem.name.as_deref().unwrap_or(&meta.name);
-    let summary = config
-        .gem
-        .summary
-        .as_deref()
-        .unwrap_or(&meta.description);
+    let summary = config.gem.summary.as_deref().unwrap_or(&meta.description);
     let default_require_paths = vec!["lib".to_string()];
     let require_paths = config
         .gem
@@ -117,10 +113,7 @@ pub fn generate_gemspec_yaml(
     let files_yaml: String = if files.is_empty() {
         "[]".to_string()
     } else {
-        files
-            .iter()
-            .map(|f| format!("\n- {f}"))
-            .collect::<String>()
+        files.iter().map(|f| format!("\n- {f}")).collect::<String>()
     };
 
     // Compute ruby version bounds from the versions we're building for.

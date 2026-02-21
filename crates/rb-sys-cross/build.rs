@@ -51,22 +51,21 @@ fn main() {
         toolchains_path.canonicalize().unwrap().display()
     );
 
-    let contents = fs::read_to_string(&toolchains_path).unwrap_or_else(|e| {
-        panic!(
-            "failed to read {}: {e}",
-            toolchains_path.display()
-        )
-    });
+    let contents = fs::read_to_string(&toolchains_path)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", toolchains_path.display()));
 
-    let data: ToolchainsFile = serde_json::from_str(&contents).unwrap_or_else(|e| {
-        panic!("failed to parse toolchains.json: {e}")
-    });
+    let data: ToolchainsFile = serde_json::from_str(&contents)
+        .unwrap_or_else(|e| panic!("failed to parse toolchains.json: {e}"));
 
     let out_dir = env::var("OUT_DIR").unwrap();
     let out_path = Path::new(&out_dir).join("platforms_generated.rs");
     let mut out = fs::File::create(&out_path).unwrap();
 
-    writeln!(out, "// Auto-generated from data/toolchains.json — do not edit").unwrap();
+    writeln!(
+        out,
+        "// Auto-generated from data/toolchains.json — do not edit"
+    )
+    .unwrap();
     writeln!(out).unwrap();
 
     // Emit PLATFORMS
