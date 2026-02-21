@@ -1,0 +1,32 @@
+[package]
+name = "rb-sys-cross"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+license = "MIT OR Apache-2.0"
+description = "Cross-compile Ruby native extensions without Docker"
+repository = "https://github.com/oxidize-rb/rb-sys"
+
+[[bin]]
+name = "rb-sys-cross"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+flate2 = "1"
+indicatif = "0.17"
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+glob = "0.3"
+regex = "1"
+sha2 = "0.10"
+tar = "0.4"
+toml = "0.8"
+which = "7"
+
+[build-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
