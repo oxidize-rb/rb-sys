@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
-require "psych"
+require "json"
 
 module RbSys
   module Cargo
@@ -141,13 +141,12 @@ module RbSys
       def cargo_metadata
         return @cargo_metadata if @cargo_metadata
 
-        ::Gem.load_yaml
         cargo = ENV["CARGO"] || "cargo"
         args = ["metadata", "--format-version", "1"]
         args << "--no-deps" unless @deps
         out, stderr, status = Open3.capture3(cargo, *args)
         raise "exited with non-zero status (#{status})" unless status.success?
-        data = Gem::SafeYAML.safe_load(out)
+        data = JSON.parse(out)
         raise "metadata must be a Hash" unless data.is_a?(Hash)
         @cargo_metadata = data
       rescue => err
