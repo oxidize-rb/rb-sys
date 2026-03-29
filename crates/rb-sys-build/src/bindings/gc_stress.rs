@@ -41,10 +41,7 @@ pub fn wrap_functions_with_gc_stress(syntax: &mut syn::File) {
             // Create a new extern block for the raw (renamed) functions
             if !raw_fns.is_empty() {
                 let mut raw_block = foreign_mod.clone();
-                raw_block.items = raw_fns
-                    .into_iter()
-                    .map(syn::ForeignItem::Fn)
-                    .collect();
+                raw_block.items = raw_fns.into_iter().map(syn::ForeignItem::Fn).collect();
                 new_items.push(syn::Item::ForeignMod(raw_block));
             }
 
@@ -136,7 +133,8 @@ fn generate_wrapper(mut f: syn::ForeignItemFn) -> (syn::ForeignItemFn, syn::Item
         sig
     };
 
-    let returns_never = matches!(&wrapper_sig.output, syn::ReturnType::Type(_, ty) if is_never_type(ty));
+    let returns_never =
+        matches!(&wrapper_sig.output, syn::ReturnType::Type(_, ty) if is_never_type(ty));
     let has_return = !matches!(&wrapper_sig.output, syn::ReturnType::Default);
 
     let call_expr = quote! { #raw_name(#(#param_names),*) };
