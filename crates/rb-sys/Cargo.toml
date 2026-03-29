@@ -45,6 +45,7 @@ bindgen-return-const-encoding-pointers = [
 bindgen-enable-function-attribute-detection = [
   "rb-sys-build/bindgen-enable-function-attribute-detection",
 ]
+gc-stress = ["rb-sys-build/gc-stress"]
 
 [lib]
 doctest = false
