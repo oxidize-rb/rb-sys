@@ -108,7 +108,8 @@ pub fn generate(
 
         push_cargo_cfg_from_bindings(&tokens, cfg_out)?;
 
-        if cfg!(feature = "gc-stress") {
+        #[cfg(feature = "gc-stress")]
+        {
             debug_log!("INFO: gc-stress feature enabled, wrapping extern C functions with rb_gc_start()");
             println!("cargo:warning=rb-sys: gc-stress enabled — all Ruby C API functions are wrapped with rb_gc_start() calls");
             gc_stress::wrap_functions_with_gc_stress(&mut tokens);
