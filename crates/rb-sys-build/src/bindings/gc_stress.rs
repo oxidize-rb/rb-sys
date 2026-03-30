@@ -67,6 +67,130 @@ pub fn wrap_functions_with_gc_stress(syntax: &mut syn::File) {
     syntax.items.extend(new_items);
 }
 
+/// Functions verified against the Ruby C source to never allocate Ruby objects.
+/// Wrapping these with rb_gc_start() is wasteful — skip them for performance.
+const NON_ALLOCATING_FUNCTIONS: &[&str] = &[
+    // -- Predicate functions (_p suffix) --
+    "rb_obj_frozen_p",
+    "rb_block_given_p",
+    "rb_keyword_given_p",
+    "rb_fiber_alive_p",
+    "rb_proc_lambda_p",
+    "rb_mutex_locked_p",
+    "rb_method_basic_definition_p",
+    "rb_bigzero_p",
+    "rb_ary_shared_with_p",
+    "rb_class_inherited_p",
+    "rb_mod_include_p",
+    "rb_io_closed_p",
+    "rb_autoload_p",
+    "rb_enc_dummy_p",
+    "rb_enc_str_asciionly_p",
+    "rb_enc_unicode_p",
+    "rb_enc_symname_p",
+    "rb_symname_p",
+    "rb_reserved_fd_p",
+    "rb_memory_view_available_p",
+    "rb_absint_singlebit_p",
+    "rb_typeddata_inherited_p",
+    "rb_econv_has_convpath_p",
+    "rb_file_directory_p",
+    "rb_profile_frame_singleton_method_p",
+    "rb_tracepoint_enabled_p",
+    // -- Type checks / identity --
+    "rb_obj_is_kind_of",
+    "rb_obj_is_instance_of",
+    "rb_obj_is_proc",
+    "rb_obj_is_fiber",
+    "rb_obj_is_method",
+    "rb_typeddata_is_kind_of",
+    "rb_check_typeddata",
+    "rb_check_type",
+    // -- Class/object accessors --
+    "rb_obj_class",
+    "rb_obj_classname",
+    "rb_class_real",
+    "rb_class_get_superclass",
+    "rb_class_name",
+    "rb_class2name",
+    "rb_class_attached_object",
+    // -- Object state --
+    "rb_obj_freeze",
+    "rb_obj_setup",
+    // -- Symbol/ID --
+    "rb_sym2id",
+    "rb_id2name",
+    "rb_sym2str",
+    // -- Instance variable read --
+    "rb_ivar_get",
+    "rb_ivar_defined",
+    // -- String (non-allocating) --
+    "rb_str_length",
+    "rb_str_hash",
+    "rb_str_comparable",
+    "rb_str_cmp",
+    "rb_str_equal",
+    // -- Array (non-allocating) --
+    "rb_ary_entry",
+    "rb_ary_freeze",
+    // -- Hash (non-allocating) --
+    "rb_hash_lookup",
+    "rb_hash_lookup2",
+    "rb_hash_size",
+    "rb_hash_freeze",
+    // -- Struct (non-allocating) --
+    "rb_struct_size",
+    "rb_struct_getmember",
+    "rb_struct_aref",
+    // -- Encoding accessors --
+    "rb_enc_get_index",
+    "rb_enc_get",
+    "rb_enc_from_index",
+    "rb_enc_to_index",
+    "rb_enc_compatible",
+    "rb_enc_check",
+    "rb_usascii_encindex",
+    "rb_utf8_encindex",
+    "rb_ascii8bit_encindex",
+    // -- Numeric conversions --
+    "rb_num2long",
+    "rb_num2ulong",
+    "rb_num2int",
+    "rb_fix2int",
+    "rb_fix2uint",
+    "rb_num2short",
+    // -- Thread/fiber --
+    "rb_thread_current",
+    "rb_thread_main",
+    "rb_thread_local_aref",
+    "rb_thread_alone",
+    "rb_fiber_current",
+    // -- IO --
+    "rb_io_descriptor",
+    "rb_io_check_closed",
+    // -- Range --
+    "rb_range_beg_len",
+    "rb_range_values",
+    // -- Regexp --
+    "rb_reg_options",
+    // -- Control flow --
+    "rb_protect",
+    "rb_during_gc",
+    "rb_respond_to",
+    "rb_obj_respond_to",
+    // -- Source location --
+    "rb_sourcefile",
+    "rb_sourceline",
+    "rb_frame_this_func",
+    "rb_frame_callee",
+    // -- Profile frame (non-allocating subset) --
+    "rb_profile_frame_path",
+    "rb_profile_frame_label",
+    "rb_profile_frame_base_label",
+    // -- Memory view --
+    "rb_memory_view_get",
+];
+
 fn should_skip(name: &str, f: &syn::ForeignItemFn) -> bool {
     // Skip GC functions to avoid infinite recursion
     if name.starts_with("rb_gc_") {
@@ -80,6 +204,11 @@ fn should_skip(name: &str, f: &syn::ForeignItemFn) -> bool {
 
     // Skip variadic functions (can't forward varargs)
     if f.sig.variadic.is_some() {
+        return true;
+    }
+
+    // Skip functions verified to never allocate Ruby objects
+    if NON_ALLOCATING_FUNCTIONS.contains(&name) {
         return true;
     }
 
