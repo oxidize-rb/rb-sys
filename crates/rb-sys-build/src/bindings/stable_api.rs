@@ -138,6 +138,40 @@ pub fn categorize_bindings(syntax: &mut syn::File) {
         }
     }
 
+    // Fix const-based layout tests (bindgen 0.72+) that reference opaque
+    // struct types moved to stable/internal modules.
+    for item in excluded_items.iter_mut() {
+        if let syn::Item::Const(ref mut c) = item {
+            let code = c.expr.to_token_stream().to_string();
+            let references_opaque = code.contains("rb_sys__Opaque__")
+                || opaque_idents_to_swap.iter().any(|s| {
+                    code.contains(&format!("< {} >", s))
+                        || code.contains(&format!("< {} ,", s))
+                        || code.contains(&format!("! ({} ,", s))
+                });
+            if references_opaque {
+                let mut new_code = code.replace("rb_sys__Opaque__", "super::stable::");
+                for name in &opaque_idents_to_swap {
+                    new_code = new_code.replace(
+                        &format!("< {} >", name),
+                        &format!("< super::internal::{} >", name),
+                    );
+                    new_code = new_code.replace(
+                        &format!("< {} ,", name),
+                        &format!("< super::internal::{} ,", name),
+                    );
+                    new_code = new_code.replace(
+                        &format!("! ({} ,", name),
+                        &format!("! (super::internal::{} ,", name),
+                    );
+                }
+                if let Ok(new_expr) = syn::parse_str::<syn::Expr>(&new_code) {
+                    c.expr = Box::new(new_expr);
+                }
+            }
+        }
+    }
+
     *syntax = syn::parse_quote! {
         /// Contains all items that are not yet categorized by ABI stability.
         /// These items are candidates for promotion to `stable` or `unstable`
