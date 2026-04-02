@@ -26,6 +26,7 @@ The following features can be enabled in your `Cargo.toml`.
 | `stable-api`               | Uses Ruby's C-level stable API if available for your Ruby version.               |         |
 | `bindgen-rbimpls`          | Includes internal Ruby implementation types in the generated bindings.           |         |
 | `bindgen-deprecated-types` | Includes deprecated Ruby functions and types in the bindings.                    |         |
+| `gc-stress`                | Wraps all Ruby C API functions with `rb_gc_start()` calls to smoke out GC bugs. |         |
 
 ## Usage Examples
 
@@ -46,6 +47,33 @@ Enable the `link-ruby` feature to embed a Ruby VM.
 [dependencies]
 rb-sys = { version = "0.9", features = ["link-ruby"] }
 ```
+
+## GC Stress Testing
+
+The `gc-stress` feature helps find GC safety bugs in native extensions by wrapping every Ruby C API
+function with calls to `rb_gc_start()` before and after the real function call. This forces garbage
+collection at every possible point, making it much more likely to catch issues like:
+
+- Missing GC guards on Ruby objects
+- Use-after-free of Ruby objects that get collected
+- Incorrect GC marking in custom data types
+
+Enable it during testing:
+
+```toml
+[dependencies]
+rb-sys = { version = "0.9", features = ["gc-stress"] }
+```
+
+The following functions are excluded from wrapping to avoid infinite recursion:
+- `rb_gc_*` functions (GC internals)
+- `ruby_x*` functions (memory allocators called during GC)
+- Variadic functions (cannot forward varargs in Rust)
+
+:::caution
+This feature dramatically slows down execution since it triggers a full GC cycle around every Ruby C
+API call. Only use it for testing, never in production.
+:::
 
 ## Ruby Version Compatibility
 
