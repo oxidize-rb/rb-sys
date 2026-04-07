@@ -13,8 +13,9 @@ ENV RUBY_TARGET="arm-linux" \
     CXX_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-g++" \
     AR_arm_unknown_linux_gnueabihf="arm-linux-gnueabihf-ar" \
     BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf" \
-    PKG_CONFIG_PATH="/usr/lib/arm-linux-gnueabihf/pkgconfig" \
-    CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake"
+    PKG_CONFIG_PATH_arm_unknown_linux_gnueabihf="/usr/lib/arm-linux-gnueabihf/pkgconfig" \
+    CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake" \
+    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER="arm-linux-gnueabihf-gcc"
 
 COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh setup/delete-unused-files.sh /
 
