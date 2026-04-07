@@ -16,7 +16,7 @@ ENV RUBY_TARGET="arm-linux" \
     PKG_CONFIG_PATH_arm_unknown_linux_gnueabihf="/usr/lib/arm-linux-gnueabihf/pkgconfig" \
     CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake" \
     CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER="arm-linux-gnueabihf-gcc" \
-    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_RUSTFLAGS="-C link-arg=-fuse-ld=lld"
+    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_RUSTFLAGS="-C link-arg=-fuse-ld=lld -C link-arg=-B/usr/bin"
 
 COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh setup/delete-unused-files.sh /
 
