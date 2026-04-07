@@ -1,5 +1,5 @@
 # Ensure this version matches the rack-compiler-version in Gemfile
-FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.11.0-mri-x86-mingw32
+FROM ghcr.io/rake-compiler/rake-compiler-dock-image:1.11.1-mri-x86-mingw32
 
 ARG LLVM_MINGW_VERSION=20231128 \
     LLVM_MINGW_SHA256=2d532648bfd202bfe5edfa8b7f6c55970f65639779f34115a9a8bfa6f7d87f0b \
