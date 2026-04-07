@@ -15,11 +15,12 @@ ENV RUBY_TARGET="arm-linux" \
     BINDGEN_EXTRA_CLANG_ARGS_arm_unknown_linux_gnueabihf="--sysroot=/usr/arm-linux-gnueabihf" \
     PKG_CONFIG_PATH_arm_unknown_linux_gnueabihf="/usr/lib/arm-linux-gnueabihf/pkgconfig" \
     CMAKE_arm_unknown_linux_gnueabihf="/opt/cmake/bin/cmake" \
-    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER="arm-linux-gnueabihf-gcc"
+    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_LINKER="arm-linux-gnueabihf-gcc" \
+    CARGO_TARGET_ARM_UNKNOWN_LINUX_GNUEABIHF_RUSTFLAGS="-C link-arg=-fuse-ld=lld"
 
 COPY setup/lib.sh setup/rustup.sh setup/rubygems.sh setup/cmake.sh setup/rubybashrc.sh setup/rb-sys-dock.sh setup/delete-unused-files.sh /
 
-RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev libc6-armhf-cross libc6-dev-armhf-cross" && \
+RUN bash -c "source /lib.sh && install_packages libclang-dev clang llvm-dev lld libc6-armhf-cross libc6-dev-armhf-cross" && \
     /rustup.sh && \
     /rubygems.sh && \
     /cmake.sh && \
