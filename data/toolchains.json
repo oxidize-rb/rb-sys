@@ -3,6 +3,48 @@
     "minimum-supported-ruby-version": "2.7",
     "minimum-supported-rust-version": "1.71"
   },
+  "zig": {
+    "configure-overrides": {
+      "ac_cv_func_setpgrp_void": "yes",
+      "ac_cv_func_getpgrp_void": "yes",
+      "ac_cv_working_memcmp": "yes",
+      "rb_cv_binary_elf": "yes",
+      "rb_cv_broken_backtrace": "no"
+    },
+    "config-h-fixups": [
+      "#define RUBY_FUNCTION_NAME_STRING __func__",
+      "#define RUBY_SYMBOL_EXPORT_BEGIN _Pragma(\"GCC visibility push(default)\")",
+      "#define RUBY_SYMBOL_EXPORT_END _Pragma(\"GCC visibility pop\")",
+      "#define RUBY_FUNC_EXPORTED __attribute__ ((__visibility__(\"default\"))) extern",
+      "#define RUBY_FUNC_NONNULL(n,x) __attribute__ ((__nonnull__(n))) x",
+      "#define CONSTFUNC(x) __attribute__ ((__const__)) x",
+      "#define PUREFUNC(x) __attribute__ ((__pure__)) x",
+      "#define NORETURN(x) __attribute__ ((__noreturn__)) x",
+      "#define DEPRECATED(x) __attribute__ ((__deprecated__)) x",
+      "#define DEPRECATED_BY(n,x) __attribute__ ((__deprecated__(\"by \"#n))) x",
+      "#define NOINLINE(x) __attribute__ ((__noinline__)) x",
+      "#define ALWAYS_INLINE(x) __attribute__ ((__always_inline__)) x",
+      "#define NO_SANITIZE(san, x) __attribute__ ((__no_sanitize__(san))) x",
+      "#define NO_SANITIZE_ADDRESS(x) __attribute__ ((__no_sanitize_address__)) x",
+      "#define WARN_UNUSED_RESULT(x) __attribute__ ((__warn_unused_result__)) x",
+      "#define MAYBE_UNUSED(x) __attribute__ ((__unused__)) x",
+      "#define ERRORFUNC(mesg,x) __attribute__ ((__error__ mesg)) x",
+      "#define WARNINGFUNC(mesg,x) __attribute__ ((__warning__ mesg)) x",
+      "#define WEAK(x) __attribute__ ((__weak__)) x",
+      "#define HAVE_FUNC_WEAK 1",
+      "#define FUNC_CDECL(x) __attribute__ ((__cdecl__)) x",
+      "#define HAVE___BUILTIN_UNREACHABLE 1",
+      "#define HAVE__ALIGNOF 1",
+      "#define ENUM_OVER_INT 1",
+      "#define RB_THREAD_LOCAL_SPECIFIER _Thread_local",
+      "#define IOCTL_REQ_TYPE unsigned long",
+      "#define NUM2IOCTLREQ(num) NUM2ULONG(num)",
+      "#define PRI_LL_PREFIX \"ll\"",
+      "#define PRI_SIZE_PREFIX \"z\"",
+      "#define PRI_PTRDIFF_PREFIX \"t\"",
+      "#define NO_ADDRESS_SAFETY_ANALYSIS(x) __attribute__ ((__no_address_safety_analysis__)) x"
+    ]
+  },
   "toolchains": [
     {
       "ruby-platform": "arm-linux",
@@ -12,7 +54,8 @@
         "cc": "arm-linux-gnueabihf-gcc"
       },
       "docker-platform": "linux/arm/v7",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "arm-linux-gnueabihf", "glibc-version": "2.17" }
     },
     {
       "ruby-platform": "aarch64-linux",
@@ -23,7 +66,8 @@
         "cc": "aarch64-linux-gnu-gcc"
       },
       "docker-platform": "linux/arm64/v8",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "aarch64-linux-gnu", "glibc-version": "2.17" }
     },
     {
       "ruby-platform": "aarch64-linux-musl",
@@ -33,7 +77,8 @@
         "cc": "aarch64-linux-musl-gcc"
       },
       "docker-platform": "linux/arm64/v8",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "aarch64-linux-musl", "glibc-version": null }
     },
     {
       "ruby-platform": "arm64-darwin",
@@ -43,7 +88,8 @@
         "cc": "aarch64-apple-darwin-clang"
       },
       "docker-platform": "linux/arm64/v8",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": false }
     },
     {
       "ruby-platform": "x64-mingw-ucrt",
@@ -53,7 +99,8 @@
         "cc": "x86_64-windows-gnu-gcc"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "x86_64-w64-mingw32", "glibc-version": null }
     },
     {
       "ruby-platform": "aarch64-mingw-ucrt",
@@ -63,7 +110,8 @@
         "cc": "aarch64-w64-mingw32-clang"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "aarch64-w64-mingw32", "glibc-version": null }
     },
     {
       "ruby-platform": "x64-mingw32",
@@ -73,7 +121,8 @@
         "cc": "x86_64-windows-gnu-gcc"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "x86_64-w64-mingw32", "glibc-version": null }
     },
     {
       "ruby-platform": "x86-linux",
@@ -83,7 +132,8 @@
         "cc": "i686-redhat-linux-gcc"
       },
       "docker-platform": "linux/i386",
-      "supported": false
+      "supported": false,
+      "zig": { "supported": true, "autoconf-host": "i686-linux-gnu", "glibc-version": "2.17" }
     },
     {
       "ruby-platform": "x86-mingw32",
@@ -93,7 +143,8 @@
         "cc": "i686-w64-mingw32-gcc"
       },
       "docker-platform": "linux/i386",
-      "supported": false
+      "supported": false,
+      "zig": { "supported": true, "autoconf-host": "i686-w64-mingw32", "glibc-version": null }
     },
     {
       "ruby-platform": "x86_64-darwin",
@@ -103,7 +154,8 @@
         "cc": "x86_64-apple-darwin-clang"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": false }
     },
     {
       "ruby-platform": "x86_64-linux",
@@ -114,7 +166,8 @@
         "cc": "x86_64-redhat-linux-gcc"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "x86_64-linux-gnu", "glibc-version": "2.17" }
     },
     {
       "ruby-platform": "x86_64-linux-musl",
@@ -124,7 +177,8 @@
         "cc": "x86_64-unknown-linux-musl-gcc"
       },
       "docker-platform": "linux/amd64",
-      "supported": true
+      "supported": true,
+      "zig": { "supported": true, "autoconf-host": "x86_64-linux-musl", "glibc-version": null }
     }
   ]
 }
