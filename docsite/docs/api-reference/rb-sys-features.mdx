@@ -26,7 +26,7 @@ The following features can be enabled in your `Cargo.toml`.
 | `stable-api`               | Uses Ruby's C-level stable API if available for your Ruby version.               |         |
 | `bindgen-rbimpls`          | Includes internal Ruby implementation types in the generated bindings.           |         |
 | `bindgen-deprecated-types` | Includes deprecated Ruby functions and types in the bindings.                    |         |
-| `gc-stress`                | Wraps all Ruby C API functions with `rb_gc_start()` calls to smoke out GC bugs. |         |
+| `gc-stress`                | Wraps all Ruby C API functions with `rb_gc_start()` calls to smoke out GC bugs.  |         |
 
 ## Usage Examples
 
@@ -66,6 +66,7 @@ rb-sys = { version = "0.9", features = ["gc-stress"] }
 ```
 
 The following functions are excluded from wrapping to avoid infinite recursion:
+
 - `rb_gc_*` functions (GC internals)
 - `ruby_x*` functions (memory allocators called during GC)
 - Variadic functions (cannot forward varargs in Rust)
