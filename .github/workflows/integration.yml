@@ -33,7 +33,7 @@ jobs:
             run: cargo test --release
         os: ["ubuntu-latest", "windows-latest", "macos-15"]
         rust: ["stable"]
-        ruby: ["3.2", "3.3", "3.4"]
+        ruby: ["3.2", "3.3", "3.4", "4.0", "head"]
         exclude:
           - repo:
               slug: magnus-0.5
