@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useThemeConfig } from "@docusaurus/theme-common";
 import { splitNavbarItems, useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import NavbarItem from "@theme/NavbarItem";
+import NavbarLayout from "@theme/Navbar/Layout";
 import NavbarLogo from "@theme/Logo";
 import styles from "./styles.module.css";
 
@@ -38,12 +39,12 @@ export default function Navbar(): React.ReactElement {
   }, [mobileSidebar]);
 
   return (
-    <nav className="navbar navbar--fixed-top">
+    <NavbarLayout>
       <div className="navbar__inner">
         <div className="navbar__items">
           <button
             aria-label="Navigation bar toggle"
-            className="navbar__toggle"
+            className="navbar__toggle clean-btn"
             type="button"
             tabIndex={0}
             onClick={handleSidebarToggle}
@@ -65,6 +66,6 @@ export default function Navbar(): React.ReactElement {
           <NavbarItems items={rightItems} />
         </div>
       </div>
-    </nav>
+    </NavbarLayout>
   );
 }
