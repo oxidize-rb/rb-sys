@@ -168,16 +168,16 @@ fn might_fail(should_fail: bool) -> Result<(), MyError> {
 }
 ```
 
-## Optional Arguments & Blocks
+## Nilable Arguments & Blocks
 
-### Optional Arguments
+### Nilable Arguments
 
-Use `Option<T>` for optional arguments. For keyword arguments, accept an `RHash`.
+Use `Option<T>` for nilable arguments. For keyword arguments, accept an `RHash`.
 
 ```rust
 use magnus::{RHash, Error, TryConvert};
 
-// `greeting` will be `None` if the argument is omitted or `nil`.
+// `greeting` will be `None` if the argument is `nil`.
 fn greet(name: String, greeting: Option<String>) -> String {
     format!("{}, {}!", greeting.unwrap_or_else(|| "Hello".to_string()), name)
 }
