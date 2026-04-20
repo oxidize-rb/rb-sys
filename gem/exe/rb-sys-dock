@@ -154,17 +154,42 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+def find_executable(name)
+  executable_file = ->(path) {
+    stat = begin
+      File.stat(path)
+    rescue
+      nil
+    end
+    path if stat&.file? && stat.executable?
+  }
+
+  # On Windows, PATHEXT lists the extensions that make a file executable
+  exts = ENV["PATHEXT"]&.split(File::PATH_SEPARATOR)&.map(&:downcase)
+
+  try_path = ->(path) {
+    executable_file.call(path) || exts&.lazy&.filter_map { |ext| executable_file.call(path + ext) }&.first
+  }
+
+  # Handle absolute/explicit paths without a PATH search
+  return try_path.call(name) if File.expand_path(name) == name
+
+  path_dirs = ENV.fetch("PATH", "/usr/local/bin:/usr/bin:/bin").split(File::PATH_SEPARATOR)
+  path_dirs.each do |dir|
+    dir = dir.sub(/\A"(.*)"\z/m, '\1') if /mswin|mingw/i.match?(RbConfig::CONFIG["host_os"])
+    found = try_path.call(File.join(dir, name))
+    return found if found
+  end
+  nil
+end
+
 def default_docker_command
   return @default_docker_command if defined?(@default_docker_command)
 
   @default_docker_command = ENV.fetch("DOCKER") do
-    if !(docker = `which docker`).empty?
-      docker.strip
-    elsif !(podman = `which podman`).empty?
-      podman.strip
-    else
+    find_executable("docker") ||
+      find_executable("podman") ||
       logger.fatal("Could not find docker or podman command, please install one of them")
-    end
   end
 end
 
