@@ -97,6 +97,17 @@ impl StableApiDefinition for Definition {
     }
 
     #[inline]
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE {
+        *self.rarray_const_ptr(obj).offset(idx)
+    }
+
+    #[inline]
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE) {
+        let ptr = self.rarray_const_ptr(obj).cast_mut().offset(idx);
+        self.rb_obj_write(obj, ptr, val);
+    }
+
+    #[inline]
     unsafe fn rbasic_class(&self, obj: VALUE) -> Option<NonNull<VALUE>> {
         let rbasic = obj as *const crate::RBasic;
 

@@ -58,6 +58,24 @@ pub trait StableApiDefinition {
     /// is valid.
     unsafe fn rarray_const_ptr(&self, obj: VALUE) -> *const VALUE;
 
+    /// Get element from array by index (akin to `RARRAY_AREF`).
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and that the index is within bounds.
+    unsafe fn rarray_aref(&self, obj: VALUE, idx: isize) -> VALUE;
+
+    /// Set element in array by index (akin to `RARRAY_ASET`).
+    ///
+    /// Includes GC write barrier for safety.
+    ///
+    /// # Safety
+    /// This function is unsafe because it dereferences a raw pointer to get
+    /// access to underlying Ruby data. The caller must ensure that the pointer
+    /// is valid and that the index is within bounds.
+    unsafe fn rarray_aset(&self, obj: VALUE, idx: isize, val: VALUE);
+
     /// Get the class from a VALUE which contains an RBasic struct.
     ///
     /// `VALUE` is a valid pointer to a non-immediate object.

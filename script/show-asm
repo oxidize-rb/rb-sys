@@ -162,6 +162,35 @@ FUNCTIONS = [
     c: {expr: "RARRAY_CONST_PTR(v)", ret: "const VALUE *"},
     ruby_source: "include/ruby/internal/core/rarray.h:RARRAY_CONST_PTR"
   },
+  {
+    name: "rarray_aref",
+    rust: {unsafe: true, ret: "VALUE", expr: "rb_sys::RARRAY_AREF(v, 0)"},
+    c: {expr: "RARRAY_AREF(v, 0)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/core/rarray.h:RARRAY_AREF"
+  },
+  {
+    name: "rarray_aset",
+    rust: {
+      unsafe: true,
+      ret: "VALUE",
+      custom_body: <<~RUST
+        // Set element at index 0 to Qnil
+        rb_sys::RARRAY_ASET(v, 0, rb_sys::Qnil as VALUE);
+        // Return the array for consistency
+        v
+      RUST
+    },
+    c: {
+      custom_body: <<~C,
+        // Set element at index 0 to Qnil
+        RARRAY_ASET(v, 0, Qnil);
+        // Return the array for consistency
+        return v;
+      C
+      ret: "VALUE"
+    },
+    ruby_source: "include/ruby/internal/core/rarray.h:RARRAY_ASET"
+  },
 
   # Object operations
   {
