@@ -97,6 +97,22 @@ extern "C" {
     #[link_name = "impl_rtypeddata_get_data"]
     fn impl_rtypeddata_get_data(obj: VALUE) -> *mut c_void;
 
+    // Accessor functions
+    #[link_name = "impl_rstring_end"]
+    fn impl_rstring_end(obj: VALUE) -> *const c_char;
+
+    #[link_name = "impl_rdata_ptr"]
+    fn impl_rdata_ptr(obj: VALUE) -> *mut c_void;
+
+    #[link_name = "impl_rb_obj_freeze"]
+    fn impl_rb_obj_freeze(obj: VALUE);
+
+    #[link_name = "impl_rb_obj_promoted"]
+    fn impl_rb_obj_promoted(obj: VALUE) -> c_int;
+
+    #[link_name = "impl_rb_obj_promoted_raw"]
+    fn impl_rb_obj_promoted_raw(obj: VALUE) -> c_int;
+
     #[link_name = "impl_fl_able"]
     fn impl_fl_able(obj: VALUE) -> c_int;
 
@@ -368,5 +384,30 @@ impl StableApiDefinition for Definition {
     #[inline]
     fn fl_able(&self, obj: VALUE) -> bool {
         unsafe { impl_fl_able(obj) != 0 }
+    }
+
+    #[inline]
+    unsafe fn rstring_end(&self, obj: VALUE) -> *const c_char {
+        impl_rstring_end(obj)
+    }
+
+    #[inline]
+    unsafe fn rdata_ptr(&self, obj: VALUE) -> *mut c_void {
+        impl_rdata_ptr(obj)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_freeze(&self, obj: VALUE) {
+        impl_rb_obj_freeze(obj)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted(&self, obj: VALUE) -> bool {
+        impl_rb_obj_promoted(obj) != 0
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted_raw(&self, obj: VALUE) -> bool {
+        impl_rb_obj_promoted_raw(obj) != 0
     }
 }

@@ -429,4 +429,41 @@ impl StableApiDefinition for Definition {
     fn fl_able(&self, obj: VALUE) -> bool {
         !self.special_const_p(obj)
     }
+
+    #[inline]
+    unsafe fn rstring_end(&self, obj: VALUE) -> *const c_char {
+        assert!(self.type_p(obj, crate::ruby_value_type::RUBY_T_STRING));
+
+        let ptr = self.rstring_ptr(obj);
+        let len = self.rstring_len(obj);
+        ptr.add(len as usize)
+    }
+
+    #[inline]
+    unsafe fn rdata_ptr(&self, obj: VALUE) -> *mut c_void {
+        assert!(self.type_p(obj, RUBY_T_DATA));
+
+        let rdata = obj as *const RTypedData;
+        (*rdata).data
+    }
+
+    #[inline]
+    unsafe fn rb_obj_freeze(&self, obj: VALUE) {
+        crate::rb_obj_freeze(obj);
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted(&self, obj: VALUE) -> bool {
+        if self.special_const_p(obj) {
+            false
+        } else {
+            self.rb_obj_promoted_raw(obj)
+        }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_promoted_raw(&self, obj: VALUE) -> bool {
+        let rbasic = obj as *const crate::RBasic;
+        ((*rbasic).flags & crate::ruby_fl_type::RUBY_FL_PROMOTED as VALUE) != 0
+    }
 }

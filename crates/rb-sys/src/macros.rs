@@ -582,3 +582,48 @@ pub unsafe fn RB_OBJ_WRITTEN(old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
 pub fn FL_ABLE(obj: VALUE) -> bool {
     api().fl_able(obj)
 }
+
+/// Get pointer to end of string contents (akin to `RSTRING_END`).
+///
+/// # Safety
+/// - `obj` must be a valid Ruby String object
+#[inline(always)]
+pub unsafe fn RSTRING_END(obj: VALUE) -> *const c_char {
+    api().rstring_end(obj)
+}
+
+/// Get data pointer from RData/TypedData object (akin to `DATA_PTR`).
+///
+/// # Safety
+/// - `obj` must be a valid RData or TypedData object
+#[inline(always)]
+pub unsafe fn DATA_PTR(obj: VALUE) -> *mut c_void {
+    api().rdata_ptr(obj)
+}
+
+/// Freeze an object (akin to `RB_OBJ_FREEZE`).
+///
+/// # Safety
+/// - `obj` must be a valid heap-allocated Ruby object
+#[inline(always)]
+pub unsafe fn RB_OBJ_FREEZE(obj: VALUE) {
+    api().rb_obj_freeze(obj)
+}
+
+/// Check if object is promoted to old GC generation (akin to `RB_OBJ_PROMOTED`).
+///
+/// # Safety
+/// - `obj` must be a valid VALUE
+#[inline(always)]
+pub unsafe fn RB_OBJ_PROMOTED(obj: VALUE) -> bool {
+    api().rb_obj_promoted(obj)
+}
+
+/// Raw version assuming FL_ABLE (akin to `RB_OBJ_PROMOTED_RAW`).
+///
+/// # Safety
+/// - `obj` must be a valid heap-allocated Ruby object (FL_ABLE must be true)
+#[inline(always)]
+pub unsafe fn RB_OBJ_PROMOTED_RAW(obj: VALUE) -> bool {
+    api().rb_obj_promoted_raw(obj)
+}
