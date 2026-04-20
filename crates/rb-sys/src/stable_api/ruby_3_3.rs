@@ -533,9 +533,21 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     unsafe fn encoding_get(&self, obj: VALUE) -> std::os::raw::c_int {
-        // Delegate to the exported rb_enc_get_index, which handles both the
-        // inline-encoded and out-of-line (ivar) cases correctly, and is stable
-        // across Ruby versions where the inline-bit offset varies.
-        crate::rb_enc_get_index(obj)
+        // Fast path: encoding index is stored inline in the flags when
+        // < RUBY_ENCODING_INLINE_MAX (0x7f). Only fall back to the libruby
+        // function for out-of-line encodings (rare in practice).
+        // Matches CRuby's `ENCODING_GET` inline function semantics.
+        let rbasic = obj as *const crate::RBasic;
+        let flags = (*rbasic).flags;
+        let shift = crate::ruby_encoding_consts::RUBY_ENCODING_SHIFT as u32;
+        let inline_max =
+            crate::ruby_encoding_consts::RUBY_ENCODING_INLINE_MAX as std::os::raw::c_int;
+        let mask = crate::ruby_encoding_consts::RUBY_ENCODING_MASK as VALUE;
+        let inline_idx = ((flags & mask) >> shift) as std::os::raw::c_int;
+        if inline_idx == inline_max {
+            crate::rb_enc_get_index(obj)
+        } else {
+            inline_idx
+        }
     }
 }
