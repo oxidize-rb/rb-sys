@@ -113,6 +113,21 @@ extern "C" {
     #[link_name = "impl_rb_obj_promoted_raw"]
     fn impl_rb_obj_promoted_raw(obj: VALUE) -> c_int;
 
+    #[link_name = "impl_num2dbl"]
+    fn impl_num2dbl(obj: VALUE) -> f64;
+
+    #[link_name = "impl_dbl2num"]
+    fn impl_dbl2num(val: f64) -> VALUE;
+
+    #[link_name = "impl_rhash_size"]
+    fn impl_rhash_size(obj: VALUE) -> usize;
+
+    #[link_name = "impl_rhash_empty_p"]
+    fn impl_rhash_empty_p(obj: VALUE) -> std::os::raw::c_int;
+
+    #[link_name = "impl_encoding_get"]
+    fn impl_encoding_get(obj: VALUE) -> std::os::raw::c_int;
+
     #[link_name = "impl_fl_able"]
     fn impl_fl_able(obj: VALUE) -> c_int;
 
@@ -409,5 +424,29 @@ impl StableApiDefinition for Definition {
     #[inline]
     unsafe fn rb_obj_promoted_raw(&self, obj: VALUE) -> bool {
         impl_rb_obj_promoted_raw(obj) != 0
+    }
+    #[inline]
+    unsafe fn num2dbl(&self, obj: VALUE) -> std::os::raw::c_double {
+        impl_num2dbl(obj)
+    }
+
+    #[inline]
+    fn dbl2num(&self, val: std::os::raw::c_double) -> VALUE {
+        unsafe { impl_dbl2num(val) }
+    }
+
+    #[inline]
+    unsafe fn rhash_size(&self, obj: VALUE) -> usize {
+        impl_rhash_size(obj)
+    }
+
+    #[inline]
+    unsafe fn rhash_empty_p(&self, obj: VALUE) -> bool {
+        impl_rhash_empty_p(obj) != 0
+    }
+
+    #[inline]
+    unsafe fn encoding_get(&self, obj: VALUE) -> std::os::raw::c_int {
+        impl_encoding_get(obj)
     }
 }

@@ -2,6 +2,7 @@
 #include "ruby/ruby.h"
 #include "ruby/intern.h"
 #include "ruby/version.h"
+#include "ruby/encoding.h"
 
 // Check that we have Ruby API version macros
 #if !defined(RUBY_API_VERSION_MAJOR)
@@ -301,5 +302,37 @@ impl_rb_obj_promoted_raw(VALUE obj)
 #else
   (void)obj;
   return 0;
+#endif
+}
+
+double impl_num2dbl(VALUE obj)
+{
+  return NUM2DBL(obj);
+}
+
+VALUE impl_dbl2num(double val)
+{
+  return DBL2NUM(val);
+}
+
+size_t impl_rhash_size(VALUE obj)
+{
+  return RHASH_SIZE(obj);
+}
+
+int impl_rhash_empty_p(VALUE obj)
+{
+  return RHASH_EMPTY_P(obj);
+}
+
+int impl_encoding_get(VALUE obj)
+{
+#ifdef ENCODING_GET
+  return ENCODING_GET(obj);
+#else
+  // TruffleRuby and other non-MRI engines: delegate to rb_enc_get_index,
+  // which is an exported function (unlike ENCODING_GET, which is an MRI macro
+  // that pokes RBasic.flags directly — a layout TruffleRuby doesn't share).
+  return rb_enc_get_index(obj);
 #endif
 }
