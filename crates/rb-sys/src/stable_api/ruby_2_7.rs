@@ -3,7 +3,7 @@ use crate::{
     debug_ruby_assert_type,
     internal::{RArray, RString, RTypedData},
     ruby_value_type::RUBY_T_DATA,
-    value_type, ID, VALUE,
+    value_type, VALUE,
 };
 use std::{
     ffi::c_void,
@@ -398,5 +398,19 @@ impl StableApiDefinition for Definition {
             // Dynamic symbol: call rb_sym2id
             crate::rb_sym2id(obj)
         }
+    }
+
+    #[inline]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        *slot = young;
+        self.rb_obj_written(old, crate::Qundef as VALUE, young)
+    }
+
+    #[inline]
+    unsafe fn rb_obj_written(&self, old: VALUE, _oldv: VALUE, young: VALUE) -> VALUE {
+        if !self.special_const_p(young) {
+            crate::rb_gc_writebarrier(old, young);
+        }
+        old
     }
 }

@@ -418,4 +418,18 @@ impl StableApiDefinition for Definition {
             crate::rb_sym2id(obj)
         }
     }
+
+    #[inline(always)]
+    unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
+        *slot = young;
+        self.rb_obj_written(old, crate::Qundef as VALUE, young)
+    }
+
+    #[inline(always)]
+    unsafe fn rb_obj_written(&self, old: VALUE, _oldv: VALUE, young: VALUE) -> VALUE {
+        if !self.special_const_p(young) {
+            crate::rb_gc_writebarrier(old, young);
+        }
+        old
+    }
 }
