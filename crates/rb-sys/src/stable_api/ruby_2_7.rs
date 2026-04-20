@@ -3,7 +3,7 @@ use crate::{
     debug_ruby_assert_type,
     internal::{RArray, RString, RTypedData},
     ruby_value_type::RUBY_T_DATA,
-    value_type, ID, VALUE,
+    value_type, VALUE,
 };
 use std::{
     ffi::c_void,
@@ -14,23 +14,6 @@ use std::{
 
 #[cfg(not(ruby_eq_2_7))]
 compile_error!("This file should only be included in Ruby 2.7 builds");
-
-extern "C" {
-    fn rb_obj_write(
-        old: VALUE,
-        slot: *mut VALUE,
-        young: VALUE,
-        file: *const c_char,
-        line: c_long,
-    ) -> VALUE;
-    fn rb_obj_written(
-        old: VALUE,
-        oldv: VALUE,
-        young: VALUE,
-        file: *const c_char,
-        line: c_long,
-    ) -> VALUE;
-}
 
 pub struct Definition;
 
@@ -419,11 +402,15 @@ impl StableApiDefinition for Definition {
 
     #[inline]
     unsafe fn rb_obj_write(&self, old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE {
-        rb_obj_write(old, slot, young, core::ptr::null(), 0)
+        *slot = young;
+        self.rb_obj_written(old, crate::Qundef as VALUE, young)
     }
 
     #[inline]
-    unsafe fn rb_obj_written(&self, old: VALUE, oldv: VALUE, young: VALUE) -> VALUE {
-        rb_obj_written(old, oldv, young, core::ptr::null(), 0)
+    unsafe fn rb_obj_written(&self, old: VALUE, _oldv: VALUE, young: VALUE) -> VALUE {
+        if !self.special_const_p(young) {
+            crate::rb_gc_writebarrier(old, young);
+        }
+        old
     }
 }

@@ -500,14 +500,14 @@ pub fn ULONG2NUM(val: std::os::raw::c_ulong) -> VALUE {
 
 /// Execute GC write barrier when storing a reference (akin to `RB_OBJ_WRITE`).
 ///
-/// Must be called when storing a VALUE reference from one heap object to another.
-/// This is critical for GC correctness - without it, the GC may collect objects
-/// that are still referenced.
+/// Writes `young` into `*slot` and notifies the GC so generational/incremental
+/// collection stays correct. Without this, the GC may collect objects that are
+/// still referenced.
 ///
 /// @param[in]  old    The object being modified (must be heap-allocated).
 /// @param[in]  slot   Pointer to the VALUE slot within `old` being written to.
 /// @param[in]  young  The VALUE being stored.
-/// @return     The VALUE that was written (`young`).
+/// @return     `old` — matches CRuby's `RB_OBJ_WRITE` semantics.
 ///
 /// # Safety
 /// - `old` must be a valid heap-allocated Ruby object
@@ -527,7 +527,7 @@ pub unsafe fn RB_OBJ_WRITE(old: VALUE, slot: *mut VALUE, young: VALUE) -> VALUE 
 /// @param[in]  old    The object being modified (must be heap-allocated).
 /// @param[in]  oldv   The previous value (can be any VALUE).
 /// @param[in]  young  The VALUE that was written.
-/// @return     The VALUE that was written (`young`).
+/// @return     `old` — matches CRuby's `RB_OBJ_WRITTEN` semantics.
 ///
 /// # Safety
 /// - `old` must be a valid heap-allocated Ruby object

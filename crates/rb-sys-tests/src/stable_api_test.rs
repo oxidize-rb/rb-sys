@@ -1185,8 +1185,9 @@ fn test_rb_obj_write_basic() {
         // Use write barrier to store reference
         let result = rb_sys::RB_OBJ_WRITE(ary, ptr, str);
 
-        // Verify the result is the value we wrote
-        assert_eq!(result, str);
+        // RB_OBJ_WRITE returns `old`, and `*slot` now holds `young`.
+        assert_eq!(result, ary);
+        assert_eq!(*ptr, str);
     }
 }
 
@@ -1205,8 +1206,8 @@ fn test_rb_obj_written_basic() {
         // Inform GC about the write
         let result = rb_sys::RB_OBJ_WRITTEN(ary, rb_sys::Qnil as VALUE, str);
 
-        // Verify the result is the value we wrote
-        assert_eq!(result, str);
+        // RB_OBJ_WRITTEN returns `old`.
+        assert_eq!(result, ary);
     }
 }
 
