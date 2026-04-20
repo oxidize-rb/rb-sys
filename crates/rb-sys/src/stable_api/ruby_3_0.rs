@@ -432,4 +432,8 @@ impl StableApiDefinition for Definition {
         }
         old
     }
+    #[inline]
+    fn fl_able(&self, obj: VALUE) -> bool {
+        !self.special_const_p(obj)
+    }
 }
