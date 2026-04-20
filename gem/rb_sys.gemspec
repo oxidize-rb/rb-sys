@@ -27,8 +27,6 @@ Gem::Specification.new do |spec|
     spec.signing_key = File.expand_path("~/.ssh/gem-private_key.pem") if $0.end_with?("gem")
   end
 
-  spec.add_dependency("json", ">= 2")
-
   # Needed for `RakeCompilerDock.cross_rubies`
   spec.add_dependency("rake-compiler-dock", "1.11.0")
 
