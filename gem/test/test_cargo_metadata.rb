@@ -15,6 +15,20 @@ class TestCargoMetadata < Minitest::Test
     end
   end
 
+  def test_cargo_metadata_with_utf_8
+    skip if win_target?
+
+    original_encoding = Encoding.default_external
+    Encoding.default_external = Encoding::US_ASCII
+    in_new_crate("フー") do |dir|
+      metadata = RbSys::Cargo::Metadata.new("フー")
+
+      assert metadata.target_directory.end_with?(File.join(dir, "target"))
+    end
+  ensure
+    Encoding.default_external = original_encoding if original_encoding
+  end
+
   def test_fails_when_cargo_metadata_fails
     skip if win_target?
 
