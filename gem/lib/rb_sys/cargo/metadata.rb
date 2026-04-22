@@ -145,6 +145,7 @@ module RbSys
         args = ["metadata", "--format-version", "1"]
         args << "--no-deps" unless @deps
         out, stderr, status = Open3.capture3(cargo, *args)
+        out.force_encoding(Encoding::UTF_8)
         raise "exited with non-zero status (#{status})" unless status.success?
         data = JSON.parse(out)
         raise "metadata must be a Hash" unless data.is_a?(Hash)
