@@ -1827,3 +1827,846 @@ parity_test!(
         gen_rstring!("abc")
     }
 );
+
+// ============================================================
+// Edge-case parity tests — stress the stable-api inlines
+// ============================================================
+
+// ── rstring_len ─────────────────────────────────────────────
+
+parity_test!(
+    name: test_rstring_len_empty,
+    func: rstring_len,
+    data_factory: { ruby_eval!("''") },
+    expected: 0
+);
+
+// NUL byte mid-string: RSTRING_LEN must return 7, not 3
+parity_test!(
+    name: test_rstring_len_with_nul_byte,
+    func: rstring_len,
+    data_factory: { ruby_eval!("\"foo\\x00bar\"") },
+    expected: 7
+);
+
+// Exactly at RSTRING_EMBED_LEN_MAX (23 bytes on 64-bit MRI) — inline storage
+parity_test!(
+    name: test_rstring_len_at_embed_max,
+    func: rstring_len,
+    data_factory: { ruby_eval!("'a' * 23") },
+    expected: 23
+);
+
+// One byte past embed max — forces heap ptr+len storage
+parity_test!(
+    name: test_rstring_len_just_above_embed,
+    func: rstring_len,
+    data_factory: { ruby_eval!("'a' * 24") },
+    expected: 24
+);
+
+// Binary string: 4 raw bytes including 0x00 and 0xFF
+parity_test!(
+    name: test_rstring_len_binary_bytes,
+    func: rstring_len,
+    data_factory: { ruby_eval!("\"\\x00\\x01\\x02\\xFF\".force_encoding('BINARY')") },
+    expected: 4
+);
+
+// Multibyte UTF-8: U+1F600 (GRINNING FACE) = 4 bytes
+parity_test!(
+    name: test_rstring_len_multibyte_utf8,
+    func: rstring_len,
+    data_factory: { ruby_eval!("\"\\u{1F600}\"") },
+    expected: 4
+);
+
+parity_test!(
+    name: test_rstring_len_frozen,
+    func: rstring_len,
+    data_factory: { ruby_eval!("'frozen'.freeze") },
+    expected: 6
+);
+
+// ── rstring_ptr: embedded vs heap ───────────────────────────
+
+// Embedded string: ptr points into the RString struct itself
+parity_test!(
+    name: test_rstring_ptr_embedded,
+    func: rstring_ptr,
+    data_factory: { ruby_eval!("'hello'") }
+);
+
+// Heap string: ptr points to malloc'd buffer
+parity_test!(
+    name: test_rstring_ptr_heap,
+    func: rstring_ptr,
+    data_factory: { ruby_eval!("'a' * 100") }
+);
+
+// rstring_end for embedded string: must equal ptr + len
+#[rb_sys_test_helpers::ruby_test]
+fn test_rstring_end_equals_ptr_plus_len_embedded() {
+    unsafe {
+        let s = ruby_eval!("'hello'");
+        let api = stable_api::get_default();
+        let ptr = api.rstring_ptr(s);
+        let len = api.rstring_len(s) as usize;
+        let end = api.rstring_end(s);
+        assert_eq!(ptr.add(len), end);
+    }
+}
+
+// rstring_end for heap string
+#[rb_sys_test_helpers::ruby_test]
+fn test_rstring_end_equals_ptr_plus_len_heap() {
+    unsafe {
+        let s = ruby_eval!("'a' * 100");
+        let api = stable_api::get_default();
+        let ptr = api.rstring_ptr(s);
+        let len = api.rstring_len(s) as usize;
+        let end = api.rstring_end(s);
+        assert_eq!(ptr.add(len), end);
+    }
+}
+
+// ── rarray_len: embedded vs heap boundary ───────────────────
+
+parity_test!(
+    name: test_rarray_len_empty,
+    func: rarray_len,
+    data_factory: { ruby_eval!("[]") },
+    expected: 0
+);
+
+// RARRAY_EMBED_LEN_MAX = 3 on 64-bit — all three elements inline
+parity_test!(
+    name: test_rarray_len_embed_max,
+    func: rarray_len,
+    data_factory: { ruby_eval!("[1, 2, 3]") },
+    expected: 3
+);
+
+// 4 elements — first heap-allocated array (RARRAY_EMBED_FLAG unset)
+parity_test!(
+    name: test_rarray_len_just_above_embed,
+    func: rarray_len,
+    data_factory: { ruby_eval!("[1, 2, 3, 4]") },
+    expected: 4
+);
+
+parity_test!(
+    name: test_rarray_len_large,
+    func: rarray_len,
+    data_factory: { ruby_eval!("Array.new(1000, nil)") },
+    expected: 1000
+);
+
+// Array containing only special VALUE constants (nil/false/true/fixnum/symbol)
+parity_test!(
+    name: test_rarray_len_special_value_elements,
+    func: rarray_len,
+    data_factory: { ruby_eval!("[nil, false, true, 0, 1, :sym]") },
+    expected: 6
+);
+
+// Nested array: outer length = 3, not 9
+parity_test!(
+    name: test_rarray_len_nested,
+    func: rarray_len,
+    data_factory: { ruby_eval!("[[1,2,3],[4,5,6],[7,8,9]]") },
+    expected: 3
+);
+
+// rarray_const_ptr: embedded (3 elems) vs heap (5 elems)
+parity_test!(
+    name: test_rarray_const_ptr_embedded,
+    func: rarray_const_ptr,
+    data_factory: { ruby_eval!("[10, 20, 30]") }
+);
+
+parity_test!(
+    name: test_rarray_const_ptr_heap,
+    func: rarray_const_ptr,
+    data_factory: { ruby_eval!("[10, 20, 30, 40, 50]") }
+);
+
+// ── num2dbl: special float values ───────────────────────────
+
+// NaN cannot use assert_eq! (NaN != NaN); check is_nan() on both sides
+#[rb_sys_test_helpers::ruby_test]
+fn test_num2dbl_nan_parity() {
+    unsafe {
+        let nan_obj = ruby_eval!("Float::NAN");
+        let rust_val = stable_api::get_default().num2dbl(nan_obj);
+        let c_val = stable_api::get_compiled().num2dbl(nan_obj);
+        assert!(rust_val.is_nan(), "rust num2dbl(NaN) = {rust_val}");
+        assert!(c_val.is_nan(), "c num2dbl(NaN) = {c_val}");
+    }
+}
+
+// -0.0 is a heap Float; verify both implementations preserve the sign bit
+#[rb_sys_test_helpers::ruby_test]
+fn test_num2dbl_negative_zero_sign_preserved() {
+    unsafe {
+        let neg_zero = ruby_eval!("-0.0");
+        let rust_val = stable_api::get_default().num2dbl(neg_zero);
+        let c_val = stable_api::get_compiled().num2dbl(neg_zero);
+        assert_eq!(
+            rust_val.to_bits(),
+            c_val.to_bits(),
+            "bit mismatch for -0.0: rust={:#018x} c={:#018x}",
+            rust_val.to_bits(),
+            c_val.to_bits()
+        );
+        assert!(rust_val.is_sign_negative(), "rust: -0.0 sign bit lost");
+    }
+}
+
+parity_test!(
+    name: test_num2dbl_negative_infinity,
+    func: num2dbl,
+    data_factory: { ruby_eval!("-Float::INFINITY") }
+);
+
+parity_test!(
+    name: test_num2dbl_negative_flonum,
+    func: num2dbl,
+    data_factory: { ruby_eval!("-1.5") }
+);
+
+parity_test!(
+    name: test_num2dbl_negative_one,
+    func: num2dbl,
+    data_factory: { ruby_eval!("-1.0") }
+);
+
+// Smallest positive denormal (5e-324): heap Float, not a flonum
+parity_test!(
+    name: test_num2dbl_subnormal,
+    func: num2dbl,
+    data_factory: { ruby_eval!("5e-324") }
+);
+
+// Smallest normalized positive (f64::MIN_POSITIVE ≈ 2.22e-308)
+parity_test!(
+    name: test_num2dbl_min_positive_normalized,
+    func: num2dbl,
+    data_factory: { ruby_eval!("2.2250738585072014e-308") }
+);
+
+// Integer 0 as Float: should give 0.0 (via fixnum fast path)
+parity_test!(
+    name: test_num2dbl_fixnum_zero,
+    func: num2dbl,
+    data_factory: { ruby_eval!("0") },
+    expected: 0.0f64
+);
+
+parity_test!(
+    name: test_num2dbl_fixnum_minus_one,
+    func: num2dbl,
+    data_factory: { ruby_eval!("-1") },
+    expected: -1.0f64
+);
+
+// ── dbl2num: parity on in-flonum-range negatives + roundtrips ─
+
+parity_test!(
+    name: test_dbl2num_negative_flonum,
+    func: dbl2num,
+    data_factory: { -1.5f64 }
+);
+
+parity_test!(
+    name: test_dbl2num_negative_one,
+    func: dbl2num,
+    data_factory: { -1.0f64 }
+);
+
+// -0.0 is heap-allocated (not a flonum); roundtrip must preserve sign
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_negative_zero_roundtrip() {
+    unsafe {
+        let rust_obj = stable_api::get_default().dbl2num(-0.0f64);
+        let c_obj = stable_api::get_compiled().dbl2num(-0.0f64);
+        let rust_bits = stable_api::get_default().num2dbl(rust_obj).to_bits();
+        let c_bits = stable_api::get_compiled().num2dbl(c_obj).to_bits();
+        assert_eq!(
+            rust_bits, c_bits,
+            "dbl2num(-0.0) bit mismatch: rust={:#018x} c={:#018x}",
+            rust_bits, c_bits
+        );
+        let neg_zero_bits = (-0.0f64).to_bits();
+        assert_eq!(rust_bits, neg_zero_bits, "dbl2num(-0.0) roundtrip lost sign");
+    }
+}
+
+// NaN is heap-allocated; roundtrip must give back NaN
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_nan_roundtrip() {
+    unsafe {
+        let rust_obj = stable_api::get_default().dbl2num(f64::NAN);
+        let c_obj = stable_api::get_compiled().dbl2num(f64::NAN);
+        let rust_val = stable_api::get_default().num2dbl(rust_obj);
+        let c_val = stable_api::get_compiled().num2dbl(c_obj);
+        assert!(rust_val.is_nan(), "rust dbl2num(NaN) roundtrip = {rust_val}");
+        assert!(c_val.is_nan(), "c dbl2num(NaN) roundtrip = {c_val}");
+    }
+}
+
+// -Inf is heap-allocated; roundtrip
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_neg_infinity_roundtrip() {
+    unsafe {
+        let rust_obj = stable_api::get_default().dbl2num(f64::NEG_INFINITY);
+        let c_obj = stable_api::get_compiled().dbl2num(f64::NEG_INFINITY);
+        let rust_val = stable_api::get_default().num2dbl(rust_obj);
+        let c_val = stable_api::get_compiled().num2dbl(c_obj);
+        assert!(
+            rust_val.is_infinite() && rust_val.is_sign_negative(),
+            "rust: expected -Inf, got {rust_val}"
+        );
+        assert_eq!(rust_val, c_val);
+    }
+}
+
+// ── rhash_size: AR/ST boundary and mutation ─────────────────
+
+// Exactly 8 entries — at or just below the AR→ST threshold
+parity_test!(
+    name: test_rhash_size_exactly_eight,
+    func: rhash_size,
+    data_factory: { ruby_eval!("h = {}; 8.times { |i| h[i] = i }; h") },
+    expected: 8
+);
+
+// 9 entries — forces ST table on MRI
+parity_test!(
+    name: test_rhash_size_exactly_nine,
+    func: rhash_size,
+    data_factory: { ruby_eval!("h = {}; 9.times { |i| h[i] = i }; h") },
+    expected: 9
+);
+
+// After deleting one entry: size must decrease
+parity_test!(
+    name: test_rhash_size_after_delete,
+    func: rhash_size,
+    data_factory: { ruby_eval!("h = {a: 1, b: 2, c: 3}; h.delete(:b); h") },
+    expected: 2
+);
+
+// String keys
+parity_test!(
+    name: test_rhash_size_string_keys,
+    func: rhash_size,
+    data_factory: { ruby_eval!("{'x' => 1, 'y' => 2, 'z' => 3}") },
+    expected: 3
+);
+
+// Mixed key types: integer, symbol, string, nil
+parity_test!(
+    name: test_rhash_size_mixed_keys,
+    func: rhash_size,
+    data_factory: { ruby_eval!("{1 => 'a', :sym => 'b', 'str' => 'c', nil => 'd'}") },
+    expected: 4
+);
+
+// Size counts top-level pairs only — nested values don't inflate it
+parity_test!(
+    name: test_rhash_size_nested_values,
+    func: rhash_size,
+    data_factory: { ruby_eval!("{a: {b: {c: 1}}, d: [1,2,3]}") },
+    expected: 2
+);
+
+// After deleting all entries: must be empty
+parity_test!(
+    name: test_rhash_empty_p_after_delete_all,
+    func: rhash_empty_p,
+    data_factory: { ruby_eval!("h = {a: 1}; h.delete(:a); h") },
+    expected: true
+);
+
+// ── encoding_get: non-UTF-8 encodings ───────────────────────
+
+parity_test!(
+    name: test_encoding_get_binary,
+    func: encoding_get,
+    data_factory: { ruby_eval!("\"\\x00\\xFF\".force_encoding('BINARY')") }
+);
+
+parity_test!(
+    name: test_encoding_get_us_ascii,
+    func: encoding_get,
+    data_factory: { ruby_eval!("\"hello\".force_encoding('US-ASCII')") }
+);
+
+// BINARY and UTF-8 must produce different encoding indices.
+// Use force_encoding to guarantee UTF-8 vs BINARY are distinct — `rb_eval_string_protect`
+// may default to ASCII-8BIT (index 0) for pure-ASCII strings, same as BINARY.
+#[rb_sys_test_helpers::ruby_test]
+fn test_encoding_get_binary_differs_from_utf8() {
+    unsafe {
+        // Force UTF-8 explicitly so the index is never confused with BINARY (index 0)
+        let utf8 = ruby_eval!("\"\\u00E9\".force_encoding('UTF-8')");  // é
+        let binary = ruby_eval!("\"\\xFF\".force_encoding('BINARY')");
+        let utf8_enc = stable_api::get_default().encoding_get(utf8);
+        let binary_enc = stable_api::get_default().encoding_get(binary);
+        assert_ne!(utf8_enc, binary_enc, "UTF-8 and BINARY must have different encoding indices (got utf8={utf8_enc}, binary={binary_enc})");
+    }
+}
+
+// ── frozen_p: all immediate types are always frozen ─────────
+
+parity_test!(
+    name: test_frozen_p_symbol,
+    func: frozen_p,
+    data_factory: { ruby_eval!(":hello") },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_integer,
+    func: frozen_p,
+    data_factory: { ruby_eval!("42") },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_float_heap,
+    func: frozen_p,
+    data_factory: { ruby_eval!("Float::INFINITY") },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_nil,
+    func: frozen_p,
+    data_factory: { rb_sys::Qnil as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_true_val,
+    func: frozen_p,
+    data_factory: { rb_sys::Qtrue as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_false_val,
+    func: frozen_p,
+    data_factory: { rb_sys::Qfalse as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_mutable_string,
+    func: frozen_p,
+    data_factory: { ruby_eval!("+'hello'") },
+    expected: false
+);
+
+parity_test!(
+    name: test_frozen_p_frozen_string,
+    func: frozen_p,
+    data_factory: { ruby_eval!("'hello'.freeze") },
+    expected: true
+);
+
+parity_test!(
+    name: test_frozen_p_mutable_hash,
+    func: frozen_p,
+    data_factory: { ruby_eval!("{a: 1}") },
+    expected: false
+);
+
+parity_test!(
+    name: test_frozen_p_frozen_hash,
+    func: frozen_p,
+    data_factory: { ruby_eval!("{a: 1}.freeze") },
+    expected: true
+);
+
+// ── special_const_p: immediates vs heap objects ──────────────
+
+parity_test!(
+    name: test_special_const_p_nil,
+    func: special_const_p,
+    data_factory: { rb_sys::Qnil as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_special_const_p_true_val,
+    func: special_const_p,
+    data_factory: { rb_sys::Qtrue as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_special_const_p_false_val,
+    func: special_const_p,
+    data_factory: { rb_sys::Qfalse as VALUE },
+    expected: true
+);
+
+parity_test!(
+    name: test_special_const_p_fixnum_zero,
+    func: special_const_p,
+    data_factory: { ruby_eval!("0") },
+    expected: true
+);
+
+parity_test!(
+    name: test_special_const_p_fixnum_large,
+    func: special_const_p,
+    data_factory: { ruby_eval!("9999") },
+    expected: true
+);
+
+// Flonum is an immediate on 64-bit — must be a special const
+parity_test!(
+    name: test_special_const_p_flonum,
+    func: special_const_p,
+    data_factory: { ruby_eval!("1.5") },
+    expected: true
+);
+
+// Heap-allocated Float (Inf) is NOT a special const
+parity_test!(
+    name: test_special_const_p_heap_float,
+    func: special_const_p,
+    data_factory: { ruby_eval!("Float::INFINITY") },
+    expected: false
+);
+
+parity_test!(
+    name: test_special_const_p_bignum,
+    func: special_const_p,
+    data_factory: { ruby_eval!("2**64") },
+    expected: false
+);
+
+parity_test!(
+    name: test_special_const_p_array,
+    func: special_const_p,
+    data_factory: { ruby_eval!("[]") },
+    expected: false
+);
+
+// ── nil_p: only Qnil should be true ─────────────────────────
+
+parity_test!(
+    name: test_nil_p_false_val,
+    func: nil_p,
+    data_factory: { rb_sys::Qfalse as VALUE },
+    expected: false
+);
+
+parity_test!(
+    name: test_nil_p_zero,
+    func: nil_p,
+    data_factory: { ruby_eval!("0") },
+    expected: false
+);
+
+parity_test!(
+    name: test_nil_p_empty_string,
+    func: nil_p,
+    data_factory: { ruby_eval!("''") },
+    expected: false
+);
+
+parity_test!(
+    name: test_nil_p_empty_array,
+    func: nil_p,
+    data_factory: { ruby_eval!("[]") },
+    expected: false
+);
+
+// ── rb_test: Ruby truthiness (nil and false are falsy; everything else truthy) ─
+
+parity_test!(
+    name: test_rb_test_nil,
+    func: rb_test,
+    data_factory: { rb_sys::Qnil as VALUE },
+    expected: false
+);
+
+parity_test!(
+    name: test_rb_test_false_val,
+    func: rb_test,
+    data_factory: { rb_sys::Qfalse as VALUE },
+    expected: false
+);
+
+parity_test!(
+    name: test_rb_test_true_val,
+    func: rb_test,
+    data_factory: { rb_sys::Qtrue as VALUE },
+    expected: true
+);
+
+// 0 is truthy in Ruby — common gotcha from C/Java backgrounds
+parity_test!(
+    name: test_rb_test_zero_is_truthy,
+    func: rb_test,
+    data_factory: { ruby_eval!("0") },
+    expected: true
+);
+
+// "" is truthy in Ruby
+parity_test!(
+    name: test_rb_test_empty_string_is_truthy,
+    func: rb_test,
+    data_factory: { ruby_eval!("''") },
+    expected: true
+);
+
+// [] is truthy in Ruby
+parity_test!(
+    name: test_rb_test_empty_array_is_truthy,
+    func: rb_test,
+    data_factory: { ruby_eval!("[]") },
+    expected: true
+);
+
+// {} is truthy in Ruby
+parity_test!(
+    name: test_rb_test_empty_hash_is_truthy,
+    func: rb_test,
+    data_factory: { ruby_eval!("{}") },
+    expected: true
+);
+
+// ── type_p: two-arg function — needs custom tests ────────────
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_type_p_string_correct_type() {
+    unsafe {
+        let obj = ruby_eval!("'hello'");
+        let ty = rb_sys::ruby_value_type::RUBY_T_STRING;
+        let rust = stable_api::get_default().type_p(obj, ty);
+        let c = stable_api::get_compiled().type_p(obj, ty);
+        assert_eq!(rust, c);
+        assert!(rust, "T_STRING object must match T_STRING type");
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_type_p_string_wrong_type() {
+    unsafe {
+        let obj = ruby_eval!("'hello'");
+        let ty = rb_sys::ruby_value_type::RUBY_T_ARRAY;
+        let rust = stable_api::get_default().type_p(obj, ty);
+        let c = stable_api::get_compiled().type_p(obj, ty);
+        assert_eq!(rust, c);
+        assert!(!rust, "T_STRING object must not match T_ARRAY type");
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_type_p_bignum_correct_type() {
+    unsafe {
+        let obj = ruby_eval!("2**64");
+        let ty = rb_sys::ruby_value_type::RUBY_T_BIGNUM;
+        let rust = stable_api::get_default().type_p(obj, ty);
+        let c = stable_api::get_compiled().type_p(obj, ty);
+        assert_eq!(rust, c);
+        assert!(rust, "2**64 must be T_BIGNUM");
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_type_p_heap_float_correct_type() {
+    unsafe {
+        let obj = ruby_eval!("Float::INFINITY");
+        let ty = rb_sys::ruby_value_type::RUBY_T_FLOAT;
+        let rust = stable_api::get_default().type_p(obj, ty);
+        let c = stable_api::get_compiled().type_p(obj, ty);
+        assert_eq!(rust, c);
+        assert!(rust, "Float::INFINITY must be T_FLOAT");
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_type_p_hash_correct_type() {
+    unsafe {
+        let obj = ruby_eval!("{a: 1}");
+        let ty = rb_sys::ruby_value_type::RUBY_T_HASH;
+        let rust = stable_api::get_default().type_p(obj, ty);
+        let c = stable_api::get_compiled().type_p(obj, ty);
+        assert_eq!(rust, c);
+        assert!(rust, "Hash object must match T_HASH");
+    }
+}
+
+// ── rbasic_class edge cases ──────────────────────────────────
+
+parity_test!(
+    name: test_rbasic_class_string,
+    func: rbasic_class,
+    data_factory: { ruby_eval!("'hello'") }
+);
+
+parity_test!(
+    name: test_rbasic_class_hash,
+    func: rbasic_class,
+    data_factory: { ruby_eval!("{}") }
+);
+
+parity_test!(
+    name: test_rbasic_class_bignum,
+    func: rbasic_class,
+    data_factory: { ruby_eval!("2**64") }
+);
+
+parity_test!(
+    name: test_rbasic_class_heap_float,
+    func: rbasic_class,
+    data_factory: { ruby_eval!("Float::INFINITY") }
+);
+
+// ── builtin_type: complete type matrix ──────────────────────
+
+parity_test!(
+    name: test_builtin_type_bignum,
+    func: builtin_type,
+    data_factory: { ruby_eval!("2**64") },
+    expected: rb_sys::ruby_value_type::RUBY_T_BIGNUM
+);
+
+parity_test!(
+    name: test_builtin_type_heap_float,
+    func: builtin_type,
+    data_factory: { ruby_eval!("Float::INFINITY") },
+    expected: rb_sys::ruby_value_type::RUBY_T_FLOAT
+);
+
+parity_test!(
+    name: test_builtin_type_regexp,
+    func: builtin_type,
+    data_factory: { ruby_eval!("/hello/") },
+    expected: rb_sys::ruby_value_type::RUBY_T_REGEXP
+);
+
+parity_test!(
+    name: test_builtin_type_class,
+    func: builtin_type,
+    data_factory: { ruby_eval!("String") },
+    expected: rb_sys::ruby_value_type::RUBY_T_CLASS
+);
+
+parity_test!(
+    name: test_builtin_type_module,
+    func: builtin_type,
+    data_factory: { ruby_eval!("Enumerable") },
+    expected: rb_sys::ruby_value_type::RUBY_T_MODULE
+);
+
+parity_test!(
+    name: test_builtin_type_struct,
+    func: builtin_type,
+    data_factory: { ruby_eval!("Struct.new(:x, :y).new(1, 2)") },
+    expected: rb_sys::ruby_value_type::RUBY_T_STRUCT
+);
+
+// ── rstring_interned_p edge cases ────────────────────────────
+
+// Dynamic symbol string (via to_s) — not interned
+parity_test!(
+    name: test_rstring_interned_p_dynamic,
+    func: rstring_interned_p,
+    data_factory: { ruby_eval!("+'dynamic_string'") },
+    expected: false
+);
+
+// Frozen string literal — should be interned (deduplicated)
+parity_test!(
+    name: test_rstring_interned_p_frozen_literal,
+    func: rstring_interned_p,
+    data_factory: { ruby_eval!("-'interned_literal'") },
+    expected: true
+);
+
+// ── bignum sign edge cases ────────────────────────────────────
+
+// Exactly FIXNUM_MAX + 1 on LP64: smallest positive 1-digit Bignum
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
+parity_test!(
+    name: test_bignum_positive_p_fixnum_max_plus_one,
+    func: bignum_positive_p,
+    data_factory: { ruby_eval!("4611686018427387904") },  // 2^62, FIXNUM_MAX+1
+    expected: true
+);
+
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
+parity_test!(
+    name: test_bignum_negative_p_fixnum_min_minus_one,
+    func: bignum_negative_p,
+    data_factory: { ruby_eval!("-4611686018427387905") },  // FIXNUM_MIN-1
+    expected: true
+);
+
+// Large positive Bignum spanning multiple digits
+parity_test!(
+    name: test_bignum_positive_p_large,
+    func: bignum_positive_p,
+    data_factory: { ruby_eval!("2**128") },
+    expected: true
+);
+
+// Negative large Bignum
+parity_test!(
+    name: test_bignum_negative_p_large,
+    func: bignum_negative_p,
+    data_factory: { ruby_eval!("-(2**128)") },
+    expected: true
+);
+
+// Bignum -0 created via rb_int2big(0) is treated as positive
+parity_test!(
+    name: test_bignum_positive_p_zero_bignum,
+    func: bignum_positive_p,
+    data_factory: { unsafe { rb_sys::rb_int2big(0) } },
+    expected: true
+);
+
+// ── num2long / num2ulong: boundary values ────────────────────
+
+// FIXNUM_MAX on LP64 (just fits in a fixnum)
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
+parity_test!(
+    name: test_num2long_fixnum_max,
+    func: num2long,
+    data_factory: { ruby_eval!("4611686018427387903") },  // 2^62 - 1
+    expected: 4611686018427387903i64 as std::os::raw::c_long
+);
+
+// Negative fixnum boundary
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
+parity_test!(
+    name: test_num2long_fixnum_min,
+    func: num2long,
+    data_factory: { ruby_eval!("-4611686018427387904") },  // -(2^62)
+    expected: -4611686018427387904i64 as std::os::raw::c_long
+);
+
+// Fixnum 1 (sanity — edge boundary just above 0)
+parity_test!(
+    name: test_num2long_one_boundary,
+    func: num2long,
+    data_factory: { ruby_eval!("1") },
+    expected: 1 as std::os::raw::c_long
+);
+
+// ulong: zero boundary
+parity_test!(
+    name: test_num2ulong_zero_boundary,
+    func: num2ulong,
+    data_factory: { ruby_eval!("0") },
+    expected: 0 as std::os::raw::c_ulong
+);
