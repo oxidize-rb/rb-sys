@@ -101,6 +101,12 @@ FUNCTIONS = [
     ruby_source: "include/ruby/internal/value_type.h:RB_FLOAT_TYPE_P"
   },
   {
+    name: "num2dbl",
+    rust: {unsafe: true, ret: "f64", expr: "{ let api = rb_sys::stable_api::get_default(); api.num2dbl(v) }"},
+    c: {expr: "NUM2DBL(v)", ret: "double"},
+    ruby_source: "include/ruby/internal/arithmetic/double.h:NUM2DBL"
+  },
+  {
     name: "integer_type_p",
     rust: {unsafe: true, ret: "bool", expr: "rb_sys::RB_INTEGER_TYPE_P(v)"},
     c: {expr: "RB_INTEGER_TYPE_P(v)", ret: "int"},

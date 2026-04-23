@@ -494,8 +494,25 @@ impl StableApiDefinition for Definition {
             // Fast path: convert Fixnum to double
             let long_val = (obj as c_long) >> 1;
             long_val as std::os::raw::c_double
+        } else if !self.special_const_p(obj)
+            && self.builtin_type(obj) == crate::ruby_value_type::RUBY_T_FLOAT
+        {
+            // Fast path: heap Float — read RFloat.float_value directly.
+            // RFloat = { RBasic basic (2*sizeof(VALUE) bytes); double float_value; }
+            // Avoids a dylib call for the common heap-Float case.
+            // SAFETY: builtin_type check guarantees obj is a valid heap RFloat pointer.
+            #[cfg(not(target_pointer_width = "32"))]
+            {
+                let float_val_ptr =
+                    (obj as *const crate::VALUE).add(2) as *const std::os::raw::c_double;
+                *float_val_ptr
+            }
+            #[cfg(target_pointer_width = "32")]
+            {
+                crate::rb_num2dbl(obj)
+            }
         } else {
-            // Slow path: heap Float, Bignum, or other numeric types
+            // Slow path: Bignum, coercion (to_f), TypeError, etc.
             crate::rb_num2dbl(obj)
         }
     }
