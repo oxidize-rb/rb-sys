@@ -116,7 +116,7 @@ impl Build {
         let mut hasher = DefaultHasher::new();
         object_files
             .iter()
-            .for_each(|f| hasher.write(f.to_str().expect("non-utf8 filename").as_bytes()));
+            .for_each(|f| hasher.write(f.as_os_str().as_encoded_bytes()));
         let lib_name = format!("{}-{}", name, hasher.finish());
         let lib_filename = format!("lib{}.a", lib_name);
         let dst = out_dir.join(lib_filename);
