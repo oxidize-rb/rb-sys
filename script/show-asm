@@ -357,6 +357,15 @@ FUNCTIONS = [
       arg_name: "str"
     },
     ruby_source: "include/ruby/internal/memory.h:RB_GC_GUARD"
+  },
+
+  # Hash operations
+  {
+    name: "rhash_size",
+    rust: {unsafe: true, ret: "usize",
+           expr: "{ let api = rb_sys::stable_api::get_default(); api.rhash_size(v) }"},
+    c: {expr: "(size_t)RHASH_SIZE(v)", ret: "size_t"},
+    ruby_source: "include/ruby/intern.h:RHASH_SIZE"
   }
 ].freeze
 

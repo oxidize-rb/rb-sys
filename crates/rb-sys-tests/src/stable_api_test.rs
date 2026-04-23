@@ -1667,7 +1667,28 @@ parity_test!(
     func: rhash_size,
     data_factory: {
         ruby_eval!("{}")
-    }
+    },
+    expected: 0
+);
+
+parity_test!(
+    name: test_rhash_size_ar_mode,
+    func: rhash_size,
+    data_factory: {
+        // Small hash — typically uses AR table (up to 8 entries)
+        ruby_eval!("{a: 1, b: 2}")
+    },
+    expected: 2
+);
+
+parity_test!(
+    name: test_rhash_size_st_mode,
+    func: rhash_size,
+    data_factory: {
+        // Large hash — forces ST table (> 8 entries)
+        ruby_eval!("(1..20).each_with_object({}) { |i, h| h[i] = i }")
+    },
+    expected: 20
 );
 
 #[rb_sys_test_helpers::ruby_test]
@@ -1685,7 +1706,17 @@ parity_test!(
     func: rhash_empty_p,
     data_factory: {
         ruby_eval!("{}")
-    }
+    },
+    expected: true
+);
+
+parity_test!(
+    name: test_rhash_empty_p_nonempty,
+    func: rhash_empty_p,
+    data_factory: {
+        ruby_eval!("{a: 1}")
+    },
+    expected: false
 );
 
 #[rb_sys_test_helpers::ruby_test]
