@@ -532,21 +532,49 @@ impl StableApiDefinition for Definition {
         unsafe { crate::rb_float_new(val) }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rhash_size(&self, obj: VALUE) -> usize {
-        // Call rb_hash_size which returns a fixnum VALUE
-        let size_val = crate::rb_hash_size(obj);
-        // Convert fixnum to usize
-        if self.fixnum_p(size_val) {
-            // FIX2LONG: shift right by 1 to get the actual value
-            (size_val >> 1) as usize
+        // Ruby 3.1 RHash layout (pre-3.3):
+        //   struct RHash { RBasic basic; union { st_table *st; ar_table *ar; } as; VALUE ifnone; };
+        //
+        // AR mode (RUBY_FL_USER3 not set): size is packed in
+        //   RBasic.flags bits [USER4..USER7] >> 16 (= FL_USHIFT+4).
+        // ST mode (RUBY_FL_USER3 set): dereference the st_table pointer in
+        //   RHash.as and read st_table.num_entries directly.
+        //
+        // SAFETY: caller guarantees obj is a valid T_HASH VALUE.
+        #[repr(C)]
+        struct RHashPre33 {
+            basic: crate::RBasic,
+            st: *mut crate::st_table, // union { st_table *st; ar_table *ar; } — same size
+            ifnone: VALUE,
+        }
+
+        let rhash = obj as *const RHashPre33;
+        let flags = (*rhash).basic.flags;
+
+        // RHASH_ST_TABLE_FLAG = FL_USER3 = 32768
+        let st_flag = crate::ruby_fl_type::RUBY_FL_USER3 as VALUE;
+        if (flags & st_flag) == 0 {
+            // AR mode: size encoded in bits [USER4..USER7].
+            // RHASH_AR_TABLE_SIZE_MASK = FL_USER4|FL_USER5|FL_USER6|FL_USER7 = 0x000F_0000
+            // RHASH_AR_TABLE_SIZE_SHIFT = FL_USHIFT + 4 = 12 + 4 = 16
+            let mask: VALUE = (crate::ruby_fl_type::RUBY_FL_USER4 as VALUE)
+                | (crate::ruby_fl_type::RUBY_FL_USER5 as VALUE)
+                | (crate::ruby_fl_type::RUBY_FL_USER6 as VALUE)
+                | (crate::ruby_fl_type::RUBY_FL_USER7 as VALUE);
+            // RHASH_AR_TABLE_SIZE_SHIFT = FL_USHIFT + 4 = 12 + 4 = 16 (stable across all Ruby versions)
+            let shift = 16u32;
+            ((flags & mask) >> shift) as usize
         } else {
-            // Fallback for large hashes (shouldn't normally happen)
-            crate::rb_num2ulong(size_val) as usize
+            // ST mode: dereference the st_table pointer and read num_entries.
+            // SAFETY: the st pointer is valid when RHASH_ST_TABLE_FLAG is set.
+            let st = (*rhash).st;
+            (*st).num_entries as usize
         }
     }
 
-    #[inline]
+    #[inline(always)]
     unsafe fn rhash_empty_p(&self, obj: VALUE) -> bool {
         self.rhash_size(obj) == 0
     }
