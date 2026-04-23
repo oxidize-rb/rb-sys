@@ -2098,7 +2098,10 @@ fn test_dbl2num_negative_zero_roundtrip() {
             rust_bits, c_bits
         );
         let neg_zero_bits = (-0.0f64).to_bits();
-        assert_eq!(rust_bits, neg_zero_bits, "dbl2num(-0.0) roundtrip lost sign");
+        assert_eq!(
+            rust_bits, neg_zero_bits,
+            "dbl2num(-0.0) roundtrip lost sign"
+        );
     }
 }
 
@@ -2110,7 +2113,10 @@ fn test_dbl2num_nan_roundtrip() {
         let c_obj = stable_api::get_compiled().dbl2num(f64::NAN);
         let rust_val = stable_api::get_default().num2dbl(rust_obj);
         let c_val = stable_api::get_compiled().num2dbl(c_obj);
-        assert!(rust_val.is_nan(), "rust dbl2num(NaN) roundtrip = {rust_val}");
+        assert!(
+            rust_val.is_nan(),
+            "rust dbl2num(NaN) roundtrip = {rust_val}"
+        );
         assert!(c_val.is_nan(), "c dbl2num(NaN) roundtrip = {c_val}");
     }
 }
@@ -2210,7 +2216,7 @@ parity_test!(
 fn test_encoding_get_binary_differs_from_utf8() {
     unsafe {
         // Force UTF-8 explicitly so the index is never confused with BINARY (index 0)
-        let utf8 = ruby_eval!("\"\\u00E9\".force_encoding('UTF-8')");  // é
+        let utf8 = ruby_eval!("\"\\u00E9\".force_encoding('UTF-8')"); // é
         let binary = ruby_eval!("\"\\xFF\".force_encoding('BINARY')");
         let utf8_enc = stable_api::get_default().encoding_get(utf8);
         let binary_enc = stable_api::get_default().encoding_get(binary);
