@@ -5,12 +5,9 @@
   padding: 0;
 }
 
-.docItemContainer {
-  padding: 0 var(--ifm-spacing-horizontal);
-}
-
 .headerContainer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
