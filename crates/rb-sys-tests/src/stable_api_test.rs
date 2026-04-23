@@ -1608,6 +1608,60 @@ fn test_dbl2num_and_num2dbl_roundtrip() {
     }
 }
 
+// Parity tests for dbl2num: flonum-range values encode as tagged immediates,
+// so both Rust and C produce identical VALUE representations (no heap pointer).
+parity_test!(
+    name: test_dbl2num_in_flonum_range,
+    func: dbl2num,
+    data_factory: { 1.5f64 }
+);
+
+parity_test!(
+    name: test_dbl2num_positive_zero,
+    func: dbl2num,
+    data_factory: { 0.0f64 }
+);
+
+// Out-of-flonum-range values heap-allocate; verify via roundtrip not pointer equality.
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_out_of_flonum_range() {
+    unsafe {
+        let val = 1e300f64;
+        let rust_obj = stable_api::get_default().dbl2num(val);
+        let recovered = stable_api::get_default().num2dbl(rust_obj);
+        assert!(
+            (val - recovered).abs() < f64::EPSILON,
+            "roundtrip failed: {} != {}",
+            val,
+            recovered
+        );
+
+        // Also confirm parity with compiled C by decoding both
+        let c_obj = stable_api::get_compiled().dbl2num(val);
+        let c_recovered = stable_api::get_default().num2dbl(c_obj);
+        assert!(
+            (val - c_recovered).abs() < f64::EPSILON,
+            "C roundtrip failed: {} != {}",
+            val,
+            c_recovered
+        );
+    }
+}
+
+#[rb_sys_test_helpers::ruby_test]
+fn test_dbl2num_infinity() {
+    unsafe {
+        let inf_obj = ruby_eval!("Float::INFINITY");
+        let recovered = stable_api::get_default().num2dbl(inf_obj);
+        assert!(recovered.is_infinite() && recovered > 0.0);
+
+        // Verify our dbl2num produces a value that num2dbl can round-trip
+        let encoded = stable_api::get_default().dbl2num(f64::INFINITY);
+        let decoded = stable_api::get_default().num2dbl(encoded);
+        assert!(decoded.is_infinite() && decoded > 0.0);
+    }
+}
+
 parity_test!(
     name: test_rhash_size_empty,
     func: rhash_size,

@@ -517,9 +517,22 @@ impl StableApiDefinition for Definition {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn dbl2num(&self, val: std::os::raw::c_double) -> VALUE {
-        // Call the C function rb_float_new to create a Float VALUE
+        #[cfg(ruby_use_flonum = "true")]
+        {
+            let bits = val.to_bits() as VALUE;
+            let exp_bits = (bits >> 60) & 0x7;
+            // Flonum-representable: exponent top-3 bits are 011 or 100
+            if bits != 0x3000_0000_0000_0000 && (exp_bits == 3 || exp_bits == 4) {
+                return (bits.rotate_left(3) & !0x01) | 0x02;
+            }
+            // +0.0 special case
+            if bits == 0 {
+                return 0x8000_0000_0000_0002;
+            }
+        }
+        // Out-of-flonum-range or flonum disabled: heap allocate
         unsafe { crate::rb_float_new(val) }
     }
 
