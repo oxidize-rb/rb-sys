@@ -362,7 +362,7 @@ impl StableApiDefinition for Definition {
         if self.fixnum_p(obj) {
             self.fix2long(obj)
         } else {
-            #[cfg(target_pointer_width = "64")]
+            #[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
             if self.type_p(obj, crate::ruby_value_type::RUBY_T_BIGNUM) {
                 if let Some(v) = bignum_to_long_fast(obj) {
                     return v;
@@ -377,7 +377,7 @@ impl StableApiDefinition for Definition {
         if self.fixnum_p(obj) {
             self.fix2ulong(obj)
         } else {
-            #[cfg(target_pointer_width = "64")]
+            #[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
             if self.type_p(obj, crate::ruby_value_type::RUBY_T_BIGNUM) {
                 if let Some(v) = bignum_to_ulong_fast(obj) {
                     return v;
@@ -629,14 +629,14 @@ impl StableApiDefinition for Definition {
 //   RUBY_FL_USER4 = 65536 = 0x1_0000  > BIGNUM_EMBED_LEN_MASK (3-bit digit count)
 //   RUBY_FL_USER5 = 131072= 0x2_0000  /
 //   BIGNUM_EMBED_LEN_SHIFT = RUBY_FL_USHIFT + 3 = 12 + 3 = 15
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 #[repr(C)]
 struct RBignum {
     basic: crate::RBasic,
     as_: RBignumAs,
 }
 
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 #[repr(C)]
 union RBignumAs {
     heap: RBignumHeap,
@@ -644,7 +644,7 @@ union RBignumAs {
     ary: [u32; 2],
 }
 
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 #[repr(C)]
 #[derive(Copy, Clone)]
 struct RBignumHeap {
@@ -655,7 +655,7 @@ struct RBignumHeap {
 /// Fast path: read BDIGIT digits directly from RBignum to convert to i64 (c_long).
 /// Returns None if the value overflows i64 or if digits > 2 (heap bignum).
 /// Falls back to crate::rb_num2long which raises RangeError for overflow.
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 #[inline]
 unsafe fn bignum_to_long_fast(obj: VALUE) -> Option<std::os::raw::c_long> {
     let rb = obj as *const RBignum;
@@ -718,7 +718,7 @@ unsafe fn bignum_to_long_fast(obj: VALUE) -> Option<std::os::raw::c_long> {
 /// Fast path: read BDIGIT digits directly from RBignum to convert to u64 (c_ulong).
 /// Returns None if the bignum is negative or overflows u64.
 /// Falls back to crate::rb_num2ulong which handles errors.
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 #[inline]
 unsafe fn bignum_to_ulong_fast(obj: VALUE) -> Option<std::os::raw::c_ulong> {
     let rb = obj as *const RBignum;

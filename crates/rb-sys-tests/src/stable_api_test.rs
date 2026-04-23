@@ -1151,8 +1151,10 @@ parity_test!(
     expected: 4294967295 as std::os::raw::c_ulong
 );
 
-// Bignum fast-path parity tests (64-bit only; on 32-bit the fast path is absent)
-// These verify that the inline RBignum digit-reading matches rb_num2long/rb_num2ulong.
+// Bignum fast-path parity tests — LP64 only (Linux/macOS 64-bit).
+// On Windows x64, c_long is i32 (LLP64), so rb_num2long raises RangeError for
+// these values; the fast path is also disabled there. Skip on Windows entirely.
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_1_digit_positive,
     func: num2long,
@@ -1160,6 +1162,7 @@ parity_test!(
     expected: (1_i64 << 31) as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_1_digit_negative,
     func: num2long,
@@ -1167,6 +1170,7 @@ parity_test!(
     expected: -(1_i64 << 31) as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_2_digit_positive,
     func: num2long,
@@ -1174,6 +1178,7 @@ parity_test!(
     expected: (1_i64 << 62) as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_2_digit_negative,
     func: num2long,
@@ -1181,6 +1186,7 @@ parity_test!(
     expected: -(1_i64 << 62) as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_2_digit_max,
     func: num2long,
@@ -1188,6 +1194,7 @@ parity_test!(
     expected: i64::MAX as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2long_bignum_2_digit_min,
     func: num2long,
@@ -1195,6 +1202,7 @@ parity_test!(
     expected: i64::MIN as std::os::raw::c_long
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2ulong_bignum_1_digit,
     func: num2ulong,
@@ -1202,6 +1210,7 @@ parity_test!(
     expected: (1_u64 << 31) as std::os::raw::c_ulong
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2ulong_bignum_2_digit,
     func: num2ulong,
@@ -1209,6 +1218,7 @@ parity_test!(
     expected: (1_u64 << 32) as std::os::raw::c_ulong
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2ulong_bignum_2_digit_large,
     func: num2ulong,
@@ -1216,6 +1226,7 @@ parity_test!(
     expected: (1_u64 << 62) as std::os::raw::c_ulong
 );
 
+#[cfg(all(target_pointer_width = "64", not(target_os = "windows")))]
 parity_test!(
     name: test_num2ulong_bignum_max_u64,
     func: num2ulong,
