@@ -1151,6 +1151,78 @@ parity_test!(
     expected: 4294967295 as std::os::raw::c_ulong
 );
 
+// Bignum fast-path parity tests (64-bit only; on 32-bit the fast path is absent)
+// These verify that the inline RBignum digit-reading matches rb_num2long/rb_num2ulong.
+parity_test!(
+    name: test_num2long_bignum_1_digit_positive,
+    func: num2long,
+    data_factory: { ruby_eval!("2**31") },  // 0x80000000, 1 BDIGIT, fits i64
+    expected: (1_i64 << 31) as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_bignum_1_digit_negative,
+    func: num2long,
+    data_factory: { ruby_eval!("-(2**31)") },  // -0x80000000, 1 BDIGIT, fits i64
+    expected: -(1_i64 << 31) as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_bignum_2_digit_positive,
+    func: num2long,
+    data_factory: { ruby_eval!("2**62") },  // 2 BDIGITs, fits i64
+    expected: (1_i64 << 62) as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_bignum_2_digit_negative,
+    func: num2long,
+    data_factory: { ruby_eval!("-(2**62)") },  // 2 BDIGITs negative, fits i64
+    expected: -(1_i64 << 62) as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_bignum_2_digit_max,
+    func: num2long,
+    data_factory: { ruby_eval!("9223372036854775807") },  // i64::MAX, 2 BDIGITs
+    expected: i64::MAX as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2long_bignum_2_digit_min,
+    func: num2long,
+    data_factory: { ruby_eval!("-9223372036854775808") },  // i64::MIN, 2 BDIGITs
+    expected: i64::MIN as std::os::raw::c_long
+);
+
+parity_test!(
+    name: test_num2ulong_bignum_1_digit,
+    func: num2ulong,
+    data_factory: { ruby_eval!("2**31") },  // 1 BDIGIT, fits u64
+    expected: (1_u64 << 31) as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_bignum_2_digit,
+    func: num2ulong,
+    data_factory: { ruby_eval!("2**32") },  // 2 BDIGITs, fits u64
+    expected: (1_u64 << 32) as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_bignum_2_digit_large,
+    func: num2ulong,
+    data_factory: { ruby_eval!("2**62") },  // 2 BDIGITs, fits u64
+    expected: (1_u64 << 62) as std::os::raw::c_ulong
+);
+
+parity_test!(
+    name: test_num2ulong_bignum_max_u64,
+    func: num2ulong,
+    data_factory: { ruby_eval!("18446744073709551615") },  // u64::MAX = 2 BDIGITs
+    expected: u64::MAX as std::os::raw::c_ulong
+);
+
 // long2num/ulong2num parity tests
 // These functions take a primitive and return VALUE, so we need a different pattern
 macro_rules! parity_test_long2num {

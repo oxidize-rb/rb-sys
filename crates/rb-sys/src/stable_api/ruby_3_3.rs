@@ -373,6 +373,12 @@ impl StableApiDefinition for Definition {
         if self.fixnum_p(obj) {
             self.fix2long(obj)
         } else {
+            #[cfg(target_pointer_width = "64")]
+            if self.type_p(obj, crate::ruby_value_type::RUBY_T_BIGNUM) {
+                if let Some(v) = bignum_to_long_fast(obj) {
+                    return v;
+                }
+            }
             crate::rb_num2long(obj)
         }
     }
@@ -382,6 +388,12 @@ impl StableApiDefinition for Definition {
         if self.fixnum_p(obj) {
             self.fix2ulong(obj)
         } else {
+            #[cfg(target_pointer_width = "64")]
+            if self.type_p(obj, crate::ruby_value_type::RUBY_T_BIGNUM) {
+                if let Some(v) = bignum_to_ulong_fast(obj) {
+                    return v;
+                }
+            }
             crate::rb_num2ulong(obj)
         }
     }
@@ -607,5 +619,152 @@ impl StableApiDefinition for Definition {
         } else {
             inline_idx
         }
+    }
+}
+
+// SAFETY: RBignum layout is stable across MRI 2.7–master on 64-bit.
+// On 64-bit: BDIGIT = u32, BDIGIT_DBL = u64, BIGNUM_EMBED_LEN_MAX = 2.
+// RBasic is 16 bytes (flags + klass), union as_ starts at offset 16.
+// Embedded digits: as.ary[0..len] are u32 stored at offset 16..24.
+// Heap: as.heap.len (usize, offset 16) + as.heap.digits (*u32, offset 24).
+//
+// Flag constants (from ruby_fl_type):
+//   RUBY_FL_USER1 = 8192  = 0x2000  → BIGNUM sign (set = positive)
+//   RUBY_FL_USER2 = 16384 = 0x4000  → BIGNUM_EMBED_FLAG (set = embedded)
+//   RUBY_FL_USER3 = 32768 = 0x8000  \
+//   RUBY_FL_USER4 = 65536 = 0x1_0000  > BIGNUM_EMBED_LEN_MASK (3-bit digit count)
+//   RUBY_FL_USER5 = 131072= 0x2_0000  /
+//   BIGNUM_EMBED_LEN_SHIFT = RUBY_FL_USHIFT + 3 = 12 + 3 = 15
+#[cfg(target_pointer_width = "64")]
+#[repr(C)]
+struct RBignum {
+    basic: crate::RBasic,
+    as_: RBignumAs,
+}
+
+#[cfg(target_pointer_width = "64")]
+#[repr(C)]
+union RBignumAs {
+    heap: RBignumHeap,
+    // BIGNUM_EMBED_LEN_MAX = sizeof(u64)/sizeof(u32) = 2 on 64-bit
+    ary: [u32; 2],
+}
+
+#[cfg(target_pointer_width = "64")]
+#[repr(C)]
+#[derive(Copy, Clone)]
+struct RBignumHeap {
+    len: usize,
+    digits: *const u32,
+}
+
+/// Fast path: read BDIGIT digits directly from RBignum to convert to i64 (c_long).
+/// Returns None if the value overflows i64 or if digits > 2 (heap bignum).
+/// Falls back to crate::rb_num2long which raises RangeError for overflow.
+#[cfg(target_pointer_width = "64")]
+#[inline]
+unsafe fn bignum_to_long_fast(obj: VALUE) -> Option<std::os::raw::c_long> {
+    let rb = obj as *const RBignum;
+    let flags = (*rb).basic.flags;
+
+    // BIGNUM_EMBED_FLAG = RUBY_FL_USER2 = 16384 = 0x4000
+    let embed_flag: VALUE = 16384;
+    // BIGNUM_EMBED_LEN_MASK = USER3 | USER4 | USER5 = 32768 | 65536 | 131072 = 229376
+    let embed_len_mask: VALUE = 229376;
+    // BIGNUM_EMBED_LEN_SHIFT = RUBY_FL_USHIFT + 3 = 15
+    let embed_len_shift: u32 = 15;
+    // RUBY_FL_USER1 = 8192: set means positive
+    let sign_flag: VALUE = 8192;
+    let positive = (flags & sign_flag) != 0;
+
+    let (len, digits_ptr) = if (flags & embed_flag) != 0 {
+        // Embedded: digit count stored in flags[17:15], digits in as_.ary
+        let len = ((flags & embed_len_mask) >> embed_len_shift) as usize;
+        let digits = (*rb).as_.ary.as_ptr();
+        (len, digits)
+    } else {
+        // Heap: len in as_.heap.len, digits in as_.heap.digits
+        let len = (*rb).as_.heap.len;
+        let digits = (*rb).as_.heap.digits;
+        (len, digits)
+    };
+
+    match len {
+        0 => Some(0),
+        1 => {
+            // Single BDIGIT (u32): max 0xFFFF_FFFF = 4294967295 < i64::MAX — always fits
+            let d0 = *digits_ptr as u64;
+            if positive {
+                Some(d0 as std::os::raw::c_long)
+            } else {
+                Some(-(d0 as i64) as std::os::raw::c_long)
+            }
+        }
+        2 => {
+            // Two BDIGITs: check if combined value fits in i64
+            let lo = *digits_ptr as u64;
+            let hi = *digits_ptr.add(1) as u64;
+            let val = lo | (hi << 32);
+            if positive {
+                if val > i64::MAX as u64 {
+                    return None; // overflows i64, fall back to rb_num2long
+                }
+                Some(val as std::os::raw::c_long)
+            } else {
+                if val > (i64::MAX as u64) + 1 {
+                    return None; // |val| > i64::MIN, fall back
+                }
+                Some((val as i64).wrapping_neg() as std::os::raw::c_long)
+            }
+        }
+        _ => None, // 3+ digits: doesn't fit in i64
+    }
+}
+
+/// Fast path: read BDIGIT digits directly from RBignum to convert to u64 (c_ulong).
+/// Returns None if the bignum is negative or overflows u64.
+/// Falls back to crate::rb_num2ulong which handles errors.
+#[cfg(target_pointer_width = "64")]
+#[inline]
+unsafe fn bignum_to_ulong_fast(obj: VALUE) -> Option<std::os::raw::c_ulong> {
+    let rb = obj as *const RBignum;
+    let flags = (*rb).basic.flags;
+
+    let embed_flag: VALUE = 16384;
+    let embed_len_mask: VALUE = 229376;
+    let embed_len_shift: u32 = 15;
+    let sign_flag: VALUE = 8192;
+    let positive = (flags & sign_flag) != 0;
+
+    // For num2ulong, negative bignums are not an error (Ruby's rb_num2ulong wraps them),
+    // so we only fast-path positive values that fit in u64.
+    // Negative bignums with > 2 digits always overflow u64 too, so fall back for all negatives.
+    if !positive {
+        return None; // let rb_num2ulong handle negative bignums (it wraps them)
+    }
+
+    let (len, digits_ptr) = if (flags & embed_flag) != 0 {
+        let len = ((flags & embed_len_mask) >> embed_len_shift) as usize;
+        let digits = (*rb).as_.ary.as_ptr();
+        (len, digits)
+    } else {
+        let len = (*rb).as_.heap.len;
+        let digits = (*rb).as_.heap.digits;
+        (len, digits)
+    };
+
+    match len {
+        0 => Some(0),
+        1 => {
+            let d0 = *digits_ptr as u64;
+            Some(d0 as std::os::raw::c_ulong)
+        }
+        2 => {
+            // Two positive BDIGITs always fit in u64
+            let lo = *digits_ptr as u64;
+            let hi = *digits_ptr.add(1) as u64;
+            Some((lo | (hi << 32)) as std::os::raw::c_ulong)
+        }
+        _ => None, // 3+ digits: may exceed u64, fall back
     }
 }
