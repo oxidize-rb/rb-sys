@@ -1570,6 +1570,33 @@ parity_test!(
     }
 );
 
+// Heap Float tests: values that are NOT flonums (stored as heap-allocated RFloat objects).
+// These exercise the new T_FLOAT fast path that reads RFloat.float_value directly.
+
+parity_test!(
+    name: test_num2dbl_heap_float_infinity,
+    func: num2dbl,
+    data_factory: {
+        ruby_eval!("Float::INFINITY")
+    }
+);
+
+parity_test!(
+    name: test_num2dbl_heap_float_one_third,
+    func: num2dbl,
+    data_factory: {
+        ruby_eval!("1.0 / 3.0")
+    }
+);
+
+parity_test!(
+    name: test_num2dbl_heap_float_large,
+    func: num2dbl,
+    data_factory: {
+        ruby_eval!("1e300")
+    }
+);
+
 #[rb_sys_test_helpers::ruby_test]
 fn test_dbl2num_and_num2dbl_roundtrip() {
     unsafe {
