@@ -330,7 +330,8 @@ impl StableApiDefinition for Definition {
                     - std::mem::size_of::<*mut std::ffi::c_void>();
 
             // Return address after the header as the data pointer
-            (obj as *mut u8).add(EMBEDDED_TYPED_DATA_SIZE) as *mut std::ffi::c_void
+            (obj as *const crate::internal::RTypedData).byte_add(EMBEDDED_TYPED_DATA_SIZE)
+                as *mut std::ffi::c_void
         } else {
             // For non-embedded data, return the data field directly
             let rdata = obj as *const crate::internal::RTypedData;
@@ -521,9 +522,7 @@ impl StableApiDefinition for Definition {
             // SAFETY: builtin_type check guarantees obj is a valid heap RFloat pointer.
             #[cfg(not(target_pointer_width = "32"))]
             {
-                let float_val_ptr =
-                    (obj as *const crate::VALUE).add(2) as *const std::os::raw::c_double;
-                *float_val_ptr
+                (*(obj as *const RFloat)).float_value
             }
             #[cfg(target_pointer_width = "32")]
             {
@@ -620,6 +619,14 @@ impl StableApiDefinition for Definition {
             inline_idx
         }
     }
+}
+
+// RFloat layout is stable across all MRI versions: RBasic (flags+klass) followed by float_value.
+#[cfg(not(target_pointer_width = "32"))]
+#[repr(C)]
+struct RFloat {
+    basic: crate::RBasic,
+    float_value: std::os::raw::c_double,
 }
 
 // SAFETY: RBignum layout is stable across MRI 2.7–master on 64-bit.
