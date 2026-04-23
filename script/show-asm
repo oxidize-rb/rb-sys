@@ -302,6 +302,15 @@ FUNCTIONS = [
     ruby_source: "include/ruby/internal/arithmetic/long.h:RB_ULONG2NUM"
   },
 
+  # Float conversion operations
+  {
+    name: "dbl2num",
+    rust: {unsafe: false, ret: "VALUE",
+           expr: "{ let api = rb_sys::stable_api::get_default(); api.dbl2num(1.5f64) }"},
+    c: {expr: "DBL2NUM(1.5)", ret: "VALUE"},
+    ruby_source: "include/ruby/internal/arithmetic/double.h:DBL2NUM"
+  },
+
   # GC guard (macro, not StableApiDefinition method)
   # Uses a realistic pattern: extract pointer, call function that might GC, use guard
   {
