@@ -5,3 +5,4 @@ gem/docs
 .yardoc/
 .DS_Store
 book/src/https:/
+.worktrees/

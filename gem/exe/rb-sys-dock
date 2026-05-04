@@ -339,7 +339,7 @@ def default_command_to_run(input_args)
   input_cmd = input_args.empty? ? "true" : input_args.join(" ")
 
   if OPTIONS[:build]
-    with_bundle = +"test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
+    with_bundle = "test -f Gemfile && bundle install && #{input_cmd} && bundle exec rake native:$RUBY_TARGET gem"
     without_bundle = "#{input_cmd} && rake native:$RUBY_TARGET gem"
     logger.info("Running default build command (rake native:#{ruby_platform} gem)")
     "bash -c '(#{with_bundle}) || (#{without_bundle})'"

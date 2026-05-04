@@ -7,7 +7,7 @@ end
 
 def extra_args
   seperator_index = ARGV.index("--")
-  seperator_index && ARGV[(seperator_index + 1)..-1] || []
+  seperator_index && ARGV[(seperator_index + 1)..] || []
 end
 
 def cargo_test_task(name, *args, crate: name)
@@ -190,7 +190,7 @@ end
 desc "Run criterion benchmarks"
 task :bench do
   Dir.chdir("bench") do
-    extra_args = ARGV[(ARGV.index("bench") + 1)..-1] || []
+    extra_args = ARGV[(ARGV.index("bench") + 1)..] || []
     sh "cargo", "bench", *extra_args
   end
 end

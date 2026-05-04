@@ -6,7 +6,7 @@ gemspec path: "gem"
 gemspec path: "examples/rust_reverse"
 
 gem "rake"
-gem "minitest"
+gem "minitest", "~> 5"
 gem "rake-compiler"
 gem "rake-compiler-dock"
 gem "racc"
@@ -14,7 +14,7 @@ gem "base64"
 gem "yard"
 gem "mutex_m"
 
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.0")
+if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.2")
   gem "standard", "~> 1.54.0"
 end
 

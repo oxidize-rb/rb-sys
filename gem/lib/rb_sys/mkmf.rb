@@ -56,7 +56,7 @@ module RbSys
       # global_rustflags << "--cfg=rb_sys_gem" unless builder.use_cargo_build
       global_rustflags << "--cfg=rb_sys_use_stable_api_compiled_fallback" if builder.use_stable_api_compiled_fallback?
 
-      make_install = +<<~MAKE
+      make_install = <<~MAKE
         #{conditional_assign("RB_SYS_BUILD_DIR", File.join(Dir.pwd, ".rb-sys"))}
         #{conditional_assign("CARGO", "cargo")}
         #{conditional_assign("CARGO_BUILD_TARGET", builder.target)}
@@ -150,7 +150,7 @@ module RbSys
         all: #{$extout ? "install" : "$(DLLIB)"}
       MAKE
 
-      gsub_cargo_command!(make_install, builder: builder)
+      make_install = gsub_cargo_command!(make_install.dup, builder: builder)
 
       File.write("Makefile", make_install)
     end
@@ -334,7 +334,7 @@ module RbSys
 
     def conditional_assign(a, b, export: false, indent: 0)
       if $nmake
-        result = +"!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF\n"
+        result = "!IFNDEF #{a}\n#{a} = #{b}\n!ENDIF\n"
         result << export_env(a, b) if export
         result
       else
