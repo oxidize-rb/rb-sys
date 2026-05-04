@@ -6,10 +6,11 @@ use crate::RbConfig;
 
 const OPAQUE_STRUCTS: [&str; 4] = ["RString", "RArray", "RData", "RTypedData"];
 
-const OPAQUE_STRUCTS_RUBY_3_3: [&str; 3] = [
-    "rb_matchext_struct",
-    "rb_internal_thread_event_data",
-    "rb_io_internal_buffer",
+// (struct_name, added_in, removed_in) — removed_in is an exclusive upper bound (None = still present)
+const VERSIONED_OPAQUE_STRUCTS: &[(&str, (u32, u32), Option<(u32, u32)>)] = &[
+    ("rb_matchext_struct", (3, 3), Some((4, 1))), // removed in 4.1, merged into RMatch
+    ("rb_internal_thread_event_data", (3, 3), None),
+    ("rb_io_internal_buffer", (3, 3), None),
 ];
 
 /// Generate opaque structs for the given bindings.
@@ -226,17 +227,14 @@ fn gen_opaque_struct(
 }
 
 fn get_version_specific_opaque_structs(major_minor: Option<(u32, u32)>) -> Vec<&'static str> {
-    let Some(major_minor) = major_minor else {
+    let Some(v) = major_minor else {
         return vec![];
     };
-    let mut result = vec![];
-    let (major, minor) = major_minor;
-
-    if major > 3 || (major == 3 && minor >= 3) {
-        result.extend(OPAQUE_STRUCTS_RUBY_3_3)
-    }
-
-    result
+    VERSIONED_OPAQUE_STRUCTS
+        .iter()
+        .filter(|(_, added, removed)| v >= *added && removed.map_or(true, |r| v < r))
+        .map(|(name, _, _)| *name)
+        .collect()
 }
 
 #[cfg(test)]
@@ -251,28 +249,46 @@ mod tests {
         // Ruby 3.2.x - too old for 3.3 structs
         assert!(get_version_specific_opaque_structs(Some((3, 2))).is_empty());
 
-        // Ruby 3.3.x - should include 3.3 structs
+        // Ruby 3.3.x - all three structs present
         assert_eq!(
             get_version_specific_opaque_structs(Some((3, 3))),
-            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+            vec![
+                "rb_matchext_struct",
+                "rb_internal_thread_event_data",
+                "rb_io_internal_buffer"
+            ]
         );
 
-        // Ruby 3.4.x - should include 3.3 structs
+        // Ruby 3.4.x - same as 3.3
         assert_eq!(
             get_version_specific_opaque_structs(Some((3, 4))),
-            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+            vec![
+                "rb_matchext_struct",
+                "rb_internal_thread_event_data",
+                "rb_io_internal_buffer"
+            ]
         );
 
-        // Ruby 4.0.x - should include 3.3 structs (this was the bug!)
+        // Ruby 4.0.x - matchext still present
         assert_eq!(
             get_version_specific_opaque_structs(Some((4, 0))),
-            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+            vec![
+                "rb_matchext_struct",
+                "rb_internal_thread_event_data",
+                "rb_io_internal_buffer"
+            ]
         );
 
-        // Ruby 4.1.x - should include 3.3 structs
+        // Ruby 4.1.x - matchext removed (merged into RMatch in 4.1)
         assert_eq!(
             get_version_specific_opaque_structs(Some((4, 1))),
-            OPAQUE_STRUCTS_RUBY_3_3.to_vec()
+            vec!["rb_internal_thread_event_data", "rb_io_internal_buffer"]
+        );
+
+        // Ruby 4.2.x - matchext still gone
+        assert_eq!(
+            get_version_specific_opaque_structs(Some((4, 2))),
+            vec!["rb_internal_thread_event_data", "rb_io_internal_buffer"]
         );
 
         // Ruby 2.7.x - too old
