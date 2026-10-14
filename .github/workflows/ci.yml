@@ -121,7 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: oxidize-rb/actions/upload-core-dumps@85175a9d5f63d4491253e957d3fc3f4ed7f17534 # v1
+      - uses: oxidize-rb/actions/upload-core-dumps@e36686534da417104bb84432725f4bb881ee34c3 # v1
 
       - name: Setup debug info
         shell: bash
@@ -212,7 +212,7 @@ jobs:
         if: env.ACTIONS_STEP_DEBUG == 'true'
         run: bundle exec rake bindings:generate
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: rb-sys-ci-debug-artifacts-${{ matrix.sys.os }}-${{ matrix.ruby_version }}
@@ -235,7 +235,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: oxidize-rb/actions/upload-core-dumps@85175a9d5f63d4491253e957d3fc3f4ed7f17534 # v1
+      - uses: oxidize-rb/actions/upload-core-dumps@e36686534da417104bb84432725f4bb881ee34c3 # v1
 
       - uses: oxidize-rb/actions/setup-ruby-and-rust@v1
         with:
