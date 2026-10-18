@@ -2,7 +2,7 @@
 build = "build/main.rs"
 name = "rb-sys"
 version = "0.9.130"
-edition = "2018"
+edition = "2021"
 readme = "readme.md"
 categories = ["external-ffi-bindings"]
 description = "Rust bindings for the CRuby API"
