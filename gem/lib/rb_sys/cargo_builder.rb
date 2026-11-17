@@ -8,6 +8,7 @@ module RbSys
   # @api private
   class CargoBuilder < Gem::Ext::Builder
     WELL_KNOWN_WRAPPERS = %w[sccache cachepot].freeze
+    MSVC_COMPILERS = %w[cl clang-cl].freeze
 
     attr_accessor :spec, :runner, :env, :features, :target, :extra_rustc_args, :dry_run, :ext_dir, :extra_rustflags,
       :extra_cargo_args, :config
@@ -177,7 +178,7 @@ module RbSys
 
       link_args = cc_flag.flat_map { |a| ["-C", "link-arg=#{a}"] }
 
-      return mswin_link_args if linker == "cl"
+      return mswin_link_args if MSVC_COMPILERS.include?(File.basename(linker, ".exe"))
 
       ["-C", "linker=#{linker}", *link_args]
     end
