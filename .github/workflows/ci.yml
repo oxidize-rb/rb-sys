@@ -199,12 +199,15 @@ jobs:
         run: |
           set -ex
           ulimit -c unlimited
-          gem update --system 3.4.22 > /dev/null
+          for gem_cmd in gem gem.bat gem.cmd; do
+            command -v "$gem_cmd" > /dev/null && break
+          done
+          "$gem_cmd" update --system 3.4.22 > /dev/null
           export RUBYOPT="-I$PWD/gem/lib"
           pushd examples/rust_reverse
           bundle exec rake build
-          gem install pkg/*.gem --verbose
-          ../../script/ci/upload-on-failure.sh "gem install pkg/*.gem --verbose" "smoke-test" "./pkg"
+          "$gem_cmd" install pkg/*.gem --verbose
+          ../../script/ci/upload-on-failure.sh "$gem_cmd install pkg/*.gem --verbose" "smoke-test" "./pkg"
           ruby -rrust_reverse -e "puts RustReverse.reverse('olleh')" | grep hello
           popd
 
