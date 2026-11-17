@@ -105,11 +105,13 @@ fn test_manually_tracked_allows_for_increasing_and_decreasing() {
 fn test_manually_tracked_decreases_on_drop() {
     let manually_tracked = ManuallyTracked::wrap((), 1024);
 
-    let (_, decreased) = capture_gc_stat_for!("oldmalloc_increase_bytes", {
+    let (_still_tracked, changed) = capture_gc_stat_for!("oldmalloc_increase_bytes", {
+        let still_tracked = ManuallyTracked::wrap((), 1024);
         std::mem::drop(manually_tracked);
+        still_tracked
     });
 
-    assert_eq!(-1024, decreased);
+    assert_eq!(0, changed);
 }
 
 #[ruby_test]
