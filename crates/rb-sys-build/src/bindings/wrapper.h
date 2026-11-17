@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "ruby.h"
 
 #ifdef HAVE_RUBY_DEBUG_H

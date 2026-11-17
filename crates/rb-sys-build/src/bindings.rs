@@ -16,6 +16,10 @@ use syn::{Expr, ExprLit, ItemConst, Lit};
 
 const WRAPPER_H_CONTENT: &str = include_str!("bindings/wrapper.h");
 
+fn is_msvc_only_flag(flag: &str) -> bool {
+    flag.starts_with("-Zc:") || flag.starts_with("/Zc:")
+}
+
 /// Generate bindings for the Ruby using bindgen.
 pub fn generate(
     rbconfig: &RbConfig,
@@ -34,7 +38,12 @@ pub fn generate(
 
     clang_args.extend(Build::default_cflags());
     clang_args.extend(rbconfig.cflags.clone());
-    clang_args.extend(rbconfig.cppflags());
+    clang_args.extend(
+        rbconfig
+            .cppflags()
+            .into_iter()
+            .filter(|flag| !is_msvc_only_flag(flag)),
+    );
 
     // On Windows x86_64, we need to handle AVX512 FP16 compatibility issues
     // Clang 20+ includes types like __m512h that aren't compatible with bindgen
@@ -288,5 +297,18 @@ impl<'a> ConfValue<'a> {
                 self.item
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_msvc_only_flag;
+
+    #[test]
+    fn test_is_msvc_only_flag() {
+        assert!(is_msvc_only_flag("-Zc:preprocessor"));
+        assert!(is_msvc_only_flag("/Zc:preprocessor"));
+        assert!(!is_msvc_only_flag("-D_WIN32_WINNT=_WIN32_WINNT_WIN10"));
+        assert!(!is_msvc_only_flag("-I/usr/include"));
     }
 }

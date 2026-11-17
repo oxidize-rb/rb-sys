@@ -2,7 +2,6 @@
 
 use rb_sys::tracking_allocator::ManuallyTracked;
 use rb_sys::*;
-use std::os::raw::c_long;
 
 // NOTICE: This is a low level library. If you are looking to write a gem in
 // Rust, you should probably use https://github.com/matsadler/magnus instead.
@@ -23,7 +22,7 @@ unsafe extern "C" fn pub_reverse(_klass: VALUE, input: VALUE) -> VALUE {
     let manually_tracked = ManuallyTracked::wrap("foo", 1024);
     assert_eq!(&"foo", manually_tracked.get());
 
-    rb_utf8_str_new(reversed.as_ptr() as _, reversed.len() as c_long)
+    rb_utf8_str_new(reversed.as_ptr() as _, reversed.len() as _)
 }
 
 #[allow(non_snake_case)]

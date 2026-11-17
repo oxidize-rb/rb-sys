@@ -76,7 +76,7 @@ jobs:
           echo >> .cargo/config.toml
           echo "[patch.crates-io]" >> .cargo/config.toml
           echo "rb-sys = { path = \"../rb-sys/crates/rb-sys\" }" >> .cargo/config.toml
-          cargo update -p rb-sys
+          cargo update -p rb-sys --recursive
           echo "RUBYOPT=-I${{ github.workspace }}/rb-sys/gem/lib" >> $GITHUB_ENV
           ruby -e "File.write('Gemfile', File.read('Gemfile').gsub(/gem .rb_sys.*$/, 'gem \"rb_sys\", path: \"../rb-sys/gem\"'))" || true
           bundle install -j3 --retry 3 || true
